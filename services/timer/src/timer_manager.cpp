@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 #include <algorithm>
-#include <time.h>
+#include <ctime>
 #include <iostream>
 
 namespace OHOS{
@@ -273,9 +273,9 @@ std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono
         auto offset = when - system_clock::now().time_since_epoch();
         return steady_clock::now() + offset;
     }
-    auto offset = when - steady_clock::now().time_since_epoch();
+    auto offsett = when - steady_clock::now().time_since_epoch();
     TIME_HILOGI(TIME_MODULE_SERVICE, "end");
-    return steady_clock::now() + offset;
+    return steady_clock::now() + offsett;
 }
 
 void TimerManager::TimerLooper()
@@ -445,7 +445,6 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
         if ((item->GetFlags() & static_cast<uint32_t>(STANDALONE)) == 0 && item->CanHold(whenElapsed, maxWhen)) {
             return i;
         }
-       // ++i;
     }
     return -1;
 }

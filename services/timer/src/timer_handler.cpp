@@ -78,8 +78,8 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
     }
     itimerspec spec{};
 
-    int err = timerfd_settime (fds[ALARM_TYPE_COUNT], TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET, &spec, nullptr);
-    if (err < 0) {
+    int errn = timerfd_settime (fds[ALARM_TYPE_COUNT], TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET, &spec, nullptr);
+    if (errn < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime() failed: %{public}s", strerror(errno));
         return nullptr;
     }

@@ -18,17 +18,21 @@
 #include <map>
 #include <mutex>
 #include "refbase.h"
+#include "time.h"
+#include <sys/time.h>
+#include "time_common.h"
+#include <vector>
+#include "json/json.h"
+#include <fstream>
 
 namespace OHOS{
 namespace MiscServices{
-using namespace std;
 
 struct zoneInfoEntry
 {
    std::string ID;
    std::string alias;
-   int utcOffsetHours;
-   std::string description;
+   float utcOffsetHours;
 };
 
 class TimeZoneInfo : public RefBase{
@@ -37,13 +41,16 @@ class TimeZoneInfo : public RefBase{
 
 public:
     static sptr<TimeZoneInfo>  GetInstance();
+    bool GetTimezone(std::string &timezoneId);
+    bool SetTimezone(std::string timezoneId);
     void Init();
-    int32_t GetOffset(const std::string timezoneId, int &offset);
-    int32_t GetTimezoneId(std::string &timezoneId);
-
 private:
+    static const std::string TIMEZONE_FILE_PATH;
+    bool SetOffsetToKernel(float offset);
+    bool GetOffsetById(const std::string timezoneId, float &offset);
+    bool GetTimezoneFromFile(std::string &timezoneId);
+    bool SaveTimezoneToFile(std::string timezoneId);
     std::string curTimezoneId_;
-    int32_t lastOffset_;
     static std::mutex instanceLock_;
     static sptr<TimeZoneInfo>  instance_;
     std::map<std::string, struct zoneInfoEntry> timezoneInfoMap_;

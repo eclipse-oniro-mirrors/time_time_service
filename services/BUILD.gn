@@ -51,6 +51,7 @@ ohos_shared_library("time_service") {
 
   public_configs = [
     "//utils/native/base:utils_config",
+    "//third_party/jsoncpp:jsoncpp_public_config",
     ":time_service_config",
   ]
   deps = [
@@ -61,6 +62,7 @@ ohos_shared_library("time_service") {
     "//foundation/distributeddatamgr/appdatamgr/interfaces/innerkits/native_preferences:native_preferences",
     "//foundation/distributeddatamgr/appdatamgr/interfaces/innerkits/native_rdb:native_rdb",
     "//utils/native/base:utils",
+    "//third_party/jsoncpp:jsoncpp",
   ]
   external_deps = [
     "aafwk_standard:base",
@@ -74,6 +76,13 @@ ohos_shared_library("time_service") {
     "safwk:system_ability_fwk",
     "samgr_L2:samgr_proxy",
   ]
-  subsystem_name = "miscservices"
   part_name = "time_native"
+  subsystem_name = "miscservices"
+}
+
+ohos_prebuilt_etc("timezone_json") {
+  source = "time_manager/src/timezone.json"
+  module_install_dir = "/data/misc/zoneinfo/"
+  part_name = "time_native"
+  subsystem_name = "miscservices"
 }

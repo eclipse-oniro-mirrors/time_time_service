@@ -54,6 +54,7 @@ HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
     gettimeofday(&getTime, NULL);
     int64_t time = (getTime.tv_sec + 1000) * 1000 + getTime.tv_usec / 1000;
     if (time < 0){
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Time now invalid : %{public}" PRId64 "",time);
         time = 1627307312000;
     }
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "",time);
@@ -68,7 +69,7 @@ HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level0)
 {
-    std::string timeZoneSet("Beijing, China");
+    std::string timeZoneSet("Asia/Shanghai");
 
     bool result = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneSet);
     EXPECT_TRUE(result);
@@ -83,10 +84,13 @@ HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, SetTimeZone002, TestSize.Level0)
 {
-    std::string timeZoneSet("Beijing, China");
+    std::string timeZoneSet("Asia/Ulaanbaatar");
 
     bool result = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneSet);
     EXPECT_TRUE(result);
+    struct timezone tz = {};
+    gettimeofday(NULL, &tz);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "TimezoneId in kernel : %{public}d", tz.tz_minuteswest);
     auto timeZoneRes = TimeServiceClient::GetInstance()->GetTimeZone();
     EXPECT_EQ(timeZoneRes, timeZoneSet);
 }

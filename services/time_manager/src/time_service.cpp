@@ -22,8 +22,8 @@
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 
-#include <time.h>
-#include <stdio.h>
+#include <ctime>
+#include <cstdio>
 #include <string>
 #include <unistd.h>
 #include <sys/time.h>
@@ -33,7 +33,7 @@
 #include <sys/ioctl.h>
 #include <linux/rtc.h>
 #include <dirent.h>
-#include <string.h>
+#include <cstring>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -101,6 +101,8 @@ void TimeService::OnStart()
     InitServiceHandler();
     InitTimerHandler();
     InitNotifyHandler();
+    // init timezone 
+    TimeZoneInfo::GetInstance()->Init();
     if (Init() != ERR_OK) {
         auto callback = [=]() { Init(); };
         serviceHandler_->PostTask(callback, INIT_INTERVAL);
@@ -134,31 +136,6 @@ void TimeService::OnStop()
     timeServiceNotify_ = nullptr;
     state_ = ServiceRunningState::STATE_NOT_START;
     TIME_HILOGI(TIME_MODULE_SERVICE,"OnStop End.");
-}
-
-void TimeService::InitTimeZone(){
-    TIME_HILOGD(TIME_MODULE_SERVICE,"start");
-    std::string timeZoneId;
-    auto hasTimeZone = GetTimeZoneId(timeZoneId);
-    if (!hasTimeZone){
-        TIME_HILOGE(TIME_MODULE_SERVICE,"Time Zone Not Found.");
-        return;
-    }
-    int gmtOffset;
-    struct timezone tz;
-    TIME_HILOGD(TIME_MODULE_SERVICE,"timezone id: %{public}s.", timeZoneId.c_str());
-    auto ret = TimeZoneInfo::GetInstance()->GetOffset(timeZoneId, gmtOffset);
-    TIME_HILOGE(TIME_MODULE_SERVICE,"get timezone offset: %{public}d.", gmtOffset);
-    if (ret != ERR_OK){
-        TIME_HILOGE(TIME_MODULE_SERVICE,"get timezone info fail: %{public}d.", ret);
-    }
-    tz.tz_minuteswest = gmtOffset * 60;
-    tz.tz_dsttime = 0;
-
-    int result = settimeofday(NULL, &tz);
-    if (result < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE,"settimeofday fail: %{public}d.",result);
-    }
 }
 
 void TimeService::InitNotifyHandler(){
@@ -317,7 +294,7 @@ int32_t TimeService::SetTime(const int64_t time)
         return E_TIME_NO_PERMISSION;
     }
     TIME_HILOGI(TIME_MODULE_SERVICE,"Setting time of day to milliseconds: %{public}" PRId64 "", time);
-    if (time < 0) {
+    if (time < 0 || time / 1000LL >= LONG_MAX) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "input param error");
         return E_TIME_PARAMETERS_INVALID;
     }
@@ -447,21 +424,8 @@ int32_t TimeService::SetTimeZone(const std::string timeZoneId)
         TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check failed, uid : %{public}d", uid);
         return E_TIME_NO_PERMISSION;
     }
-    int gmtOffset;
-    struct timezone tz;
-    TIME_HILOGE(TIME_MODULE_SERVICE,"timezone id: %{public}s.", timeZoneId.c_str());
-    auto ret = TimeZoneInfo::GetInstance()->GetOffset(timeZoneId, gmtOffset);
-    TIME_HILOGE(TIME_MODULE_SERVICE,"get timezone offset: %{public}d.", gmtOffset);
-    if (ret != ERR_OK){
-        TIME_HILOGE(TIME_MODULE_SERVICE,"get timezone info fail: %{public}d.", ret);
-        return ret;
-    }
-    tz.tz_minuteswest = gmtOffset * 60;
-    tz.tz_dsttime = 0;
-
-    int result = settimeofday(NULL, &tz);
-    if (result < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE,"settimeofday fail: %{public}d.",result);
+    if (!TimeZoneInfo::GetInstance()->SetTimezone(timeZoneId)){
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone failed :%{public}s", timeZoneId.c_str());
         return E_TIME_DEAL_FAILED;
     }
     int64_t currentTime = 0;
@@ -475,15 +439,12 @@ int32_t TimeService::SetTimeZone(const std::string timeZoneId)
 
 int32_t TimeService::GetTimeZone(std::string &timeZoneId)
 {
-    std::string curTimezone;
-    auto ret = TimeZoneInfo::GetInstance()->GetTimezoneId(curTimezone);
-    TIME_HILOGI(TIME_MODULE_SERVICE,"get timezone : %{public}s.", curTimezone.c_str());
-    if (ret == ERR_OK){
-        timeZoneId = curTimezone;
-        return ERR_OK;
+    if (!TimeZoneInfo::GetInstance()->GetTimezone(timeZoneId)){
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get timezone failed.");
+        return E_TIME_DEAL_FAILED;
     }
-    TIME_HILOGE(TIME_MODULE_SERVICE,"get timezone info fail: %{public}d.", ret);
-    return ret;
+    TIME_HILOGD(TIME_MODULE_SERVICE,"Current timezone : %{public}s", timeZoneId.c_str());
+    return ERR_OK;
 }
 
 int32_t TimeService::GetWallTimeMs(int64_t &times)

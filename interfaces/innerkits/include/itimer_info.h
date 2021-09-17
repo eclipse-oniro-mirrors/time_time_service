@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef I_TIMER_INFO_H
+#define I_TIMER_INFO_H
 
 #include <mutex>
 #include "want_agent.h"
@@ -76,3 +78,4 @@ public:
 } // MiscServices
 } // OHOS
 
+#endif // I_TIMER_INFO_H

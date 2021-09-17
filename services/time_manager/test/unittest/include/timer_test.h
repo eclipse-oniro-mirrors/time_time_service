@@ -12,6 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ 
+#ifndef TIMER_TEST_H 
+#define TIMER_TEST_H
+
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include <functional>
@@ -24,7 +28,7 @@
 #include "time_common.h"
 #include "time_service_client.h"
 #include <string>
-#include <inttypes.h>
+#include <cinttypes>
 
 namespace OHOS{
 namespace MiscServices{
@@ -86,3 +90,4 @@ void TimerInfoTest::SetWantAgent(std::shared_ptr<OHOS::Notification::WantAgent::
 
 }
 }
+#endif

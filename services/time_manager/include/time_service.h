@@ -18,7 +18,6 @@
 
 #include "time_service_stub.h"
 #include "time_service_notify.h"
-#include "time_rdb_handler.h"
 #include "timer_manager.h"
 #include "time_permission.h"
 #include "system_ability.h"
