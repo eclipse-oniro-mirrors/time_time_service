@@ -31,14 +31,12 @@ constexpr int THREE_PARAMETERS = 3;
 constexpr int MAX_TIME_ZONE_ID = 1024;
 
 #define GET_PARAMS(env, info, num)                                \
-    do {                                                          \
-        size_t argc = num;                                        \
-        napi_value argv[num];                                     \
-        napi_value thisVar;                                       \
-        void* data;                                               \
-        napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);                         \
-    } while (0)                                                   \
-    
+    size_t argc = num;             \
+    napi_value argv[num] = {0};    \
+    napi_value thisVar = nullptr;  \
+    void *data;                    \
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data)
+
 typedef struct AsyncContext {
     napi_env env;
     napi_async_work work;
