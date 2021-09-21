@@ -27,6 +27,7 @@
 #include <mutex>
 #include <inttypes.h>
 
+
 namespace OHOS {
 namespace MiscServices {
 enum class ServiceRunningState {
@@ -34,19 +35,10 @@ enum class ServiceRunningState {
     STATE_RUNNING
 };
 
-
-const int TIMER_TYPE_REALTIME_MASK = 1 << 0;
-const int TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
-const int TIMER_TYPE_EXACT_MASK = 1 << 2;
-const int TIMER_TYPE_IDLE_MASK =  1 << 3;
-
-
 class TimeService : public SystemAbility, public TimeServiceStub {
     DECLARE_SYSTEM_ABILITY(TimeService);
-
 public:
     DISALLOW_COPY_AND_MOVE(TimeService);
-
     TimeService(int32_t systemAbilityId, bool runOnCreate);
     TimeService();
     ~TimeService();
@@ -73,11 +65,18 @@ protected:
     void OnStop() override;
 
 private:
+    struct TimerPara {
+        int timerType;
+        int64_t windowLength;
+        uint64_t interval;
+        int flag;
+    };
     int32_t Init();
     void InitServiceHandler();
     void InitNotifyHandler();
     void InitTimeZone();
     void InitTimerHandler();
+    void PaserTimerPara(int32_t type, bool repeat, uint64_t interval, TimerPara &paras);
     bool GetTimeByClockid(clockid_t clockID, struct timespec* tv);
     int set_rtc_time(time_t sec);
 

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Copyright (c); 2021 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -13,30 +13,26 @@
  * limitations under the License.
  */
 
-#inlude "init.h"
+#ifndef TIMER_INIT_H
+#define TIMER_INIT_H
+
+#include "system_timer.h"
+#include "napi/native_api.h"
+#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace MiscServicesNapi {
-EXTERN_C_START
-/*
- * Module export function
- */
-static napi_value Init(napi_env env, napi_value exports)
-{
-    /*
-     * Propertise define
-     */
-    SystemtimerInit(env, exports);
-    return exports;
-}
-EXTERN_C_END
+static napi_module _module = {
+    .nm_version = 1,
+    .nm_flags = 0,
+    .nm_filename = nullptr,
+    .nm_register_func = Init,
+    .nm_modname = "systemtimer",
+    .nm_priv = ((void *)0),
+    .reserved = {0}
+};
 
-/*
- * Module register function
- */
-extern "C" __attribute__((constructor)) void RegisterModule(void)
-{
-    napi_module_register(&_module);
-}
-}  // namespace MiscServicesNapi
-}  // namespace OHOS
+} // OHOS
+} // MiscServicesNapi
+
+#endif // TIMER_INIT_H

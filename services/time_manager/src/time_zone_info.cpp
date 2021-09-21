@@ -18,11 +18,9 @@
 
 namespace OHOS{
 namespace MiscServices{
-
-const std::string TimeZoneInfo::TIMEZONE_FILE_PATH = "/data/misc/zoneinfo/timezone.json";
-
-std::mutex TimeZoneInfo::instanceLock_;
-sptr<TimeZoneInfo> TimeZoneInfo::instance_;
+namespace {
+static const int HOURS_TO_MINUTES = 60;
+}
 
 TimeZoneInfo::TimeZoneInfo()
 {
@@ -65,77 +63,72 @@ TimeZoneInfo::TimeZoneInfo()
     }
 }
 
-TimeZoneInfo::~TimeZoneInfo(){
+TimeZoneInfo::~TimeZoneInfo()
+{
     timezoneInfoMap_.clear();
 }
 
-sptr<TimeZoneInfo> TimeZoneInfo::GetInstance()
+void TimeZoneInfo::Init() 
 {
-    if (instance_ == nullptr) {
-        std::lock_guard<std::mutex> autoLock(instanceLock_);
-        if (instance_ == nullptr) {
-            instance_ = new TimeZoneInfo;
-        }
-    }
-    return instance_;
-}
-
-void TimeZoneInfo::Init(){
-    TIME_HILOGD(TIME_MODULE_SERVICE,"start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::string timezoneId;
     float gmtOffset;
-    if(!GetTimezoneFromFile(timezoneId)){
-        TIME_HILOGE(TIME_MODULE_SERVICE,"end, init timezone failed.");
+    if (!GetTimezoneFromFile(timezoneId)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "end, init timezone failed.");
         return;
     }
-    if(!GetOffsetById(timezoneId, gmtOffset)){
-        TIME_HILOGE(TIME_MODULE_SERVICE,"end, init timezone failed.");
+    if (!GetOffsetById(timezoneId, gmtOffset)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "end, init timezone failed.");
         return;
     }
-    if(!SetOffsetToKernel(gmtOffset)){
-        TIME_HILOGE(TIME_MODULE_SERVICE,"end, init timezone failed.");
+    if (!SetOffsetToKernel(gmtOffset)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "end, init timezone failed.");
         return;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE,"end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
-bool TimeZoneInfo::SetTimezone(std::string timezoneId){
+bool TimeZoneInfo::SetTimezone(std::string timezoneId) 
+{
     float gmtOffset;
-    if(!GetOffsetById(timezoneId, gmtOffset)){
-        TIME_HILOGE(TIME_MODULE_SERVICE,"Timezone unsupport %{public}s.", timezoneId.c_str());
+    if (!GetOffsetById(timezoneId, gmtOffset)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Timezone unsupport %{public}s.", timezoneId.c_str());
         return false;
     }
-    if(!SetOffsetToKernel(gmtOffset)){
-        TIME_HILOGE(TIME_MODULE_SERVICE,"Set kernel failed.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "timezone :%{public}s , GMT Offset :%{public}f",  timezoneId.c_str(), gmtOffset);
+    if (!SetOffsetToKernel(gmtOffset)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Set kernel failed.");
         return false;
     }
-    if(!SaveTimezoneToFile(timezoneId)){
-        TIME_HILOGE(TIME_MODULE_SERVICE,"Save file failed.");
+    if (!SaveTimezoneToFile(timezoneId)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Save file failed.");
         return false;
     }
     curTimezoneId_ = timezoneId;
     return true;
 }
 
-bool TimeZoneInfo::GetTimezone(std::string &timezoneId){
+bool TimeZoneInfo::GetTimezone(std::string &timezoneId) {
     timezoneId = curTimezoneId_;
     return true;
 }
 
-bool TimeZoneInfo::SetOffsetToKernel(float offsetHour){
+bool TimeZoneInfo::SetOffsetToKernel(float offsetHour) 
+{
     struct timezone tz{};
-    tz.tz_minuteswest = static_cast<int>(offsetHour * 60);
+    tz.tz_minuteswest = static_cast<int>(offsetHour * HOURS_TO_MINUTES);
     tz.tz_dsttime = 0;
-
+    TIME_HILOGD(TIME_MODULE_SERVICE, "settimeofday, Offset hours :%{public}f , Offset minutes :%{public}d",  offsetHour, tz.tz_minuteswest);
     int result = settimeofday(NULL, &tz);
     if (result < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE,"settimeofday fail: %{public}d.",result);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday fail: %{public}d.",result);
         return false;
     }
     return true;
 }
 
-bool TimeZoneInfo::GetTimezoneFromFile(std::string &timezoneId){
+bool TimeZoneInfo::GetTimezoneFromFile(std::string &timezoneId) 
+{
     Json::Value root;
     std::ifstream ifs;
     ifs.open(TIMEZONE_FILE_PATH);
@@ -153,7 +146,8 @@ bool TimeZoneInfo::GetTimezoneFromFile(std::string &timezoneId){
     return true;
 }
 
-bool TimeZoneInfo::SaveTimezoneToFile(std::string timezoneId){
+bool TimeZoneInfo::SaveTimezoneToFile(std::string timezoneId) 
+{
     std::ofstream ofs;
     ofs.open(TIMEZONE_FILE_PATH);
     Json::Value root;
@@ -166,7 +160,8 @@ bool TimeZoneInfo::SaveTimezoneToFile(std::string timezoneId){
     return true;
 }
 
-bool TimeZoneInfo::GetOffsetById(const std::string timezoneId, float &offset){
+bool TimeZoneInfo::GetOffsetById(const std::string timezoneId, float &offset) 
+{
     auto itEntry = timezoneInfoMap_.find(timezoneId);
     if (itEntry != timezoneInfoMap_.end()) {
         auto zoneInfo = itEntry->second;
@@ -177,6 +172,5 @@ bool TimeZoneInfo::GetOffsetById(const std::string timezoneId, float &offset){
     TIME_HILOGE(TIME_MODULE_SERVICE, "TimezoneId not found.");
     return false;
 }
-
 }
 }

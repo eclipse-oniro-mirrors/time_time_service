@@ -46,9 +46,7 @@ ohos_shared_library("time_service") {
     "timer/src/timer_info.cpp",
     "timer/src/timer_manager.cpp",
   ]
-
   configs = [ "${time_utils_path}:utils_config" ]
-
   public_configs = [
     "//utils/native/base:utils_config",
     "//third_party/jsoncpp:jsoncpp_public_config",
@@ -61,8 +59,8 @@ ohos_shared_library("time_service") {
     "//foundation/distributeddatamgr/appdatamgr/interfaces/innerkits/native_appdatafwk:native_appdatafwk",
     "//foundation/distributeddatamgr/appdatamgr/interfaces/innerkits/native_preferences:native_preferences",
     "//foundation/distributeddatamgr/appdatamgr/interfaces/innerkits/native_rdb:native_rdb",
-    "//utils/native/base:utils",
     "//third_party/jsoncpp:jsoncpp",
+    "//utils/native/base:utils",
   ]
   external_deps = [
     "aafwk_standard:base",

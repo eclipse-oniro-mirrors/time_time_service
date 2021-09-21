@@ -15,6 +15,7 @@
 #ifndef SERVICES_INCLUDE_TIME_ZONE_INFO_H
 #define SERVICES_INCLUDE_TIME_ZONE_INFO_H
 
+#include <singleton.h>
 #include <map>
 #include <mutex>
 #include "refbase.h"
@@ -25,34 +26,27 @@
 #include "json/json.h"
 #include <fstream>
 
-namespace OHOS{
-namespace MiscServices{
-
-struct zoneInfoEntry
-{
+namespace OHOS {
+namespace MiscServices {
+struct zoneInfoEntry {
    std::string ID;
    std::string alias;
    float utcOffsetHours;
 };
 
-class TimeZoneInfo : public RefBase{
-    TimeZoneInfo();
-    ~TimeZoneInfo();
-
+class TimeZoneInfo {
+    DECLARE_DELAYED_SINGLETON(TimeZoneInfo)
 public:
-    static sptr<TimeZoneInfo>  GetInstance();
     bool GetTimezone(std::string &timezoneId);
     bool SetTimezone(std::string timezoneId);
     void Init();
 private:
-    static const std::string TIMEZONE_FILE_PATH;
+    const std::string TIMEZONE_FILE_PATH = "/data/misc/zoneinfo/timezone.json";
     bool SetOffsetToKernel(float offset);
     bool GetOffsetById(const std::string timezoneId, float &offset);
     bool GetTimezoneFromFile(std::string &timezoneId);
     bool SaveTimezoneToFile(std::string timezoneId);
     std::string curTimezoneId_;
-    static std::mutex instanceLock_;
-    static sptr<TimeZoneInfo>  instance_;
     std::map<std::string, struct zoneInfoEntry> timezoneInfoMap_;
 };
 } // MiscServices

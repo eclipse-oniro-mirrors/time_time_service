@@ -20,7 +20,6 @@
 
 namespace OHOS {
 namespace MiscServices {
-
 class ITimerInfo {
 public:
     ITimerInfo();
@@ -72,7 +71,7 @@ public:
      */
     virtual void SetInterval(const uint64_t &interval) = 0;
     virtual void SetWantAgent(std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> wantAgent) = 0;
-    virtual void OnTrigger() = 0;    
+    virtual void OnTrigger() = 0;
 };
 
 } // MiscServices

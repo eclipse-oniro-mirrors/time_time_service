@@ -19,12 +19,10 @@
 #define MOCK_PERMISSION_H
 namespace OHOS {
 namespace MiscServices {
-namespace MockPermission{
-
+namespace MockPermission {
     bool VerifyPermission(const std::string& bundleName, const std::string& permissionName, int userId);
-
-}
-}
-}
+} // MockPermission
+} // MiscServices
+} // OHOS
 
 #endif // MOCK_PERMISSION_H
