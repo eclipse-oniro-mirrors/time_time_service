@@ -18,7 +18,7 @@
 
 namespace OHOS {
 namespace MiscServices {
-namespace{
+namespace {
 static const int UID_TO_USERID = 100000;
 }
 sptr<AppExecFwk::IBundleMgr> TimePermission::bundleMgrProxy_;

@@ -1,6 +1,6 @@
 /*
- * Copyright(C) 2021 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0(the "License");
+ * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -29,7 +29,7 @@
 
 namespace OHOS {
 namespace MiscServices {
-namespace{
+namespace {
 static const uint32_t ALARM_TIME_CHANGE_MASK = 1 << 16;
 static const clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
     CLOCK_REALTIME_ALARM,

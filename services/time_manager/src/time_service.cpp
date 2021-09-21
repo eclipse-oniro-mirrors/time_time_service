@@ -562,7 +562,7 @@ int32_t TimeService::GetThreadTimeNs(int64_t &times)
 } 
 
 
-bool TimeService::GetTimeByClockid(clockid_t clk_id, struct timespec* tv)
+bool TimeService::GetTimeByClockid(clockid_t clk_id, struct timespec *tv)
 {
     if (clock_gettime(clk_id, tv) < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Failed clock_gettime.");
