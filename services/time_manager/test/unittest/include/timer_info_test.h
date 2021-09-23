@@ -42,8 +42,8 @@ public:
     virtual void SetWantAgent(std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> wantAgent) override;
     void SetCallbackInfo(const std::function<void()> &callBack);
 
-    private:
-        std::function<void()> callBack_ = nullptr;
+private:
+    std::function<void()> callBack_ = nullptr;
 };
 
 TimerInfoTest::TimerInfoTest()

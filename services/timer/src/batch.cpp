@@ -57,7 +57,7 @@ bool Batch::Add (const std::shared_ptr<TimerInfo> &alarm)
     auto it = std::upper_bound(alarms_.begin(),
                                alarms_.end(),
                                alarm,
-                               [](const std::shared_ptr<TimerInfo> &first, const std::shared_ptr<TimerInfo> &second){
+                               [](const std::shared_ptr<TimerInfo> &first, const std::shared_ptr<TimerInfo> &second) {
                                    return first->whenElapsed < second->whenElapsed;
                                });
     alarms_.insert (it, alarm); // 根据Alarm.when_elapsed从小到大排列
@@ -117,8 +117,8 @@ bool Batch::Remove (std::function<bool (const TimerInfo &)> predicate)
 bool Batch::HasPackage (const std::string &package_name)
 {
     return std::find_if(alarms_.begin(),
-                         alarms_.end(),
-                         [package_name](const std::shared_ptr<TimerInfo> &alarm){
+                        alarms_.end(),
+                        [package_name](const std::shared_ptr<TimerInfo> &alarm) {
                              return alarm->Matches(package_name);
                         }) != alarms_.end();
 }

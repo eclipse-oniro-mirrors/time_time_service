@@ -345,10 +345,10 @@ napi_value CreateTimer(napi_env env, napi_callback_info info)
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
     std::shared_ptr<ITimerInfoInstance> iTimerInfoInstance = std::make_shared<ITimerInfoInstance>();
     napi_ref callback = nullptr;
-    if (ParseParametersByCreateTimer(env, argv, argc, iTimerInfoInstance, callback) == nullptr){
+    if (ParseParametersByCreateTimer(env, argv, argc, iTimerInfoInstance, callback) == nullptr) {
         return JSParaError(env, callback);
     }
-    AsyncCallbackInfoCreate *asynccallbackinfo = new (std::nothrow) AsyncCallbackInfoCreate{
+    AsyncCallbackInfoCreate *asynccallbackinfo = new (std::nothrow) AsyncCallbackInfoCreate {
         .env = env,
         .asyncWork = nullptr,
         .iTimerInfoInstance = iTimerInfoInstance

@@ -343,7 +343,7 @@ void TimerManager::TimerLooper()
 
             if (lastTimeChangeClockTime == system_clock::time_point::min()
                 || nowRtc < (expectedClockTime - milliseconds(ONE_THOUSAND))
-                || nowRtc > (expectedClockTime + milliseconds(ONE_THOUSAND))){
+                || nowRtc > (expectedClockTime + milliseconds(ONE_THOUSAND))) {
                 TIME_HILOGI(TIME_MODULE_SERVICE, "Time changed notification from kernel; rebatching");
                 ReBatchAllTimers();
                 lastTimeChangeClockTime_ = nowRtc;
@@ -398,7 +398,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             auto alarm = batch->Get(i);
             alarm->count = 1;
             triggerList.push_back(alarm);
-            if (alarm->repeatInterval > milliseconds::zero()){
+            if (alarm->repeatInterval > milliseconds::zero()) {
                 alarm->count += duration_cast<milliseconds>(nowElapsed-
                     alarm->expectedWhenElapsed) / alarm->repeatInterval;
                 auto delta = alarm->count * alarm->repeatInterval;
@@ -414,7 +414,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
     }
     std::sort(triggerList.begin(),
               triggerList.end(),
-              [](const std::shared_ptr<TimerInfo> &l, const std::shared_ptr<TimerInfo> &r){
+              [](const std::shared_ptr<TimerInfo> &l, const std::shared_ptr<TimerInfo> &r) {
                 return l->whenElapsed < r->whenElapsed;
               });
 
@@ -516,7 +516,8 @@ bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared
     return it == list.begin();
 }
 
-steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,steady_clock::time_point triggerAtTime,
+steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
+                                        steady_clock::time_point triggerAtTime,
                                         milliseconds interval)
 {
     milliseconds futurity = (interval == milliseconds::zero()) ?

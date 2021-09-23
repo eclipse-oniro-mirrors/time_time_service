@@ -27,7 +27,7 @@ namespace OHOS {
 namespace MiscServices {
 constexpr int64_t ERROR_OPREATION_FAILED = -1;
 
-class TimeSaDeathRecipient : public IRemoteObject::DeathRecipient{
+class TimeSaDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
     explicit TimeSaDeathRecipient();
     ~TimeSaDeathRecipient() = default;

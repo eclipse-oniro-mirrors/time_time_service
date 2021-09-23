@@ -119,8 +119,8 @@ bool TimeZoneInfo::SetOffsetToKernel(float offsetHour)
     struct timezone tz{};
     tz.tz_minuteswest = static_cast<int>(offsetHour * HOURS_TO_MINUTES);
     tz.tz_dsttime = 0;
-    TIME_HILOGD(TIME_MODULE_SERVICE,"settimeofday,Offset hours:%{public}f,Offset minutes:%{public}d",
-                offsetHour,tz.tz_minuteswest);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "settimeofday, Offset hours % {public}f, Offset minutes % {public}d",
+        offsetHour, tz.tz_minuteswest);
     int result = settimeofday(NULL, &tz);
     if (result < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE,"settimeofday fail:%{public}d.",result);
@@ -165,7 +165,7 @@ bool TimeZoneInfo::SaveTimezoneToFile(std::string timezoneId)
 bool TimeZoneInfo::GetOffsetById(const std::string timezoneId, float &offset)
 {
     auto itEntry = timezoneInfoMap_.find(timezoneId);
-    if (itEntry != timezoneInfoMap_.end()){
+    if (itEntry != timezoneInfoMap_.end()) {
         auto zoneInfo = itEntry->second;
         offset = zoneInfo.utcOffsetHours;
         curTimezoneId_ = timezoneId;

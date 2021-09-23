@@ -126,7 +126,11 @@ static napi_value JSSystemTimeSetTimeZone(napi_env env,napi_callback_info info)
         if (i == 0 && valueType == napi_string) {
             char timeZoneChars[MAX_TIME_ZONE_ID];
             size_t timeZoneCharsSize;
-            if (napi_ok != napi_get_value_string_utf8(env,argv[i],timeZoneChars,MAX_TIME_ZONE_ID-1,&timeZoneCharsSize)){
+            if (napi_ok != napi_get_value_string_utf8(env,
+                                                      argv[i],
+                                                      timeZoneChars,
+                                                      MAX_TIME_ZONE_ID-1,
+                                                      &timeZoneCharsSize)) {
                 delete asyncContext;
                 NAPI_ASSERT(env, false, "input para invalid");
             }
@@ -189,7 +193,7 @@ static napi_value JSSystemTimeSetTimeZone(napi_env env,napi_callback_info info)
         },
         (void*)asyncContext,
         &asyncContext->work);
-    napi_queue_async_work(env,asyncContext->work);
+    napi_queue_async_work(env, asyncContext->work);
     return result;
 }
 
