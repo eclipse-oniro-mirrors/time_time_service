@@ -309,7 +309,7 @@ int32_t TimeService::SetTime(const int64_t time)
     tv.tv_usec = (suseconds_t)((time % MILLI_TO_BASE) * MILLI_TO_MICR);
 
     int result = settimeofday(&tv, NULL);
-    if (result < 0){
+    if (result < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday fail: %{public}d.",result);
         return E_TIME_DEAL_FAILED;
     }
