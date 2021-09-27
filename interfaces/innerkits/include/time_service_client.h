@@ -16,11 +16,12 @@
 #ifndef SERVICES_INCLUDE_TIME_SERVICES_MANAGER_H
 #define SERVICES_INCLUDE_TIME_SERVICES_MANAGER_H
 
+#include <mutex>
+
 #include "refbase.h"
 #include "time_service_interface.h"
 #include "iremote_object.h"
 #include "timer_call_back.h"
-#include <mutex>
 
 namespace OHOS {
 namespace MiscServices {
@@ -42,8 +43,7 @@ public:
     
     /**
      * SetTime
-     * 
-     * @descrition 
+     * @descrition
      * @param milliseconds int64_t UTC time in milliseconds.
      * @return bool true on success, false on failure.
      */
@@ -51,8 +51,7 @@ public:
 
     /**
      * SetTimeZone
-     * 
-     * @descrition 
+     * @descrition
      * @param timeZoneId const std::string time zone. example: "Beijing, China".
      * @return bool true on success, false on failure.
      */
@@ -60,14 +59,12 @@ public:
 
     /**
      * GetTimeZone
-     * 
-     * @descpriton 
+     * @descpriton
      * @return std::string, time zone example: "Beijing, China", if result length == 0 on failed. 
      */
     std::string GetTimeZone();
     /**
      * GetWallTimeMs
-     * 
      * @descpriton get the wall time(the UTC time from 1970 0H:0M:0S) in milliseconds
      * @return int64_t, milliseconds in wall time, ret < 0 on failed. 
      */
@@ -75,7 +72,6 @@ public:
 
     /**
      * GetWallTimeNs
-     * 
      * @descpriton get the wall time(the UTC time from 1970 0H:0M:0S) in nanoseconds
      * @return int64_t, nanoseconds in wall time, ret < 0 on failed. 
      */
@@ -83,7 +79,6 @@ public:
 
     /**
      * GetBootTimeMs
-     * 
      * @descpriton get the time since boot(include time spent in sleep) in milliseconds.
      * @return int64_t, milliseconds in boot time, ret < 0 on failed. 
      */
@@ -91,7 +86,6 @@ public:
 
     /**
      * GetBootTimeNs
-     * 
      * @descpriton // get the time since boot(include time spent in sleep) in nanoseconds.
      * @return int64_t, nanoseconds in boot time, ret < 0 on failed. 
      */
@@ -99,7 +93,6 @@ public:
 
     /**
      * GetMonotonicTimeMs
-     * 
      * @descpriton get the time since boot(exclude time spent in sleep) in milliseconds.
      * @return int64_t, milliseconds in Monotonic time, ret < 0 on failed. 
      */
@@ -107,7 +100,6 @@ public:
 
     /**
      * GetMonotonicTimeNs
-     * 
      * @descpriton get the time since boot(exclude time spent in sleep) in nanoseconds.
      * @return int64_t, nanoseconds in Monotonic time, ret < 0 on failed. 
      */
@@ -115,7 +107,6 @@ public:
 
     /**
      * GetThreadTimeMs
-     * 
      * @descpriton get the Thread-specific CPU-time in milliseconds.
      * @return int64_t, milliseconds in Thread-specific CPU-time, ret < 0 on failed. 
      */
@@ -123,7 +114,6 @@ public:
 
     /**
      * GetThreadTimeNs
-     * 
      * @descpriton get the Thread-specific CPU-time in nanoseconds.
      * @return int64_t, nanoseconds in Thread-specific CPU-time, ret < 0 on failed. 
      */
@@ -131,7 +121,6 @@ public:
     
     /**
      * CreateTimer
-     * 
      * @param TimerInfo  timer info
      * @return uint64_t > 0 on success, == 0 failure.
      */
@@ -139,7 +128,6 @@ public:
 
      /**
      * StartTimer
-     * 
      * @param timerId indicate timerId
      * @param treggerTime  trigger times
      * @return bool true on success, false on failure.
@@ -148,7 +136,6 @@ public:
 
      /**
      * StopTimer
-     * 
      * @param timerId indicate timerId
      * @return bool true on success, false on failure.
      */
@@ -156,7 +143,6 @@ public:
 
      /**
      * DestroyTimer
-     * 
      * @param timerId indicate timerId
      * @return bool true on success, false on failure.
      */

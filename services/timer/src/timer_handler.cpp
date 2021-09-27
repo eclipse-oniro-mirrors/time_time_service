@@ -66,7 +66,7 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
     }
 
     std::shared_ptr<TimerHandler> handler = std::shared_ptr<TimerHandler>(new TimerHandler(fds, epollfd));
-    for(size_t i = 0; i < fds.size(); i++) {
+    for (size_t i = 0; i < fds.size(); i++) {
         epoll_event event {};
         event.events = EPOLLIN | EPOLLWAKEUP;
         event.data.u32 = i;
@@ -95,7 +95,7 @@ TimerHandler::TimerHandler(const TimerFds &fds, int epollfd)
 
 TimerHandler::~TimerHandler()
 {
-    for(auto fd : fds_) {
+    for (auto fd : fds_) {
         epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, nullptr);
         close(fd);
     }
@@ -126,7 +126,7 @@ uint32_t TimerHandler::WaitForAlarm()
     }
 
     uint32_t result = 0;
-    for(int i = 0; i < nevents; i++) {
+    for (int i = 0; i < nevents; i++) {
         uint32_t alarm_idx = events[i].data.u32;
         uint64_t unused;
         ssize_t err = read(fds_[alarm_idx], &unused, sizeof(unused));
