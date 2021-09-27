@@ -113,7 +113,7 @@ bool TimeZoneInfo::InitStorage()
         }
     }
     return true;
-} 
+}
 
 bool TimeZoneInfo::SetTimezone(std::string timezoneId)
 {
