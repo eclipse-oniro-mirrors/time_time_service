@@ -516,9 +516,7 @@ bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared
     return it == list.begin();
 }
 
-steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
-                                        steady_clock::time_point triggerAtTime,
-                                        milliseconds interval)
+steady_clock::time_point MaxTriggerTime(steady_clock::time_point now, steady_clock::time_point triggerAtTime, milliseconds interval)
 {
     milliseconds futurity = (interval == milliseconds::zero()) ?
         (duration_cast<milliseconds>(triggerAtTime - now)) : interval;

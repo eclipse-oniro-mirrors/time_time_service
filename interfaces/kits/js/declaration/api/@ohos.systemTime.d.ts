@@ -26,24 +26,24 @@ declare namespace systemTime {
      * @permission ohos.permission.SET_TIME
      * @since 6
      */
-    function setTime(time : number, callback : AsyncCallback<boolean>) : void;
-    function setTime(time : number) : Promise<boolean>;
+    function setTime(time : number, callback : AsyncCallback<void>) : void;
+    function setTime(time : number) : Promise<void>;
 
     /**
      * Sets the system time.
      * @permission ohos.permission.SET_TIME
      * @since 7
      */
-    function setDate(date: Date, callback: AsyncCallback<boolean>): void;
-    function setDate(date: Date): Promise<boolean>;
+    function setDate(date: Date, callback: AsyncCallback<void>): void;
+    function setDate(date: Date): Promise<void>;
 
     /**
      * Sets the system time zone.
      * @permission ohos.permission.SET_TIME_ZONE
      * @since 7
      */
-    function setTimezone(timezone: string, callback: AsyncCallback<boolean>): void;
-    function setTimezone(timezone: string): Promise<boolean>;
+    function setTimezone(timezone: string, callback: AsyncCallback<void>): void;
+    function setTimezone(timezone: string): Promise<void>;
 }
 
 export default systemTime;

@@ -24,6 +24,7 @@
 
 namespace OHOS {
 namespace MiscServicesNapi {
+namespace {
 const int NO_ERROR = 0;
 const int ERROR = -1;
 const int CREATE_MAX_PARA = 2;
@@ -33,6 +34,7 @@ const int DESTROY_MAX_PARA = 2;
 const int ARGS_TWO = 2;
 const int PARAM0 = 0;
 const int PARAM1 = 1;
+}
 
 struct CallbackPromiseInfo {
     napi_ref callback = nullptr;
@@ -486,9 +488,9 @@ napi_value StartTimer(napi_env env, napi_callback_info info)
             info.deferred = asynccallbackinfo->deferred;
             info.errorCode = asynccallbackinfo->errorCode;
 
-            // result: bool
-            napi_value result = nullptr;
-            napi_get_boolean(env, asynccallbackinfo->isOK, &result);
+            // result: void
+            napi_value result = 0;
+            napi_get_null(env, &result);
             ReturnCallbackPromise(env, info, result);
 
             napi_delete_async_work(env, asynccallbackinfo->asyncWork);
@@ -591,9 +593,9 @@ napi_value StopTimer(napi_env env, napi_callback_info info)
             info.deferred = asynccallbackinfo->deferred;
             info.errorCode = asynccallbackinfo->errorCode;
 
-            // result: bool
-            napi_value result = nullptr;
-            napi_get_boolean(env, asynccallbackinfo->isOK, &result);
+            // result: void
+            napi_value result = 0;
+            napi_get_null(env, &result);
             ReturnCallbackPromise(env, info, result);
 
             napi_delete_async_work(env, asynccallbackinfo->asyncWork);
@@ -704,9 +706,9 @@ napi_value DestroyTimer(napi_env env, napi_callback_info info)
             info.deferred = asynccallbackinfo->deferred;
             info.errorCode = asynccallbackinfo->errorCode;
 
-            // result: bool
-            napi_value result = nullptr;
-            napi_get_boolean(env, asynccallbackinfo->isOK, &result);
+            // result: void
+            napi_value result = 0;
+            napi_get_null(env, &result);
             ReturnCallbackPromise(env, info, result);
 
             napi_delete_async_work(env, asynccallbackinfo->asyncWork);

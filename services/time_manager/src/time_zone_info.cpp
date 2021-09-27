@@ -14,11 +14,12 @@
  */
 
 #include "time_zone_info.h"
-
+#include "time_file_utils.h"
 
 namespace OHOS{
 namespace MiscServices{
 namespace {
+const std::string TIMEZONE_FILE_PATH = "/data/misc/zoneinfo/timezone.json";
 static const int HOURS_TO_MINUTES = 60;
 }
 
@@ -73,20 +74,46 @@ void TimeZoneInfo::Init()
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::string timezoneId;
     float gmtOffset;
+    if (!InitStorage()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "end, InitStorage failed.");
+        return;
+    }
     if (!GetTimezoneFromFile(timezoneId)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, init timezone failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "end, GetTimezoneFromFile failed.");
         return;
     }
     if (!GetOffsetById(timezoneId, gmtOffset)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, init timezone failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "end, GetOffsetById failed.");
         return;
     }
     if (!SetOffsetToKernel(gmtOffset)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, init timezone failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "end, SetOffsetToKernel failed.");
         return;
     }
+    curTimezoneId_ = timezoneId;
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
+
+bool TimeZoneInfo::InitStorage()
+{
+    auto filePath = TIMEZONE_FILE_PATH.c_str();
+    if (!TimeFileUtils::IsExistFile(filePath)) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Timezone file not existed :%{public}s.", filePath);
+        const std::string dir = TimeFileUtils::GetPathDir(filePath);
+        if (dir.empty()) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Filepath invalid.");
+            return false;
+        }
+        if (!TimeFileUtils::IsExistDir(dir.c_str())) {
+            if (!TimeFileUtils::MkRecursiveDir(dir.c_str(), true)) {
+                TIME_HILOGE(TIME_MODULE_SERVICE, "Create filepath failed :%{public}s.", filePath);
+                return false;
+            }
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Create filepath success :%{public}s.", filePath);
+        }
+    }
+    return true;
+} 
 
 bool TimeZoneInfo::SetTimezone(std::string timezoneId)
 {
@@ -119,11 +146,10 @@ bool TimeZoneInfo::SetOffsetToKernel(float offsetHour)
     struct timezone tz{};
     tz.tz_minuteswest = static_cast<int>(offsetHour * HOURS_TO_MINUTES);
     tz.tz_dsttime = 0;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "settimeofday, Offset hours %{public}f, Offset minutes %{public}d",
-        offsetHour, tz.tz_minuteswest);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "settimeofday, Offset hours :%{public}f , Offset minutes :%{public}d",  offsetHour, tz.tz_minuteswest);
     int result = settimeofday(NULL, &tz);
     if (result < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE,"settimeofday fail:%{public}d.",result);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday fail:%{public}d.", result);
         return false;
     }
     return true;
@@ -168,7 +194,6 @@ bool TimeZoneInfo::GetOffsetById(const std::string timezoneId, float &offset)
     if (itEntry != timezoneInfoMap_.end()) {
         auto zoneInfo = itEntry->second;
         offset = zoneInfo.utcOffsetHours;
-        curTimezoneId_ = timezoneId;
         return true;
     }
     TIME_HILOGE(TIME_MODULE_SERVICE, "TimezoneId not found.");

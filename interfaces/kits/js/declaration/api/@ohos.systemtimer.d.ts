@@ -63,8 +63,8 @@ declare namespace systemTimer {
    * value is smaller than the current time plus 5000 milliseconds.
    * @systemapi Hide this for inner system use.
    */
-  function startTimer(timer: number, triggerTime: number, callback: AsyncCallback<boolean>): void;
-  function startTimer(timer: number, triggerTime: number): Promise<boolean>;
+  function startTimer(timer: number, triggerTime: number, callback: AsyncCallback<void>): void;
+  function startTimer(timer: number, triggerTime: number): Promise<void>;
 
   /**
    * Stops a timer.
@@ -72,8 +72,8 @@ declare namespace systemTimer {
    * @Param timer The timer ID.
    * @systemapi Hide this for inner system use.
    */
-  function stopTimer(timer: number, callback: AsyncCallback<boolean>):  void;
-  function stopTimer(timer: number): Promise<boolean>;
+  function stopTimer(timer: number, callback: AsyncCallback<void>):  void;
+  function stopTimer(timer: number): Promise<void>;
 
   /**
    * Clears a timer.
@@ -81,8 +81,8 @@ declare namespace systemTimer {
    * @Param timer The timer ID.
    * @systemapi Hide this for inner system use.
    */
-  function destroyTimer(timer: number, callback: AsyncCallback<boolean>): void;
-  function destroyTimer(timer: number): Promise<boolean>;
+  function destroyTimer(timer: number, callback: AsyncCallback<void>): void;
+  function destroyTimer(timer: number): Promise<void>;
 
   interface TimerOptions {
     /**
