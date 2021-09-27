@@ -141,7 +141,7 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
     return result;
 }
 
-napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info) 
+napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
 {
     TIME_HILOGI(TIME_MODULE_JS_NAPI, "JSSystemTimeSetTimeZone start");
     GET_PARAMS(env, info, TWO_PARAMETERS);
@@ -244,6 +244,5 @@ extern "C" __attribute__((constructor)) void SystemTimeRegister()
 {
     napi_module_register(&system_time_module);
 }
-
-} // MiscServicesNapi
-} // OHOS
+}//MiscServicesNapi
+}//OHOS

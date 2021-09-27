@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef N_JS_SYSTEMTIME_H
 #define N_JS_SYSTEMTIME_H
 
@@ -61,7 +60,6 @@ struct TimeCallbackPromiseInfo {
     bool isCallback = false;
     int errorCode = NO_ERROR;
 };
-
-} // MiscServicesNapi
-} // OHOS
+}//MiscServicesNapi
+}//OHOS
 #endif
