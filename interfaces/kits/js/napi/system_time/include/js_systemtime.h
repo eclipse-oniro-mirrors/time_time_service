@@ -21,14 +21,20 @@
 #include "napi/native_node_api.h"
 #include "js_native_api.h"
 
-constexpr int RESOLVED = 1;
-constexpr int REJECT = 0;
-
-constexpr int NONE_PARAMETER = 0;
-constexpr int ONE_PARAMETER = 1;
-constexpr int TWO_PARAMETERS = 2;
-constexpr int THREE_PARAMETERS = 3;
-constexpr int MAX_TIME_ZONE_ID = 1024;
+namespace OHOS {
+namespace MiscServicesNapi {
+namespace {
+const int NONE_PARAMETER = 0;
+const int ONE_PARAMETER = 1;
+const int TWO_PARAMETERS = 2;
+const int THREE_PARAMETERS = 3;
+const int MAX_TIME_ZONE_ID = 1024;
+const int NO_ERROR = 0;
+const int ERROR = -1;
+const int PARAM0 = 0;
+const int PARAM1 = 1;
+const int ARGS_TWO = 2;
+}
 
 #define GET_PARAMS(env, info, num)                                \
     size_t argc = num;             \
@@ -44,8 +50,18 @@ typedef struct AsyncContext {
     std::string timeZone;
     napi_deferred deferred;
     napi_ref callbackRef;
-    int status;
+    bool isCallback = false;
+    bool isOK = false;
+    int errorCode = NO_ERROR;
 } AsyncContext;
 
+struct TimeCallbackPromiseInfo {
+    napi_ref callback = nullptr;
+    napi_deferred deferred;
+    bool isCallback = false;
+    int errorCode = NO_ERROR;
+};
 
+} // MiscServicesNapi
+} // OHOS
 #endif

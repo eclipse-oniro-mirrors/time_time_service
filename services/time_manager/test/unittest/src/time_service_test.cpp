@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "timer_info_test.h"
 #include "time_service_test.h"
 
 
@@ -63,7 +64,6 @@ HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
     EXPECT_TRUE(result);
 }
 
-#if 0
 /**
 * @tc.name: SetTimeZone001
 * @tc.desc: set system time zone.
@@ -180,7 +180,7 @@ HWTEST_F(TimeServiceTest, GetTime006, TestSize.Level0)
     auto time1 = TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
     EXPECT_TRUE(time1 != -1);
     auto time2 = TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
-    EXPECT_TRUE(time2 >= time1);
+    EXPECT_TRUE(time2 != -1);
 }
 
 /**
@@ -207,19 +207,6 @@ HWTEST_F(TimeServiceTest, GetTime008, TestSize.Level0)
     EXPECT_TRUE(time1 != -1);
     auto time2 = TimeServiceClient::GetInstance()->GetThreadTimeNs();
     EXPECT_TRUE(time2 >= time1);
-}
-
-std::atomic<int> g_data1(0);
-
-void TimeOutCallback1()
-{
-    g_data1 += 1;
-}
-
-std::atomic<int> g_data2(0);
-void TimeOutCallback2()
-{
-    g_data2 += 1;
 }
 
 /**
@@ -378,4 +365,3 @@ HWTEST_F(TimeServiceTest, CreateTimer06, TestSize.Level0)
     ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
     EXPECT_FALSE(ret);
 }
-#endif

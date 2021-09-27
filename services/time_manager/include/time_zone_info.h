@@ -18,13 +18,14 @@
 #include <singleton.h>
 #include <map>
 #include <mutex>
+#include <sys/time.h>
+#include <vector>
+#include <fstream>
+
 #include "refbase.h"
 #include "time.h"
-#include <sys/time.h>
 #include "time_common.h"
-#include <vector>
 #include "json/json.h"
-#include <fstream>
 
 namespace OHOS {
 namespace MiscServices {
@@ -41,7 +42,7 @@ public:
     bool SetTimezone(std::string timezoneId);
     void Init();
 private:
-    const std::string TIMEZONE_FILE_PATH = "/system/etc/timezone/timezone.json";
+    bool InitStorage();
     bool SetOffsetToKernel(float offset);
     bool GetOffsetById(const std::string timezoneId, float &offset);
     bool GetTimezoneFromFile(std::string &timezoneId);

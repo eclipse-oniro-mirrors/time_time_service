@@ -12,20 +12,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "js_systemtime.h"
-
 #include <string>
+#include <initializer_list>
+
 #include "time_service_client.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "js_native_api.h"
 #include "time_common.h"
-#include <initializer_list>
+#include "js_systemtime.h"
 
+namespace OHOS {
+namespace MiscServicesNapi {
 using namespace OHOS::MiscServices;
 
-static napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
+napi_value TimeGetCallbackErrorValue(napi_env env, int errCode)
+{
+    napi_value result = nullptr;
+    napi_value eCode = nullptr;
+    NAPI_CALL(env, napi_create_int32(env, errCode, &eCode));
+    NAPI_CALL(env, napi_create_object(env, &result));
+    NAPI_CALL(env, napi_set_named_property(env, result, "code", eCode));
+    return result;
+}
+
+void TimeSetPromise(const napi_env &env, const napi_deferred &deferred, const napi_value &result)
+{
+    napi_resolve_deferred(env, deferred, result);
+}
+
+void TimeSetCallback(const napi_env &env, const napi_ref &callbackIn, const int &errorCode, const napi_value &result)
+{
+    napi_value undefined = nullptr;
+    napi_get_undefined(env, &undefined);
+
+    napi_value callback = nullptr;
+    napi_value resultout = nullptr;
+    napi_get_reference_value(env, callbackIn, &callback);
+    napi_value results[ARGS_TWO] = {0};
+    results[PARAM0] = TimeGetCallbackErrorValue(env, errorCode);
+    results[PARAM1] = result;
+    NAPI_CALL_RETURN_VOID(env, napi_call_function(env, undefined, callback, ARGS_TWO, &results[PARAM0], &resultout));
+}
+
+void TimeReturnCallbackPromise(const napi_env &env, const TimeCallbackPromiseInfo &info, const napi_value &result)
+{
+    if (info.isCallback) {
+        TimeSetCallback(env, info.callback, info.errorCode, result);
+    } else {
+        TimeSetPromise(env, info.deferred, result);
+    }
+}
+
+napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
 {
     TIME_HILOGI(TIME_MODULE_JS_NAPI, "JSSystemTimeSetTime start");
     GET_PARAMS(env, info, TWO_PARAMETERS);
@@ -54,6 +93,7 @@ static napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
             napi_get_value_int64(env, getTimeResult, &dateValue);
             asyncContext->time = dateValue;
         } else if (i == 1 && valueType == napi_function) {
+            asyncContext->isCallback = true;
             napi_create_reference(env, argv[i], 1, &asyncContext->callbackRef);
         } else {
             delete asyncContext;
@@ -62,8 +102,7 @@ static napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
     }
 
     napi_value result = nullptr;
-
-    if (asyncContext->callbackRef == nullptr) {
+    if (!asyncContext->isCallback) {
         napi_create_promise(env, &asyncContext->deferred, &result);
     } else {
         napi_get_undefined(env, &result);
@@ -73,48 +112,36 @@ static napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
     napi_create_string_utf8(env, "JSSystemTimeSetTime", NAPI_AUTO_LENGTH, &resource);
     napi_create_async_work(env, nullptr, resource,[](napi_env env, void* data) {
             AsyncContext* asyncContext = (AsyncContext*)data;
-            auto setTimeResult = TimeServiceClient::GetInstance()->SetTime(asyncContext->time);
-            if (setTimeResult) {
-                asyncContext->status = RESOLVED;
-            } else {
-                asyncContext->status = REJECT;
-            }
+            asyncContext->isOK = TimeServiceClient::GetInstance()->SetTime(asyncContext->time);
         },
         [](napi_env env, napi_status status, void* data) {
             AsyncContext* asyncContext = (AsyncContext*)data;
-            napi_value result[2] = { 0 };
-            if (asyncContext->status == RESOLVED) {
-                napi_get_undefined(env, &result[0]);
-                napi_get_boolean(env, true, &result[1]);
-            } else {
-                napi_value message = nullptr;
-                napi_create_string_utf8(env, "Set fail", NAPI_AUTO_LENGTH, &message);
-                napi_create_error(env, nullptr, message, &result[0]);
-                napi_get_undefined(env, &result[1]);
+            if (!asyncContext->isOK) {
+                asyncContext->errorCode = ERROR;
             }
-            if (asyncContext->deferred) {
-                if (asyncContext->status == RESOLVED) {
-                    napi_resolve_deferred(env, asyncContext->deferred, result[1]);
-                } else {
-                    napi_reject_deferred(env, asyncContext->deferred, result[0]);
-                }
-            } else {
-                napi_value callback = nullptr;
-                napi_get_reference_value(env, asyncContext->callbackRef, &callback);
-                // 2 -> result size
-                napi_call_function(env, nullptr, callback, 2, result, nullptr);
-                napi_delete_reference(env, asyncContext->callbackRef);
-            }
+            TimeCallbackPromiseInfo info;
+            info.isCallback = asyncContext->isCallback;
+            info.callback = asyncContext->callbackRef;
+            info.deferred = asyncContext->deferred;
+            info.errorCode = asyncContext->errorCode;
+
+            // result: void
+            napi_value result = 0;
+            napi_get_null(env, &result);
+            TimeReturnCallbackPromise(env, info, result);
+
             napi_delete_async_work(env, asyncContext->work);
-            delete asyncContext;
+            if (asyncContext) {
+                delete asyncContext;
+                asyncContext = nullptr;
+            }
         },
         (void*)asyncContext, &asyncContext->work);
     napi_queue_async_work(env, asyncContext->work);
-
     return result;
 }
 
-static napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info) 
+napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info) 
 {
     TIME_HILOGI(TIME_MODULE_JS_NAPI, "JSSystemTimeSetTimeZone start");
     GET_PARAMS(env, info, TWO_PARAMETERS);
@@ -140,6 +167,7 @@ static napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
             std::string timeZoneStr(timeZoneChars, timeZoneCharsSize);
             asyncContext->timeZone = timeZoneStr;
         } else if (i == 1 && valueType == napi_function) {
+            asyncContext->isCallback = true;
             napi_create_reference(env, argv[i], 1, &asyncContext->callbackRef);
         } else {
             delete asyncContext;
@@ -149,7 +177,7 @@ static napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
 
     napi_value result = nullptr;
 
-    if (asyncContext->callbackRef == nullptr) {
+    if (!asyncContext->isCallback) {
         napi_create_promise(env, &asyncContext->deferred, &result);
     } else {
         napi_get_undefined(env, &result);
@@ -159,42 +187,31 @@ static napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
     napi_create_async_work(env, nullptr, resource,
         [](napi_env env, void* data) {
             AsyncContext* asyncContext = (AsyncContext*)data;
-            auto setTimeResult = TimeServiceClient::GetInstance()->SetTimeZone(asyncContext->timeZone);
-            if (setTimeResult) {
-                asyncContext->status = RESOLVED;
-            } else {
-                asyncContext->status = REJECT;
-            }
+            asyncContext->isOK = TimeServiceClient::GetInstance()->SetTimeZone(asyncContext->timeZone);
         },
         [](napi_env env, napi_status status, void* data) {
             AsyncContext* asyncContext = (AsyncContext*)data;
-            napi_value result[2] = { 0 };
-            if (asyncContext->status == RESOLVED) {
-                napi_get_undefined(env, &result[0]);
-                napi_get_boolean(env, true, &result[1]);
-            } else {
-                napi_value message = nullptr;
-                napi_create_string_utf8(env, "Set fail", NAPI_AUTO_LENGTH, &message);
-                napi_create_error(env, nullptr, message, &result[0]);
-                napi_get_undefined(env, &result[1]);
+            if (!asyncContext->isOK) {
+                asyncContext->errorCode = ERROR;
             }
-            if (asyncContext->deferred) {
-                if (asyncContext->status == RESOLVED) {
-                    napi_resolve_deferred(env, asyncContext->deferred, result[1]);
-                } else {
-                    napi_reject_deferred(env, asyncContext->deferred, result[0]);
-                }
-            } else {
-                napi_value callback = nullptr;
-                napi_get_reference_value(env, asyncContext->callbackRef, &callback);
-                // 2 -> result size
-                napi_call_function(env, nullptr, callback, 2, result, nullptr);
-                napi_delete_reference(env, asyncContext->callbackRef);
-            }
+            TimeCallbackPromiseInfo info;
+            info.isCallback = asyncContext->isCallback;
+            info.callback = asyncContext->callbackRef;
+            info.deferred = asyncContext->deferred;
+            info.errorCode = asyncContext->errorCode;
+
+            // result: void
+            napi_value result = 0;
+            napi_get_null(env, &result);
+            TimeReturnCallbackPromise(env, info, result);
+
             napi_delete_async_work(env, asyncContext->work);
-            delete asyncContext;
+            if (asyncContext) {
+                delete asyncContext;
+                asyncContext = nullptr;
+            }
         },
-        (void*)asyncContext, 
+        (void*)asyncContext,
         &asyncContext->work);
     napi_queue_async_work(env, asyncContext->work);
     return result;
@@ -227,3 +244,6 @@ extern "C" __attribute__((constructor)) void SystemTimeRegister()
 {
     napi_module_register(&system_time_module);
 }
+
+} // MiscServicesNapi
+} // OHOS
