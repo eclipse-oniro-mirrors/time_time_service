@@ -52,7 +52,7 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
             return nullptr;
     }
 
-    for(size_t i = 0; i < fds.size(); i++) {
+    for (size_t i = 0; i < fds.size(); i++) {
         fds[i] = timerfd_create(alarm_to_clock_id[i], 0);
         if (fds[i] < 0) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create %{public}d  failed: %{public}s",
