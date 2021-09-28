@@ -24,6 +24,7 @@
 
 namespace OHOS {
 namespace MiscServicesNapi {
+namespace {
 const int NO_ERROR = 0;
 const int ERROR = -1;
 const int CREATE_MAX_PARA = 2;
@@ -33,6 +34,7 @@ const int DESTROY_MAX_PARA = 2;
 const int ARGS_TWO = 2;
 const int PARAM0 = 0;
 const int PARAM1 = 1;
+}
 
 struct CallbackPromiseInfo {
     napi_ref callback = nullptr;
@@ -196,9 +198,9 @@ void ITimerInfoInstance::OnTrigger()
                 return;
             }
 
-            SetCallback(dataWorkerData->env, 
-                        dataWorkerData->ref, 
-                        NO_ERROR, 
+            SetCallback(dataWorkerData->env,
+                        dataWorkerData->ref,
+                        NO_ERROR,
                         NapiGetNull(dataWorkerData->env));
             delete dataWorkerData;
             dataWorkerData = nullptr;
@@ -281,7 +283,7 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
         if (wantAgent == nullptr) {
             return nullptr;
         }
-        std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> sWantAgent = 
+        std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> sWantAgent =
             std::make_shared<OHOS::Notification::WantAgent::WantAgent>(*wantAgent);
         iTimerInfoInstance->SetWantAgent(sWantAgent);
     }
@@ -343,10 +345,8 @@ napi_value CreateTimer(napi_env env, napi_callback_info info)
     napi_value argv[CREATE_MAX_PARA];
     napi_value thisVar = nullptr;
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
-
     std::shared_ptr<ITimerInfoInstance> iTimerInfoInstance = std::make_shared<ITimerInfoInstance>();
     napi_ref callback = nullptr;
-
     if (ParseParametersByCreateTimer(env, argv, argc, iTimerInfoInstance, callback) == nullptr) {
         return JSParaError(env, callback);
     }
@@ -358,13 +358,10 @@ napi_value CreateTimer(napi_env env, napi_callback_info info)
     if (!asynccallbackinfo) {
         return JSParaError(env, callback);
     }
-
     napi_value promise = nullptr;
     PaddingAsyncCallbackInfoIsByCreateTimer(env, asynccallbackinfo, callback, promise);
-
     napi_value resourceName = nullptr;
     napi_create_string_latin1(env, "createTimer", NAPI_AUTO_LENGTH, &resourceName);
-    // Asynchronous function call
     napi_create_async_work(env,
         nullptr,
         resourceName,
@@ -378,14 +375,11 @@ napi_value CreateTimer(napi_env env, napi_callback_info info)
         },
         [](napi_env env, napi_status status, void *data) {
             AsyncCallbackInfoCreate *asynccallbackinfo = (AsyncCallbackInfoCreate *)data;
-
             CallbackPromiseInfo info;
             info.isCallback = asynccallbackinfo->isCallback;
             info.callback = asynccallbackinfo->callback;
             info.deferred = asynccallbackinfo->deferred;
             info.errorCode = asynccallbackinfo->errorCode;
-
-            // timerId: number
             napi_value result = nullptr;
             napi_create_int64(env, asynccallbackinfo->timerId, &result);
             ReturnCallbackPromise(env, info, result);
@@ -393,9 +387,7 @@ napi_value CreateTimer(napi_env env, napi_callback_info info)
         },
         (void *)asynccallbackinfo,
         &asynccallbackinfo->asyncWork);
-
     NAPI_CALL(env, napi_queue_async_work(env, asynccallbackinfo->asyncWork));
-
     if (asynccallbackinfo->isCallback) {
         return NapiGetNull(env);
     } else {
@@ -423,7 +415,7 @@ napi_value ParseParametersByStartTimer(const napi_env &env, const napi_value (&a
     int64_t triggerTime = 0;
     napi_get_value_int64(env, argv[1], &triggerTime);
     NAPI_ASSERT(env, triggerTime >= 0, "Wrong argument triggerTime. Positive number expected.");
-    uintTriggerTime = (uint64_t)triggerTime;
+    uintTriggerTime = static_cast<uint64_t>(triggerTime);
 
     // argv[2]:callback
     if (argc >= START_MAX_PARA) {
@@ -496,9 +488,9 @@ napi_value StartTimer(napi_env env, napi_callback_info info)
             info.deferred = asynccallbackinfo->deferred;
             info.errorCode = asynccallbackinfo->errorCode;
 
-            // result: bool
-            napi_value result = nullptr;
-            napi_get_boolean(env, asynccallbackinfo->isOK, &result);
+            // result: void
+            napi_value result = 0;
+            napi_get_null(env, &result);
             ReturnCallbackPromise(env, info, result);
 
             napi_delete_async_work(env, asynccallbackinfo->asyncWork);
@@ -601,9 +593,9 @@ napi_value StopTimer(napi_env env, napi_callback_info info)
             info.deferred = asynccallbackinfo->deferred;
             info.errorCode = asynccallbackinfo->errorCode;
 
-            // result: bool
-            napi_value result = nullptr;
-            napi_get_boolean(env, asynccallbackinfo->isOK, &result);
+            // result: void
+            napi_value result = 0;
+            napi_get_null(env, &result);
             ReturnCallbackPromise(env, info, result);
 
             napi_delete_async_work(env, asynccallbackinfo->asyncWork);
@@ -714,9 +706,9 @@ napi_value DestroyTimer(napi_env env, napi_callback_info info)
             info.deferred = asynccallbackinfo->deferred;
             info.errorCode = asynccallbackinfo->errorCode;
 
-            // result: bool
-            napi_value result = nullptr;
-            napi_get_boolean(env, asynccallbackinfo->isOK, &result);
+            // result: void
+            napi_value result = 0;
+            napi_get_null(env, &result);
             ReturnCallbackPromise(env, info, result);
 
             napi_delete_async_work(env, asynccallbackinfo->asyncWork);
