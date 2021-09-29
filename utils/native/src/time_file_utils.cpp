@@ -17,9 +17,9 @@
 
 #include <dirent.h>
 #include <fcntl.h>
-#include <climits>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <climits>
 
 #include "time_common.h"
 #include "securec.h"
