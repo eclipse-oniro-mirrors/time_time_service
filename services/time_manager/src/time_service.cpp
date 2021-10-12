@@ -32,7 +32,7 @@
 
 #include "pthread.h"
 #include "time_service.h"
-#include "time_zone_info.h" 
+#include "time_zone_info.h"
 #include "time_common.h"
 #include "system_ability.h"
 #include "system_ability_definition.h"
