@@ -236,7 +236,7 @@ void TimerManager::RemoveLocked(uint64_t id)
     };
 
     bool didRemove = false;
-    for (auto it = alarmBatches_.begin(); it != alarmBatches_.end();) {
+    for (auto it = alarmBatches_.begin(); it != alarmBatches_.end(); ) {
         auto batch = *it;
         didRemove = batch->Remove(whichAlarms);
         if (batch->Size() == 0) {
@@ -271,7 +271,7 @@ void TimerManager::ReBatchAllTimers()
     TIME_HILOGI(TIME_MODULE_SERVICE, "end");
 }
 
-void TimerManager::ReBatchAllTimersLocked(bool doValidate) 
+void TimerManager::ReBatchAllTimersLocked(bool doValidate)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start");
     auto oldSet = alarmBatches_;
@@ -493,7 +493,7 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
 }
 
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList,
-                                       std::chrono::steady_clock::time_point nowElapsed) 
+                                       std::chrono::steady_clock::time_point nowElapsed)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start");
     for (const auto &alarm : triggerList) {
