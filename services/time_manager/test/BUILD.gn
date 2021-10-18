@@ -20,7 +20,7 @@ config("module_private_config") {
     "//base/miscservices/time/interfaces/innerkits/include",
     "unittest/include",
     "//foundation/ace/napi/interfaces/kits/napi",
-    ]
+  ]
 }
 
 module_output_path = "time_native/time_service"
@@ -30,16 +30,14 @@ ohos_unittest("TimeServiceTest") {
 
   sources = [ "unittest/src/time_service_test.cpp" ]
 
-  configs = [
-    ":module_private_config",
-  ]
+  configs = [ ":module_private_config" ]
 
   deps = [
     "//base/miscservices/time/services:time_service",
     "//base/notification/ans_standard/frameworks/wantagent:wantagent_innerkits",
     "//foundation/ace/napi:ace_napi",
-    "//foundation/distributedschedule/safwk/interfaces/innerkits/safwk:system_ability_fwk",
     "//foundation/distributedschedule/dmsfwk/services/dtbschedmgr:distributedschedsvr",
+    "//foundation/distributedschedule/safwk/interfaces/innerkits/safwk:system_ability_fwk",
     "//foundation/distributedschedule/samgr/interfaces/innerkits/samgr_proxy:samgr_proxy",
     "//third_party/googletest:gtest_main",
     "//utils/native/base:utils",
@@ -55,7 +53,7 @@ ohos_unittest("TimeServiceTest") {
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
-    "samgr_L2:samgr_proxy",
+    "samgr_standard:samgr_proxy",
   ]
 }
 
