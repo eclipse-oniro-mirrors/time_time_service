@@ -30,8 +30,6 @@ constexpr uint64_t MINUTE_TO_MILLISECOND = 6000;
 constexpr uint64_t NANO_TO_SECOND = 1000000000;
 constexpr uint64_t  NANO_TO_MILESECOND = 100000;
 constexpr uint64_t SECOND_TO_MINUTE = 60;
-#define MILLISECONDS_FROM_UTC(x) (((x) / NANO_TO_MILESECOND) % (SECOND_TO_MILESECOND))
-#define SECONDS_FROM_UTC(x) (((x) / NANO_TO_SECOND) % (SECOND_TO_MINUTE))
 }
 TimeTickNotify::TimeTickNotify() {};
 TimeTickNotify::~TimeTickNotify() {};
@@ -45,7 +43,7 @@ void TimeTickNotify::Init()
     };
     timerId_ = TimeService::GetInstance()->CreateTimer(timerType, 0, 0, 0, callback);
     TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify timerId: %{public}" PRId64 "", timerId_);
-    refreshNextTriggerTime();
+    RefreshNextTriggerTime();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify triggertime: %{public}" PRId64 "", nextTriggerTime_);
     TimeService::GetInstance()->StartTimer(timerId_, nextTriggerTime_);
 }
@@ -56,29 +54,29 @@ void TimeTickNotify::Callback(const uint64_t timerId)
     auto currentTime = steady_clock::now().time_since_epoch().count();
     DelayedSingleton<TimeServiceNotify>::GetInstance()->PublishTimeTickEvents(currentTime);
     timerId_ = timerId;
-    refreshNextTriggerTime();
-    auto startFunc = [this]() {
-        this->startTimer();
+    RefreshNextTriggerTime();
+    auto startFunc = [this](){
+        this->StartTimer();
     };
     std::thread startTimerThread(startFunc);
     startTimerThread.detach();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify triggertime: %{public}" PRId64 "", nextTriggerTime_);
 }
 
-void TimeTickNotify::refreshNextTriggerTime()
+void TimeTickNotify::RefreshNextTriggerTime()
 {
     uint64_t timeNowMilliseconds;
     auto UTCTimeNano = system_clock::now().time_since_epoch().count();
     auto BootTimeNano = steady_clock::now().time_since_epoch().count();
     auto BootTimeMilli = BootTimeNano / NANO_TO_MILESECOND;
-    auto timeMilliseconds = MILLISECONDS_FROM_UTC(UTCTimeNano);
-    auto timeSeconds = SECONDS_FROM_UTC(UTCTimeNano);
+    auto timeMilliseconds = GetMillisecondsFromUTC(UTCTimeNano);
+    auto timeSeconds = GetSecondsFromUTC(UTCTimeNano);
     timeNowMilliseconds = timeSeconds * SECOND_TO_MILESECOND + timeMilliseconds;
     nextTriggerTime_ = BootTimeMilli+ (MINUTE_TO_MILLISECOND - timeNowMilliseconds);
     return ;
 }
 
-void TimeTickNotify::startTimer()
+void TimeTickNotify::StartTimer()
 {
     TimeService::GetInstance()->StartTimer(timerId_, nextTriggerTime_);
 }
@@ -87,6 +85,16 @@ void TimeTickNotify::Stop()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     TimeService::GetInstance()->DestroyTimer(timerId_);
+}
+
+uint64_t TimeTickNotify::GetMillisecondsFromUTC(uint64_t UTCtimeNano)
+{
+    return (UTCtimeNano / NANO_TO_MILESECOND) % SECOND_TO_MILESECOND;
+}
+
+uint64_t TimeTickNotify::GetSecondsFromUTC(uint64_t UTCtimeNano)
+{
+    return (UTCtimeNano / NANO_TO_SECOND) % SECOND_TO_MINUTE;
 }
 } // MiscServices
 } // OHOS
