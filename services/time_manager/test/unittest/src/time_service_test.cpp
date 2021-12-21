@@ -12,9 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cstdlib>
+#include <ctime>
 #include "timer_info_test.h"
 #include "time_service_test.h"
-
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -52,7 +53,7 @@ void TimeServiceTest::TearDown(void)
 */
 HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
 {
-    struct timeval getTime;
+    struct timeval getTime {};
     gettimeofday(&getTime, NULL);
     int64_t time = (getTime.tv_sec + 1000) * 1000 + getTime.tv_usec / 1000;
     if (time < 0) {
@@ -71,15 +72,12 @@ HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level0)
 {   
-    struct timezone tz = {};
-    gettimeofday(NULL, &tz);
-    TIME_HILOGD(TIME_MODULE_CLIENT, "Before set timezone, GMT offset in kernel : %{public}d", tz.tz_minuteswest);
+    time_t t;
+    (void)time(&t);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "Time before: %{public}s", asctime(localtime(&t)));
     std::string timeZoneSet("Asia/Shanghai");
     bool result = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneSet);
     EXPECT_TRUE(result);
-    auto ret = gettimeofday(NULL, &tz);
-    TIME_HILOGD(TIME_MODULE_CLIENT, "gettimeofday result : %{public}d", ret);
-    TIME_HILOGD(TIME_MODULE_CLIENT, "After set timezone, GMT offset minutes in kernel : %{public}d", tz.tz_minuteswest);
     auto timeZoneRes = TimeServiceClient::GetInstance()->GetTimeZone();
     EXPECT_EQ(timeZoneRes, timeZoneSet);
 }
@@ -91,16 +89,13 @@ HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, SetTimeZone002, TestSize.Level0)
 {
-    struct timezone tz = {};
-    gettimeofday(NULL, &tz);
-    TIME_HILOGD(TIME_MODULE_CLIENT, "Before set timezone, GMT offset in kernel : %{public}d", tz.tz_minuteswest);
+    time_t t;
+    (void)time(&t);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "Time before: %{public}s", asctime(localtime(&t)));
     std::string timeZoneSet("Asia/Ulaanbaatar");
 
     bool result = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneSet);
     EXPECT_TRUE(result);
-    auto ret = gettimeofday(NULL, &tz);
-    TIME_HILOGD(TIME_MODULE_CLIENT, "gettimeofday result : %{public}d", ret);
-    TIME_HILOGD(TIME_MODULE_CLIENT, "After set timezone, GMT offset minutes in kernel : %{public}d", tz.tz_minuteswest);
     auto timeZoneRes = TimeServiceClient::GetInstance()->GetTimeZone();
     EXPECT_EQ(timeZoneRes, timeZoneSet);
 }
@@ -347,7 +342,7 @@ HWTEST_F(TimeServiceTest, CreateTimer006, TestSize.Level0)
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
 
-    struct timeval getTime;
+    struct timeval getTime {};
     gettimeofday(&getTime, NULL);
     int64_t current_time = (getTime.tv_sec + 100) * 1000 + getTime.tv_usec / 1000;
     if (current_time < 0) {
