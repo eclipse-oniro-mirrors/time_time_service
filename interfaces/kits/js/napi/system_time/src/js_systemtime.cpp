@@ -640,8 +640,7 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
             info.callback = asyncContext->callbackRef;
             info.deferred = asyncContext->deferred;
             info.errorCode = asyncContext->errorCode;
-            std::string str;
-            str = "new Date(" + std::to_string(asyncContext->time) + ");";
+            std::string str = "new Date(" + std::to_string(asyncContext->time) + ");";
             const char *scriptStr = str.c_str();
             napi_value script = nullptr;
             napi_create_string_utf8(env, scriptStr, strlen(scriptStr), &script);
