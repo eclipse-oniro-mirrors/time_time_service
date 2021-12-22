@@ -59,7 +59,7 @@ HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
     gettimeofday(&getTime, NULL);
     int64_t time = (getTime.tv_sec + 1000) * 1000 + getTime.tv_usec / 1000;
     if (time < 0) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Time now invalid : %{public}" PRId64 "",time);
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Time now invalid : %{public}" PRId64 "", time);
         time = 1627307312000;
     }
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "",time);
@@ -274,7 +274,7 @@ HWTEST_F(TimeServiceTest, CreateTimer005, TestSize.Level0)
 }
 
 /**
-* @tc.name: CreateTimer06 
+* @tc.name: CreateTimer06.
 * @tc.desc: Create system timer.
 * @tc.type: FUNC
 */
