@@ -23,9 +23,7 @@ config("utils_config") {
 }
 
 ohos_source_set("time_utils") {
-  configs = [ 
-    ":utils_config",
-  ]
+  configs = [ ":utils_config" ]
 
   sources = [
     "mock/src/mock_permission.cpp",
