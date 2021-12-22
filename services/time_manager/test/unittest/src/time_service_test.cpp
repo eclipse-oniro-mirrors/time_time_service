@@ -207,65 +207,6 @@ HWTEST_F(TimeServiceTest, GetTime008, TestSize.Level0)
 }
 
 /**
-* @tc.name: CreateTimer01 
-* @tc.desc: Create system timer.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, CreateTimer001, TestSize.Level0)
-{
-    g_data1 = 0;
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
-    timerInfo->SetRepeat(false);
-    timerInfo->SetInterval(0);
-    timerInfo->SetWantAgent(nullptr);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
-    auto BootTimeNano = system_clock::now().time_since_epoch().count();
-    auto BootTimeMilli = BootTimeNano / NANO_TO_MILESECOND;
-    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, BootTimeMilli + 5000);
-    std::this_thread::sleep_for(std::chrono::milliseconds(6000));
-    EXPECT_TRUE(ret);
-    EXPECT_TRUE(g_data1 == 1);
-    ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
-    EXPECT_TRUE(ret);
-}
-
-/**
-* @tc.name: CreateTimer02 
-* @tc.desc: Create system timer.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, CreateTimer002, TestSize.Level0)
-{
-    g_data1 = 0;
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
-    timerInfo->SetRepeat(false);
-    timerInfo->SetInterval(0);
-    timerInfo->SetWantAgent(nullptr);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
-    auto BootTimeNano = system_clock::now().time_since_epoch().count();
-    auto BootTimeMilli = BootTimeNano / NANO_TO_MILESECOND;
-    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, BootTimeMilli + 5000);
-    std::this_thread::sleep_for(std::chrono::milliseconds(5100));
-    EXPECT_TRUE(ret);
-    EXPECT_TRUE(g_data1 == 1);
-    ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, 5000);
-    EXPECT_TRUE(ret);
-    EXPECT_TRUE(g_data1 == 1);
-    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
-    EXPECT_TRUE(ret);
-}
-
-/**
 * @tc.name: CreateTimer03 
 * @tc.desc: Create system timer.
 * @tc.type: FUNC
