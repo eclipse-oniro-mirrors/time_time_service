@@ -17,55 +17,58 @@ import { AsyncCallback, ErrorCallback } from './basic';
 
 /**
  * System time and timezone.
- *
- * @since 6
+ * @since 7
+ * @sysCap SystemCapability.Miscservices.Time
+ * @devices phone, tablet, tv, wearable, car
+ * @import systemTime from '@ohos.systemTime';
  */
 declare namespace systemTime {
     /**
      * Sets the system time.
      * @permission ohos.permission.SET_TIME
-     * @since 6
+     * @param time Target time stamp (ms)
+     * @since 7
      */
     function setTime(time : number, callback : AsyncCallback<void>) : void;
     function setTime(time : number) : Promise<void>;
     /**
      * Obtains the number of milliseconds that have elapsed since the Unix epoch.
-     * @since 7
+     * @since 8
      */
     function getCurrentTime(callback: AsyncCallback<number>): void;
     function getCurrentTime(): Promise<number>;
 
     /**
      * Obtains the number of nanoseconds that have elapsed since the Unix epoch.
-     * @since 7
+     * @since 8
      */
     function getCurrentTimeNs(callback: AsyncCallback<number>): void;
     function getCurrentTimeNs(): Promise<number>;
 
     /**
      * Obtains the number of milliseconds elapsed since the system was booted, not including deep sleep time.
-     * @since 7
+     * @since 8
      */
     function getRealActiveTime(callback: AsyncCallback<number>): void;
     function getRealActiveTime(): Promise<number>;
 
     /**
      * Obtains the number of nanoseconds elapsed since the system was booted, not including deep sleep time.
-     * @since 7
+     * @since 8
      */
     function getRealActiveTimeNs(callback: AsyncCallback<number>): void;
     function getRealActiveTimeNs(): Promise<number>;
 
     /**
      * Obtains the number of milliseconds elapsed since the system was booted, including deep sleep time.
-     * @since 7
+     * @since 8
      */
     function getRealTime(callback: AsyncCallback<number>): void;
     function getRealTime(): Promise<number>;
 
     /**
      * Obtains the number of nanoseconds elapsed since the system was booted, including deep sleep time.
-     * @since 7
+     * @since 8
      */
     function getRealTimeNs(callback: AsyncCallback<number>): void;
     function getRealTimeNs(): Promise<number>;
@@ -73,6 +76,7 @@ declare namespace systemTime {
     /**
      * Sets the system time.
      * @permission ohos.permission.SET_TIME
+     * @param date The target date
      * @since 7
      */
     function setDate(date: Date, callback: AsyncCallback<void>): void;
@@ -80,7 +84,7 @@ declare namespace systemTime {
 
     /**
      * Obtains the system date.
-     * @since 7
+     * @since 8
      */
     function getDate(callback: AsyncCallback<Date>): void;
     function getDate(): Promise<Date>;
@@ -88,6 +92,7 @@ declare namespace systemTime {
     /**
      * Sets the system time zone.
      * @permission ohos.permission.SET_TIME_ZONE
+     * @param timezone The system time zone
      * @since 7
      */
     function setTimezone(timezone: string, callback: AsyncCallback<void>): void;
@@ -95,10 +100,10 @@ declare namespace systemTime {
 
       /**
      * Obtains the system time zone.
-     * @since 7
+     * @since 8
      */  
-    function getTimeZone(callback: AsyncCallback<string>): void;
-    function getTimeZone(): Promise<string>;
+    function getTimezone(callback: AsyncCallback<string>): void;
+    function getTimezone(): Promise<string>;
 }
 
 export default systemTime;
