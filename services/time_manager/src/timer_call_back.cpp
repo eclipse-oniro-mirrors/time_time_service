@@ -96,7 +96,7 @@ void TimerCallback::NotifyTimer(const uint64_t timerId)
                 Notification::WantAgent::WantAgentHelper::GetWant(it->second->wantAgent);
           
             OHOS::Notification::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
-            Notification::WantAgent::WantAgentHelper::TriggerWantAgent(context,
+            Notification::WantAgent::WantAgentHelper::TriggerWantAgent(
                 it->second->wantAgent, nullptr, paramsInfo);
         }
     }
