@@ -28,7 +28,7 @@ public:
     int type;
     bool repeat;
     uint64_t interval;
-    std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> wantAgent;
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
 
     /**
     * Indicates the timing policy the timer use, which can be REALTIME or UTC.
@@ -70,7 +70,7 @@ public:
      *
      */
     virtual void SetInterval(const uint64_t &interval) = 0;
-    virtual void SetWantAgent(std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> wantAgent) = 0;
+    virtual void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) = 0;
     virtual void OnTrigger() = 0;
 };
 } // MiscServices

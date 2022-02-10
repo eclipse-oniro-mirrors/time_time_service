@@ -34,7 +34,6 @@ ohos_unittest("TimeServiceTest") {
 
   deps = [
     "//base/miscservices/time/services:time_service",
-    "//base/notification/ans_standard/frameworks/wantagent:wantagent_innerkits",
     "//foundation/ace/napi:ace_napi",
     "//foundation/distributedschedule/dmsfwk/services/dtbschedmgr:distributedschedsvr",
     "//foundation/distributedschedule/safwk/interfaces/innerkits/safwk:system_ability_fwk",
@@ -46,6 +45,7 @@ ohos_unittest("TimeServiceTest") {
   external_deps = [
     "ability_base:base",
     "ability_base:want",
+    "ability_runtime:wantagent_innerkits",
     "bundle_framework:appexecfwk_base",
     "ces_standard:cesfwk_innerkits",
     "eventhandler:libeventhandler",

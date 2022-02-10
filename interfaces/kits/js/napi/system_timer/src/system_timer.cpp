@@ -228,7 +228,7 @@ void ITimerInfoInstance::SetInterval(const uint64_t &_interval)
 {
     interval = _interval;
 }
-void ITimerInfoInstance::SetWantAgent(std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> _wantAgent)
+void ITimerInfoInstance::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent)
 {
     wantAgent = _wantAgent;
 }
@@ -238,7 +238,7 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
 {
     napi_valuetype valuetype = napi_undefined;
     napi_value result = nullptr;
-    OHOS::Notification::WantAgent::WantAgent *wantAgent = nullptr;
+    OHOS::AbilityRuntime::WantAgent::WantAgent *wantAgent = nullptr;
     bool hasProperty = false;
 
     // type: number
@@ -283,8 +283,8 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
         if (wantAgent == nullptr) {
             return nullptr;
         }
-        std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> sWantAgent = 
-            std::make_shared<OHOS::Notification::WantAgent::WantAgent>(*wantAgent);
+        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> sWantAgent = 
+            std::make_shared<OHOS::AbilityRuntime::WantAgent::WantAgent>(*wantAgent);
         iTimerInfoInstance->SetWantAgent(sWantAgent);
     }
 
