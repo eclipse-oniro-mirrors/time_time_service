@@ -386,6 +386,39 @@ int64_t TimeServiceClient::GetThreadTimeNs()
     return times;
 }
 
+void TimeServiceClient::NetworkTimeStatusOff()
+{
+    TIME_HILOGW(TIME_MODULE_CLIENT, "start");
+    if (timeServiceProxy_ == nullptr) {
+        TIME_HILOGW(TIME_MODULE_CLIENT, "Redo ConnectService");
+        timeServiceProxy_ = ConnectService();
+    }
+
+    if (timeServiceProxy_ == nullptr) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "NetworkTimeStatusOff quit because redoing ConnectService failed.");
+        return;
+    }
+    timeServiceProxy_->NetworkTimeStatusOff();
+    TIME_HILOGW(TIME_MODULE_CLIENT, "end");
+    return;
+}
+
+void TimeServiceClient::NetworkTimeStatusOn()
+{
+    TIME_HILOGW(TIME_MODULE_CLIENT, "start");
+    if (timeServiceProxy_ == nullptr) {
+        TIME_HILOGW(TIME_MODULE_CLIENT, "Redo ConnectService");
+        timeServiceProxy_ = ConnectService();
+    }
+
+    if (timeServiceProxy_ == nullptr) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "NetworkTimeStatusOn quit because redoing ConnectService failed.");
+        return;
+    }
+    timeServiceProxy_->NetworkTimeStatusOn();
+    TIME_HILOGW(TIME_MODULE_CLIENT, "end");
+    return;
+}
 
 void TimeServiceClient::OnRemoteSaDied(const wptr<IRemoteObject> &remote)
 {
