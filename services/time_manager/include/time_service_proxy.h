@@ -42,7 +42,8 @@ public:
     bool StartTimer(uint64_t timerId, uint64_t treggerTime) override;
     bool StopTimer(uint64_t  timerId) override;
     bool DestroyTimer(uint64_t  timerId) override;
-
+    void NetworkTimeStatusOff() override;
+    void NetworkTimeStatusOn() override;
 private:
     static inline BrokerDelegator<TimeServiceProxy> delegator_;
 };

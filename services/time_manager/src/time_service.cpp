@@ -31,6 +31,7 @@
 #include <sys/ioctl.h>
 #include <linux/rtc.h>
 #include "pthread.h"
+#include "ntp_update_time.h"
 #include "time_zone_info.h"
 #include "time_common.h"
 #include "time_tick_notify.h"
@@ -102,6 +103,7 @@ void TimeService::OnStart()
     InitNotifyHandler();
     DelayedSingleton<TimeTickNotify>::GetInstance()->Init();
     DelayedSingleton<TimeZoneInfo>::GetInstance()->Init();
+    DelayedSingleton<NtpUpdateTime>::GetInstance()->Init();
     if (Init() != ERR_OK) {
         auto callback = [=]() { Init(); };
         serviceHandler_->PostTask(callback, INIT_INTERVAL);
@@ -568,6 +570,15 @@ bool TimeService::GetTimeByClockid(clockid_t clk_id, struct timespec &tv)
         return false;
     }
     return true;
+}
+void TimeService::NetworkTimeStatusOff()
+{
+    DelayedSingleton<NtpUpdateTime>::GetInstance()->UpdateStatusOff();
+}
+
+void TimeService::NetworkTimeStatusOn()
+{
+    DelayedSingleton<NtpUpdateTime>::GetInstance()->UpdateStatusOn();
 }
 } // namespace MiscServices
 } // namespace OHOS

@@ -289,5 +289,21 @@ int32_t TimeServiceStub::OnDestoryTimer(MessageParcel &data, MessageParcel &repl
     TIME_HILOGI(TIME_MODULE_SERVICE, "end.");
     return ERR_OK;
 }
+
+int32_t TimeServiceStub::OnNetworkTimeStatusOff(MessageParcel &data, MessageParcel &reply)
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
+    NetworkTimeStatusOff();
+    TIME_HILOGI(TIME_MODULE_SERVICE, "end.");
+    return ERR_OK;
+}
+
+int32_t TimeServiceStub::OnNetworkTimeStatusOn(MessageParcel &data, MessageParcel &reply)
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
+    NetworkTimeStatusOn();
+    TIME_HILOGI(TIME_MODULE_SERVICE, "end.");
+    return ERR_OK;
+}
 } // namespace MiscServices
 } // namespace OHOS

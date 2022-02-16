@@ -147,7 +147,19 @@ public:
      * @return bool true on success, false on failure.
      */
     bool DestroyTimer(uint64_t timerId);
- 
+
+     /**
+     * NetworkTimeStatusOff
+     * @return void.
+     */
+    void NetworkTimeStatusOff();
+
+     /**
+     * NetworkTimeStatusOn
+     * @return void.
+     */
+    void NetworkTimeStatusOn();
+
     void OnRemoteSaDied(const wptr<IRemoteObject> &object);
 
 private:

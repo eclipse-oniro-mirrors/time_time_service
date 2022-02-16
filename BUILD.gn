@@ -18,7 +18,7 @@ import("//build/ohos.gni")
 group("time_native_packages") {
   if (is_standard_system) {
     deps = [
-      "etc/init:timeservice.rc",
+      "etc/init:timeservice.cfg",
       "interfaces/kits/js/declaration:time",
       "interfaces/kits/js/napi/system_time:systemtime",
       "interfaces/kits/js/napi/system_timer:systemtimer",
