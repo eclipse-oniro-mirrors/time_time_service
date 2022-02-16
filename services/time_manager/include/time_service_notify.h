@@ -21,7 +21,6 @@
 #include <ohos/aafwk/content/want.h>
 #include "time_common.h"
 
-
 namespace OHOS {
 namespace MiscServices {
 class TimeServiceNotify : public DelayedSingleton<TimeServiceNotify> {

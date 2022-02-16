@@ -39,7 +39,9 @@ public:
         CREATE_TIMER = 11,
         START_TIMER = 12,
         STOP_TIMER = 13,
-        DESTORY_TIMER = 14
+        DESTORY_TIMER = 14,
+        NETWORK_TIME_ON = 15,
+        NETWORK_TIME_OFF = 16
     };
       /**
      * SetTime
@@ -164,6 +166,18 @@ public:
      */
     virtual bool DestroyTimer(uint64_t  timerId) = 0;
 
+     /**
+     * NetworkTimeStatusOff
+     * @return void.
+     */
+    virtual void NetworkTimeStatusOff() = 0;
+
+     /**
+     * NetworkTimeStatusOn
+     * @return void.
+     */
+    virtual void NetworkTimeStatusOn() = 0;
+    
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.miscservices.time.ITimeService");
 };
 } // namespace MiscServices

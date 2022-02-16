@@ -61,7 +61,8 @@ public:
     bool StartTimer(uint64_t timerId, uint64_t triggerTime) override;
     bool StopTimer(uint64_t  timerId) override;
     bool DestroyTimer(uint64_t  timerId) override;
-    
+    void NetworkTimeStatusOff() override;
+    void NetworkTimeStatusOn() override;
 protected:
     void OnStart() override;
     void OnStop() override;

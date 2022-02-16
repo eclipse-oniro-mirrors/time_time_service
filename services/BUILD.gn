@@ -39,6 +39,10 @@ ohos_shared_library("time_service") {
 
   sources = [
     "time_manager/src/itimer_info.cpp",
+    "time_manager/src/nitz_subscriber.cpp",
+    "time_manager/src/ntp_trusted_time.cpp",
+    "time_manager/src/ntp_update_time.cpp",
+    "time_manager/src/sntp_client.cpp",
     "time_manager/src/time_service.cpp",
     "time_manager/src/time_service_client.cpp",
     "time_manager/src/time_service_notify.cpp",
