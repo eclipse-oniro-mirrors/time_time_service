@@ -13,18 +13,18 @@
  * limitations under the License.
  */
 
-#include <sys/epoll.h>
-#include <iostream>
-#include <cstring>
-#include <sys/timerfd.h>
 #include <unistd.h>
-#include <linux/rtc.h>
+#include <cstring>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <dirent.h>
+#include <sys/epoll.h>
+#include <sys/timerfd.h>
 #include <sys/time.h>
+#include <dirent.h>
 #include <sstream>
 #include <fstream>
+#include <iostream>
+#include <linux/rtc.h>
 #include "timer_handler.h"
 
 namespace OHOS {
@@ -65,7 +65,7 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
         }
     }
 
-    std::shared_ptr<TimerHandler> handler = std::make_shared<TimerHandler>(fds, epollfd);
+    std::shared_ptr<TimerHandler> handler = std::shared_ptr<TimerHandler>(new TimerHandler(fds, epollfd));
     for (size_t i = 0; i < fds.size(); i++) {
         epoll_event event {};
         event.events = EPOLLIN | EPOLLWAKEUP;

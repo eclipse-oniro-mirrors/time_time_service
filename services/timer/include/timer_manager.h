@@ -17,13 +17,8 @@
 
 #include <cinttypes>
 #include <mutex>
-#include <thread>
-#include <atomic>
 #include <vector>
-#include <chrono>
-#include <functional>
 #include <map>
-#include <random>
 #include "batch.h"
 #include "timer_handler.h"
 

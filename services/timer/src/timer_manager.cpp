@@ -52,7 +52,7 @@ std::shared_ptr<TimerManager> TimerManager::Create()
         TIME_HILOGE(TIME_MODULE_SERVICE, "Create Timer handle failed.");
         return nullptr;
     }
-    return std::make_shared<TimerManager>(impl);
+    return std::shared_ptr<TimerManager>(new TimerManager(impl));
 }
 
 TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
