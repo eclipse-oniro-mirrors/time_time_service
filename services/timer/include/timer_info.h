@@ -18,9 +18,6 @@
 
 #include <cstdint>
 #include <string>
-#include <chrono>
-#include <utility>
-#include <functional>
 #include "timer_manager_interface.h"
 
 namespace OHOS {

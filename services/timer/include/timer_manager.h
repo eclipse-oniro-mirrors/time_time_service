@@ -15,17 +15,17 @@
 #ifndef TIMER_MANAGER_H
 #define TIMER_MANAGER_H
 
+#include <cinttypes>
 #include <mutex>
-#include <thread>
-#include <atomic>
 #include <vector>
-#include <chrono>
-#include <functional>
 #include <map>
 #include <random>
-#include "timer_handler.h"
+#include <thread>
+#include <atomic>
+#include <chrono>
+#include <functional>
 #include "batch.h"
-#include <inttypes.h>
+#include "timer_handler.h"
 
 namespace OHOS {
 namespace MiscServices {

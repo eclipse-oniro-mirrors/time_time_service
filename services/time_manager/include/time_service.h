@@ -16,6 +16,9 @@
 #ifndef SERVICES_INCLUDE_TIME_SERVICES_H
 #define SERVICES_INCLUDE_TIME_SERVICES_H
 
+#include <mutex>
+#include <inttypes.h>
+
 #include "time_service_stub.h"
 #include "time_service_notify.h"
 #include "timer_manager.h"
@@ -24,9 +27,6 @@
 #include "event_handler.h"
 #include "time.h"
 #include "securec.h"
-#include <mutex>
-#include <inttypes.h>
-
 
 namespace OHOS {
 namespace MiscServices {

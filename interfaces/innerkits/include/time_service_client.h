@@ -60,62 +60,62 @@ public:
     /**
      * GetTimeZone
      * @descpriton
-     * @return std::string, time zone example: "Beijing, China", if result length == 0 on failed. 
+     * @return std::string, time zone example: "Beijing, China", if result length == 0 on failed.
      */
     std::string GetTimeZone();
     /**
      * GetWallTimeMs
      * @descpriton get the wall time(the UTC time from 1970 0H:0M:0S) in milliseconds
-     * @return int64_t, milliseconds in wall time, ret < 0 on failed. 
+     * @return int64_t, milliseconds in wall time, ret < 0 on failed.
      */
     int64_t GetWallTimeMs();
 
     /**
      * GetWallTimeNs
      * @descpriton get the wall time(the UTC time from 1970 0H:0M:0S) in nanoseconds
-     * @return int64_t, nanoseconds in wall time, ret < 0 on failed. 
+     * @return int64_t, nanoseconds in wall time, ret < 0 on failed.
      */
     int64_t GetWallTimeNs();
 
     /**
      * GetBootTimeMs
      * @descpriton get the time since boot(include time spent in sleep) in milliseconds.
-     * @return int64_t, milliseconds in boot time, ret < 0 on failed. 
+     * @return int64_t, milliseconds in boot time, ret < 0 on failed.
      */
     int64_t GetBootTimeMs();
 
     /**
      * GetBootTimeNs
      * @descpriton // get the time since boot(include time spent in sleep) in nanoseconds.
-     * @return int64_t, nanoseconds in boot time, ret < 0 on failed. 
+     * @return int64_t, nanoseconds in boot time, ret < 0 on failed.
      */
     int64_t GetBootTimeNs();
 
     /**
      * GetMonotonicTimeMs
      * @descpriton get the time since boot(exclude time spent in sleep) in milliseconds.
-     * @return int64_t, milliseconds in Monotonic time, ret < 0 on failed. 
+     * @return int64_t, milliseconds in Monotonic time, ret < 0 on failed.
      */
     int64_t GetMonotonicTimeMs();
 
     /**
      * GetMonotonicTimeNs
      * @descpriton get the time since boot(exclude time spent in sleep) in nanoseconds.
-     * @return int64_t, nanoseconds in Monotonic time, ret < 0 on failed. 
+     * @return int64_t, nanoseconds in Monotonic time, ret < 0 on failed.
      */
     int64_t GetMonotonicTimeNs();
 
     /**
      * GetThreadTimeMs
      * @descpriton get the Thread-specific CPU-time in milliseconds.
-     * @return int64_t, milliseconds in Thread-specific CPU-time, ret < 0 on failed. 
+     * @return int64_t, milliseconds in Thread-specific CPU-time, ret < 0 on failed.
      */
     int64_t GetThreadTimeMs();
 
     /**
      * GetThreadTimeNs
      * @descpriton get the Thread-specific CPU-time in nanoseconds.
-     * @return int64_t, nanoseconds in Thread-specific CPU-time, ret < 0 on failed. 
+     * @return int64_t, nanoseconds in Thread-specific CPU-time, ret < 0 on failed.
      */
     int64_t GetThreadTimeNs();
     

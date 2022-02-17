@@ -75,7 +75,7 @@ bool TimerCallback::RemoveTimerCallbackInfo(const uint64_t timerId)
         TimerInfoMap_.erase(info);
         TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
         return true;
-    } 
+    }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return false;
 }

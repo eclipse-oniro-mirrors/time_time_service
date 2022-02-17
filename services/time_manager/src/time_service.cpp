@@ -339,7 +339,7 @@ int32_t TimeService::SetTime(const int64_t time)
 int TimeService::set_rtc_time(time_t sec)
 {
     struct rtc_time rtc {};
-    struct tm tm {}; 
+    struct tm tm {};
     struct tm *gmtime_res = nullptr;
     int fd = 0;
     int res;

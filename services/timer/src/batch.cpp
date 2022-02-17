@@ -14,7 +14,6 @@
  */
 
 #include "batch.h"
-#include <algorithm>
 
 namespace OHOS {
 namespace MiscServices {

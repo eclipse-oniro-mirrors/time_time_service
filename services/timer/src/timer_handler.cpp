@@ -13,19 +13,19 @@
  * limitations under the License.
  */
 
-#include <sys/epoll.h>
-#include <iostream>
-#include <cstring>
-#include <sys/timerfd.h>
 #include <unistd.h>
-#include "timer_handler.h"
-#include <linux/rtc.h>
+#include <cstring>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <dirent.h>
+#include <sys/epoll.h>
+#include <sys/timerfd.h>
 #include <sys/time.h>
+#include <dirent.h>
 #include <sstream>
 #include <fstream>
+#include <iostream>
+#include <linux/rtc.h>
+#include "timer_handler.h"
 
 namespace OHOS {
 namespace MiscServices {

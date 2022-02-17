@@ -13,12 +13,12 @@
  * limitations under the License.
  */
 
-#include "time_service_client.h"
-#include "time_common.h"
 #include <cinttypes>
+#include <mutex>
+#include "time_common.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
-#include <mutex>
+#include "time_service_client.h"
 
 namespace OHOS {
 namespace MiscServices {

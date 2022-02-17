@@ -16,11 +16,11 @@
 #ifndef SERVICES_INCLUDE_TIME_SERVICE_STUB_H
 #define SERVICES_INCLUDE_TIME_SERVICE_STUB_H
 
+#include <map>
 #include "iremote_stub.h"
 #include "time_service_interface.h"
 #include "itimer_call_back.h"
 #include "ipc_skeleton.h"
-#include <map>
 
 namespace OHOS {
 namespace MiscServices {

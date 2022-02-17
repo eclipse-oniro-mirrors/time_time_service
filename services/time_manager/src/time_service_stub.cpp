@@ -13,10 +13,8 @@
  * limitations under the License.
  */
 
-#include "time_service_stub.h"
-#include <cinttypes>
-
 #include "time_common.h"
+#include "time_service_stub.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -40,6 +38,8 @@ TimeServiceStub::TimeServiceStub()
     memberFuncMap_[START_TIMER] = &TimeServiceStub::OnStartTimer;
     memberFuncMap_[STOP_TIMER] = &TimeServiceStub::OnStopTimer;
     memberFuncMap_[DESTORY_TIMER] = &TimeServiceStub::OnDestoryTimer;
+    memberFuncMap_[NETWORK_TIME_ON] = &TimeServiceStub::OnNetworkTimeStatusOn;
+    memberFuncMap_[NETWORK_TIME_OFF] = &TimeServiceStub::OnNetworkTimeStatusOff;
 }
 
 TimeServiceStub::~TimeServiceStub()
