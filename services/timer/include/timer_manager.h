@@ -19,6 +19,7 @@
 #include <mutex>
 #include <vector>
 #include <map>
+#include <random>
 #include "batch.h"
 #include "timer_handler.h"
 
