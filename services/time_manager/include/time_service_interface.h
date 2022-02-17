@@ -125,7 +125,7 @@ public:
 
      /**
      * GetThreadTimeNs
-     * 
+     *
      * @param times result of times ,unit: Nanosecond
      * @return int32_t ERR_OK on success, other on failure.
      */
@@ -133,7 +133,7 @@ public:
     
     /**
      * CreateTimer
-     * 
+     *
      * @param type    timer type
      * @param repeat  is repeat or not
      * @param timerCallback remoteobject
@@ -143,7 +143,7 @@ public:
 
      /**
      * StartTimer
-     * 
+     *
      * @param timerId indicate timerId
      * @param treggerTime  trigger times
      * @return bool true on success, false on failure.
@@ -152,7 +152,7 @@ public:
 
      /**
      * StopTimer
-     * 
+     *
      * @param timerId indicate timerId
      * @return bool true on success, false on failure.
      */
@@ -160,7 +160,7 @@ public:
 
      /**
      * DestroyTimer
-     * 
+     *
      * @param timerId indicate timerId
      * @return bool true on success, false on failure.
      */

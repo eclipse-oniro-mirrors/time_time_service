@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MOCK_PERMISSION_H
+#define MOCK_PERMISSION_H
 
 #include <string>
 
-#ifndef MOCK_PERMISSION_H
-#define MOCK_PERMISSION_H
 namespace OHOS {
 namespace MiscServices {
 namespace MockPermission {

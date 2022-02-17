@@ -15,7 +15,6 @@
 
 #ifndef TIME_SERVICE_TEST_H
 #define TIME_SERVICE_TEST_H
-#include <atomic>
 
 std::atomic<int> g_data1(0);
 

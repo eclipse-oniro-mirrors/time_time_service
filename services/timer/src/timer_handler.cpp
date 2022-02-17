@@ -18,7 +18,6 @@
 #include <cstring>
 #include <sys/timerfd.h>
 #include <unistd.h>
-#include "timer_handler.h"
 #include <linux/rtc.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -26,6 +25,7 @@
 #include <sys/time.h>
 #include <sstream>
 #include <fstream>
+#include "timer_handler.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -65,7 +65,7 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
         }
     }
 
-    std::shared_ptr<TimerHandler> handler = std::shared_ptr<TimerHandler>(new TimerHandler(fds, epollfd));
+    std::shared_ptr<TimerHandler> handler = std::make_shared<TimerHandler>(fds, epollfd);
     for (size_t i = 0; i < fds.size(); i++) {
         epoll_event event {};
         event.events = EPOLLIN | EPOLLWAKEUP;

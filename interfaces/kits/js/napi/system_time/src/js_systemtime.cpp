@@ -722,7 +722,7 @@ EXTERN_C_START
 napi_value SystemTimeExport(napi_env env, napi_value exports)
 {
     static napi_property_descriptor desc[] = {
-        DECLARE_NAPI_FUNCTION("setTime", JSSystemTimeSetTime), 
+        DECLARE_NAPI_FUNCTION("setTime", JSSystemTimeSetTime),
         DECLARE_NAPI_FUNCTION("setDate", JSSystemTimeSetTime),
         DECLARE_NAPI_FUNCTION("setTimezone", JSSystemTimeSetTimeZone),
         DECLARE_NAPI_FUNCTION("getCurrentTime", JSSystemTimeGetCurrentTime),

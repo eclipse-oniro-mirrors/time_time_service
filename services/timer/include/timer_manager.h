@@ -15,6 +15,7 @@
 #ifndef TIMER_MANAGER_H
 #define TIMER_MANAGER_H
 
+#include <cinttypes>
 #include <mutex>
 #include <thread>
 #include <atomic>
@@ -23,9 +24,8 @@
 #include <functional>
 #include <map>
 #include <random>
-#include "timer_handler.h"
 #include "batch.h"
-#include <inttypes.h>
+#include "timer_handler.h"
 
 namespace OHOS {
 namespace MiscServices {

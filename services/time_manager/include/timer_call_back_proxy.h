@@ -16,12 +16,13 @@
 #ifndef TIMER_CALL_BACK_PROXY_H
 #define TIMER_CALL_BACK_PROXY_H
 
+#include <inttypes.h>
 #include <iremote_proxy.h>
 #include <nocopyable.h>
 
 #include "itimer_call_back.h"
 #include "time_common.h"
-#include <inttypes.h>
+
 namespace OHOS {
 namespace MiscServices {
 class TimerCallbackProxy : public IRemoteProxy<ITimerCallback> {

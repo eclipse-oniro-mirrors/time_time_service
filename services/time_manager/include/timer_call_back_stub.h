@@ -16,11 +16,12 @@
 #ifndef TIMER_CALL_BACK_STUB_H
 #define TIMER_CALL_BACK_STUB_H
 
+#include <inttypes.h>
 #include <iremote_stub.h>
 #include <nocopyable.h>
 #include "time_common.h"
 #include "itimer_call_back.h"
-#include <inttypes.h>
+
 namespace OHOS {
 namespace MiscServices {
 class TimerCallbackStub : public IRemoteStub<ITimerCallback> {

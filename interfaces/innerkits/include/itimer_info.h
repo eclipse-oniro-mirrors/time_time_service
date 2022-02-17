@@ -52,22 +52,22 @@ public:
 
     /**
      * SetType set timer type
-     * @para: type: TIMER_TYPE_REALTIME | TIMER_TYPE_WAKEUP 
-     * 
+     * @para: type: TIMER_TYPE_REALTIME | TIMER_TYPE_WAKEUP
+     *
      */
     virtual void SetType(const int &type) = 0;
 
     /**
      * SetRepeat set timer repeat or not
      * @para: repeat: bool
-     * 
+     *
      */
     virtual void SetRepeat(bool repeat) = 0;
 
     /**
      * SetInterval set timer repeat interval
      * @para: repeat: uint64_t  >= 5000ms
-     * 
+     *
      */
     virtual void SetInterval(const uint64_t &interval) = 0;
     virtual void SetWantAgent(std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> wantAgent) = 0;

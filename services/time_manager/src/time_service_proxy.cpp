@@ -87,7 +87,7 @@ uint64_t TimeServiceProxy::CreateTimer(int32_t type, bool repeat, uint64_t inter
     return TimerId;
 }
 
-bool TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTimes) 
+bool TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTimes)
 {
     MessageParcel data, reply;
     MessageOption option;
@@ -114,7 +114,7 @@ bool TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTimes)
     return true;
 }
 
-bool TimeServiceProxy::StopTimer(uint64_t  timerId) 
+bool TimeServiceProxy::StopTimer(uint64_t  timerId)
 {
     MessageParcel data, reply;
     MessageOption option;
@@ -124,7 +124,7 @@ bool TimeServiceProxy::StopTimer(uint64_t  timerId)
         return E_TIME_WRITE_PARCEL_ERROR;
     }
 
-    if (!data.WriteUint64(timerId)) { 
+    if (!data.WriteUint64(timerId)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
@@ -136,7 +136,7 @@ bool TimeServiceProxy::StopTimer(uint64_t  timerId)
     
     return true;
 }
-bool TimeServiceProxy::DestroyTimer(uint64_t  timerId) 
+bool TimeServiceProxy::DestroyTimer(uint64_t  timerId)
 {
     MessageParcel data, reply;
     MessageOption option;
@@ -201,7 +201,7 @@ int32_t TimeServiceProxy::GetTimeZone(std::string &timezoneId)
     return result;
 }
 
-int32_t TimeServiceProxy::GetWallTimeMs(int64_t &times) 
+int32_t TimeServiceProxy::GetWallTimeMs(int64_t &times)
 {
     MessageParcel data, reply;
     MessageOption option;
@@ -296,7 +296,7 @@ int32_t TimeServiceProxy::GetMonotonicTimeMs(int64_t &times)
     return result;
 }
 
-int32_t TimeServiceProxy::GetMonotonicTimeNs(int64_t &times) 
+int32_t TimeServiceProxy::GetMonotonicTimeNs(int64_t &times)
 {
     MessageParcel data, reply;
     MessageOption option;

@@ -62,7 +62,7 @@ HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Time now invalid : %{public}" PRId64 "", time);
         time = 1627307312000;
     }
-    TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "",time);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
     bool result = TimeServiceClient::GetInstance()->SetTime(time);
     EXPECT_TRUE(result);
 }
@@ -73,7 +73,7 @@ HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level0)
-{   
+{
     time_t t;
     (void)time(&t);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time before: %{public}s", asctime(localtime(&t)));
@@ -207,7 +207,7 @@ HWTEST_F(TimeServiceTest, GetTime008, TestSize.Level0)
 }
 
 /**
-* @tc.name: CreateTimer03 
+* @tc.name: CreateTimer03
 * @tc.desc: Create system timer.
 * @tc.type: FUNC
 */
@@ -223,7 +223,7 @@ HWTEST_F(TimeServiceTest, CreateTimer003, TestSize.Level0)
 }
 
 /**
-* @tc.name: CreateTimer04 
+* @tc.name: CreateTimer04
 * @tc.desc: Create system timer.
 * @tc.type: FUNC
 */
@@ -246,7 +246,7 @@ HWTEST_F(TimeServiceTest, CreateTimer004, TestSize.Level0)
 }
 
 /**
-* @tc.name: CreateTimer05 
+* @tc.name: CreateTimer05
 * @tc.desc: Create system timer.
 * @tc.type: FUNC
 */
@@ -314,11 +314,13 @@ HWTEST_F(TimeServiceTest, CreateTimer006, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, NetworkTime001, TestSize.Level0)
 {
+    TimeServiceClient::GetInstance()->NetworkTimeStatusOn();
+    sleep(5);
     auto UTCTimeMicro1 = system_clock::now().time_since_epoch().count();
     auto UTCTimeMillis = (UTCTimeMicro1 / 1000) + 86400000;
     TimeServiceClient::GetInstance()->SetTime(UTCTimeMillis);
     TimeServiceClient::GetInstance()->NetworkTimeStatusOn();
-    sleep(5000);
+    sleep(5);
     auto UTCTimeMicro2 = system_clock::now().time_since_epoch().count();
     EXPECT_TRUE(UTCTimeMicro2 < UTCTimeMicro1);
     TimeServiceClient::GetInstance()->NetworkTimeStatusOff();

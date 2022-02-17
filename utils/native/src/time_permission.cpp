@@ -46,7 +46,7 @@ bool TimePermission::CheckCallingPermission(int32_t uid, std::string permName)
     auto ret = bundleMgrProxy_->GetBundleNameForUid(uid, bundleName);
     if (!ret) {
         TIME_HILOGE(TIME_MODULE_COMMON, "get bundle name failed");
-        // always true 
+        // always true
         return true;
     }
     auto userId = uid / UID_TO_USERID;
