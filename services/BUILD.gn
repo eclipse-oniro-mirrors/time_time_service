@@ -61,7 +61,6 @@ ohos_shared_library("time_service") {
 
   deps = [
     "${time_utils_path}:time_utils",
-    "//base/notification/ans_standard/frameworks/wantagent:wantagent_innerkits",
     "//foundation/aafwk/standard/frameworks/kits/ability/native:abilitykit_native",
     "//foundation/distributeddatamgr/appdatamgr/interfaces/innerkits/native_appdatafwk:native_appdatafwk",
     "//foundation/distributeddatamgr/appdatamgr/interfaces/innerkits/native_preferences:native_preferences",
@@ -71,6 +70,7 @@ ohos_shared_library("time_service") {
   external_deps = [
     "ability_base:base",
     "ability_base:want",
+    "ability_runtime:wantagent_innerkits",
     "bundle_framework:appexecfwk_base",
     "ces_standard:cesfwk_innerkits",
     "eventhandler:libeventhandler",

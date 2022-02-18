@@ -42,7 +42,7 @@ public:
     virtual void SetType(const int &type) override;
     virtual void SetRepeat(bool repeat) override;
     virtual void SetInterval(const uint64_t &interval) override;
-    virtual void SetWantAgent(std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> wantAgent) override;
+    virtual void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) override;
     void SetCallbackInfo(const std::function<void()> &callBack);
 
 private:
@@ -85,7 +85,7 @@ void TimerInfoTest::SetInterval(const uint64_t &_interval)
 {
     interval = _interval;
 }
-void TimerInfoTest::SetWantAgent(std::shared_ptr<OHOS::Notification::WantAgent::WantAgent> _wantAgent)
+void TimerInfoTest::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent)
 {
     wantAgent = _wantAgent;
 }

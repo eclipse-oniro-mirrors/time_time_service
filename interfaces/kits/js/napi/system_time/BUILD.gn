@@ -32,7 +32,6 @@ ohos_shared_library("systemtime") {
 
   deps = [
     "//base/miscservices/time/services:time_service",
-    "//base/notification/ans_standard/frameworks/wantagent:wantagent_innerkits",
     "//foundation/aafwk/standard/frameworks/kits/ability/native:abilitykit_native",
     "//foundation/ace/napi/:ace_napi",
     "//utils/native/base:utils",
@@ -40,6 +39,7 @@ ohos_shared_library("systemtime") {
 
   external_deps = [
     "ability_base:want",
+    "ability_runtime:wantagent_innerkits",
     "bundle_framework:appexecfwk_base",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
