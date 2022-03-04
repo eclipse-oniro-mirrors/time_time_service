@@ -326,7 +326,7 @@ unsigned int SNTPClient::GetNtpField32(int offset, char* buffer)
     unsigned int milliseconds;
     errno_t ret = memcpy_s(&milliseconds, sizeof(int), valueRx, sizeof(int));
     if (ret != EOK) {
-        Log("memcpy_s failed, err = %d\n", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
         return false; // 返回失败
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
