@@ -68,6 +68,7 @@ bool SNTPClient::RequestTime(std::string host)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     int iResult;
+    errno_t ret;
     struct sockaddr_in RecvAddr;
     unsigned short Port = NTP_PORT;
     int BufLen = NTP_PACKAGE_SIZE;
@@ -90,9 +91,18 @@ bool SNTPClient::RequestTime(std::string host)
         TIME_HILOGE(TIME_MODULE_SERVICE, "Get host by name %{public}s but get nullptr.", host.c_str());
         return false;
     }
-    (void)memset_s((char*)& RecvAddr, sizeof(RecvAddr), 0, sizeof(RecvAddr));
+
+    ret = memset_s((char*)& RecvAddr, sizeof(RecvAddr), 0, sizeof(RecvAddr));
+    if (ret != EOK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        return false;
+    }
     RecvAddr.sin_family = AF_INET;
-    (void)memcpy_s((char*)& RecvAddr.sin_addr.s_addr, hostV->h_length, (char*)hostV->h_addr, hostV->h_length);
+    ret = memcpy_s((char*)& RecvAddr.sin_addr.s_addr, hostV->h_length, (char*)hostV->h_addr, hostV->h_length);
+    if (ret != EOK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        return false;
+    }
     RecvAddr.sin_port = htons(Port);
     if (connect(SendSocket, (struct sockaddr*) & RecvAddr, sizeof(RecvAddr)) < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Connect socket failed with host: %{public}s", host.c_str());
@@ -138,8 +148,12 @@ uint64_t SNTPClient::GetNtpTimestamp64(int offset, char* buffer)
 {
     const int _len = sizeof(uint64_t);
     char valueRx[_len];
-    (void)memset_s(valueRx, sizeof(uint64_t), 0, sizeof(uint64_t));
-
+    errno_t ret;
+    ret = memset_s(valueRx, sizeof(uint64_t), 0, sizeof(uint64_t));
+    if (ret != EOK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        return false;
+    }
     int numOfBit = sizeof(uint64_t) - 1;
     for (int loop = offset; loop < offset + _len; loop++) {
         valueRx[numOfBit] = buffer[loop];
@@ -147,7 +161,12 @@ uint64_t SNTPClient::GetNtpTimestamp64(int offset, char* buffer)
     }
 
     uint64_t milliseconds;
-    (void)memcpy_s(&milliseconds, sizeof(uint64_t), valueRx, sizeof(uint64_t));
+    ret = memcpy_s(&milliseconds, sizeof(uint64_t), valueRx, sizeof(uint64_t));
+    if (ret != EOK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret1);
+        return false;
+    }
+
     return milliseconds;
 }
 
@@ -215,8 +234,11 @@ void SNTPClient::CreateMessage(char* buffer)
     // optional (?)
     _sntpMsg._originateTimestamp = _ntpTs;
     char value[sizeof(uint64_t)];
-    (void)memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
-
+    errno_t ret = memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
+    if (ret != EOK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        return;
+    }
     int numOfBit = sizeof(uint64_t) - 1;
     int ofssetEnd = ORIGINATE_TIMESTAMP_OFFSET + sizeof(uint64_t);
     for (int loop = ORIGINATE_TIMESTAMP_OFFSET; loop < ofssetEnd; loop++) {
@@ -244,8 +266,11 @@ void SNTPClient::WriteTimeStamp(char* buffer, ntp_timestamp *ntp)
     _sntpMsg._mode = MODE_THREE;
     _sntpMsg._originateTimestamp = _ntpTs;
     char value[sizeof(uint64_t)];
-    (void)memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
-
+    errno_t ret = memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
+    if (ret != EOK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        return;
+    }
     int numOfBit = sizeof(uint64_t) - 1;
     int ofssetEnd = ORIGINATE_TIMESTAMP_OFFSET + sizeof(uint64_t);
     for (int loop = ORIGINATE_TIMESTAMP_OFFSET; loop < ofssetEnd; loop++) {
@@ -315,8 +340,11 @@ unsigned int SNTPClient::GetNtpField32(int offset, char* buffer)
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     const int _len = sizeof(int);
     char valueRx[_len];
-    (void)memset_s(valueRx, _len, 0, _len);
-
+    errno_t ret = memset_s(valueRx, _len, 0, _len);
+    if (ret != EOK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        return false;
+    }
     int numOfBit = sizeof(int) - 1;
     for (int loop = offset; loop < offset + _len; loop++) {
         valueRx[numOfBit] = buffer[loop];
@@ -324,9 +352,9 @@ unsigned int SNTPClient::GetNtpField32(int offset, char* buffer)
     }
 
     unsigned int milliseconds;
-    errno_t ret = memcpy_s(&milliseconds, sizeof(int), valueRx, sizeof(int));
-    if (ret != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+    errno_t retValue = memcpy_s(&milliseconds, sizeof(int), valueRx, sizeof(int));
+    if (retValue != EOK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", retValue);
         return false; // 返回失败
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
@@ -348,8 +376,10 @@ void SNTPClient::GetReferenceId(int offset, char* buffer, int* _outArray)
 void SNTPClient::SNTPMessage::clear()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    (void)memset_s(this, sizeof(*this), 0, sizeof(*this));
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    errno_t ret = memset_s(this, sizeof(*this), 0, sizeof(*this));
+    if (ret != EOK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed.");
+    }
 }
 
 int64_t SNTPClient::getNtpTIme()
