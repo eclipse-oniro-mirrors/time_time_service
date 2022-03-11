@@ -53,6 +53,7 @@ ohos_unittest("TimeServiceTest") {
     "bundle_framework:appexecfwk_core",
     "ces_standard:cesfwk_innerkits",
     "eventhandler:libeventhandler",
+    "native_appdatamgr:native_rdb",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",

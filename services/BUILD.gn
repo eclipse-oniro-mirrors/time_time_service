@@ -71,6 +71,7 @@ ohos_shared_library("time_service") {
     "ability_base:want",
     "ability_runtime:wantagent_innerkits",
     "bundle_framework:appexecfwk_base",
+    "native_appdatamgr:native_rdb",
     "ces_standard:cesfwk_innerkits",
     "eventhandler:libeventhandler",
     "hiviewdfx_hilog_native:libhilog",

@@ -26,6 +26,8 @@
       "components": [
         "ability_base",
         "ability_runtime",
+	"ability_manager",
+        "aafwk_standard",
         "appexecfwk_standard",
         "ans_standard",
         "ces_standard",
