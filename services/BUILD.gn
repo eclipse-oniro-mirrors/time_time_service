@@ -65,6 +65,7 @@ ohos_shared_library("time_service") {
     "//foundation/aafwk/standard/interfaces/innerkits/want:want",
     "//third_party/jsoncpp:jsoncpp",
     "//utils/native/base:utils",
+    "//foundation/distributeddatamgr/appdatamgr/interfaces/innerkits/native_rdb/include/",
   ]
   external_deps = [
     "ability_runtime:runtime",
