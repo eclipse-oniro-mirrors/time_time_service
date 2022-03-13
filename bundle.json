@@ -30,6 +30,7 @@
         "ans_standard",
         "ces_standard",
         "hiviewdfx_hilog_native",
+        "distributeddatamgr",
         "ipc",
         "permission_standard",
         "safwk",
