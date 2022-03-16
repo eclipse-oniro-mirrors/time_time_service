@@ -68,7 +68,7 @@ void NtpUpdateTime::Init()
     auto callback = [this](uint64_t id) {
         this->RefreshNetworkTimeByTimer(id);
     };
-    timerId_ = TimeService::GetInstance()->CreateTimer(timerType, 0, 0, 0, callback);
+    timerId_ = TimeService::GetInstance()->CreateTimer(timerType, 0, DAY_TO_MILLISECOND, 0, callback);
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update timerId: %{public}" PRId64 "", timerId_);
     RefreshNextTriggerTime();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update triggertime: %{public}" PRId64 "", nextTriggerTime_);
@@ -103,13 +103,6 @@ void NtpUpdateTime::RefreshNetworkTimeByTimer(const uint64_t timerId)
     }
     SetSystemTime();
     SaveAutoTimeInfoToFile(autoTimeInfo_);
-    timerId_ = timerId;
-    RefreshNextTriggerTime();
-    auto startFunc = [this]() {
-        this->StartTimer();
-    };
-    std::thread startTimerThread(startFunc);
-    startTimerThread.detach();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update triggertime: %{public}" PRId64 "", nextTriggerTime_);
 }
 
@@ -152,7 +145,6 @@ void NtpUpdateTime::RefreshNextTriggerTime()
     auto BootTimeNano = steady_clock::now().time_since_epoch().count();
     auto BootTimeMilli = BootTimeNano / NANO_TO_MILESECOND;
     nextTriggerTime_ = BootTimeMilli + DAY_TO_MILLISECOND;
-    return;
 }
 
 void NtpUpdateTime::UpdateStatusOff()

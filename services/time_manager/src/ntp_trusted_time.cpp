@@ -46,8 +46,19 @@ bool NtpTrustedTime::ForceRefresh(std::string ntpServer)
         TIME_HILOGD(TIME_MODULE_SERVICE, "true end.");
         return true;
     } else {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "false end.");
-        return false;
+        if (client.RequestTime(ntpServer)) {
+            if (mTimeResult != nullptr) {
+                mTimeResult->Clear();
+            }
+            ntpCertainty = client.getRoundTripTime() / 2;
+            mTimeResult = std::make_shared<TimeResult>(client.getNtpTIme(), client.getNtpTimeReference(), ntpCertainty);
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Re Get Ntp time result");
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Re true end.");
+            return true;
+        } else {
+            TIME_HILOGD(TIME_MODULE_SERVICE, "false end.");
+            return false;
+        }
     }
 }
 
