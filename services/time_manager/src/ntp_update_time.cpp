@@ -67,7 +67,7 @@ void NtpUpdateTime::Init()
         SetSystemTime();
     }
 
-    std::thread([this]{
+    std::thread([this] {
         for (int i = 0; i < MAX_RETRY; i++) {
             if (!this->ThreadSetSystemTime()) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "thread set ntp time failed, retry");
