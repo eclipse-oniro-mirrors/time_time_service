@@ -67,11 +67,11 @@ void NtpUpdateTime::Init()
         SetSystemTime();
     }
 
-    std::thread([&]{
+    std::thread([this]{
         for (int i = 0; i < MAX_RETRY; i++) {
-            if (!ThreadSetSystemTime()) {
+            if (!this->ThreadSetSystemTime()) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "thread set ntp time failed, retry");
-                this_thread::sleep_for(seconds(MINUTES_TO_SECOND));
+                std::this_thread::sleep_for(seconds(MINUTES_TO_SECOND));
             } else {
                 TIME_HILOGD(TIME_MODULE_SERVICE, "thread set ntp time success");
                 break;
@@ -106,7 +106,7 @@ void NtpUpdateTime::SubscriberNITZTimeChangeCommonEvent()
     }
 }
 
-void NtpUpdateTime::_RefreshNetworkTimeByTimer(const uint64_t timerId)
+void NtpUpdateTime::RefreshNetworkTimeByTimer(const uint64_t timerId)
 {
     if (!(CheckStatus())) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "Network time status off.");
@@ -179,7 +179,7 @@ bool NtpUpdateTime::ThreadSetSystemTime()
     autoTimeInfo_.lastUpdateTime = currentTime;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update currentTime: %{public}" PRId64 "", currentTime);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-    return ture;
+    return true;
 }
 
 void NtpUpdateTime::RefreshNextTriggerTime()
