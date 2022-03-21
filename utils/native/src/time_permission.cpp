@@ -14,7 +14,7 @@
  */
 
 #include "ipc_skeleton.h"
-#include "permission/permission_kit.h"
+#include "accesstoken_kit.h"
 #include "time_permission.h"
 
 namespace OHOS {
