@@ -44,12 +44,12 @@ namespace {
     constexpr int INDEX_TWO = 2;
     constexpr int INDEX_THREE = 3;
     constexpr int INDEX_FOUR = 4;
-    constexpr int TIME_OUT = 5;
+    constexpr int TIME_OUT = 10;
     constexpr unsigned char MODE_THREE = 3;
     constexpr unsigned char VERSION_THREE = 3;
     constexpr double TEN_TO_MINUS_SIX_POWER = 1.0e-6;
     constexpr double TEN_TO_SIX_POWER = 1.0e6;
-    constexpr int NTP_PORT = 123;
+    char const *NTP_PORT = "123";
     constexpr int NTP_MSG_OFFSET_ROOT_DELAY = 4;
     constexpr int NTP_MSG_OFFSET_ROOT_DISPERSION = 8;
     constexpr int NTP_MSG_OFFSET_REFERENCE_IDENTIFIER = 12;
@@ -68,44 +68,34 @@ bool SNTPClient::RequestTime(std::string host)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     int iResult;
-    struct sockaddr_in RecvAddr;
-    unsigned short Port = NTP_PORT;
     int BufLen = NTP_PACKAGE_SIZE;
 
-    // Create a socket for sending data
-    int SendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (SendSocket == 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "socket failed with error:  %{public}d", 0);
+    struct addrinfo hints = {0}, *addrs;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+
+    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime1.");
+    int status = getaddrinfo(host.c_str(), NTP_PORT, &hints, &addrs);
+    if (status != 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "getaddrinfo failed");
         return false;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime1.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime2.");
+    // Create a socket for sending data
+    int SendSocket = socket(addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
+    if (SendSocket == 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "create socket failed");
+        return false;
+    }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime3.");
     // Set send and recv function timeout
     struct timeval timeout = {TIME_OUT, 0};
     setsockopt(SendSocket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(struct timeval));
     setsockopt(SendSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 
-    struct hostent* hostV;
-    if ((hostV = gethostbyname(host.c_str())) == nullptr) {
-        // More descriptive error message
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Get host by name %{public}s but get nullptr.", host.c_str());
-        return false;
-    }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime2.");
-    errno_t ret = memset_s((char*)& RecvAddr, sizeof(RecvAddr), 0, sizeof(RecvAddr));
-    if (ret != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
-        return false;
-    }
-    RecvAddr.sin_family = AF_INET;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime3.");
-    ret = memcpy_s((char*)& RecvAddr.sin_addr.s_addr, hostV->h_length, (char*)hostV->h_addr, hostV->h_length);
-    if (ret != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
-        return false;
-    }
-    RecvAddr.sin_port = htons(Port);
-    if (connect(SendSocket, (struct sockaddr*) & RecvAddr, sizeof(RecvAddr)) < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Connect socket failed with host: %{public}s", host.c_str());
+    if (connect(SendSocket, addrs->ai_addr, addrs->ai_addrlen) < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "socket connect failed");
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime4.");
@@ -355,7 +345,7 @@ unsigned int SNTPClient::GetNtpField32(int offset, char* buffer)
     errno_t retValue = memcpy_s(&milliseconds, sizeof(int), valueRx, sizeof(int));
     if (retValue != EOK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", retValue);
-        return false; // 返回失败
+        return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return milliseconds;
