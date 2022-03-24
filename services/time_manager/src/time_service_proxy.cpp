@@ -268,7 +268,7 @@ int32_t TimeServiceProxy::GetBootTimeNs(int64_t &times)
         return E_TIME_WRITE_PARCEL_ERROR;
     }
 
-    int32_t result = Remote()->SendRequest(GET_BOOT_TIME_MILLI, data, reply, option);
+    int32_t result = Remote()->SendRequest(GET_BOOT_TIME_NANO, data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetBootTimeNs failed, error code is: %{public}d", result);
         return result;
