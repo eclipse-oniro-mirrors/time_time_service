@@ -39,6 +39,7 @@ ohos_shared_library("time_service") {
 
   sources = [
     "time_manager/src/itimer_info.cpp",
+    "time_manager/src/net_conn_callback_observer.cpp",
     "time_manager/src/nitz_subscriber.cpp",
     "time_manager/src/ntp_trusted_time.cpp",
     "time_manager/src/ntp_update_time.cpp",
@@ -53,7 +54,6 @@ ohos_shared_library("time_service") {
     "time_manager/src/timer_call_back.cpp",
     "time_manager/src/timer_call_back_proxy.cpp",
     "time_manager/src/timer_call_back_stub.cpp",
-    "time_manager/src/net_conn_callback_observer.cpp",
     "timer/src/batch.cpp",
     "timer/src/timer_handler.cpp",
     "timer/src/timer_info.cpp",

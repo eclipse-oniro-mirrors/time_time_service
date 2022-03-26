@@ -44,7 +44,6 @@ const std::string NETWORK_TIME_STATUS_ON = "ON";
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NTP_CN_SERVER = "ntp.aliyun.com";
 const int64_t INVALID_TIMES = -1;
-
 }
 
 NtpUpdateTime::NtpUpdateTime() : nitzUpdateTimeMili_(0) {};
@@ -196,7 +195,7 @@ bool NtpUpdateTime::CheckStatus()
 
 bool NtpUpdateTime::IsNITZTimeInvalid()
 {
-    if (nitzUpdateTimeMili_ == 0 ) {
+    if (nitzUpdateTimeMili_ == 0) {
         return false;
     }
     auto BootTimeNano = steady_clock::now().time_since_epoch().count();

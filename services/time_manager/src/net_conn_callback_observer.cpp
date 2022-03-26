@@ -58,6 +58,5 @@ int32_t NetConnCallbackObserver::NetBlockStatusChange(sptr<NetHandle> &netHandle
 {
     return 0;
 }
-
 } // namespace MiscServices
 } // namespace OHOS
