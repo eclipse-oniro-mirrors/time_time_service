@@ -36,7 +36,7 @@ void NITZSubscriber::OnReceiveEvent(const CommonEventData &data)
     std::string action = data.GetWant().GetAction();
     TIME_HILOGD(TIME_MODULE_SERVICE, "receive one broadcast:%{public}s", action.c_str());
 
-    if (action == CommonEventSupport::COMMON_EVENT_NITZ_TIME_UPDATED) {
+    if (action == CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED) {
         code = NITZ_TIME_CHANGED_BROADCAST_EVENT;
     } else {
         code = UNKNOWN_BROADCAST_EVENT;
