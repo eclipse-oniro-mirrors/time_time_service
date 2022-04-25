@@ -91,7 +91,7 @@ void NtpUpdateTime::SubscriberNITZTimeChangeCommonEvent()
 {
     // Broadcast subscription
     MatchingSkills matchingSkills;
-    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_NITZ_TIME_UPDATED);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED);
     CommonEventSubscribeInfo subscriberInfo(matchingSkills);
     std::shared_ptr<NITZSubscriber> subscriberPtr =
         std::make_shared<NITZSubscriber>(subscriberInfo);
