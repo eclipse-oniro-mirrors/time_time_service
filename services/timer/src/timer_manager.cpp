@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,14 +20,19 @@
 #include <ctime>
 #include <iostream>
 
+#include "bundle_mgr_interface.h"
+#include "if_system_ability_manager.h"
+#include "system_ability_definition.h"
+#include "iservice_registry.h"
+
 namespace OHOS {
 namespace MiscServices {
 using namespace std::chrono;
+using namespace OHOS::AppExecFwk;
 namespace {
 static int TIME_CHANGED_BITS = 16;
 static uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
 const int ONE_THOUSAND = 1000;
-const int FIRST_APPLICATION_UID = 10000;
 const float_t BATCH_WINDOW_COE = 0.75;
 const auto MIN_FUTURITY = seconds(5);
 const auto ZERO_FUTURITY = seconds(0);
@@ -149,10 +154,17 @@ bool TimerManager::DestroyTimer(uint64_t timerNumber)
 
 bool TimerManager::IsSystemUid(int uid)
 {
-    if (uid < FIRST_APPLICATION_UID) {
-        return true;
+    auto systemAbilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (systemAbilityManager == nullptr) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "GetSystemAbilityManager is null.");
+        return false;
     }
-    return false;
+    auto bundleMgrSa = systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    if (bundleMgrSa == nullptr) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "GetSystemAbility is null.");
+        return false;
+    }
+    return iface_cast<IBundleMgr>(bundleMgrSa)->CheckIsSystemAppByUid(uid);
 }
 
 void TimerManager::SetHandler(uint64_t id,
