@@ -34,8 +34,6 @@ ohos_unittest("TimeServiceTest") {
 
   deps = [
     "//base/miscservices/time/interfaces/innerkits:time_client",
-    "//foundation/aafwk/standard/interfaces/innerkits/base:base",
-    "//foundation/aafwk/standard/interfaces/innerkits/want:want",
     "//foundation/distributedschedule/safwk/interfaces/innerkits/safwk:system_ability_fwk",
     "//foundation/distributedschedule/samgr/interfaces/innerkits/samgr_proxy:samgr_proxy",
     "//third_party/googletest:gtest_main",
@@ -43,6 +41,7 @@ ohos_unittest("TimeServiceTest") {
   ]
 
   external_deps = [
+    "ability_base:want",
     "ability_runtime:runtime",
     "ability_runtime:wantagent_innerkits",
     "hiviewdfx_hilog_native:libhilog",

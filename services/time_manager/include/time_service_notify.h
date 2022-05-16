@@ -18,7 +18,7 @@
 #include <singleton.h>
 
 #include <common_event_publish_info.h>
-#include <ohos/aafwk/content/want.h>
+#include <want.h>
 #include "time_common.h"
 
 namespace OHOS {
