@@ -599,6 +599,9 @@ napi_value StopTimer(napi_env env, napi_callback_info info)
         },
         [](napi_env env, napi_status status, void *data) {
             AsyncCallbackInfoStop *asynccallbackinfo = (AsyncCallbackInfoStop *)data;
+            if (asynccallbackinfo == nullptr) {
+                return;
+            }
 
             if (!asynccallbackinfo->isOK) {
                 asynccallbackinfo->errorCode = ERROR;
@@ -615,9 +618,8 @@ napi_value StopTimer(napi_env env, napi_callback_info info)
             ReturnCallbackPromise(env, info, result);
 
             napi_delete_async_work(env, asynccallbackinfo->asyncWork);
-            if (asynccallbackinfo) {
-                delete asynccallbackinfo;
-                asynccallbackinfo = nullptr;
+            delete asynccallbackinfo;
+            asynccallbackinfo = nullptr;
             }
         },
         (void *)asynccallbackinfo,

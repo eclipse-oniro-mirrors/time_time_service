@@ -169,6 +169,10 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
         },
         [](napi_env env, napi_status status, void *data) {
             AsyncContext *asyncContext = (AsyncContext*)data;
+            if (asyncContext == nullptr) {
+                return;
+            }
+
             if (!asyncContext->isOK) {
                 asyncContext->errorCode = ERROR;
             }
@@ -181,10 +185,8 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
             napi_get_null(env, &result);
             TimeReturnCallbackPromise(env, info, result);
             napi_delete_async_work(env, asyncContext->work);
-            if (asyncContext) {
-                delete asyncContext;
-                asyncContext = nullptr;
-            }
+            delete asyncContext;
+            asyncContext = nullptr;
         },
         (void*)asyncContext,
         &asyncContext->work);
@@ -249,6 +251,9 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
         },
         [](napi_env env, napi_status status, void *data) {
             AsyncContext *asyncContext = (AsyncContext*)data;
+            if (asyncContext == nullptr) {
+                return;
+            }
             if (!asyncContext->isOK) {
                 asyncContext->errorCode = ERROR;
             }
@@ -261,9 +266,8 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
             napi_get_null(env, &result);
             TimeReturnCallbackPromise(env, info, result);
             napi_delete_async_work(env, asyncContext->work);
-            if (asyncContext) {
-                delete asyncContext;
-                asyncContext = nullptr;
+            delete asyncContext;
+            asyncContext = nullptr;
             }
         },
         (void*)asyncContext,
@@ -400,6 +404,9 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
         },
         [](napi_env env, napi_status status, void* data) {
             AsyncContext* asyncContext = (AsyncContext*)data;
+            if (asyncContext == nullptr) {
+                return;
+            }
             if (asyncContext->time < 0) {
                 asyncContext->errorCode = ERROR;
             }
@@ -412,9 +419,8 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
             napi_create_int64(env, asyncContext->time, &result);
             TimeReturnCallbackPromise(env, info, result);
             napi_delete_async_work(env, asyncContext->work);
-            if (asyncContext) {
-                delete asyncContext;
-                asyncContext = nullptr;
+            delete asyncContext;
+            asyncContext = nullptr;
             }
         },
         (void*)asyncContext,
@@ -460,6 +466,9 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
         },
         [](napi_env env, napi_status status, void* data) {
             AsyncContext* asyncContext = (AsyncContext*)data;
+            if (asyncContext == nullptr) {
+                return;
+            }
             if (asyncContext->time < 0) {
                 asyncContext->errorCode = ERROR;
             }
@@ -472,9 +481,8 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
             napi_create_int64(env, asyncContext->time, &result);
             TimeReturnCallbackPromise(env, info, result);
             napi_delete_async_work(env, asyncContext->work);
-            if (asyncContext) {
-                delete asyncContext;
-                asyncContext = nullptr;
+            delete asyncContext;
+            asyncContext = nullptr;
             }
         },
         (void*)asyncContext,
@@ -514,6 +522,9 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
         },
         [](napi_env env, napi_status status, void* data) {
             AsyncContext* asyncContext = (AsyncContext*)data;
+            if (asyncContext == nullptr) {
+                return;
+            }
             if (asyncContext->time < 0) {
                 asyncContext->errorCode = ERROR;
             }
@@ -530,9 +541,8 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
             napi_run_script(env, script, &result);
             TimeReturnCallbackPromise(env, info, result);
             napi_delete_async_work(env, asyncContext->work);
-            if (asyncContext) {
-                delete asyncContext;
-                asyncContext = nullptr;
+            delete asyncContext;
+            asyncContext = nullptr;
             }
         },
         (void*)asyncContext,
