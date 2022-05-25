@@ -101,8 +101,16 @@ int32_t NtpUpdateTime::MonitorNetwork()
     NetAllCapabilities netAllCapabilities;
     netAllCapabilities.netCaps_.insert(NetManagerStandard::NetCap::NET_CAPABILITY_INTERNET);
     netSpecifier.netCapabilities_ = netAllCapabilities;
-    sptr<NetSpecifier> specifier = new NetSpecifier(netSpecifier);
-    sptr<NetConnCallbackObserver> observer = new NetConnCallbackObserver;
+    sptr<NetSpecifier> specifier = new(std::nothrow) NetSpecifier(netSpecifier);
+    if (specifier == nullptr) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "new operator error.specifier is nullptr");
+        return NET_CONN_ERR_INPUT_NULL_PTR;
+    }
+    sptr<NetConnCallbackObserver> observer = new(std::nothrow) NetConnCallbackObserver();
+    if (observer == nullptr) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "new operator error.observer is nullptr");
+        return NET_CONN_ERR_INPUT_NULL_PTR;
+    }
     int nRet = DelayedSingleton<NetConnClient>::GetInstance()->RegisterNetConnCallback(specifier, observer, 0);
     TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterNetConnCallback retcode= %{public}d", nRet);
 
