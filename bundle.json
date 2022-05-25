@@ -70,6 +70,7 @@
       ],
       "test": [
         "//base/miscservices/time/services/time_manager/test:TimeServiceTest"
+        "//base/miscservices/time/test/fuzztest:fuzztest"
       ]
     }
   }
