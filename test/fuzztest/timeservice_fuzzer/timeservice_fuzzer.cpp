@@ -33,7 +33,10 @@ uint32_t ConvertToUint32(const uint8_t* ptr)
     if (ptr == nullptr) {
         return 0;
     }
-    uint32_t bigVar = static_cast<uint32_t>(ptr[1]);
+    uint32_t bigVar = static_cast<uint32_t>(ptr[0]) << 24 + \
+        static_cast<uint32_t>(ptr[1]) << 16 + \
+        static_cast<uint32_t>(ptr[2]) << 8 + \
+        static_cast<uint32_t>(ptr[3]);
     return bigVar;
 }
 
