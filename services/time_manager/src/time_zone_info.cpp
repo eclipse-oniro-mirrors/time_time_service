@@ -144,7 +144,7 @@ int64_t TimeZoneInfo::GetCurrentOffsetMs()
 {
     int offsetHours;
     GetOffsetById(curTimezoneId_, offsetHours);
-    return static_cast<int64_t>(offsetHours) * HOUR_TO_MILLISECONDS;
+    return offsetHours * HOUR_TO_MILLISECONDS;
 }
 
 bool TimeZoneInfo::SetOffsetToKernel(int offsetHour)
