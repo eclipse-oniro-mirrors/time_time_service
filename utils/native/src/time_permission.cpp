@@ -19,21 +19,6 @@
 
 namespace OHOS {
 namespace MiscServices {
-bool TimePermission::GetBundleNameByUid(int32_t uid, std::string &bundleName)
-{
-    sptr<ISystemAbilityManager> systemAbilityManager =
-            SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    sptr<IRemoteObject> remoteObject =
-            systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-
-    sptr<AppExecFwk::IBundleMgr> iBundleMgr = iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
-    if (iBundleMgr == nullptr) {
-        TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, cannot get IBundleMgr.");
-        return false;
-    }
-    return iBundleMgr->GetBundleNameForUid(uid, bundleName);
-}
-
 bool TimePermission::CheckCallingPermission(const std::string &permissionName)
 {
     if (permissionName.empty()) {
@@ -42,25 +27,16 @@ bool TimePermission::CheckCallingPermission(const std::string &permissionName)
     }
 
     auto callerToken = IPCSkeleton::GetCallingTokenID();
-    auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
-    int result = Security::AccessToken::PERMISSION_DENIED;
-
-    if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {
-        result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
-    } else if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_HAP) {
-        result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
+    int result = AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
+    if (result == PERMISSION_GRANTED) {
+        TIME_HILOGE(TIME_MODULE_COMMON, "permission check Success.");
+        return true;
     } else {
-        TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, callerToken:%{public}u, tokenType:%{public}d",
-            callerToken, tokenType);
-    }
-
-    if (result != Security::AccessToken::PERMISSION_GRANTED) {
-        TIME_HILOGE(TIME_MODULE_COMMON,
-                    "permission check failed, permission:%{public}s, callerToken:%{public}u, tokenType:%{public}d",
-                    permissionName.c_str(), callerToken, tokenType);
+		TIME_HILOGE(TIME_MODULE_COMMON,
+                    "permission check failed, permission:%{public}s, callerToken:%{public}u",
+                    permissionName.c_str(), callerToken);
         return false;
-    }
-    return true;
+	}
 }
 } // namespace MiscServices
 } // namespace OHOS

@@ -28,14 +28,8 @@
 
 namespace OHOS {
 namespace MiscServices {
-    namespace Permission {
-        static const std::string SET_TIME = "ohos.permission.SET_TIME";
-        static const std::string SET_TIME_ZONE = "ohos.permission.SET_TIME_ZONE";
-    }
-
 class TimePermission {
 public:
-    static bool GetBundleNameByUid(int32_t uid, std::string &bundleName);
     static bool CheckCallingPermission(const std::string &permissionName);
 };
 } // namespace MiscServices
