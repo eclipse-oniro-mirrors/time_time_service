@@ -142,7 +142,7 @@ bool TimeZoneInfo::GetTimezone(std::string &timezoneId)
 
 int64_t TimeZoneInfo::GetCurrentOffsetMs()
 {
-    int offsetHours;
+    int offsetHours = 0;
     GetOffsetById(curTimezoneId_, offsetHours);
     return static_cast<int64_t>(offsetHours) * HOUR_TO_MILLISECONDS;
 }
