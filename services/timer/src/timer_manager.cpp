@@ -452,7 +452,6 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
 
 void TimerManager::RescheduleKernelTimerLocked()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start");
     TIME_HILOGI(TIME_MODULE_SERVICE, "alarmBatches_.size= %{public}d", static_cast<int>(alarmBatches_.size()));
     auto nextNonWakeup = std::chrono::steady_clock::time_point::min();
     if (!alarmBatches_.empty()) {
