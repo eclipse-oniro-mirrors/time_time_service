@@ -19,11 +19,12 @@
 #include <algorithm>
 #include <ctime>
 #include <iostream>
+#include <sys/time.h>
 #include "bundle_mgr_interface.h"
 #include "if_system_ability_manager.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
-#include <sys/time.h>
+
 
 namespace OHOS {
 namespace MiscServices {
