@@ -19,11 +19,16 @@
 #include <algorithm>
 #include <ctime>
 #include <iostream>
+#include "bundle_mgr_interface.h"
+#include "if_system_ability_manager.h"
+#include "system_ability_definition.h"
+#include "iservice_registry.h"
 #include <sys/time.h>
 
 namespace OHOS {
 namespace MiscServices {
 using namespace std::chrono;
+using namespace OHOS::AppExecFwk;
 namespace {
 static int TIME_CHANGED_BITS = 16;
 static uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
