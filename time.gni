@@ -12,10 +12,10 @@
 # limitations under the License.
 import("//build/ohos.gni")
 
-aafwk_inner_api_path =
+ability_runtime_inner_api_path =
     "//foundation/ability/ability_runtime/interfaces/inner_api"
 
-aafwk_kits_path = "//foundation/ability/ability_runtime/frameworks/kits"
+ability_runtime_kits_path = "//foundation/ability/ability_runtime/frameworks/kits"
 
 time_root_path = "//base/miscservices/time"
 
