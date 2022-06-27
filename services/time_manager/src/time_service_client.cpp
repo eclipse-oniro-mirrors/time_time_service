@@ -447,11 +447,7 @@ bool TimeServiceClient::ProxyTimer(int32_t uid, bool isProxy)
         TIME_HILOGE(TIME_MODULE_CLIENT, "ProxyTimer ConnectService failed.");
         return false;
     }
-    if (timeServiceProxy_->ProxyTimer(uid, isProxy) != ERR_OK) {
-        return false;
-    }
-    TIME_HILOGD(TIME_MODULE_CLIENT, "end");
-    return true;
+    return timeServiceProxy_->ProxyTimer(uid, isProxy);
 }
 
 bool TimeServiceClient::ResetAllProxy()
@@ -465,11 +461,7 @@ bool TimeServiceClient::ResetAllProxy()
         TIME_HILOGE(TIME_MODULE_CLIENT, "ResetAllProxy ConnectService failed.");
         return false;
     }
-    if (timeServiceProxy_->ResetAllProxy() != ERR_OK) {
-        return false;
-    }
-    TIME_HILOGD(TIME_MODULE_CLIENT, "end");
-    return true;
+    return timeServiceProxy_->ResetAllProxy();
 }
 } // namespace MiscServices
 } // namespace OHOS
