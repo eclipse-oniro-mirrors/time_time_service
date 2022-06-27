@@ -49,7 +49,7 @@ ohos_shared_library("systemtimer") {
   ]
 
   deps = [
-    "${ability_runtime_kits_path}/ability/native:abilitykit_native",
+    "${ability_runtime_path}/frameworks/native/ability/native:abilitykit_native",
     "//base/miscservices/time/services:time_service",
     "//foundation/arkui/napi:ace_napi",
     "//third_party/libuv:uv_static",
@@ -61,6 +61,7 @@ ohos_shared_library("systemtimer") {
     "ability_runtime:wantagent_innerkits",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
+    "utils_base:utils",
   ]
 
   relative_install_dir = "module"
