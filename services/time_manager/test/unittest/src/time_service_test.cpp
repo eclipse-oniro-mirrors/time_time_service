@@ -312,28 +312,14 @@ HWTEST_F(TimeServiceTest, CreateTimer006, TestSize.Level0)
 * @tc.name: ProxyTimer001.
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
+* @tc.require: SR000H0GQ6 AR000H2VTQ
 */
 HWTEST_F(TimeServiceTest, ProxyTimer001, TestSize.Level0)
 {
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
-    timerInfo->SetRepeat(true);
-    timerInfo->SetInterval(5000);
-    timerInfo->SetWantAgent(nullptr);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-
-    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
-    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, 1000);
-    EXPECT_TRUE(ret);
     int32_t uid = IPCSkeleton::GetCallingUid();
-    ret = TimeServiceClient::GetInstance()->ProxyTimer(uid, true);
+    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(uid, true);
     EXPECT_TRUE(ret);
     ret = TimeServiceClient::GetInstance()->ProxyTimer(uid, false);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
     EXPECT_TRUE(ret);
 }
 
@@ -341,28 +327,11 @@ HWTEST_F(TimeServiceTest, ProxyTimer001, TestSize.Level0)
 * @tc.name: ProxyTimer002.
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
+* @tc.require: SR000H0GQ6 AR000H2VTQ
 */
 HWTEST_F(TimeServiceTest, ProxyTimer002, TestSize.Level0)
 {
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
-    timerInfo->SetRepeat(true);
-    timerInfo->SetInterval(5000);
-    timerInfo->SetWantAgent(nullptr);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-
-    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
-    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, 1000);
-    EXPECT_TRUE(ret);
-    int32_t uid = IPCSkeleton::GetCallingUid();
-    ret = TimeServiceClient::GetInstance()->ProxyTimer(uid, true);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->ResetAllProxy();
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    auto ret = TimeServiceClient::GetInstance()->ResetAllProxy();
     EXPECT_TRUE(ret);
 }
 
@@ -370,6 +339,7 @@ HWTEST_F(TimeServiceTest, ProxyTimer002, TestSize.Level0)
 * @tc.name: ProxyTimer003.
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
+* @tc.require: SR000H0GQ6 AR000H2VTQ
 */
 HWTEST_F(TimeServiceTest, ProxyTimer003, TestSize.Level0)
 {

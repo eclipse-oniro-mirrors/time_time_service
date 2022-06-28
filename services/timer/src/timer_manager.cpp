@@ -560,12 +560,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
 
 void TimerManager::CallbackAlarmIfNeed(std::shared_ptr<TimerInfo> alarm)
 {
-    if (!alarm->callback) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Callback is nullptr!");
-        return;
-    }
     int uid = alarm->uid;
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Check uid: %{public}d", alarm->uid);
     std::lock_guard<std::mutex> lock(proxyMutex_);
     auto it = proxyUids_.find(uid);
     if (it == proxyUids_.end()) {
@@ -612,17 +607,13 @@ bool TimerManager::ProxyTimer(int32_t uid, bool isProxy)
             proxyMap_.erase(uid);
         }
     }
-    std::set<int>::iterator it;
-    for (it = proxyUids_.begin(); it != proxyUids_.end(); it++) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "proxyUid:%{public}d", *it);
-    }
     return true;
 }
 
 bool TimerManager::ResetAllProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     for (auto it = proxyMap_.begin(); it != proxyMap_.end(); it++) {
         auto timeInfoVec = it->second;
         for (auto alarm : timeInfoVec) {
@@ -637,10 +628,6 @@ bool TimerManager::ResetAllProxy()
         timeInfoVec.clear();
     }
     proxyMap_.clear();
-    std::set<int>::iterator it;
-    for (it = proxyUids_.begin(); it != proxyUids_.end(); it++) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "proxyUid:%{public}d", *it);
-    }
     proxyUids_.clear();
     return true;
 }

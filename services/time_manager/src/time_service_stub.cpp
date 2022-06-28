@@ -311,7 +311,6 @@ int32_t TimeServiceStub::OnNetworkTimeStatusOn(MessageParcel &data, MessageParce
 int32_t TimeServiceStub::OnTimerProxy(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
-    auto pkg = data.ReadString();
     auto uid = data.ReadInt32();
     auto isProxy = data.ReadBool();
     if (!ProxyTimer(uid, isProxy)) {
