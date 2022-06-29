@@ -569,12 +569,13 @@ void TimerManager::CallbackAlarmIfNeed(std::shared_ptr<TimerInfo> alarm)
         return;
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Alarm is proxy!");
-    if (proxyMap_.count(uid) == 0) {
+    auto itMap = proxyMap_.find(uid);
+    if (itMap == proxyMap_.end()) {
         std::vector<std::shared_ptr<TimerInfo>> timeInfoVec;
         timeInfoVec.push_back(alarm);
         proxyMap_[uid] = timeInfoVec;
     } else {
-        std::vector<std::shared_ptr<TimerInfo>> timeInfoVec = proxyMap_[uid];
+        std::vector<std::shared_ptr<TimerInfo>> timeInfoVec = itMap->second;
         timeInfoVec.push_back(alarm);
         proxyMap_[uid] = timeInfoVec;
     }
@@ -586,19 +587,22 @@ bool TimerManager::ProxyTimer(int32_t uid, bool isProxy)
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     if (isProxy) {
         proxyUids_.insert(uid);
+        return true;
     } else {
-        if (proxyUids_.count(uid) > 0) {
+        auto it = proxyUids_.find(uid);
+        if (it != proxyUids_.end()) {
             proxyUids_.erase(uid);
         } else {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Uid: %{public}d doesn't exist in the proxy list." PRId64 "", uid);
             return false;
         }
-        if (proxyMap_.count(uid) > 0) {
-            auto timeInfoVec = proxyMap_[uid];
+        auto itMap = proxyMap_.find(uid);
+        if (itMap != proxyMap_.end()) {
+            auto timeInfoVec = itMap->second;
             for (auto alarm : timeInfoVec) {
                 if (!alarm->callback) {
                     TIME_HILOGE(TIME_MODULE_SERVICE, "Callback is nullptr!");
-                    return false;
+                    continue;
                 }
                 alarm->callback(alarm->id);
                 TIME_HILOGD(TIME_MODULE_SERVICE, "Shut down proxy, proxyUid: %{public}d, alarmId: %{public}" PRId64 "",
@@ -619,7 +623,7 @@ bool TimerManager::ResetAllProxy()
         for (auto alarm : timeInfoVec) {
             if (!alarm->callback) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "Callback is nullptr!");
-                return false;
+                continue;
             }
             alarm->callback(alarm->id);
             TIME_HILOGD(TIME_MODULE_SERVICE, "Reset all proxy, proxyUid: %{public}d, alarmId: %{public}" PRId64 "",
