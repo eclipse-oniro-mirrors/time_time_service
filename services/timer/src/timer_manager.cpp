@@ -134,20 +134,9 @@ bool TimerManager::StopTimer(uint64_t timerNumber)
         return false;
     }
     RemoveHandler(timerNumber);
-    int32_t uid = it->second->uid;
-    auto itMap = proxyMap_.find(uid);
-    if (itMap != proxyMap_.end()) {
-        auto alarms = itMap->second;
-        for (auto itAlarm = alarms.begin(); itAlarm != alarms.end();) {
-            if ((*itAlarm)->id == timerNumber) {
-                alarms.erase(itAlarm);
-            } else {
-                itAlarm++;
-            }
-        }
-        if (alarms.empty()) {
-            proxyMap_.erase(uid);
-        }
+    if (it->second) {
+        int32_t uid = it->second->uid;
+        RemoveProxy(timerNumber, uid);
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
@@ -163,7 +152,17 @@ bool TimerManager::DestroyTimer(uint64_t timerNumber)
         return false;
     }
     RemoveHandler(timerNumber);
-    int32_t uid = it->second->uid;
+    if (it->second) {
+        int32_t uid = it->second->uid;
+        RemoveProxy(timerNumber, uid);
+    }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    return true;
+}
+
+void TimerManager::RemoveProxy(uint64_t timerNumber, int32_t uid)
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
     auto itMap = proxyMap_.find(uid);
     if (itMap != proxyMap_.end()) {
         auto alarms = itMap->second;
@@ -178,9 +177,7 @@ bool TimerManager::DestroyTimer(uint64_t timerNumber)
             proxyMap_.erase(uid);
         }
     }
-    timerEntryMap_.erase(it);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-    return true;
+    timerEntryMap_.erase(timerNumber);
 }
 
 bool TimerManager::IsSystemUid(int uid)
