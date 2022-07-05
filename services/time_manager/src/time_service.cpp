@@ -423,7 +423,8 @@ void TimeService::DumpTimerInfoById(int fd, const std::vector<std::string> &inpu
             return;
         }
     }
-    timerManagerHandler_->ShowTimerEntryById(fd, std::atoi(input.at(2).c_str()));
+    int paramNumPos=2;
+    timerManagerHandler_->ShowTimerEntryById(fd, std::atoi(input.at(paramNumPos).c_str()));
 }
 
 void TimeService::DumpTimerTriggerById(int fd, const std::vector<std::string> &input)
@@ -437,7 +438,8 @@ void TimeService::DumpTimerTriggerById(int fd, const std::vector<std::string> &i
             return;
         }
     }
-    timerManagerHandler_->ShowTimerTriggerById(fd, std::atoi(input.at(2).c_str()));
+    int paramNumPos=2;
+    timerManagerHandler_->ShowTimerTriggerById(fd, std::atoi(input.at(paramNumPos).c_str()));
 }
 
 int TimeService::set_rtc_time(time_t sec)

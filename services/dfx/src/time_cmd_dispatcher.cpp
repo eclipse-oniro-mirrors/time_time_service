@@ -13,15 +13,14 @@
  * limitations under the License.
  */
 
+#include "time_cmd_dispatcher.h"
+
 #include <cstdio>
 #include <iostream>
-
-#include "time_cmd_dispatcher.h"
 #include "time_hilog_wreapper.h"
 
 namespace OHOS {
 namespace MiscServices {
-
 bool TimeCmdDispatcher::Dispatch(int fd, const std::vector<std::string> &args)
 {
     if (args.empty() || args.at(0) == "-h") {

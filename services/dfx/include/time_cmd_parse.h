@@ -34,4 +34,4 @@ private:
     std::string help;
     Action action;
 };
-#endif //TIME_CMDPARSE_H
+#endif // TIME_CMDPARSE_H

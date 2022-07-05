@@ -19,12 +19,10 @@
 #include <map>
 #include <string>
 #include <vector>
-
 #include "time_cmd_parse.h"
 
 namespace OHOS {
 namespace MiscServices {
-
 class TimeCmdDispatcher {
 public:
     static TimeCmdDispatcher &GetInstance();
@@ -37,4 +35,4 @@ private:
 };
 } // namespace MiscServices
 } // namespace OHOS
-#endif //TIME_CMD_DISPATCHER_H
+#endif // TIME_CMD_DISPATCHER_H
