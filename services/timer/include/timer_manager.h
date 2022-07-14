@@ -93,6 +93,7 @@ private:
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
     std::chrono::steady_clock::time_point GetBootTimeNs();
     void CallbackAlarmIfNeed(std::shared_ptr<TimerInfo> alarm);
+    bool StopTimerInner(uint64_t timerNumber, bool needDestroy);
     void RemoveProxy(uint64_t timerNumber, int32_t uid);
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;

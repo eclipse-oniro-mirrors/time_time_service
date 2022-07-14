@@ -126,25 +126,18 @@ bool TimerManager::StartTimer(uint64_t timerNumber, uint64_t triggerTime)
 
 bool TimerManager::StopTimer(uint64_t timerNumber)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::lock_guard<std::mutex> lock(entryMapMutex_);
-    auto it = timerEntryMap_.find(timerNumber);
-    if (it == timerEntryMap_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-        return false;
-    }
-    RemoveHandler(timerNumber);
-    if (it->second) {
-        int32_t uid = it->second->uid;
-        RemoveProxy(timerNumber, uid);
-    }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-    return true;
+    return StopTimerInner(timerNumber, false);
 }
 
 bool TimerManager::DestroyTimer(uint64_t timerNumber)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", timerNumber);
+    return StopTimerInner(timerNumber, true);
+}
+
+bool TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 ", needDestroy: %{public}d",
+        timerNumber, needDestroy);
     std::lock_guard<std::mutex> lock(entryMapMutex_);
     auto it = timerEntryMap_.find(timerNumber);
     if (it == timerEntryMap_.end()) {
@@ -156,7 +149,9 @@ bool TimerManager::DestroyTimer(uint64_t timerNumber)
         int32_t uid = it->second->uid;
         RemoveProxy(timerNumber, uid);
     }
-    timerEntryMap_.erase(it);
+    if (needDestroy) {
+        timerEntryMap_.erase(it);
+    }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
