@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Copyright (c) 2022 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,20 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build/ohos.gni")
+import("//build/test.gni")
 
-################################################################################
+#################################group#########################################
+group("unittest") {
+  testonly = true
+  deps = []
 
-group("time_native_packages") {
-  if (is_standard_system) {
-    deps = [
-      "etc/init:timeservice.cfg",
-      "interfaces/innerkits:time_client",
-      "interfaces/kits/js/declaration:time",
-      "interfaces/kits/js/napi/system_time:systemtime",
-      "interfaces/kits/js/napi/system_timer:systemtimer",
-      "profile:time_time_service_sa_profiles",
-      "services:time_service",
-    ]
-  }
+  deps += [ "unittest/src:unittest" ]
 }
+###############################################################################
