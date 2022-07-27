@@ -19,7 +19,7 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
-const std::string TIMEZONE_FILE_PATH = "/data/misc/zoneinfo/timezone.json";
+const std::string TIMEZONE_FILE_PATH = "/data/service/el1/public/time/timezone.json";
 const int64_t HOUR_TO_MILLISECONDS = 3600000;
 }
 
