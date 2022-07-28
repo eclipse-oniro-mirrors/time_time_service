@@ -1,4 +1,4 @@
-﻿# Timing and Time<a name="EN-US_TOPIC_0000001115554184"></a>
+# Timing and Time<a name="EN-US_TOPIC_0000001115554184"></a>
 
 -   [Introduction](#section11660541593)
 -   [Directory Structure](#section161941989596)
