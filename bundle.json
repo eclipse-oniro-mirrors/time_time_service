@@ -49,9 +49,19 @@
       ]
     },
     "build": {
-      "sub_component": [
-        "//base/time/time_service:time_native_packages"
-      ],
+      "group_type":{
+        "base_group": [],
+        "fwk_group":[
+          "//base/time/time_service/interfaces/kits/js/napi/system_time:systemtime",
+          "//base/time/time_service/interfaces/kits/js/napi/system_timer:systemtimer",
+          "//base/time/time_service/interfaces/innerkits:time_client"
+        ],
+        "service_group":[
+          "//base/time/time_service/etc/init:timeservice.cfg",
+          "//base/time/time_service/profile:time_time_service_sa_profiles",
+          "//base/time/time_service/services:time_service"
+        ]
+      },
       "inner_kits": [
         {
           "name": "//base/time/time_service/services:time_service",
