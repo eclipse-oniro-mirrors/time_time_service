@@ -232,17 +232,26 @@ int32_t TimeServiceStub::OnGetThreadTimeNs(MessageParcel &data, MessageParcel &r
 int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
- 
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantagent {nullptr};
     auto type = data.ReadInt32();
     auto repeat = data.ReadBool();
     auto interval = data.ReadUint64();
-
+    auto hasWantagent = data.ReadBool();
+    if (hasWantagent) {
+        wantagent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>
+            (data.ReadParcelable<OHOS::AbilityRuntime::WantAgent::WantAgent>());
+        if (!wantagent) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "Input wantagent nullptr");
+            return E_TIME_PARAMETERS_INVALID;
+        }
+    }
+    
     sptr<IRemoteObject> obj = data.ReadRemoteObject();
     if (obj == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Input nullptr");
         return E_TIME_PARAMETERS_INVALID;
     }
-    auto timerId = CreateTimer(type, repeat, interval, obj);
+    auto timerId = CreateTimer(type, repeat, interval, wantagent, obj);
     if (timerId == 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Create timer failed");
         return E_TIME_DEAL_FAILED;

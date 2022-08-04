@@ -17,9 +17,6 @@
 
 namespace OHOS {
 namespace MiscServices {
-namespace {
-    const int WANTAGENT_CODE_ELEVEN = 11;
-}
 std::mutex TimerCallback::instanceLock_;
 sptr<TimerCallback> TimerCallback::instance_;
 
@@ -88,15 +85,6 @@ void TimerCallback::NotifyTimer(const uint64_t timerId)
     if (it != TimerInfoMap_.end()) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "ontrigger.");
         it->second->OnTrigger();
-
-        if (it->second->wantAgent != nullptr) {
-            TIME_HILOGD(TIME_MODULE_SERVICE, "trigger wantagent.");
-            std::shared_ptr<AAFwk::Want> want =
-                OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(it->second->wantAgent);
-            OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
-            OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(
-                it->second->wantAgent, nullptr, paramsInfo);
-        }
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }

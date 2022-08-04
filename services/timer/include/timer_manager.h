@@ -26,6 +26,7 @@
 #include <functional>
 #include "batch.h"
 #include "timer_handler.h"
+#include "want_agent_helper.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -37,6 +38,7 @@ public:
         uint64_t interval,
         int flag,
         std::function<void (const uint64_t)> callback,
+        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
         int uid) override;
     bool StartTimer(uint64_t timerNumber, uint64_t triggerTime) override;
     bool StopTimer(uint64_t timerNumber) override;
@@ -59,6 +61,7 @@ private:
         uint64_t interval,
         int flag,
         std::function<void (const uint64_t)> callback,
+        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
         int uid);
     void SetHandlerLocked(uint64_t id,
         int type,
@@ -68,6 +71,7 @@ private:
         std::chrono::steady_clock::time_point maxWhen,
         std::chrono::milliseconds interval,
         std::function<void (const uint64_t)> callback,
+        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
         uint32_t flags,
         bool doValidate,
         uint64_t callingUid);
@@ -95,6 +99,7 @@ private:
     void CallbackAlarmIfNeed(std::shared_ptr<TimerInfo> alarm);
     bool StopTimerInner(uint64_t timerNumber, bool needDestroy);
     void RemoveProxy(uint64_t timerNumber, int32_t uid);
+    void NotifyWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent);
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     std::default_random_engine random_;

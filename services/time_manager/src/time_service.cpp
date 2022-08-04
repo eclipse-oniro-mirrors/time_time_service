@@ -226,6 +226,7 @@ void TimeService::PaserTimerPara(int32_t type, bool repeat, uint64_t interval, T
 }
 
 uint64_t TimeService::CreateTimer(int32_t type, bool repeat, uint64_t interval,
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
     sptr<IRemoteObject> &obj)
 {
     int uid = IPCSkeleton::GetCallingUid();
@@ -260,6 +261,7 @@ uint64_t TimeService::CreateTimer(int32_t type, bool repeat, uint64_t interval,
                                              paras.interval,
                                              paras.flag,
                                              callbackFunc,
+                                             wantAgent,
                                              uid);
 }
 
@@ -274,7 +276,7 @@ uint64_t TimeService::CreateTimer(int32_t type, uint64_t windowLength, uint64_t 
             return INVALID_TIMER_ID;
         }
     }
-    return timerManagerHandler_->CreateTimer(type, windowLength, interval, flag, Callback, 0);
+    return timerManagerHandler_->CreateTimer(type, windowLength, interval, flag, Callback, nullptr, 0);
 }
 
 bool TimeService::StartTimer(uint64_t timerId, uint64_t triggerTimes)
