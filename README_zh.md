@@ -1,4 +1,4 @@
-# 时间组件<a name="ZH-CN_TOPIC_0000001115554184"></a>
+# 时间时区组件<a name="ZH-CN_TOPIC_0000001115554184"></a>
 
 -   [简介](#section11660541593)
 -   [目录](#section161941989596)
@@ -239,7 +239,7 @@ console.log('end');
 
 ## 相关仓<a name="section1371113476307"></a>
 
-**Misc软件服务子系统**
+**时间时区子系统**
 
 [time\_time\_service](https://gitee.com/openharmony/time_time_service/tree/master/)
 

@@ -207,10 +207,9 @@ systemTime.setTime(time, (err, value) => {
          }    
        console.log(`success to systemTime.setTime: ${value}`);   
     });
-
 ```
 Example fo using systemTimer
-
+```
 // Import the module 
 import systemTimer from '@ohos.systemTimer';
 
@@ -237,7 +236,7 @@ console.log('end');
 
 ## Repositories Involved<a name="section1371113476307"></a>
 
-**Misc services subsystem**
+**Time/Timezone subsystem**
 
 [time\_time\_service](https://gitee.com/openharmony/time_time_service/tree/master/)
 
