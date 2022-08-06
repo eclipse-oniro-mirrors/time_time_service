@@ -30,7 +30,7 @@
         "relational_store",
         "jsoncpp",
         "napi",
-        "samgr_standard",
+        "samgr",
         "common_event_service",
         "ipc",
         "eventhandler",
