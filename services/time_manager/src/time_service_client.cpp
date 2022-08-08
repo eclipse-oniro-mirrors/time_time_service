@@ -126,6 +126,7 @@ uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> TimerOptions
     auto timerId = timeServiceProxy_->CreateTimer(TimerOptions->type,
                                                   TimerOptions->repeat,
                                                   TimerOptions->interval,
+                                                  TimerOptions->wantAgent,
                                                   timerCallbackInfoObject);
     if (timerId == 0) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Create timer failed");

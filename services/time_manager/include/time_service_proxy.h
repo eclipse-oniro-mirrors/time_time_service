@@ -38,7 +38,9 @@ public:
     int32_t GetMonotonicTimeNs(int64_t &times) override;
     int32_t GetThreadTimeMs(int64_t &times) override;
     int32_t GetThreadTimeNs(int64_t &times) override;
-    uint64_t CreateTimer(int32_t type, bool repeat, uint64_t interval, sptr<IRemoteObject> &timerCallback) override;
+    uint64_t CreateTimer(int32_t type, bool repeat, uint64_t interval,
+        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+        sptr<IRemoteObject> &timerCallback) override;
     bool StartTimer(uint64_t timerId, uint64_t treggerTime) override;
     bool StopTimer(uint64_t  timerId) override;
     bool DestroyTimer(uint64_t  timerId) override;

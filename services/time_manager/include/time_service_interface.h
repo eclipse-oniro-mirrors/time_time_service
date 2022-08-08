@@ -141,7 +141,9 @@ public:
      * @param timerCallback remoteobject
      * @return uint64_t > 0 on success, == 0 failure.
      */
-    virtual uint64_t CreateTimer(int32_t type, bool repeat, uint64_t interval, sptr<IRemoteObject> &timerCallback) = 0;
+    virtual uint64_t CreateTimer(int32_t type, bool repeat, uint64_t interval, 
+        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+        sptr<IRemoteObject> &timerCallback) = 0;
 
      /**
      * StartTimer

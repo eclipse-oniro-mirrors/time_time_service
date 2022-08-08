@@ -43,6 +43,7 @@ const auto INTERVAL_HOUR = hours(1);
 const auto INTERVAL_HALF_DAY = hours(12);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
 const int NANO_TO_SECOND =  1000000000;
+const int WANTAGENT_CODE_ELEVEN = 11;
 }
 
 extern bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &batch);
@@ -76,6 +77,7 @@ uint64_t TimerManager::CreateTimer(int type,
                                    uint64_t interval,
                                    int flag,
                                    std::function<void (const uint64_t)> callback,
+                                   std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                                    int uid)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE,
@@ -95,6 +97,7 @@ uint64_t TimerManager::CreateTimer(int type,
         interval,
         flag,
         std::move(callback),
+        wantAgent,
         uid
         });
     std::lock_guard<std::mutex> lock(entryMapMutex_);
@@ -120,6 +123,7 @@ bool TimerManager::StartTimer(uint64_t timerNumber, uint64_t triggerTime)
                timerInfo->interval,
                timerInfo->flag,
                timerInfo->callback,
+               timerInfo->wantAgent,
                timerInfo->uid);
     return true;
 }
@@ -197,6 +201,7 @@ void TimerManager::SetHandler(uint64_t id,
                               uint64_t interval,
                               int flag,
                               std::function<void (const uint64_t)> callback,
+                              std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                               int uid)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", id);
@@ -244,6 +249,7 @@ void TimerManager::SetHandler(uint64_t id,
                      maxElapsed,
                      intervalDuration,
                      std::move(callback),
+                     wantAgent,
                      static_cast<uint32_t>(flag),
                      true,
                      uid);
@@ -256,13 +262,14 @@ void TimerManager::SetHandlerLocked(uint64_t id, int type,
                                     std::chrono::steady_clock::time_point maxWhen,
                                     std::chrono::milliseconds interval,
                                     std::function<void (const uint64_t)> callback,
+                                    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                                     uint32_t flags,
                                     bool doValidate,
                                     uint64_t callingUid)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", id);
     auto alarm = std::make_shared<TimerInfo>(id, type, when, whenElapsed, windowLength, maxWhen,
-                                      interval, std::move(callback), flags, callingUid);
+        interval, std::move(callback), wantAgent, flags, callingUid);
     SetHandlerLocked(alarm, false, doValidate);
     TIME_HILOGI(TIME_MODULE_SERVICE, "end");
 }
@@ -463,7 +470,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
                 auto nextElapsed = alarm->whenElapsed + delta;
                 SetHandlerLocked(alarm->id, alarm->type, alarm->when + delta, nextElapsed, alarm->windowLength,
                     MaxTriggerTime(nowElapsed, nextElapsed, alarm->repeatInterval), alarm->repeatInterval,
-                    alarm->callback, alarm->flags, true, alarm->uid);
+                    alarm->callback, alarm->wantAgent, alarm->flags, true, alarm->uid);
             }
             if (alarm->wakeup) {
                 hasWakeup = true;
@@ -553,7 +560,20 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
         if (alarm->callback) {
             CallbackAlarmIfNeed(alarm);
         }
+        if (alarm->wantAgent) {
+            NotifyWantAgent(alarm->wantAgent);
+        }
     }
+}
+
+void TimerManager::NotifyWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent)
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "trigger wantagent.");
+    std::shared_ptr<AAFwk::Want> want =
+        OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
+    OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
+    OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(
+        wantAgent, nullptr, paramsInfo);
 }
 
 void TimerManager::CallbackAlarmIfNeed(std::shared_ptr<TimerInfo> alarm)

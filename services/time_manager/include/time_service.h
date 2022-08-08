@@ -58,7 +58,9 @@ public:
     int32_t GetThreadTimeMs(int64_t &times) override;
     int32_t GetThreadTimeNs(int64_t &times) override;
 
-    uint64_t CreateTimer(int32_t type, bool repeat, uint64_t interval, sptr<IRemoteObject> &timerCallback) override;
+    uint64_t CreateTimer(int32_t type, bool repeat, uint64_t interval,
+        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+        sptr<IRemoteObject> &timerCallback) override;
     uint64_t CreateTimer(int32_t type, uint64_t windowLength, uint64_t interval, int flag,
         std::function<void (const uint64_t)> Callback);
     bool StartTimer(uint64_t timerId, uint64_t triggerTime) override;

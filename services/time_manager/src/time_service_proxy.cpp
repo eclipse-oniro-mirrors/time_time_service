@@ -48,11 +48,13 @@ int32_t TimeServiceProxy::SetTime(const int64_t time)
     return result;
 }
 
-uint64_t TimeServiceProxy::CreateTimer(int32_t type, bool repeat, uint64_t interval, sptr<IRemoteObject> &timerCallback)
+uint64_t TimeServiceProxy::CreateTimer(int32_t type, bool repeat, uint64_t interval,
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+    sptr<IRemoteObject> &timerCallback)
 {
     MessageParcel data, reply;
     MessageOption option;
-
+    auto hasWantagent = false;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return 0;
@@ -71,6 +73,22 @@ uint64_t TimeServiceProxy::CreateTimer(int32_t type, bool repeat, uint64_t inter
     if (!data.WriteUint64(interval)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return 0;
+    }
+    if (wantAgent != nullptr) {
+        hasWantagent = true;
+        if (!data.WriteBool(hasWantagent)) {
+            TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+            return 0;
+        }
+        if (!data.WriteParcelable(&(*wantAgent))) {
+            TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+            return 0;
+        }
+    } else {
+        if (!data.WriteBool(hasWantagent)) {
+            TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+            return 0;
+        }
     }
     
     if (!data.WriteRemoteObject(timerCallback)) {

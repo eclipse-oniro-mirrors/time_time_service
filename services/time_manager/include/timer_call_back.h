@@ -21,7 +21,6 @@
 #include "itimer_info.h"
 #include "time_common.h"
 #include "ability_context.h"
-#include "want_agent_helper.h"
 
 namespace OHOS {
 namespace MiscServices {
