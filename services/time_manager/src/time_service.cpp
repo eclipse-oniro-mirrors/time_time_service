@@ -363,9 +363,7 @@ int32_t TimeService::SetTime(const int64_t time)
         TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
-    int64_t offset = DelayedSingleton<TimeZoneInfo>::GetInstance()->GetCurrentOffsetMs();
-    auto realtime = offset + time;
-    if (!SetRealTime(realtime)) {
+    if (!SetRealTime(time)) {
         return E_TIME_DEAL_FAILED;
     }
     return ERR_OK;
