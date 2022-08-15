@@ -330,17 +330,12 @@ bool TimeService::DestroyTimer(uint64_t  timerId)
     return ret;
 }
 
-int32_t TimeService::SetTime(const int64_t time)
+bool TimeService::SetRealTime(const int64_t time)
 {
-    auto hasPerm = DelayedSingleton<TimePermission>::GetInstance()->CheckCallingPermission(setTimePermName_);
-    if (!hasPerm) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTime failed");
-        return E_TIME_NO_PERMISSION;
-    }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Setting time of day to milliseconds: %{public}" PRId64 "", time);
     if (time < 0 || time / 1000LL >= LONG_MAX) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "input param error");
-        return E_TIME_PARAMETERS_INVALID;
+        return false;
     }
     struct timeval tv {};
     tv.tv_sec = (time_t) (time / MILLI_TO_BASE);
@@ -349,16 +344,29 @@ int32_t TimeService::SetTime(const int64_t time)
     int result = settimeofday(&tv, NULL);
     if (result < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday fail: %{public}d.", result);
-        return E_TIME_DEAL_FAILED;
+        return false;
     }
     auto ret = set_rtc_time(tv.tv_sec);
     if (ret < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "set rtc fail: %{public}d.", ret);
-        return E_TIME_SET_RTC_FAILED;
+        return false;
     }
     auto currentTime = steady_clock::now().time_since_epoch().count();
     DelayedSingleton<TimeServiceNotify>::GetInstance()->PublishTimeChanageEvents(currentTime);
-    return  ERR_OK;
+    return true;
+}
+
+int32_t TimeService::SetTime(const int64_t time)
+{
+    auto hasPerm = DelayedSingleton<TimePermission>::GetInstance()->CheckCallingPermission(setTimePermName_);
+    if (!hasPerm) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTime failed");
+        return E_TIME_NO_PERMISSION;
+    }
+    if (!SetRealTime(time)) {
+        return E_TIME_DEAL_FAILED;
+    }
+    return ERR_OK;
 }
 
 int TimeService::Dump(int fd, const std::vector<std::u16string> &args)
@@ -556,7 +564,8 @@ int32_t TimeService::SetTimeZone(const std::string timeZoneId)
         TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone failed :%{public}s", timeZoneId.c_str());
         return E_TIME_DEAL_FAILED;
     }
-    auto currentTime = steady_clock::now().time_since_epoch().count();
+    int64_t currentTime = 0;
+    GetBootTimeMs(currentTime);
     DelayedSingleton<TimeServiceNotify>::GetInstance()->PublishTimeZoneChangeEvents(currentTime);
     return ERR_OK;
 }
