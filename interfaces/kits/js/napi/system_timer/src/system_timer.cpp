@@ -453,19 +453,16 @@ napi_value StartTimer(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
 
-    uint64_t timerId;
-    uint64_t triggerTime;
+    uint64_t timerId = 0;
+    uint64_t triggerTime = 0;
     napi_ref callback = nullptr;
     if (ParseParametersByStartTimer(env, argv, argc, timerId, triggerTime, callback) == nullptr) {
         return JSParaError(env, callback);
     }
 
     AsyncCallbackInfoStart *asynccallbackinfo = new (std::nothrow)AsyncCallbackInfoStart {
-        .env = env,
-        .asyncWork = nullptr,
-        .timerId = timerId,
-        .triggerTime = triggerTime
-        };
+            .env = env, .asyncWork = nullptr, .timerId = timerId, .triggerTime = triggerTime
+    };
     if (!asynccallbackinfo) {
         return JSParaError(env, callback);
     }
@@ -476,9 +473,7 @@ napi_value StartTimer(napi_env env, napi_callback_info info)
     napi_value resourceName = nullptr;
     napi_create_string_latin1(env, "startTimer", NAPI_AUTO_LENGTH, &resourceName);
     // Asynchronous function call
-    napi_create_async_work(env,
-        nullptr,
-        resourceName,
+    napi_create_async_work(env, nullptr, resourceName,
         [](napi_env env, void *data) {
             AsyncCallbackInfoStart *asynccallbackinfo = (AsyncCallbackInfoStart *)data;
 
@@ -513,12 +508,7 @@ napi_value StartTimer(napi_env env, napi_callback_info info)
         &asynccallbackinfo->asyncWork);
 
     NAPI_CALL(env, napi_queue_async_work(env, asynccallbackinfo->asyncWork));
-
-    if (asynccallbackinfo->isCallback) {
-        return NapiGetNull(env);
-    } else {
-        return promise;
-    }
+    return asynccallbackinfo->isCallback ? NapiGetNull(env) : promise;
 }
 
 napi_value ParseParametersByStopTimer(const napi_env &env, const napi_value (&argv)[STOP_MAX_PARA], const size_t &argc,

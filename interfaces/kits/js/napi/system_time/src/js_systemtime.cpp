@@ -160,9 +160,7 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
     TimePaddingAsyncCallbackInfo(env, asyncContext, callback, promise);
     napi_value resource = nullptr;
     napi_create_string_utf8(env, "JSSystemTimeSetTime", NAPI_AUTO_LENGTH, &resource);
-    napi_create_async_work(env,
-        nullptr,
-        resource,
+    napi_create_async_work(env, nullptr, resource,
         [](napi_env env, void *data) {
             AsyncContext *asyncContext = (AsyncContext*)data;
             asyncContext->isOK = TimeServiceClient::GetInstance()->SetTime(asyncContext->time);
@@ -509,9 +507,7 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
     TimePaddingAsyncCallbackInfo(env, asyncContext, callback, promise);
     napi_value resource = nullptr;
     napi_create_string_utf8(env, "JSSystemTimeGetDate", NAPI_AUTO_LENGTH, &resource);
-    napi_create_async_work(env,
-        nullptr,
-        resource,
+    napi_create_async_work(env, nullptr, resource,
         [](napi_env env, void* data) {
             AsyncContext* asyncContext = (AsyncContext*)data;
             asyncContext->time = TimeServiceClient::GetInstance()->GetWallTimeMs();
