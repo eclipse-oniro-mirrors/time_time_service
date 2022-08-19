@@ -80,6 +80,12 @@ int32_t TimeServiceStub::OnSetTime(MessageParcel& data, MessageParcel& reply)
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     int64_t time = data.ReadInt64();
 
+    auto hasPerm = DelayedSingleton<TimePermission>::GetInstance()->CheckCallingPermission(setTimePermName_);
+    if (!hasPerm) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTime failed");
+        return E_TIME_NO_PERMISSION;
+    }
+
     int32_t ret = SetTime(time);
     TIME_HILOGI(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
     return ret;
@@ -89,6 +95,12 @@ int32_t TimeServiceStub::OnSetTimeZone(MessageParcel &data, MessageParcel &reply
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     std::string timeZoneId = data.ReadString();
+
+    auto hasPerm = DelayedSingleton<TimePermission>::GetInstance()->CheckCallingPermission(setTimezonePermName_);
+    if (!hasPerm) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTimezone failed");
+        return E_TIME_NO_PERMISSION;
+    }
 
     int32_t ret = SetTimeZone(timeZoneId);
     TIME_HILOGI(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
