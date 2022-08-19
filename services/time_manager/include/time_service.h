@@ -22,7 +22,6 @@
 #include "time_service_stub.h"
 #include "time_service_notify.h"
 #include "timer_manager.h"
-#include "time_permission.h"
 #include "system_ability.h"
 #include "event_handler.h"
 #include "time.h"
@@ -104,8 +103,6 @@ private:
     ServiceRunningState state_;
     static std::mutex instanceLock_;
     static sptr<TimeService> instance_;
-    const std::string setTimePermName_ = "ohos.permission.SET_TIME";
-    const std::string setTimezonePermName_ = "ohos.permission.SET_TIME_ZONE";
     const int rtc_id;
     static std::shared_ptr<AppExecFwk::EventHandler> serviceHandler_;
     static std::shared_ptr<TimerManager> timerManagerHandler_;
