@@ -148,14 +148,14 @@ void TimeService::OnAddSystemAbility(int32_t systemAbilityId, const std::string 
 
 void TimeService::RegisterSubscriber()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterSubscriber start");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterSubscriber Started");
     bool subRes = DelayedSingleton<TimeServiceNotify>::GetInstance()->RepublishEvents();
     if (subRes == false) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to RegisterSubscriber");
-        auto callback = [this]() { RegisterSubscriber(); };
+        auto callback = [this]() { DelayedSingleton<TimeServiceNotify>::GetInstance()->RepublishEvents(); };
         serviceHandler_->PostTask(callback, INIT_INTERVAL);
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterSubscriber successful");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterSubscriber end");
 }
 
 int32_t TimeService::Init()
