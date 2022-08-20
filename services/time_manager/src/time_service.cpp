@@ -142,10 +142,9 @@ void TimeService::OnAddSystemAbility(int32_t systemAbilityId, const std::string 
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId:%{public}d added!", systemAbilityId);
     if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
-        RegisterSubscriber();  
-    }
-    else {
-        TIME_HILOGE(TIME_MODULE_SERVICE,"OnAddSystemAbility systemAbilityId is not COMMON_EVENT_SERVICE_ID");
+        RegisterSubscriber();
+    } else {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not COMMON_EVENT_SERVICE_ID");
         return;
     }
 }
@@ -158,8 +157,7 @@ void TimeService::RegisterSubscriber()
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to RegisterSubscriber");
         auto callback = [this]() { DelayedSingleton<TimeServiceNotify>::GetInstance()->RepublishEvents(); };
         serviceHandler_->PostTask(callback, INIT_INTERVAL);
-    }
-    else {
+    } else {
         TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterSubscriber success.");
     }
 }
