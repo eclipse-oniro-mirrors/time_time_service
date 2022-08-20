@@ -40,13 +40,12 @@ void TimeServiceNotify::RegisterPublishEvents()
     timeTickWant_->SetAction(CommonEventSupport::COMMON_EVENT_TIME_TICK);
 }
 
-bool TimeServiceNotify::RepublishEvents(){
+bool TimeServiceNotify::RepublishEvents() {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start to Republish events");
     RegisterPublishEvents();
     auto currentTime = std::chrono::steady_clock::now().time_since_epoch().count();
     if (PublishEvents(currentTime, timeChangeWant_) && PublishEvents(currentTime, timeZoneChangeWant_) &&
-        PublishEvents(currentTime, timeTickWant_))
-    {
+        PublishEvents(currentTime, timeTickWant_)) {
         return true;
     }
     return false;
@@ -63,8 +62,7 @@ bool TimeServiceNotify::PublishEvents(int64_t eventTime, sptr<IntentWant> want)
         want->GetAction().c_str(), static_cast<long long>(eventTime));
     CommonEventData event(*want);
     bool publishResult = CommonEventManager::PublishCommonEvent(event, *publishInfo_, nullptr);
-    if (!publishResult)
-    {
+    if (!publishResult) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to Publish event %{public}s", want->GetAction().c_str());
         return false;
     }
