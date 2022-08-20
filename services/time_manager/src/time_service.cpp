@@ -132,9 +132,30 @@ void TimeService::OnStart()
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init failed. Try again 10s later.");
         return;
     }
+    AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     InitDumpCmd();
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeService success.");
     return;
+}
+
+void TimeService::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId:%{public}d added!", systemAbilityId);
+    if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
+        RegisterSubscriber();
+    }
+}
+
+void TimeService::RegisterSubscriber()
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterSubscriber start");
+    bool subRes = DelayedSingleton<TimeServiceNotify>::GetInstance()->RepublishEvents();
+    if (subRes == false) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to RegisterSubscriber");
+        auto callback = [this]() { RegisterSubscriber(); };
+        serviceHandler_->PostTask(callback, INIT_INTERVAL);
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterSubscriber successful");
 }
 
 int32_t TimeService::Init()
