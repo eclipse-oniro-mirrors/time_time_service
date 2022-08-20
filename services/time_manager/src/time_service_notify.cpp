@@ -40,7 +40,8 @@ void TimeServiceNotify::RegisterPublishEvents()
     timeTickWant_->SetAction(CommonEventSupport::COMMON_EVENT_TIME_TICK);
 }
 
-bool TimeServiceNotify::RepublishEvents() {
+bool TimeServiceNotify::RepublishEvents()
+{
     TIME_HILOGI(TIME_MODULE_SERVICE, "start to Republish events");
     RegisterPublishEvents();
     auto currentTime = std::chrono::steady_clock::now().time_since_epoch().count();
