@@ -40,18 +40,35 @@ void TimeServiceNotify::RegisterPublishEvents()
     timeTickWant_->SetAction(CommonEventSupport::COMMON_EVENT_TIME_TICK);
 }
 
-void TimeServiceNotify::PublishEvents(int64_t eventTime, sptr<IntentWant> want)
+bool TimeServiceNotify::RepublishEvents()
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "start to Republish events");
+    RegisterPublishEvents();
+    auto currentTime = std::chrono::steady_clock::now().time_since_epoch().count();
+    if (PublishEvents(currentTime, timeChangeWant_) && PublishEvents(currentTime, timeZoneChangeWant_) &&
+        PublishEvents(currentTime, timeTickWant_)) {
+        return true;
+    }
+    return false;
+}
+
+bool TimeServiceNotify::PublishEvents(int64_t eventTime, sptr<IntentWant> want)
 {
     if ((want == nullptr) || (publishInfo_ == nullptr)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid parameter");
-        return;
+        return false;
     }
 
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start to publish event %{public}s at %{public}lld",
         want->GetAction().c_str(), static_cast<long long>(eventTime));
     CommonEventData event(*want);
-    CommonEventManager::PublishCommonEvent(event, *publishInfo_, nullptr);
+    bool publishResult = CommonEventManager::PublishCommonEvent(event, *publishInfo_, nullptr);
+    if (!publishResult) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to Publish event %{public}s", want->GetAction().c_str());
+        return false;
+    }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Publish event %{public}s done", want->GetAction().c_str());
+    return publishResult;
 }
 
 void TimeServiceNotify::PublishTimeChanageEvents(int64_t eventTime)

@@ -76,10 +76,12 @@ public:
     void DumpTimerInfoById(int fd, const std::vector<std::string> &input);
     void DumpTimerTriggerById(int fd, const std::vector<std::string> &input);
     void InitDumpCmd();
+    void RegisterSubscriber();
 
 protected:
     void OnStart() override;
     void OnStop() override;
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override;
 
 private:
     struct TimerPara {

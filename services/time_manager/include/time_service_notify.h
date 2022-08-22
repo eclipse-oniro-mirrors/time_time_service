@@ -31,10 +31,11 @@ public:
     void PublishTimeChanageEvents(int64_t eventTime);
     void PublishTimeZoneChangeEvents(int64_t eventTime);
     void PublishTimeTickEvents(int64_t eventTime);
+    bool RepublishEvents();
 private:
     using IntentWant = OHOS::AAFwk::Want;
 
-    void PublishEvents(int64_t eventTime, sptr<IntentWant> intent);
+    bool PublishEvents(int64_t eventTime, sptr<IntentWant> intent);
 
     sptr<IntentWant> timeChangeWant_;
     sptr<IntentWant> timeZoneChangeWant_;
