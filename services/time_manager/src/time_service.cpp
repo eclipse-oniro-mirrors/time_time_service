@@ -358,11 +358,6 @@ bool TimeService::SetRealTime(const int64_t time)
 
 int32_t TimeService::SetTime(const int64_t time)
 {
-    auto hasPerm = DelayedSingleton<TimePermission>::GetInstance()->CheckCallingPermission(setTimePermName_);
-    if (!hasPerm) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTime failed");
-        return E_TIME_NO_PERMISSION;
-    }
     if (!SetRealTime(time)) {
         return E_TIME_DEAL_FAILED;
     }
@@ -554,12 +549,6 @@ int TimeService::get_wall_clock_rtc_id()
 
 int32_t TimeService::SetTimeZone(const std::string timeZoneId)
 {
-    auto hasPerm = DelayedSingleton<TimePermission>::GetInstance()->CheckCallingPermission(setTimezonePermName_);
-    if (!hasPerm) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTimezone failed");
-        return E_TIME_NO_PERMISSION;
-    }
-
     if (!DelayedSingleton<TimeZoneInfo>::GetInstance()->SetTimezone(timeZoneId)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone failed :%{public}s", timeZoneId.c_str());
         return E_TIME_DEAL_FAILED;

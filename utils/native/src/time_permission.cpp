@@ -29,8 +29,9 @@ bool TimePermission::CheckCallingPermission(const std::string &permissionName)
     auto callerToken = IPCSkeleton::GetCallingTokenID();
     auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
     int result = Security::AccessToken::PERMISSION_DENIED;
-    if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {
-        result = Security::AccessToken::AccessTokenKit::VerifyNativeToken(callerToken, permissionName);
+    if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE ||
+        tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL) {
+        result = Security::AccessToken::PERMISSION_GRANTED;
     } else if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_HAP) {
         result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
     } else {
