@@ -51,7 +51,8 @@ bool TimePermission::CheckProxyCallingPermission()
 {
     auto callerToken = IPCSkeleton::GetCallingTokenID();
     auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
-    return tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE;
+    return (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE ||
+            tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL);
 }
 } // namespace MiscServices
 } // namespace OHOS

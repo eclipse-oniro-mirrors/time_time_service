@@ -714,8 +714,7 @@ void TimeService::NetworkTimeStatusOn()
 
 bool TimeService::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
 {
-    auto hasPerm = DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission();
-    if (!hasPerm) {
+    if (!DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
         return E_TIME_NO_PERMISSION;
     }
@@ -734,8 +733,7 @@ bool TimeService::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
 
 bool TimeService::ResetAllProxy()
 {
-    auto hasPerm = DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission();
-    if (!hasPerm) {
+    if (!DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ResetAllProxy permission check failed");
         return E_TIME_NO_PERMISSION;
     }
