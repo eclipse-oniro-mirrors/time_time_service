@@ -14,7 +14,7 @@
 domain: TIME
 
 MISC_TIME_STATISTIC_REPORT:
-  __BASE: {type: STATISTIC, level: MINOR, tag: TimerStatus, desc: trigger timer report}
+  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: trigger timer report}
   CALLER_PID: {type: INT32, desc: the process id}
   CALLER_UID: {type: INT32, desc: the user id}
   TIMER_TYPE: {type: INT32, desc: the timer type}
