@@ -25,5 +25,5 @@ ohos_js_unittest("SystemTimerTest") {
 
 group("unittest") {
   testonly = true
-  deps = [ ":SystemTimeTest" ]
+  deps = [ ":SystemTimerTest" ]
 }
