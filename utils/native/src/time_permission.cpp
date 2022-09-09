@@ -22,7 +22,7 @@ namespace MiscServices {
 bool TimePermission::CheckCallingPermission(const std::string &permissionName)
 {
     if (permissionName.empty()) {
-        TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed，permission name is empty.");
+        TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, permission name is empty.");
         return false;
     }
 
