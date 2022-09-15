@@ -113,7 +113,7 @@ bool SNTPClient::RequestTime(std::string host)
     // Receive until the peer closes the connection
     iResult = recv(SendSocket, bufferRx, NTP_PACKAGE_SIZE, 0);
     if (iResult == INVALID_RETURN) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Recieve socket message failed. Host: %{public}s", host.c_str());
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Receive socket message failed. Host: %{public}s", host.c_str());
         close(SendSocket);
         return false;
     }
