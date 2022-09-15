@@ -291,7 +291,7 @@ describe('TimerTest', function () {
             await systemTimer.startTimer(timer, Number.MAX_VALUE)
 
             console.log("stop timer")
-            ystemTimer.stopTimer(timer)
+            systemTimer.stopTimer(timer)
 
             console.log("destroy timer")
             await systemTimer.destroyTimer(timer)
@@ -1204,7 +1204,7 @@ describe('TimerTest', function () {
             await systemTimer.startTimer(timer, Number.MAX_VALUE)
 
             console.log("stop timer")
-            ystemTimer.stopTimer(timer)
+            systemTimer.stopTimer(timer)
 
             console.log("destroy timer")
             await systemTimer.destroyTimer(timer)
