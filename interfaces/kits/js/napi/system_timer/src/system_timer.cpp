@@ -704,11 +704,7 @@ napi_value DestroyTimer(napi_env env, napi_callback_info info)
 
             if (asynccallbackinfo->isOK) {
                 for (auto it = asyncCallbackInfoCreateInfo.begin(); it != asyncCallbackInfoCreateInfo.end();) {
-                    if (*it == nullptr) {
-                        ++it;
-                        continue;
-                    }
-                    if ((*it)->timerId == asynccallbackinfo->timerId) {
+                    if ((*it) != nullptr && (*it)->timerId == asynccallbackinfo->timerId) {
                         it = asyncCallbackInfoCreateInfo.erase(it);
                     } else {
                         ++it;
