@@ -106,6 +106,10 @@ napi_value GetCallbackErrorValue(napi_env env, int errCode)
 {
     napi_value result = nullptr;
     napi_value eCode = nullptr;
+    if (errCode == NO_ERROR) {
+        napi_get_undefined(env, &result);
+        return result;
+    }
     NAPI_CALL(env, napi_create_int32(env, errCode, &eCode));
     NAPI_CALL(env, napi_create_object(env, &result));
     NAPI_CALL(env, napi_set_named_property(env, result, "code", eCode));
@@ -699,11 +703,11 @@ napi_value DestroyTimer(napi_env env, napi_callback_info info)
             }
 
             if (asynccallbackinfo->isOK) {
-                for (auto it = asyncCallbackInfoCreateInfo.begin(); it != asyncCallbackInfoCreateInfo.end(); it++) {
-                    if ((*it)->timerId == asynccallbackinfo->timerId) {
+                for (auto it = asyncCallbackInfoCreateInfo.begin(); it != asyncCallbackInfoCreateInfo.end();) {
+                    if ((*it) != nullptr && (*it)->timerId == asynccallbackinfo->timerId) {
                         it = asyncCallbackInfoCreateInfo.erase(it);
-                        delete (*it);
-                        *it = nullptr;
+                    } else {
+                        ++it;
                     }
                 }
             } else {

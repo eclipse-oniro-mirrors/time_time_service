@@ -32,6 +32,10 @@ napi_value TimeGetCallbackErrorValue(napi_env env, int errCode)
 {
     napi_value result = nullptr;
     napi_value eCode = nullptr;
+    if (errCode == NO_ERROR) {
+        napi_get_undefined(env, &result);
+        return result;
+    }
     NAPI_CALL(env, napi_create_int32(env, errCode, &eCode));
     NAPI_CALL(env, napi_create_object(env, &result));
     NAPI_CALL(env, napi_set_named_property(env, result, "code", eCode));
