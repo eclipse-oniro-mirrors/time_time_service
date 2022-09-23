@@ -638,7 +638,7 @@ napi_value ParseParametersByDestroyTimer(const napi_env &env, const napi_value (
     int64_t timerId = 0;
     napi_get_value_int64(env, argv[0], &timerId);
     NAPI_ASSERT(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
-    uintTimerId = (uint64_t)timerId;
+    uintTimerId = static_cast<uint64_t>(timerId);
 
     // argv[1]:callback
     if (argc >= DESTROY_MAX_PARA) {
