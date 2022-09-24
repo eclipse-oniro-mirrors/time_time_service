@@ -42,15 +42,10 @@ ohos_shared_library("time_client") {
     "//third_party/jsoncpp:jsoncpp",
   ]
   external_deps = [
-    "ability_base:want",
-    "ability_runtime:runtime",
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
-    "common_event_service:cesfwk_innerkits",
-    "eventhandler:libeventhandler",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
-    "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
   subsystem_name = "time"
