@@ -13,36 +13,21 @@
  * limitations under the License.
  */
 
+#include "system_timer.h"
+
 #include <uv.h>
+
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "common.h"
+#include "securec.h"
 #include "timer_type.h"
 #include "want_agent_helper.h"
-#include "securec.h"
-#include "system_timer.h"
 
 namespace OHOS {
 namespace MiscServicesNapi {
-namespace {
-const int NO_ERROR = 0;
-const int ERROR = -1;
-const int CREATE_MAX_PARA = 2;
-const int START_MAX_PARA = 3;
-const int STOP_MAX_PARA = 2;
-const int DESTROY_MAX_PARA = 2;
-const int ARGS_TWO = 2;
-const int PARAM0 = 0;
-const int PARAM1 = 1;
-}
-
-struct CallbackPromiseInfo {
-    napi_ref callback = nullptr;
-    napi_deferred deferred = nullptr;
-    bool isCallback = false;
-    int errorCode = 0;
-};
-
 struct ReceiveDataWorker {
     napi_env env = nullptr;
     napi_ref ref = 0;
@@ -56,7 +41,7 @@ struct AsyncCallbackInfoCreate {
     std::shared_ptr<ITimerInfoInstance> iTimerInfoInstance = nullptr;
     uint64_t timerId = 0;
     bool isCallback = false;
-    int errorCode = NO_ERROR;
+    int errorCode = E_TIME_OK;
 };
 
 struct AsyncCallbackInfoStart {
@@ -68,7 +53,7 @@ struct AsyncCallbackInfoStart {
     uint64_t triggerTime = 0;
     bool isOK = false;
     bool isCallback = false;
-    int errorCode = NO_ERROR;
+    int errorCode = E_TIME_OK;
 };
 
 struct AsyncCallbackInfoStop {
@@ -79,7 +64,7 @@ struct AsyncCallbackInfoStop {
     uint64_t timerId = 0;
     bool isOK = false;
     bool isCallback = false;
-    int errorCode = NO_ERROR;
+    int errorCode = E_TIME_OK;
 };
 
 struct AsyncCallbackInfoDestroy {
@@ -90,76 +75,10 @@ struct AsyncCallbackInfoDestroy {
     uint64_t timerId = 0;
     bool isOK = false;
     bool isCallback = false;
-    int errorCode = NO_ERROR;
+    int errorCode = E_TIME_OK;
 };
 
 static std::vector<AsyncCallbackInfoCreate *> asyncCallbackInfoCreateInfo;
-
-napi_value NapiGetNull(napi_env env)
-{
-    napi_value result = nullptr;
-    napi_get_null(env, &result);
-    return result;
-}
-
-napi_value GetCallbackErrorValue(napi_env env, int errCode)
-{
-    napi_value result = nullptr;
-    napi_value eCode = nullptr;
-    if (errCode == NO_ERROR) {
-        napi_get_undefined(env, &result);
-        return result;
-    }
-    NAPI_CALL(env, napi_create_int32(env, errCode, &eCode));
-    NAPI_CALL(env, napi_create_object(env, &result));
-    NAPI_CALL(env, napi_set_named_property(env, result, "code", eCode));
-    return result;
-}
-
-void SetPromise(const napi_env &env, const napi_deferred &deferred, const int &errorCode, const napi_value &result)
-{
-    if (errorCode == NO_ERROR) {
-        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, deferred, result));
-        return;
-    }
-    NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, deferred, result));
-}
-
-void SetCallback(const napi_env &env, const napi_ref &callbackIn, const int &errorCode, const napi_value &result)
-{
-    napi_value undefined = nullptr;
-    napi_get_undefined(env, &undefined);
-
-    napi_value callback = nullptr;
-    napi_value resultout = nullptr;
-    napi_get_reference_value(env, callbackIn, &callback);
-    napi_value results[ARGS_TWO] = {0};
-    results[PARAM0] = GetCallbackErrorValue(env, errorCode);
-    results[PARAM1] = result;
-    NAPI_CALL_RETURN_VOID(env, napi_call_function(env, undefined, callback, ARGS_TWO, &results[PARAM0], &resultout));
-}
-
-napi_value JSParaError(const napi_env &env, const napi_ref &callback)
-{
-    if (callback) {
-        return NapiGetNull(env);
-    } else {
-        napi_value promise = nullptr;
-        napi_deferred deferred = nullptr;
-        napi_create_promise(env, &deferred, &promise);
-        SetPromise(env, deferred, ERROR, NapiGetNull(env));
-        return promise;
-    }
-}
-
-void ReturnCallbackPromise(const napi_env &env, const CallbackPromiseInfo &info, const napi_value &result)
-{
-    if (info.isCallback) {
-        SetCallback(env, info.callback, info.errorCode, result);
-    } else {
-        SetPromise(env, info.deferred, info.errorCode, result);
-    }
-}
 
 ITimerInfoInstance::ITimerInfoInstance()
     : callbackInfo_ {}
@@ -208,7 +127,8 @@ void ITimerInfoInstance::OnTrigger()
 
             SetCallback(dataWorkerData->env,
                         dataWorkerData->ref,
-                        NO_ERROR,
+                        E_TIME_OK,
+                        "",
                         NapiGetNull(dataWorkerData->env));
             delete dataWorkerData;
             dataWorkerData = nullptr;
@@ -252,20 +172,20 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
     // type: number
     int type = 0;
     NAPI_CALL(env, napi_has_named_property(env, value, "type", &hasProperty));
-    NAPI_ASSERT(env, hasProperty, "type expected.");
+    NAPI_ASSERTC(env, hasProperty, "type expected.");
     napi_get_named_property(env, value, "type", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    NAPI_ASSERT(env, valuetype == napi_number, "Wrong argument type. Number expected.");
+    NAPI_ASSERTP(env, valuetype == napi_number, "Parameter error. The type of type must be number.");
     napi_get_value_int32(env, result, &type);
     iTimerInfoInstance->SetType(type);
 
     // repeat: boolean
     bool repeat = false;
     NAPI_CALL(env, napi_has_named_property(env, value, "repeat", &hasProperty));
-    NAPI_ASSERT(env, hasProperty, "repeat expected.");
+    NAPI_ASSERTC(env, hasProperty, "repeat expected.");
     napi_get_named_property(env, value, "repeat", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    NAPI_ASSERT(env, valuetype == napi_boolean, "Wrong argument type. Bool expected.");
+    NAPI_ASSERTP(env, valuetype == napi_boolean, "Parameter error. The type of repeat must be boolean.");
     napi_get_value_bool(env, result, &repeat);
     iTimerInfoInstance->SetRepeat(repeat);
 
@@ -275,9 +195,9 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
     if (hasProperty) {
         napi_get_named_property(env, value, "interval", &result);
         NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-        NAPI_ASSERT(env, valuetype == napi_number, "Wrong argument type. Number expected.");
+        NAPI_ASSERTP(env, valuetype == napi_number, "Parameter error. The type of interval must be number.");
         napi_get_value_int64(env, result, &interval);
-        NAPI_ASSERT(env, interval >= 0, "Wrong argument number. Positive number expected.");
+        NAPI_ASSERTC(env, interval >= 0, "Wrong argument number. Positive number expected.");
         iTimerInfoInstance->SetInterval((uint64_t)interval);
     }
 
@@ -286,7 +206,7 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
     if (hasProperty) {
         napi_get_named_property(env, value, "wantAgent", &result);
         NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-        NAPI_ASSERT(env, valuetype == napi_object, "Wrong argument type. Object expected.");
+        NAPI_ASSERTP(env, valuetype == napi_object, "Parameter error. The type of wantAgent must be WantAgent.");
         napi_unwrap(env, result, (void **)&wantAgent);
         if (wantAgent == nullptr) {
             return nullptr;
@@ -301,7 +221,7 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
     if (hasProperty) {
         napi_get_named_property(env, value, "callback", &result);
         NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-        NAPI_ASSERT(env, valuetype == napi_function, "Wrong argument type. Function expected.");
+        NAPI_ASSERTP(env,  valuetype == napi_function, "Parameter error. The type of callback must be function.");
         napi_ref onTriggerCallback;
         napi_create_reference(env, result, 1, &onTriggerCallback);
         iTimerInfoInstance->SetCallbackInfo(env, onTriggerCallback);
@@ -312,20 +232,20 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
 napi_value ParseParametersByCreateTimer(const napi_env &env, const napi_value (&argv)[CREATE_MAX_PARA],
     const size_t &argc, std::shared_ptr<ITimerInfoInstance> &iTimerInfoInstance, napi_ref &callback)
 {
-    NAPI_ASSERT(env, argc >= CREATE_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTC(env, argc >= CREATE_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valuetype = napi_undefined;
 
-    // argv[0]: TimerOptions
+    // options: TimerOptions
     NAPI_CALL(env, napi_typeof(env, argv[0], &valuetype));
-    NAPI_ASSERT(env, valuetype == napi_object, "Wrong argument type. Object expected.");
+    NAPI_ASSERTP(env, valuetype == napi_object, "Parameter error. The type of options must be TimerOptions.");
     if (GetTimerOptions(env, argv[0], iTimerInfoInstance) == nullptr) {
         return nullptr;
     }
 
-    // argv[1]:callback
+    // callback:AsyncCallback<number>
     if (argc >= CREATE_MAX_PARA) {
         NAPI_CALL(env, napi_typeof(env, argv[1], &valuetype));
-        NAPI_ASSERT(env, valuetype == napi_function, "Wrong argument type. Function expected.");
+        NAPI_ASSERTP(env,  valuetype == napi_function, "Parameter error. The type of callback must be function.");
         napi_create_reference(env, argv[1], 1, &callback);
     }
 
@@ -405,30 +325,30 @@ napi_value CreateTimer(napi_env env, napi_callback_info info)
 napi_value ParseParametersByStartTimer(const napi_env &env, const napi_value (&argv)[START_MAX_PARA],
     const size_t &argc, uint64_t &uintTimerId, uint64_t &uintTriggerTime, napi_ref &callback)
 {
-    NAPI_ASSERT(env, argc >= START_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTC(env, argc >= START_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valuetype = napi_undefined;
 
     // argv[0]: timer
     NAPI_CALL(env, napi_typeof(env, argv[0], &valuetype));
-    NAPI_ASSERT(env, valuetype == napi_number, "Wrong argument type. Number expected.");
+    NAPI_ASSERTP(env,  valuetype == napi_number, "Parameter error. The type of timer must be number.");
     int64_t timerId = 0;
     napi_get_value_int64(env, argv[0], &timerId);
-    NAPI_ASSERT(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
+    NAPI_ASSERTC(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
     uintTimerId = static_cast<uint64_t>(timerId);
 
     // argv[1]: triggerTime
     NAPI_CALL(env, napi_typeof(env, argv[1], &valuetype));
-    NAPI_ASSERT(env, valuetype == napi_number, "Wrong argument type. Number expected.");
+    NAPI_ASSERTP(env,  valuetype == napi_number, "Parameter error. The type of triggerTime must be number.");
     int64_t triggerTime = 0;
     napi_get_value_int64(env, argv[1], &triggerTime);
-    NAPI_ASSERT(env, triggerTime >= 0, "Wrong argument triggerTime. Positive number expected.");
+    NAPI_ASSERTC(env, triggerTime >= 0, "Wrong argument triggerTime. Positive number expected.");
     uintTriggerTime = static_cast<uint64_t>(triggerTime);
 
     // argv[2]:callback
     if (argc >= START_MAX_PARA) {
-        NAPI_CALL(env, napi_typeof(env, argv[TWO_PARAMETERS], &valuetype));
-        NAPI_ASSERT(env, valuetype == napi_function, "Wrong argument type. Function expected.");
-        napi_create_reference(env, argv[TWO_PARAMETERS], 1, &callback);
+        NAPI_CALL(env, napi_typeof(env, argv[2], &valuetype));
+        NAPI_ASSERTP(env,  valuetype == napi_function, "Parameter error. The type of callback must be function.");
+        napi_create_reference(env, argv[2], 1, &callback);
     }
 
     return NapiGetNull(env);
@@ -518,21 +438,21 @@ napi_value StartTimer(napi_env env, napi_callback_info info)
 napi_value ParseParametersByStopTimer(const napi_env &env, const napi_value (&argv)[STOP_MAX_PARA], const size_t &argc,
     uint64_t &uintTimerId, napi_ref &callback)
 {
-    NAPI_ASSERT(env, argc >= STOP_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTC(env, argc >= STOP_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valuetype = napi_undefined;
 
     // argv[0]: timer
     NAPI_CALL(env, napi_typeof(env, argv[0], &valuetype));
-    NAPI_ASSERT(env, valuetype == napi_number, "Wrong argument type. Number expected.");
+    NAPI_ASSERTP(env,  valuetype == napi_number, "Parameter error. The type of timer must be number.");
     int64_t timerId = 0;
     napi_get_value_int64(env, argv[0], &timerId);
-    NAPI_ASSERT(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
+    NAPI_ASSERTC(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
     uintTimerId = static_cast<uint64_t>(timerId);
 
     // argv[1]:callback
     if (argc >= STOP_MAX_PARA) {
         NAPI_CALL(env, napi_typeof(env, argv[1], &valuetype));
-        NAPI_ASSERT(env, valuetype == napi_function, "Wrong argument type. Function expected.");
+        NAPI_ASSERTP(env,  valuetype == napi_function, "Parameter error. The type of callback must be function.");
         napi_create_reference(env, argv[1], 1, &callback);
     }
 
@@ -629,21 +549,21 @@ napi_value StopTimer(napi_env env, napi_callback_info info)
 napi_value ParseParametersByDestroyTimer(const napi_env &env, const napi_value (&argv)[DESTROY_MAX_PARA],
     const size_t &argc, uint64_t &uintTimerId, napi_ref &callback)
 {
-    NAPI_ASSERT(env, argc >= DESTROY_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTC(env, argc >= DESTROY_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valuetype = napi_undefined;
 
     // argv[0]: timer
     NAPI_CALL(env, napi_typeof(env, argv[0], &valuetype));
-    NAPI_ASSERT(env, valuetype == napi_number, "Wrong argument type. Number expected.");
+    NAPI_ASSERTP(env,  valuetype == napi_number, "Parameter error. The type of timer must be number.");
     int64_t timerId = 0;
     napi_get_value_int64(env, argv[0], &timerId);
-    NAPI_ASSERT(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
+    NAPI_ASSERTC(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
     uintTimerId = static_cast<uint64_t>(timerId);
 
     // argv[1]:callback
     if (argc >= DESTROY_MAX_PARA) {
         NAPI_CALL(env, napi_typeof(env, argv[1], &valuetype));
-        NAPI_ASSERT(env, valuetype == napi_function, "Wrong argument type. Function expected.");
+        NAPI_ASSERTP(env,  valuetype == napi_function, "Parameter error. The type of callback must be function.");
         napi_create_reference(env, argv[1], 1, &callback);
     }
 

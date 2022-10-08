@@ -86,15 +86,22 @@ bool TimeServiceClient::ConnectService()
     return true;
 }
 
-bool TimeServiceClient::TimeServiceClient::SetTime(const int64_t time)
+bool TimeServiceClient::SetTime(const int64_t time)
 {
     if (!ConnectService()) {
         return false;
     }
-    if (timeServiceProxy_->SetTime(time) != ERR_OK) {
+    return timeServiceProxy_->SetTime(time) == ERR_OK;
+}
+
+bool TimeServiceClient::SetTime(const int64_t milliseconds, int32_t &code)
+{
+    if (!ConnectService()) {
+        code = E_TIME_SA_DIED;
         return false;
     }
-    return true;
+    code = timeServiceProxy_->SetTime(milliseconds);
+    return code == ERR_OK;
 }
 
 bool TimeServiceClient::SetTimeZone(const std::string timezoneId)
@@ -102,10 +109,17 @@ bool TimeServiceClient::SetTimeZone(const std::string timezoneId)
     if (!ConnectService()) {
         return false;
     }
-    if (timeServiceProxy_->SetTimeZone(timezoneId) != ERR_OK) {
+    return timeServiceProxy_->SetTimeZone(timezoneId) == ERR_OK;
+}
+
+bool TimeServiceClient::SetTimeZone(const std::string timezoneId, int32_t &code)
+{
+    if (!ConnectService()) {
+        code = E_TIME_SA_DIED;
         return false;
     }
-    return true;
+    code = timeServiceProxy_->SetTimeZone(timezoneId);
+    return code == ERR_OK;
 }
 
 uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> TimerOptions)
