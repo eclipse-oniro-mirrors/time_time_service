@@ -50,12 +50,30 @@ public:
     bool SetTime(const int64_t milliseconds);
 
     /**
+     * SetTime
+     * @description
+     * @param milliseconds int64_t UTC time in milliseconds.
+     * @param code error code return.
+     * @return bool true on success, false on failure.
+     */
+    bool SetTime(const int64_t milliseconds, int32_t &code);
+
+    /**
      * SetTimeZone
      * @description
      * @param timeZoneId const std::string time zone. example: "Beijing, China".
      * @return bool true on success, false on failure.
      */
     bool SetTimeZone(const std::string timeZoneId);
+
+    /**
+     * SetTimeZone
+     * @description
+     * @param timeZoneId const std::string time zone. example: "Beijing, China".
+     * @param code error code return.
+     * @return bool true on success, false on failure.
+     */
+    bool SetTimeZone(const std::string timezoneId, int32_t &code);
 
     /**
      * GetTimeZone

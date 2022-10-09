@@ -30,8 +30,8 @@ enum TimeModule {
 constexpr ErrCode TIME_ERR_OFFSET = ErrCodeOffset(SUBSYS_SMALLSERVICES, TIME_MODULE_SERVICE_ID);
 
 enum TimeError {
-    E_TIME_OK = TIME_ERR_OFFSET,
-    E_TIME_SA_DIED,
+    E_TIME_OK = 0,
+    E_TIME_SA_DIED = TIME_ERR_OFFSET,
     E_TIME_READ_PARCEL_ERROR,
     E_TIME_WRITE_PARCEL_ERROR,
     E_TIME_PUBLISH_FAIL,
@@ -40,7 +40,7 @@ enum TimeError {
     E_TIME_PARAMETERS_INVALID,
     E_TIME_SET_RTC_FAILED,
     E_TIME_NOT_FOUND,
-    E_TIME_NO_PERMISSION,
+    E_TIME_NO_PERMISSION = 201,
 };
 } // namespace MiscServices
 } // namespace OHOS

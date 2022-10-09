@@ -35,6 +35,7 @@ ohos_shared_library("systemtimer") {
   include_dirs = [
     "//base/time/time_service/interfaces/innerkits/include",
     "./include",
+    "../common/include",
     "//foundation/arkui/napi/interfaces/kits/napi",
     "//third_party/node/src",
     "//third_party/libuv/include",
