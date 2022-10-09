@@ -207,7 +207,7 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
                 return;
             }
             if (asyncContext->errorCode == E_TIME_NO_PERMISSION) {
-                asyncContext->massage = "Permission verification failed. An attempt was made to join session "
+                asyncContext->message = "Permission verification failed. An attempt was made to join session "
                                         "forbidden by permission: ohos.permission.SET_TIME_ZONE";
             }
             CallbackPromiseInfo info;
