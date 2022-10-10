@@ -31,8 +31,6 @@
 
 #define NAPI_ASSERTP(env, assertion, message) NAPI_ASSERTS_BASE(env, assertion, CODE_401, message, nullptr)
 
-#define NAPI_ASSERTC(env, assertion, message) NAPI_ASSERTS_BASE(env, assertion, CODE, message, nullptr)
-
 namespace OHOS {
 namespace MiscServicesNapi {
 namespace {
@@ -50,7 +48,6 @@ const int INVALID_TIME = -1;
 const int ERROR = 13000000;
 const int ERROR_201 = 201;
 const int ERROR_401 = 401;
-const char *CODE = "13000000";
 const char *CODE_201 = "201";
 const char *CODE_401 = "401";
 } // namespace
@@ -71,14 +68,16 @@ napi_value GetCallbackErrorValue(napi_env env, int errCode, const char *message)
         napi_get_undefined(env, &result);
         return result;
     }
-    NAPI_CALL(env, napi_create_int32(env, errCode, &eCode));
-    NAPI_CALL(env, napi_create_object(env, &result));
-    NAPI_CALL(env, napi_set_named_property(env, result, "code", eCode));
+    if (errCode == MiscServices::E_TIME_NO_PERMISSION) {
+        NAPI_CALL(env, napi_create_int32(env, errCode, &eCode));
+        NAPI_CALL(env, napi_create_object(env, &result));
+        NAPI_CALL(env, napi_set_named_property(env, result, "code", eCode));
 
-    napi_value str;
-    size_t str_len = strlen(message);
-    NAPI_CALL(env, napi_create_string_utf8(env, message, str_len, &str));
-    NAPI_CALL(env, napi_set_named_property(env, result, "message", str));
+        napi_value str;
+        size_t str_len = strlen(message);
+        NAPI_CALL(env, napi_create_string_utf8(env, message, str_len, &str));
+        NAPI_CALL(env, napi_set_named_property(env, result, "message", str));
+    }
     return result;
 }
 

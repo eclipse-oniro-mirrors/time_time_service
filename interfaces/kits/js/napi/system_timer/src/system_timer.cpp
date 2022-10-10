@@ -172,7 +172,7 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
     // type: number
     int type = 0;
     NAPI_CALL(env, napi_has_named_property(env, value, "type", &hasProperty));
-    NAPI_ASSERTC(env, hasProperty, "type expected.");
+    NAPI_ASSERTP(env, hasProperty, "type expected.");
     napi_get_named_property(env, value, "type", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
     NAPI_ASSERTP(env, valuetype == napi_number, "Parameter error. The type of type must be number.");
@@ -182,7 +182,7 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
     // repeat: boolean
     bool repeat = false;
     NAPI_CALL(env, napi_has_named_property(env, value, "repeat", &hasProperty));
-    NAPI_ASSERTC(env, hasProperty, "repeat expected.");
+    NAPI_ASSERTP(env, hasProperty, "repeat expected.");
     napi_get_named_property(env, value, "repeat", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
     NAPI_ASSERTP(env, valuetype == napi_boolean, "Parameter error. The type of repeat must be boolean.");
@@ -197,7 +197,7 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
         NAPI_CALL(env, napi_typeof(env, result, &valuetype));
         NAPI_ASSERTP(env, valuetype == napi_number, "Parameter error. The type of interval must be number.");
         napi_get_value_int64(env, result, &interval);
-        NAPI_ASSERTC(env, interval >= 0, "Wrong argument number. Positive number expected.");
+        NAPI_ASSERTP(env, interval >= 0, "Wrong argument number. Positive number expected.");
         iTimerInfoInstance->SetInterval((uint64_t)interval);
     }
 
@@ -232,7 +232,7 @@ napi_value GetTimerOptions(const napi_env &env, const napi_value &value,
 napi_value ParseParametersByCreateTimer(const napi_env &env, const napi_value (&argv)[CREATE_MAX_PARA],
     const size_t &argc, std::shared_ptr<ITimerInfoInstance> &iTimerInfoInstance, napi_ref &callback)
 {
-    NAPI_ASSERTC(env, argc >= CREATE_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTP(env, argc >= CREATE_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valuetype = napi_undefined;
 
     // options: TimerOptions
@@ -325,7 +325,7 @@ napi_value CreateTimer(napi_env env, napi_callback_info info)
 napi_value ParseParametersByStartTimer(const napi_env &env, const napi_value (&argv)[START_MAX_PARA],
     const size_t &argc, uint64_t &uintTimerId, uint64_t &uintTriggerTime, napi_ref &callback)
 {
-    NAPI_ASSERTC(env, argc >= START_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTP(env, argc >= START_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valuetype = napi_undefined;
 
     // argv[0]: timer
@@ -333,7 +333,7 @@ napi_value ParseParametersByStartTimer(const napi_env &env, const napi_value (&a
     NAPI_ASSERTP(env,  valuetype == napi_number, "Parameter error. The type of timer must be number.");
     int64_t timerId = 0;
     napi_get_value_int64(env, argv[0], &timerId);
-    NAPI_ASSERTC(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
+    NAPI_ASSERTP(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
     uintTimerId = static_cast<uint64_t>(timerId);
 
     // argv[1]: triggerTime
@@ -341,7 +341,7 @@ napi_value ParseParametersByStartTimer(const napi_env &env, const napi_value (&a
     NAPI_ASSERTP(env,  valuetype == napi_number, "Parameter error. The type of triggerTime must be number.");
     int64_t triggerTime = 0;
     napi_get_value_int64(env, argv[1], &triggerTime);
-    NAPI_ASSERTC(env, triggerTime >= 0, "Wrong argument triggerTime. Positive number expected.");
+    NAPI_ASSERTP(env, triggerTime >= 0, "Wrong argument triggerTime. Positive number expected.");
     uintTriggerTime = static_cast<uint64_t>(triggerTime);
 
     // argv[2]:callback
@@ -438,7 +438,7 @@ napi_value StartTimer(napi_env env, napi_callback_info info)
 napi_value ParseParametersByStopTimer(const napi_env &env, const napi_value (&argv)[STOP_MAX_PARA], const size_t &argc,
     uint64_t &uintTimerId, napi_ref &callback)
 {
-    NAPI_ASSERTC(env, argc >= STOP_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTP(env, argc >= STOP_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valuetype = napi_undefined;
 
     // argv[0]: timer
@@ -446,7 +446,7 @@ napi_value ParseParametersByStopTimer(const napi_env &env, const napi_value (&ar
     NAPI_ASSERTP(env,  valuetype == napi_number, "Parameter error. The type of timer must be number.");
     int64_t timerId = 0;
     napi_get_value_int64(env, argv[0], &timerId);
-    NAPI_ASSERTC(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
+    NAPI_ASSERTP(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
     uintTimerId = static_cast<uint64_t>(timerId);
 
     // argv[1]:callback
@@ -549,7 +549,7 @@ napi_value StopTimer(napi_env env, napi_callback_info info)
 napi_value ParseParametersByDestroyTimer(const napi_env &env, const napi_value (&argv)[DESTROY_MAX_PARA],
     const size_t &argc, uint64_t &uintTimerId, napi_ref &callback)
 {
-    NAPI_ASSERTC(env, argc >= DESTROY_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTP(env, argc >= DESTROY_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valuetype = napi_undefined;
 
     // argv[0]: timer
@@ -557,7 +557,7 @@ napi_value ParseParametersByDestroyTimer(const napi_env &env, const napi_value (
     NAPI_ASSERTP(env,  valuetype == napi_number, "Parameter error. The type of timer must be number.");
     int64_t timerId = 0;
     napi_get_value_int64(env, argv[0], &timerId);
-    NAPI_ASSERTC(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
+    NAPI_ASSERTP(env, timerId >= 0, "Wrong argument timer. Positive number expected.");
     uintTimerId = static_cast<uint64_t>(timerId);
 
     // argv[1]:callback
