@@ -54,7 +54,7 @@ void TimePaddingAsyncCallbackInfo(const napi_env &env,
 napi_value ParseParametersBySetTime(const napi_env &env, const napi_value (&argv)[SET_TIME_MAX_PARA],
     const size_t &argc, int64_t &times, napi_ref &callback)
 {
-    NAPI_ASSERTC(env, argc >= SET_TIME_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTP(env, argc >= SET_TIME_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valueType = napi_undefined;
 
     // argv[0]: times or date object
@@ -62,18 +62,18 @@ napi_value ParseParametersBySetTime(const napi_env &env, const napi_value (&argv
     NAPI_ASSERTP(env, valueType == napi_number || valueType == napi_object, "Parameter error. The type of time must be number or date.");
     if (valueType == napi_number) {
         napi_get_value_int64(env, argv[0], &times);
-        NAPI_ASSERTC(env, times >= 0, "Wrong argument timer. Positive number expected.");
+        NAPI_ASSERTP(env, times >= 0, "Wrong argument timer. Positive number expected.");
     } else {
         bool hasProperty = false;
         napi_valuetype resValueType = napi_undefined;
         NAPI_CALL(env, napi_has_named_property(env, argv[0], "getTime", &hasProperty));
-        NAPI_ASSERTC(env, hasProperty, "type expected.");
+        NAPI_ASSERTP(env, hasProperty, "type expected.");
         napi_value getTimeFunc = nullptr;
         napi_get_named_property(env, argv[0], "getTime", &getTimeFunc);
         napi_value getTimeResult = nullptr;
         napi_call_function(env, argv[0], getTimeFunc, 0, nullptr, &getTimeResult);
         NAPI_CALL(env, napi_typeof(env, getTimeResult, &resValueType));
-        NAPI_ASSERTC(env, resValueType == napi_number, "type mismatch");
+        NAPI_ASSERTP(env, resValueType == napi_number, "type mismatch");
         napi_get_value_int64(env, getTimeResult, &times);
     }
 
@@ -149,7 +149,7 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
 napi_value ParseParametersBySetTimezone(const napi_env &env, const napi_value (&argv)[SET_TIMEZONE_MAX_PARA],
     const size_t &argc, std::string &timezoneId, napi_ref &callback)
 {
-    NAPI_ASSERTC(env, argc >= SET_TIMEZONE_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTP(env, argc >= SET_TIMEZONE_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valueType = napi_undefined;
 
     // argv[0]: timezoneid
