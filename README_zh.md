@@ -241,5 +241,7 @@ console.log('end');
 
 **时间时区子系统**
 
-[time\_time\_service](https://gitee.com/openharmony/time_time_service/tree/master/)
+[Misc软件服务子系统](https://gitee.com/openharmony/docs/blob/master/zh-cn/readme/Misc软件服务子系统.md)
+
+[**time\_time\_service**](https://gitee.com/openharmony/time_time_service/tree/master/)
 
