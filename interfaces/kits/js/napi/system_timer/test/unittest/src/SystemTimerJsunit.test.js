@@ -1764,7 +1764,7 @@ describe('TimerTest', function () {
 
     /**
      * @tc.number    SUB_systemTimer_Timer_JS_API_2900
-     * @tc.name      Test systemTimer.createTTimer type = TIMER_TYPE_IDLE
+     * @tc.name      Test systemTimer.createTimer type = TIMER_TYPE_IDLE
      * @tc.desc      Test systemTimer_Timer API functionality.
      * @tc.size      : MEDIUM
      * @tc.type      : Function
@@ -1799,4 +1799,182 @@ describe('TimerTest', function () {
     function callbackFunction() {
         console.log("Start to call the callback function")
     }
+  
+    /**
+     * @tc.number SUB_time_systemTimer_createTimer_0001
+     * @tc.name   Test systemTimer.createTimer type = TIMER_TYPE_REALTIME
+     * @tc.desc   Test systemTimer_Timer API functionality, repeat = true (Callback)
+     * @tc.size   : MEDIUM
+     * @tc.type   : Function
+     * @tc.level  : Level 0
+     */
+    it('SUB_time_systemTimer_createTimer_0001', 0, async function (done) {
+        console.log("SUB_time_systemTimer_createTimer_0001 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_REALTIME,
+            repeat: true,
+            interval: 5001
+        }
+        try {
+            systemTimer.createTimer(options, function (err, timerID) {
+                if (err) {
+                    expect(false).assertTrue();
+                }
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.startTimer("timerID", function (err, data) {
+                    expect(false).assertTrue();
+                });
+            });
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+        console.log('SUB_time_systemTimer_createTimer_0001 end');
+        done();
+    });
+  
+    /**
+     * @tc.number SUB_time_systemTimer_createTimer_0002
+     * @tc.name   Test systemTimer.createTimer type = TIMER_TYPE_WAKEUP
+     * @tc.desc   Test systemTimer_Timer API functionality, repeat = false (Callback)
+     * @tc.size   : MEDIUM
+     * @tc.type   : Function
+     * @tc.level  : Level 0
+     */
+    it('SUB_time_systemTimer_createTimer_0002', 0, async function (done) {
+        console.log("SUB_time_systemTimer_createTimer_0002 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_WAKEUP,
+            repeat: false
+        }
+        try {
+            systemTimer.createTimer(options, function (err, timerID) {
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.startTimer(timerID, 6000, function (err, data) {
+                    systemTimer.stopTimer("timerID", function (err, data) {
+                        expect(false).assertTrue;
+                    });
+                });
+            });
+        } catch (e) {
+            expect(err.code).assertEqual(401);
+        }
+        console.log('SUB_time_systemTimer_createTimer_0002 end');
+        done();
+    });
+
+    /**
+     * @tc.number SUB_time_systemTimer_createTimer_0003
+     * @tc.name   Test systemTimer.createTimer type = TIMER_TYPE_EXACT
+     * @tc.desc   Test systemTimer_Timer API functionality, repeat = false (Callback)
+     * @tc.size   : MEDIUM
+     * @tc.type   : Function
+     * @tc.level  : Level 0
+     */
+    it('SUB_time_systemTimer_createTimer_0003', 0, async function (done) {
+        console.log("SUB_time_systemTimer_createTimer_0003 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_EXACT,
+            repeat: false
+        }
+        try {
+            systemTimer.createTimer(options, function (err, timerID) {
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.startTimer(timerID, 5000, function (e) {
+                    systemTimer.stopTimer(timerID, function (e) {
+                        systemTimer.destroyTimer("timerID", function (e) {
+                            expect(false).assertTrue;
+                        });
+                    });
+                });   
+            });
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+        console.log('SUB_time_systemTimer_createTimer_0003 end');
+        done();
+    });
+
+    /**
+     * @tc.number SUB_time_systemTimer_createTimer_0004
+     * @tc.name   Test systemTimer.createTimer type = TIMER_TYPE_WAKEUP
+     * @tc.desc   Test systemTimer_Timer API functionality, repeat = true (Promise)
+     * @tc.size   : MEDIUM
+     * @tc.type   : Function
+     * @tc.level  : Level 0
+     */
+    it('SUB_time_systemTimer_createTimer_0004', 0, async function (done) {
+        let options = {
+            type: systemTimer.TIMER_TYPE_WAKEUP,
+            repeat: false
+        };
+        try {
+            systemTimer.createTimer(options).then((timerID) => {
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.startTimer("timerID", 5000).then(() => {
+                    expect(false).assertTrue();
+                })
+            });
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+        done();
+    });
+
+    /**
+     * @tc.number SUB_time_systemTimer_createTimer_0005
+     * @tc.name   Test systemTimer.createTimer type = TIMER_TYPE_WAKEUP
+     * @tc.desc   Test systemTimer_Timer API functionality, repeat = true (Promise)
+     * @tc.size   : MEDIUM
+     * @tc.type   : Function
+     * @tc.level  : Level 0
+     */
+    it('SUB_time_systemTimer_createTimer_0005', 0, async function (done) {
+        let options = {
+            type: systemTimer.TIMER_TYPE_WAKEUP,
+            repeat: false
+        };
+        try {
+            systemTimer.createTimer(options).then((timerID) => {
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.startTimer(timerID, 5000).then(() => {
+                    systemTimer.stopTimer("timerID").then(() => {
+                        expect(false).assertTrue();
+                    })
+                })
+            });
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+        done();
+    });
+
+    /**
+     * @tc.number SUB_time_systemTimer_createTimer_0006
+     * @tc.name   Test systemTimer.createTimer type = TIMER_TYPE_WAKEUP
+     * @tc.desc   Test systemTimer_Timer API functionality, repeat = true (Promise)
+     * @tc.size   : MEDIUM
+     * @tc.type   : Function
+     * @tc.level  : Level 0
+     */
+    it('SUB_time_systemTimer_createTimer_0006', 0, async function (done) {
+        let options = {
+            type: systemTimer.TIMER_TYPE_WAKEUP,
+            repeat: false
+        };
+        try {
+            systemTimer.createTimer(options).then((timerID) => {
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.startTimer(timerID, 5000).then(() => {
+                    systemTimer.stopTimer(timerID).then(() => {
+                        systemTimer.destroyTimer("timerID").then(() => {
+                            expect(false).assertTrue();
+                        })
+                    })
+                })
+            });
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+        done();
+    });
 })

@@ -193,4 +193,96 @@ describe('TimeTest', function () {
         expect('Asia/Shanghai').assertEqual(timezone);
         done();
     })
+
+    /**
+     * @tc.number    systemTime_getCurrentTime_401_test1
+     * @tc.name      Test systemTime.getCurrentTime Invalid value
+     * @tc.desc      Test systemTime_getCurrentTime API functionality.
+     * @tc.size      : MEDIUM
+     * @tc.type      : Function
+     * @tc.level     : Level 0
+     */
+    it('systemTime_getCurrentTime_401_test1', 0, async function (done) {
+        console.log("systemTime_getCurrentTime_401_test1 start");
+
+        try {
+            systemTime.getCurrentTime("true", function (err, data) {
+                expect(false).assertTrue;
+            });
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+
+        try {
+            systemTime.getCurrentTime("true").then((time) => {
+                expect(false).assertTrue;
+            });
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+        console.log('systemTime_getCurrentTime_401_test1 end');
+        done();
+    })
+
+    /**
+     * @tc.number    systemTime_getCurrentTime_401_test1
+     * @tc.name      Test systemTime.getCurrentTime Invalid value
+     * @tc.desc      Test systemTime_getCurrentTime API functionality.
+     * @tc.size      : MEDIUM
+     * @tc.type      : Function
+     * @tc.level     : Level 0
+     */
+    it('systemTime_getRealActiveTime_401_test1', 0, async function (done) {
+        console.log("systemTime_getRealActiveTime_401_test1 start");
+
+        try {
+            systemTime.getRealActiveTime("true", function (err, data) {
+                expect(false).assertTrue;
+            });
+            expect(false).assertTrue;
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+
+        try {
+            systemTime.getRealActiveTime("true").then((time) => {
+                expect(false).assertTrue;
+            });
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+        console.log('systemTime_getRealActiveTime_401_test1 end');
+        done();
+    })
+
+    /**
+     * @tc.number    systemTime_getRealTime_401_test1
+     * @tc.name      Test systemTime.getRealTime Invalid value
+     * @tc.desc      Test systemTime_getRealTime API functionality.
+     * @tc.size      : MEDIUM
+     * @tc.type      : Function
+     * @tc.level     : Level 0
+     */
+    it('systemTime_getRealTime_401_test1', 0, async function (done) {
+        console.log("systemTime_getRealTime_401_test1 start");
+
+        try {
+            systemTime.getRealTime("true", function (err, data) {
+                expect(false).assertTrue;
+            });
+            expect(false).assertTrue;
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+
+        try {
+            systemTime.getRealTime("true").then((time) => {
+                expect(false).assertTrue;
+            });
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+        }
+        console.log('systemTime_getRealTime_401_test1 end');
+        done();
+    })
 })
