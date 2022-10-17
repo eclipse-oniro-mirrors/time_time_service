@@ -239,7 +239,7 @@ console.log('end');
 
 ## 相关仓<a name="section1371113476307"></a>
 
-**时间时区子系统**
+[Misc软件服务子系统](https://gitee.com/openharmony/docs/blob/master/zh-cn/readme/Misc软件服务子系统.md)
 
-[time\_time\_service](https://gitee.com/openharmony/time_time_service/tree/master/)
+[**time\_time\_service**](https://gitee.com/openharmony/time_time_service/tree/master/)
 
