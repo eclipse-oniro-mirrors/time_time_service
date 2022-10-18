@@ -40,11 +40,11 @@ class TimeZoneInfo : public std::enable_shared_from_this<TimeZoneInfo> {
 public:
     bool GetTimezone(std::string &timezoneId);
     bool SetTimezone(std::string timezoneId);
+    bool SetOffsetToKernel(int offset);
     void Init();
     int64_t GetCurrentOffsetMs();
 private:
     bool InitStorage();
-    bool SetOffsetToKernel(int offset);
     bool GetOffsetById(const std::string timezoneId, int &offset);
     bool GetTimezoneFromFile(std::string &timezoneId);
     bool SaveTimezoneToFile(std::string timezoneId);

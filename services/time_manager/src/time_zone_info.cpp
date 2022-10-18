@@ -20,7 +20,6 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 const std::string TIMEZONE_FILE_PATH = "/data/service/el1/public/time/timezone.json";
-const int64_t HOUR_TO_MILLISECONDS = 3600000;
 const std::string DEFAULT_TIME_ZONE_ID = "Asia/Shanghai";
 }
 
@@ -78,6 +77,10 @@ void TimeZoneInfo::Init()
     curTimezoneId_ = DEFAULT_TIME_ZONE_ID;
     if (!InitStorage()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "end, InitStorage failed.");
+        return;
+    }
+    if (!SaveTimezoneToFile(curTimezoneId_)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "end, SaveTimezoneToFile failed.");
         return;
     }
     if (!GetTimezoneFromFile(timezoneId)) {
@@ -143,7 +146,8 @@ int64_t TimeZoneInfo::GetCurrentOffsetMs()
 {
     int offsetHours = 0;
     GetOffsetById(curTimezoneId_, offsetHours);
-    return static_cast<int64_t>(offsetHours) * HOUR_TO_MILLISECONDS;
+    TIME_HILOGE(TIME_MODULE_SERVICE, "GetCurrentOffset offsetHour %{public}d", offsetHours);
+    return static_cast<int64_t>(offsetHours);
 }
 
 bool TimeZoneInfo::SetOffsetToKernel(int offsetHour)
@@ -151,10 +155,11 @@ bool TimeZoneInfo::SetOffsetToKernel(int offsetHour)
     std::stringstream TZstrs;
     time_t timeNow;
     TZstrs << "UTC-" << offsetHour;
-    (void)time(&timeNow);
     if (setenv("TZ", TZstrs.str().data(), 1) == 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone %{public}s", TZstrs.str().data());
         tzset();
-        (void)time(&timeNow);
+        time(&timeNow);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "localtime %{public}s", asctime(localtime(&timeNow)));
         return true;
     }
     TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone failed %{public}s", TZstrs.str().data());
@@ -200,6 +205,7 @@ bool TimeZoneInfo::GetOffsetById(const std::string timezoneId, int &offset)
     if (itEntry != timezoneInfoMap_.end()) {
         auto zoneInfo = itEntry->second;
         offset = zoneInfo.utcOffsetHours;
+        TIME_HILOGE(TIME_MODULE_SERVICE, "GetOffsetById offset %{public}d", offset);
         return true;
     }
     TIME_HILOGE(TIME_MODULE_SERVICE, "TimezoneId not found: %{public}s.", timezoneId.c_str());
