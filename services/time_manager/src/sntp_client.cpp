@@ -120,6 +120,7 @@ bool SNTPClient::RequestTime(std::string host)
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime6.");
     ReceivedMessage(bufferRx);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    close(SendSocket);
     return true;
 }
 
