@@ -137,4 +137,4 @@ napi_value JSParaError(const napi_env &env, const napi_ref &callback)
 } // namespace MiscServicesNapi
 } // namespace OHOS
 
-#endif //TIME_TIME_SERVICE_COMMON_H
+#endif // TIME_TIME_SERVICE_COMMON_H
