@@ -59,7 +59,8 @@ napi_value ParseParametersBySetTime(const napi_env &env, const napi_value (&argv
 
     // argv[0]: times or date object
     NAPI_CALL(env, napi_typeof(env, argv[0], &valueType));
-    NAPI_ASSERTP(env, valueType == napi_number || valueType == napi_object, "Parameter error. The type of time must be number or date.");
+    NAPI_ASSERTP(env, valueType == napi_number || valueType == napi_object,
+                 "Parameter error. The type of time must be number or date.");
     if (valueType == napi_number) {
         napi_get_value_int64(env, argv[0], &times);
         NAPI_ASSERTP(env, times >= 0, "Wrong argument timer. Positive number expected.");
@@ -165,7 +166,7 @@ napi_value ParseParametersBySetTimezone(const napi_env &env, const napi_value (&
     // argv[1]:callback
     if (argc >= SET_TIMEZONE_MAX_PARA) {
         NAPI_CALL(env, napi_typeof(env, argv[1], &valueType));
-         NAPI_ASSERTP( env, valueType == napi_function, "Parameter error. The type of callback must be function.");
+        NAPI_ASSERTP(env, valueType == napi_function, "Parameter error. The type of callback must be function.");
         napi_create_reference(env, argv[1], 1, &callback);
     }
     return NapiGetNull(env);
