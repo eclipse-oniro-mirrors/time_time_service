@@ -40,7 +40,6 @@ namespace MiscServices {
 namespace {
 constexpr uint64_t NANO_TO_MILLISECOND = 1000000;
 constexpr uint64_t DAY_TO_MILLISECOND = 86400000;
-constexpr uint64_t EIGHTHOUR_TO_MILLISECONDS = 28800000;
 const std::string AUTOTIME_FILE_PATH = "/data/service/el1/public/time/autotime.json";
 const std::string NETWORK_TIME_STATUS_ON = "ON";
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
@@ -149,7 +148,7 @@ void NtpUpdateTime::RefreshNetworkTimeByTimer(const uint64_t timerId)
 void NtpUpdateTime::UpdateNITZSetTime()
 {
     auto BootTimeNano = steady_clock::now().time_since_epoch().count();
-    auto BootTimeMilli = BootTimeNano / NANO_TO_MILLISECOND + EIGHTHOUR_TO_MILLISECONDS;
+    auto BootTimeMilli = BootTimeNano / NANO_TO_MILLISECOND;
     TIME_HILOGD(TIME_MODULE_SERVICE, "nitz time changed.");
     nitzUpdateTimeMili_ = BootTimeMilli;
 }
@@ -176,7 +175,7 @@ void NtpUpdateTime::SetSystemTime()
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp UTC Time: %{public}" PRId64 "", currentTime);
     int64_t offset = DelayedSingleton<TimeZoneInfo>::GetInstance()->GetCurrentOffsetMs();
-    currentTime = offset + currentTime;
+    DelayedSingleton<TimeZoneInfo>::GetInstance()->SetOffsetToKernel(offset);
     TimeService::GetInstance()->SetTime(currentTime);
     autoTimeInfo_.lastUpdateTime = currentTime;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update currentTime: %{public}" PRId64 "", currentTime);
