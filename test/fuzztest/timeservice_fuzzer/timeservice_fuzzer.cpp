@@ -26,7 +26,7 @@ using namespace OHOS::MiscServices;
 namespace OHOS {
 constexpr size_t THRESHOLD = 10;
 constexpr int32_t OFFSET = 4;
-const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscseervice.screenlock";
+const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscservices.time.ITimeService";
 
 uint32_t ConvertToUint32(const uint8_t* ptr)
 {
