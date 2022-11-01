@@ -688,7 +688,7 @@ steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
 bool TimerManager::ShowtimerEntryMap(int fd)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::lock_guard<std::mutex> lock(entryMapMutex_);
+    std::lock_guard<std::mutex> lock(showTimerMutex_);
     std::map<uint64_t, std::shared_ptr<TimerEntry>>::iterator iter = timerEntryMap_.begin();
     for (; iter != timerEntryMap_.end(); iter++) {
         dprintf(fd, " - dump timer number   = %lu\n", iter->first);
@@ -705,7 +705,7 @@ bool TimerManager::ShowtimerEntryMap(int fd)
 bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::lock_guard<std::mutex> lock(entryMapMutex_);
+    std::lock_guard<std::mutex> lock(showTimerMutex_);
     std::map<uint64_t, std::shared_ptr<TimerEntry>>::iterator iter = timerEntryMap_.find(timerId);
     if (iter == timerEntryMap_.end()) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
@@ -725,7 +725,7 @@ bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
 bool TimerManager::ShowTimerTriggerById(int fd, uint64_t timerId)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::lock_guard<std::mutex> lock(entryMapMutex_);
+    std::lock_guard<std::mutex> lock(showTimerMutex_);
     for (size_t i = 0; i < alarmBatches_.size(); i++) {
         for (size_t j = 0; j < alarmBatches_[i]->Size(); j++) {
             if (alarmBatches_[i]->Get(j)->id == timerId) {

@@ -109,6 +109,7 @@ private:
     std::vector<std::shared_ptr<Batch>> alarmBatches_;
     std::mutex mutex_;
     std::mutex entryMapMutex_;
+    std::mutex showTimerMutex_;
     std::chrono::system_clock::time_point lastTimeChangeClockTime_;
     std::chrono::steady_clock::time_point lastTimeChangeRealtime_;
 
