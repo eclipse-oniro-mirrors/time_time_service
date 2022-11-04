@@ -68,9 +68,9 @@ napi_value GetCallbackErrorValue(napi_env env, int errCode, const char *message)
         napi_get_undefined(env, &result);
         return result;
     }
+    NAPI_CALL(env, napi_create_object(env, &result));
     if (errCode == MiscServices::E_TIME_NO_PERMISSION) {
         NAPI_CALL(env, napi_create_int32(env, errCode, &eCode));
-        NAPI_CALL(env, napi_create_object(env, &result));
         NAPI_CALL(env, napi_set_named_property(env, result, "code", eCode));
 
         napi_value str;
