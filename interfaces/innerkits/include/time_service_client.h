@@ -199,6 +199,9 @@ public:
 private:
     TimeServiceClient();
     ~TimeServiceClient();
+    static std::mutex proxyLock_;
+    static sptr<ITimeService> GetProxy();
+    static void SetProxy(sptr<ITimeService> proxy);
 
     static std::mutex instanceLock_;
     static sptr<TimeServiceClient> instance_;

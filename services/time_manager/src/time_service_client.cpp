@@ -23,6 +23,7 @@
 namespace OHOS {
 namespace MiscServices {
 std::mutex TimeServiceClient::instanceLock_;
+std::mutex TimeServiceClient::proxyLock_;
 sptr<TimeServiceClient> TimeServiceClient::instance_;
 sptr<ITimeService> TimeServiceClient::timeServiceProxy_;
 sptr<TimeSaDeathRecipient> TimeServiceClient::deathRecipient_;
@@ -34,7 +35,7 @@ TimeServiceClient::TimeServiceClient()
 TimeServiceClient::~TimeServiceClient()
 {
     if (timeServiceProxy_ != nullptr) {
-        auto remoteObject = timeServiceProxy_->AsObject();
+        auto remoteObject = GetProxy()->AsObject();
         if (remoteObject != nullptr) {
             remoteObject->RemoveDeathRecipient(deathRecipient_);
         }
@@ -75,14 +76,12 @@ bool TimeServiceClient::ConnectService()
     }
     deathRecipient_ = new TimeSaDeathRecipient();
     systemAbility->AddDeathRecipient(deathRecipient_);
-    timeServiceProxy_ = iface_cast<ITimeService>(systemAbility);
-    if (timeServiceProxy_ == nullptr) {
+    sptr<ITimeService> proxy = iface_cast<ITimeService>(systemAbility);
+    if (proxy == nullptr) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Get TimeServiceProxy from SA failed.");
         return false;
     }
-
-    TIME_HILOGI(TIME_MODULE_CLIENT, "Getting TimeServiceProxy succeeded, ptr: %{public}p, wrap: %{public}p",
-        timeServiceProxy_.GetRefPtr(), &timeServiceProxy_);
+    SetProxy(proxy);
     return true;
 }
 
@@ -91,7 +90,7 @@ bool TimeServiceClient::SetTime(const int64_t time)
     if (!ConnectService()) {
         return false;
     }
-    return timeServiceProxy_->SetTime(time) == ERR_OK;
+    return GetProxy()->SetTime(time) == ERR_OK;
 }
 
 bool TimeServiceClient::SetTime(const int64_t milliseconds, int32_t &code)
@@ -100,7 +99,7 @@ bool TimeServiceClient::SetTime(const int64_t milliseconds, int32_t &code)
         code = E_TIME_SA_DIED;
         return false;
     }
-    code = timeServiceProxy_->SetTime(milliseconds);
+    code = GetProxy()->SetTime(milliseconds);
     return code == ERR_OK;
 }
 
@@ -109,7 +108,7 @@ bool TimeServiceClient::SetTimeZone(const std::string timezoneId)
     if (!ConnectService()) {
         return false;
     }
-    return timeServiceProxy_->SetTimeZone(timezoneId) == ERR_OK;
+    return GetProxy()->SetTimeZone(timezoneId) == ERR_OK;
 }
 
 bool TimeServiceClient::SetTimeZone(const std::string timezoneId, int32_t &code)
@@ -118,7 +117,7 @@ bool TimeServiceClient::SetTimeZone(const std::string timezoneId, int32_t &code)
         code = E_TIME_SA_DIED;
         return false;
     }
-    code = timeServiceProxy_->SetTimeZone(timezoneId);
+    code = GetProxy()->SetTimeZone(timezoneId);
     return code == ERR_OK;
 }
 
@@ -137,11 +136,11 @@ uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> TimerOptions
         return 0;
     }
 
-    auto timerId = timeServiceProxy_->CreateTimer(TimerOptions->type,
-                                                  TimerOptions->repeat,
-                                                  TimerOptions->interval,
-                                                  TimerOptions->wantAgent,
-                                                  timerCallbackInfoObject);
+    auto timerId = GetProxy()->CreateTimer(TimerOptions->type,
+                                           TimerOptions->repeat,
+                                           TimerOptions->interval,
+                                           TimerOptions->wantAgent,
+                                           timerCallbackInfoObject);
     if (timerId == 0) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Create timer failed");
         return 0;
@@ -159,7 +158,7 @@ bool TimeServiceClient::StartTimer(uint64_t timerId, uint64_t triggerTime)
     if (!ConnectService()) {
         return false;
     }
-    return timeServiceProxy_->StartTimer(timerId, triggerTime);
+    return GetProxy()->StartTimer(timerId, triggerTime);
 }
 
 bool TimeServiceClient::StopTimer(uint64_t timerId)
@@ -167,7 +166,7 @@ bool TimeServiceClient::StopTimer(uint64_t timerId)
     if (!ConnectService()) {
         return false;
     }
-    return timeServiceProxy_->StopTimer(timerId);
+    return GetProxy()->StopTimer(timerId);
 }
 
 bool TimeServiceClient::DestroyTimer(uint64_t timerId)
@@ -175,7 +174,7 @@ bool TimeServiceClient::DestroyTimer(uint64_t timerId)
     if (!ConnectService()) {
         return false;
     }
-    if (timeServiceProxy_->DestroyTimer(timerId)) {
+    if (GetProxy()->DestroyTimer(timerId)) {
         TimerCallback::GetInstance()->RemoveTimerCallbackInfo(timerId);
         return true;
     }
@@ -188,7 +187,7 @@ std::string TimeServiceClient::GetTimeZone()
     if (!ConnectService()) {
         return std::string("");
     }
-    if (timeServiceProxy_->GetTimeZone(timeZoneId) != ERR_OK) {
+    if (GetProxy()->GetTimeZone(timeZoneId) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return std::string("");
     }
@@ -202,7 +201,7 @@ int64_t TimeServiceClient::GetWallTimeMs()
         return -1;
     }
     TIME_HILOGW(TIME_MODULE_CLIENT, "timeServiceProxy_: %{public}p", timeServiceProxy_.GetRefPtr());
-    if (timeServiceProxy_->GetWallTimeMs(times) != ERR_OK) {
+    if (GetProxy()->GetWallTimeMs(times) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
@@ -216,7 +215,7 @@ int64_t TimeServiceClient::GetWallTimeNs()
     if (!ConnectService()) {
         return -1;
     }
-    if (timeServiceProxy_->GetWallTimeNs(times) != ERR_OK) {
+    if (GetProxy()->GetWallTimeNs(times) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
@@ -230,7 +229,7 @@ int64_t TimeServiceClient::GetBootTimeMs()
     if (!ConnectService()) {
         return -1;
     }
-    if (timeServiceProxy_->GetBootTimeMs(times) != ERR_OK) {
+    if (GetProxy()->GetBootTimeMs(times) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
@@ -244,7 +243,7 @@ int64_t TimeServiceClient::GetBootTimeNs()
     if (!ConnectService()) {
         return -1;
     }
-    if (timeServiceProxy_->GetBootTimeNs(times) != ERR_OK) {
+    if (GetProxy()->GetBootTimeNs(times) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
@@ -258,7 +257,7 @@ int64_t TimeServiceClient::GetMonotonicTimeMs()
     if (!ConnectService()) {
         return -1;
     }
-    if (timeServiceProxy_->GetMonotonicTimeMs(times) != ERR_OK) {
+    if (GetProxy()->GetMonotonicTimeMs(times) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
@@ -272,7 +271,7 @@ int64_t TimeServiceClient::GetMonotonicTimeNs()
     if (!ConnectService()) {
         return -1;
     }
-    if (timeServiceProxy_->GetMonotonicTimeNs(times) != ERR_OK) {
+    if (GetProxy()->GetMonotonicTimeNs(times) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
@@ -286,7 +285,7 @@ int64_t TimeServiceClient::GetThreadTimeMs()
     if (!ConnectService()) {
         return -1;
     }
-    if (timeServiceProxy_->GetThreadTimeMs(times) != ERR_OK) {
+    if (GetProxy()->GetThreadTimeMs(times) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
@@ -300,7 +299,7 @@ int64_t TimeServiceClient::GetThreadTimeNs()
     if (!ConnectService()) {
         return -1;
     }
-    if (timeServiceProxy_->GetThreadTimeNs(times) != ERR_OK) {
+    if (GetProxy()->GetThreadTimeNs(times) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
@@ -314,7 +313,7 @@ void TimeServiceClient::NetworkTimeStatusOff()
     if (!ConnectService()) {
         return;
     }
-    timeServiceProxy_->NetworkTimeStatusOff();
+    GetProxy()->NetworkTimeStatusOff();
     TIME_HILOGW(TIME_MODULE_CLIENT, "end");
     return;
 }
@@ -325,7 +324,7 @@ void TimeServiceClient::NetworkTimeStatusOn()
     if (!ConnectService()) {
         return;
     }
-    timeServiceProxy_->NetworkTimeStatusOn();
+    GetProxy()->NetworkTimeStatusOn();
     TIME_HILOGW(TIME_MODULE_CLIENT, "end");
     return;
 }
@@ -352,7 +351,7 @@ bool TimeServiceClient::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger
     if (!ConnectService()) {
         return false;
     }
-    return timeServiceProxy_->ProxyTimer(uid, isProxy, needRetrigger);
+    return GetProxy()->ProxyTimer(uid, isProxy, needRetrigger);
 }
 
 bool TimeServiceClient::ResetAllProxy()
@@ -366,7 +365,19 @@ bool TimeServiceClient::ResetAllProxy()
         TIME_HILOGE(TIME_MODULE_CLIENT, "ResetAllProxy ConnectService failed.");
         return false;
     }
-    return timeServiceProxy_->ResetAllProxy();
+    return GetProxy()->ResetAllProxy();
+}
+
+sptr<ITimeService> TimeServiceClient::GetProxy()
+{
+    std::lock_guard<std::mutex> autoLock(proxyLock_);
+    return timeServiceProxy_;
+}
+
+void TimeServiceClient::SetProxy(sptr<ITimeService> proxy)
+{
+    std::lock_guard<std::mutex> autoLock(proxyLock_);
+    timeServiceProxy_ = proxy;
 }
 } // namespace MiscServices
 } // namespace OHOS
