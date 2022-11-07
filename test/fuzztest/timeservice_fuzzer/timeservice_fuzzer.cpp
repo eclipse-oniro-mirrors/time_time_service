@@ -25,7 +25,6 @@ using namespace OHOS::MiscServices;
 
 namespace OHOS {
 constexpr size_t THRESHOLD = 10;
-constexpr int32_t OFFSET = 4;
 const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscservices.time.ITimeService";
 
 uint32_t ConvertToUint32(const uint8_t* ptr)
@@ -42,9 +41,7 @@ uint32_t ConvertToUint32(const uint8_t* ptr)
 
 bool FuzzTimeService(const uint8_t* rawData, size_t size)
 {
-    uint32_t code = ConvertToUint32(rawData);
-    rawData = rawData + OFFSET;
-    size = size - OFFSET;
+    uint32_t code = (*rawData) % 9 + 1;
 
     MessageParcel data;
     data.WriteInterfaceToken(TIMESERVICE_INTERFACE_TOKEN);
