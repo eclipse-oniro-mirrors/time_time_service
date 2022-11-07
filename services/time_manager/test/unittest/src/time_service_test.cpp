@@ -15,7 +15,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <chrono>
+#include <fstream>
 #include "ipc_skeleton.h"
+#include "json/json.h"
 #include "timer_info_test.h"
 #include "time_service_test.h"
 
@@ -26,6 +28,12 @@ using namespace OHOS::MiscServices;
 using namespace std::chrono;
 
 const int RESERVED_UID = 99999;
+
+const std::string AUTOTIME_FILE_PATH = "/data/service/el1/public/time/autotime.json";
+const std::string NETWORK_TIME_STATUS_ON = "ON";
+const std::string NETWORK_TIME_STATUS_OFF = "OFF";
+const std::string NTP_CN_SERVER = "ntp.aliyun.com";
+const int64_t INVALID_TIMES = -1;
 
 class TimeServiceTest : public testing::Test
 {
@@ -50,6 +58,63 @@ void TimeServiceTest::SetUp(void)
 
 void TimeServiceTest::TearDown(void)
 {
+}
+
+struct AutoTimeInfo {
+    std::string NTP_SERVER;
+    std::string status;
+    int64_t lastUpdateTime;
+};
+
+bool GetAutoTimeInfoFromFile(AutoTimeInfo &info)
+{
+    Json::Value jsonValue;
+    std::ifstream ifs;
+    ifs.open(AUTOTIME_FILE_PATH);
+    Json::CharReaderBuilder builder;
+    builder["collectComments"] = true;
+    JSONCPP_STRING errs;
+    if (!parseFromStream(builder, ifs, &jsonValue, &errs)) {
+        ifs.close();
+        return false;
+    }
+    info.status = jsonValue["status"].asString();
+    info.NTP_SERVER = jsonValue["ntpServer"].asString();
+    info.lastUpdateTime = jsonValue["lastUpdateTime"].asInt64();
+    ifs.close();
+    return true;
+}
+
+/**
+* @tc.name: NetworkTimeStatusOn
+* @tc.desc: network time status on.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, NetworkTimeStatusOn, TestSize.Level1)
+{
+    TimeServiceClient::GetInstance()->NetworkTimeStatusOn();
+
+    AutoTimeInfo info;
+    bool result = GetAutoTimeInfoFromFile(info);
+    EXPECT_EQ(true, result);
+    EXPECT_EQ(NETWORK_TIME_STATUS_ON, info.status);
+}
+
+/**
+* @tc.name: NetworkTimeStatusOff
+* @tc.desc: network time status off.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, NetworkTimeStatusOff, TestSize.Level1)
+{
+    TimeServiceClient::GetInstance()->NetworkTimeStatusOff();
+
+    AutoTimeInfo info;
+    bool result = GetAutoTimeInfoFromFile(info);
+    EXPECT_EQ(true, result);
+    EXPECT_EQ(INVALID_TIMES, info.lastUpdateTime);
+    EXPECT_EQ(NTP_CN_SERVER, info.NTP_SERVER);
+    EXPECT_EQ(NETWORK_TIME_STATUS_OFF, info.status);
 }
 
 /**
@@ -89,15 +154,93 @@ HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level0)
 }
 
 /**
-* @tc.name: GetTime001
-* @tc.desc: get system time.
+* @tc.name: GetWallTimeMs
+* @tc.desc: get wall time (ms).
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, GetTime001, TestSize.Level0)
+HWTEST_F(TimeServiceTest, GetWallTimeMs, TestSize.Level0)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
     EXPECT_TRUE(time1 != -1);
     auto time2 = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    EXPECT_TRUE(time2 >= time1);
+}
+
+/**
+* @tc.name: GetWallTimeNs
+* @tc.desc: get wall time (ns).
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, GetWallTimeNs, TestSize.Level1)
+{
+    auto time1 = TimeServiceClient::GetInstance()->GetWallTimeNs();
+    EXPECT_TRUE(time1 != -1);
+    auto time2 = TimeServiceClient::GetInstance()->GetWallTimeNs();
+    EXPECT_TRUE(time2 >= time1);
+}
+
+/**
+* @tc.name: GetBootTimeNs
+* @tc.desc: get boot time (ns).
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, GetBootTimeNs, TestSize.Level1)
+{
+    auto time1 = TimeServiceClient::GetInstance()->GetBootTimeNs();
+    EXPECT_TRUE(time1 != -1);
+    auto time2 = TimeServiceClient::GetInstance()->GetBootTimeNs();
+    EXPECT_TRUE(time2 >= time1);
+}
+
+/**
+* @tc.name: GetMonotonicTimeMs
+* @tc.desc: get monotonic time (ms).
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, GetMonotonicTimeMs, TestSize.Level1)
+{
+    auto time1 = TimeServiceClient::GetInstance()->GetMonotonicTimeMs();
+    EXPECT_TRUE(time1 != -1);
+    auto time2 = TimeServiceClient::GetInstance()->GetMonotonicTimeMs();
+    EXPECT_TRUE(time2 >= time1);
+}
+
+/**
+* @tc.name: GetMonotonicTimeNs
+* @tc.desc: get monotonic time (ns).
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, GetMonotonicTimeNs, TestSize.Level1)
+{
+    auto time1 = TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
+    EXPECT_TRUE(time1 != -1);
+    auto time2 = TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
+    EXPECT_TRUE(time2 >= time1);
+}
+
+/**
+* @tc.name: GetThreadTimeMs
+* @tc.desc: get thread time (ms).
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, GetThreadTimeMs, TestSize.Level1)
+{
+    auto time1 = TimeServiceClient::GetInstance()->GetThreadTimeMs();
+    EXPECT_TRUE(time1 != -1);
+    auto time2 = TimeServiceClient::GetInstance()->GetThreadTimeMs();
+    EXPECT_TRUE(time2 >= time1);
+}
+
+/**
+* @tc.name: GetThreadTimeNs
+* @tc.desc: get thread time (ns).
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, GetThreadTimeNs, TestSize.Level1)
+{
+    auto time1 = TimeServiceClient::GetInstance()->GetThreadTimeNs();
+    EXPECT_TRUE(time1 != -1);
+    auto time2 = TimeServiceClient::GetInstance()->GetThreadTimeNs();
     EXPECT_TRUE(time2 >= time1);
 }
 
