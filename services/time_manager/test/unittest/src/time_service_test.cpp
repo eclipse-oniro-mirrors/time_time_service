@@ -61,7 +61,7 @@ void TimeServiceTest::TearDown(void)
 }
 
 struct AutoTimeInfo {
-    std::string NTP_SERVER;
+    std::string ntpServer;
     std::string status;
     int64_t lastUpdateTime;
 };
@@ -79,7 +79,7 @@ bool GetAutoTimeInfoFromFile(AutoTimeInfo &info)
         return false;
     }
     info.status = jsonValue["status"].asString();
-    info.NTP_SERVER = jsonValue["ntpServer"].asString();
+    info.ntpServer = jsonValue["ntpServer"].asString();
     info.lastUpdateTime = jsonValue["lastUpdateTime"].asInt64();
     ifs.close();
     return true;
@@ -113,7 +113,7 @@ HWTEST_F(TimeServiceTest, NetworkTimeStatusOff, TestSize.Level1)
     bool result = GetAutoTimeInfoFromFile(info);
     EXPECT_EQ(true, result);
     EXPECT_EQ(INVALID_TIMES, info.lastUpdateTime);
-    EXPECT_EQ(NTP_CN_SERVER, info.NTP_SERVER);
+    EXPECT_EQ(NTP_CN_SERVER, info.ntpServer);
     EXPECT_EQ(NETWORK_TIME_STATUS_OFF, info.status);
 }
 
