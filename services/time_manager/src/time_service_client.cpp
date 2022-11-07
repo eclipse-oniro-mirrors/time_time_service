@@ -13,19 +13,34 @@
  * limitations under the License.
  */
 
+#include "time_service_client.h"
+#include "iremote_object.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
+#include "time_common.h"
 #include <cinttypes>
 #include <mutex>
-#include "time_common.h"
-#include "system_ability_definition.h"
-#include "iservice_registry.h"
-#include "time_service_client.h"
 
 namespace OHOS {
 namespace MiscServices {
+class TimeSaDeathRecipient : public IRemoteObject::DeathRecipient {
+public:
+    explicit TimeSaDeathRecipient(){};
+    ~TimeSaDeathRecipient() = default;
+    void OnRemoteDied(const wptr<IRemoteObject> &object) override
+    {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "TimeSaDeathRecipient on remote systemAbility died.");
+        TimeServiceClient::GetInstance()->ConnectService();
+    };
+
+private:
+    DISALLOW_COPY_AND_MOVE(TimeSaDeathRecipient);
+};
+
 std::mutex TimeServiceClient::instanceLock_;
 sptr<TimeServiceClient> TimeServiceClient::instance_;
 sptr<ITimeService> TimeServiceClient::timeServiceProxy_;
-sptr<TimeSaDeathRecipient> TimeServiceClient::deathRecipient_;
+sptr<TimeSaDeathRecipient> deathRecipient_;
 
 TimeServiceClient::TimeServiceClient()
 {
@@ -328,21 +343,6 @@ void TimeServiceClient::NetworkTimeStatusOn()
     timeServiceProxy_->NetworkTimeStatusOn();
     TIME_HILOGW(TIME_MODULE_CLIENT, "end");
     return;
-}
-
-void TimeServiceClient::OnRemoteSaDied(const wptr<IRemoteObject> &remote)
-{
-    ConnectService();
-}
-
-TimeSaDeathRecipient::TimeSaDeathRecipient()
-{
-}
-
-void TimeSaDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &object)
-{
-    TIME_HILOGE(TIME_MODULE_CLIENT, "TimeSaDeathRecipient on remote systemAbility died.");
-    TimeServiceClient::GetInstance()->OnRemoteSaDied(object);
 }
 
 bool TimeServiceClient::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
