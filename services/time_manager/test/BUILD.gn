@@ -20,10 +20,11 @@ config("module_private_config") {
     "//base/time/time_service/interfaces/innerkits/include",
     "unittest/include",
     "//foundation/arkui/napi/interfaces/kits/napi",
+    "//third_party/json/include",
   ]
 }
 
-module_output_path = "time_native/time_service"
+module_output_path = "time_service/time_native"
 
 ohos_unittest("TimeServiceTest") {
   module_out_path = module_output_path
@@ -37,6 +38,7 @@ ohos_unittest("TimeServiceTest") {
     "//foundation/systemabilitymgr/safwk/interfaces/innerkits/safwk:system_ability_fwk",
     "//foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy:samgr_proxy",
     "//third_party/googletest:gtest_main",
+    "//third_party/jsoncpp:jsoncpp",
   ]
 
   external_deps = [
