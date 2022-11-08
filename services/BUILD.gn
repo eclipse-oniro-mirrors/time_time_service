@@ -27,6 +27,7 @@ config("time_service_config") {
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "${relational_store_innerapi_path}/rdb/include/",
     "${relational_store_innerapi_path}/appdatafwk/include/",
+    "//base/startup/init/interfaces/innerkits/include/syspara",
   ]
 }
 
@@ -73,7 +74,6 @@ ohos_shared_library("time_service") {
   ]
   external_deps = [
     "ability_base:want",
-    "ability_runtime:runtime",
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
@@ -81,11 +81,10 @@ ohos_shared_library("time_service") {
     "hisysevent_native:libhisysevent",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
-    "relational_store:native_appdatafwk",
-    "relational_store:native_dataability",
-    "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "init:libbeget_proxy",
+    "init:libbegetutil",
   ]
   part_name = "time_service"
   subsystem_name = "time"
