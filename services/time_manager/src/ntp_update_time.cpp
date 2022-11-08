@@ -174,8 +174,6 @@ void NtpUpdateTime::SetSystemTime()
         return;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp UTC Time: %{public}" PRId64 "", currentTime);
-    int64_t offset = DelayedSingleton<TimeZoneInfo>::GetInstance()->GetCurrentOffsetMs();
-    DelayedSingleton<TimeZoneInfo>::GetInstance()->SetOffsetToKernel(offset);
     TimeService::GetInstance()->SetTime(currentTime);
     autoTimeInfo_.lastUpdateTime = currentTime;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update currentTime: %{public}" PRId64 "", currentTime);
