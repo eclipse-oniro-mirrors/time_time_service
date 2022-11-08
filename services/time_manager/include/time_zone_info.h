@@ -25,7 +25,7 @@
 #include "refbase.h"
 #include "time.h"
 #include "time_common.h"
-#include "json/json.h"
+#include "parameter.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -40,14 +40,9 @@ class TimeZoneInfo : public std::enable_shared_from_this<TimeZoneInfo> {
 public:
     bool GetTimezone(std::string &timezoneId);
     bool SetTimezone(std::string timezoneId);
-    bool SetOffsetToKernel(int offset);
+    bool SetTimezoneToKernel(std::string timezoneId);
     void Init();
-    int64_t GetCurrentOffsetMs();
 private:
-    bool InitStorage();
-    bool GetOffsetById(const std::string timezoneId, int &offset);
-    bool GetTimezoneFromFile(std::string &timezoneId);
-    bool SaveTimezoneToFile(std::string timezoneId);
     std::string curTimezoneId_;
     std::map<std::string, struct zoneInfoEntry> timezoneInfoMap_;
 };
