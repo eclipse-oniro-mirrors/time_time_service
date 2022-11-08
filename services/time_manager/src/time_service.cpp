@@ -368,7 +368,7 @@ bool TimeService::SetRealTime(const int64_t time)
 
     int result = settimeofday(&tv, NULL);
     if (result < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday fail: %{public}d.", result);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday time fail: %{public}d.", result);
         return false;
     }
     auto ret = set_rtc_time(tv.tv_sec);

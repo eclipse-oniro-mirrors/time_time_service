@@ -19,8 +19,10 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
-const std::string TIMEZONE_FILE_PATH = "/data/service/el1/public/time/timezone.json";
-const std::string DEFAULT_TIME_ZONE_ID = "Asia/Shanghai";
+    constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
+    const int TIMEZONE_OK = 0;
+    const int CONFIG_LEN = 35;
+    const int HOUR_TO_MILLI = 60;
 }
 
 TimeZoneInfo::TimeZoneInfo()
@@ -71,66 +73,35 @@ TimeZoneInfo::~TimeZoneInfo()
 
 void TimeZoneInfo::Init()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::string timezoneId;
-    int gmtOffset;
-    curTimezoneId_ = DEFAULT_TIME_ZONE_ID;
-    if (!InitStorage()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, InitStorage failed.");
-        return;
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Start.");
+    char value[CONFIG_LEN] = "Asia/Shanghai";
+    if (GetParameter(TIMEZONE_KEY, "", value, CONFIG_LEN) < TIMEZONE_OK) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "No found timezone from system parameter.");
     }
-    if (!SaveTimezoneToFile(curTimezoneId_)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, SaveTimezoneToFile failed.");
-        return;
-    }
-    if (!GetTimezoneFromFile(timezoneId)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, GetTimezoneFromFile failed.");
-        return;
-    }
-    if (!GetOffsetById(timezoneId, gmtOffset)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, GetOffsetById failed.");
-        return;
-    }
-    if (!SetOffsetToKernel(gmtOffset)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, SetOffsetToKernel failed.");
-    }
-    curTimezoneId_ = timezoneId;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-}
 
-bool TimeZoneInfo::InitStorage()
-{
-    auto filePath = TIMEZONE_FILE_PATH.c_str();
-    if (!TimeFileUtils::IsExistFile(filePath)) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Timezone file not existed :%{public}s.", filePath);
-        const std::string dir = TimeFileUtils::GetPathDir(filePath);
-        if (dir.empty()) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Filepath invalid.");
-            return false;
-        }
-        if (!TimeFileUtils::IsExistDir(dir.c_str())) {
-            if (!TimeFileUtils::MkRecursiveDir(dir.c_str(), true)) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "Create filepath failed :%{public}s.", filePath);
-                return false;
-            }
-            TIME_HILOGD(TIME_MODULE_SERVICE, "Create filepath success :%{public}s.", filePath);
-        }
+    if (!SetTimezoneToKernel(value)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Init Set kernel failed.");
     }
-    return true;
+    curTimezoneId_ = value;
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Timezone value: %{public}s", value);
 }
 
 bool TimeZoneInfo::SetTimezone(std::string timezoneId)
 {
-    int gmtOffset;
-    if (!GetOffsetById(timezoneId, gmtOffset)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timezone unsupport %{public}s.", timezoneId.c_str());
+    if (curTimezoneId_ == timezoneId) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Same Timezone has been set.");
+        return true;
+    }
+
+    auto errNo = SetParameter(TIMEZONE_KEY, timezoneId.c_str());
+    if (errNo > TIMEZONE_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone timezoneId: %{public}d: %{public}s", errNo, timezoneId.c_str());
         return false;
     }
-    if (!SetOffsetToKernel(gmtOffset)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Set kernel failed.");
-    }
-    if (!SaveTimezoneToFile(timezoneId)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Save file failed.");
+
+    if (!SetTimezoneToKernel(timezoneId)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone Set kernel failed.");
+        return false;
     }
     curTimezoneId_ = timezoneId;
     return true;
@@ -142,73 +113,24 @@ bool TimeZoneInfo::GetTimezone(std::string &timezoneId)
     return true;
 }
 
-int64_t TimeZoneInfo::GetCurrentOffsetMs()
-{
-    int offsetHours = 0;
-    GetOffsetById(curTimezoneId_, offsetHours);
-    TIME_HILOGE(TIME_MODULE_SERVICE, "GetCurrentOffset offsetHour %{public}d", offsetHours);
-    return static_cast<int64_t>(offsetHours);
-}
-
-bool TimeZoneInfo::SetOffsetToKernel(int offsetHour)
-{
-    std::stringstream TZstrs;
-    time_t timeNow;
-    TZstrs << "UTC-" << offsetHour;
-    if (setenv("TZ", TZstrs.str().data(), 1) == 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone %{public}s", TZstrs.str().data());
-        tzset();
-        time(&timeNow);
-        TIME_HILOGE(TIME_MODULE_SERVICE, "localtime %{public}s", asctime(localtime(&timeNow)));
-        return true;
-    }
-    TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone failed %{public}s", TZstrs.str().data());
-    return false;
-}
-
-bool TimeZoneInfo::GetTimezoneFromFile(std::string &timezoneId)
-{
-    Json::Value root;
-    std::ifstream ifs;
-    ifs.open(TIMEZONE_FILE_PATH);
-    Json::CharReaderBuilder builder;
-    builder["collectComments"] = true;
-    JSONCPP_STRING errs;
-    if (!parseFromStream(builder, ifs, &root, &errs)) {
-        ifs.close();
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Read file failed %{public}s.", errs.c_str());
-        return false;
-    }
-    timezoneId = root["TimezoneId"].asString();
-    TIME_HILOGE(TIME_MODULE_SERVICE, "Read file %{public}s.", timezoneId.c_str());
-    ifs.close();
-    return true;
-}
-
-bool TimeZoneInfo::SaveTimezoneToFile(std::string timezoneId)
-{
-    std::ofstream ofs;
-    ofs.open(TIMEZONE_FILE_PATH);
-    Json::Value root;
-    root["TimezoneId"] = timezoneId;
-    Json::StreamWriterBuilder builder;
-    const std::string json_file = Json::writeString(builder, root);
-    ofs << json_file;
-    ofs.close();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}s.", timezoneId.c_str());
-    return true;
-}
-
-bool TimeZoneInfo::GetOffsetById(const std::string timezoneId, int &offset)
+bool TimeZoneInfo::SetTimezoneToKernel(std::string timezoneId)
 {
     auto itEntry = timezoneInfoMap_.find(timezoneId);
     if (itEntry != timezoneInfoMap_.end()) {
-        auto zoneInfo = itEntry->second;
-        offset = zoneInfo.utcOffsetHours;
-        TIME_HILOGE(TIME_MODULE_SERVICE, "GetOffsetById offset %{public}d", offset);
-        return true;
+        auto offset = itEntry->second.utcOffsetHours;
+        struct timezone tz;
+        tz.tz_minuteswest = offset * HOUR_TO_MILLI;
+        tz.tz_dsttime = 0;
+
+        int result = settimeofday(NULL, &tz);
+        if (result < 0) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "Settimeofday timezone fail: %{public}d.", result);
+            return false;
+        } else {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "Timezone offset: %{public}d", offset);
+            return true;
+        }
     }
-    TIME_HILOGE(TIME_MODULE_SERVICE, "TimezoneId not found: %{public}s.", timezoneId.c_str());
     return false;
 }
 }
