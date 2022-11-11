@@ -55,6 +55,7 @@ static const uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
 constexpr int INVALID_TIMER_ID = 0;
 constexpr int MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
+constexpr int ONE_MILLI = 1000;
 }
 
 REGISTER_SYSTEM_ABILITY_BY_ID(TimeService, TIME_SERVICE_ID, true);
@@ -362,6 +363,11 @@ bool TimeService::SetRealTime(const int64_t time)
         TIME_HILOGE(TIME_MODULE_SERVICE, "input param error");
         return false;
     }
+    int64_t currentTime = 0;
+    if (GetWallTimeMs(currentTime) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "currentTime get failed");
+        return false;
+    }
     struct timeval tv {};
     tv.tv_sec = (time_t) (time / MILLI_TO_BASE);
     tv.tv_usec = (suseconds_t)((time % MILLI_TO_BASE) * MILLI_TO_MICR);
@@ -376,9 +382,10 @@ bool TimeService::SetRealTime(const int64_t time)
         TIME_HILOGE(TIME_MODULE_SERVICE, "set rtc fail: %{public}d.", ret);
         return false;
     }
-    auto currentTime = steady_clock::now().time_since_epoch().count();
-    DelayedSingleton<TimeServiceNotify>::GetInstance()->PublishTimeChanageEvents(currentTime);
-    return true;
+    TIME_HILOGD(TIME_MODULE_SERVICE, "getting currentTime to milliseconds: %{public}" PRId64 "", currentTime);
+    if (currentTime < (time - ONE_MILLI) || currentTime > (time + ONE_MILLI)) {
+        DelayedSingleton<TimeServiceNotify>::GetInstance()->PublishTimeChanageEvents(currentTime);
+    }
 }
 
 int32_t TimeService::SetTime(const int64_t time)
