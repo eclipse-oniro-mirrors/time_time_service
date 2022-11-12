@@ -386,6 +386,7 @@ bool TimeService::SetRealTime(const int64_t time)
     if (currentTime < (time - ONE_MILLI) || currentTime > (time + ONE_MILLI)) {
         DelayedSingleton<TimeServiceNotify>::GetInstance()->PublishTimeChanageEvents(currentTime);
     }
+    return true;
 }
 
 int32_t TimeService::SetTime(const int64_t time)
