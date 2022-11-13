@@ -363,6 +363,11 @@ bool TimeService::SetRealTime(const int64_t time)
         TIME_HILOGE(TIME_MODULE_SERVICE, "input param error");
         return false;
     }
+    int64_t currentTime = 0;
+    if (GetWallTimeMs(currentTime) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "currentTime get failed");
+        return false;
+    }
     struct timeval tv {};
     tv.tv_sec = (time_t) (time / MILLI_TO_BASE);
     tv.tv_usec = (suseconds_t)((time % MILLI_TO_BASE) * MILLI_TO_MICR);
@@ -375,11 +380,6 @@ bool TimeService::SetRealTime(const int64_t time)
     auto ret = set_rtc_time(tv.tv_sec);
     if (ret < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "set rtc fail: %{public}d.", ret);
-        return false;
-    }
-    int64_t currentTime = 0;
-    if (GetWallTimeMs(currentTime) != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "currentTime get failed");
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "getting currentTime to milliseconds: %{public}" PRId64 "", currentTime);
