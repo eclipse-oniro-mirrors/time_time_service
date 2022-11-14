@@ -146,11 +146,15 @@ HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level0)
     time_t t;
     (void)time(&t);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time before: %{public}s", asctime(localtime(&t)));
-    std::string timeZoneSet("Asia/Shanghai");
-    bool result = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneSet);
+    std::string timeZoneShanghai("Asia/Shanghai");
+    auto getTimeZoneShanghai = TimeServiceClient::GetInstance()->GetTimeZone();
+    EXPECT_EQ(timeZoneShanghai, getTimeZoneShanghai);
+
+    std::string timeZoneNicosia("Asia/Nicosia");
+    bool result = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneNicosia);
     EXPECT_TRUE(result);
-    auto timeZoneRes = TimeServiceClient::GetInstance()->GetTimeZone();
-    EXPECT_EQ(timeZoneRes, timeZoneSet);
+    auto getTimeZoneNicosia = TimeServiceClient::GetInstance()->GetTimeZone();
+    EXPECT_EQ(timeZoneNicosia, getTimeZoneNicosia);
 }
 
 /**
