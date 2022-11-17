@@ -126,7 +126,7 @@ HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
 {
     struct timeval getTime {};
     gettimeofday(&getTime, NULL);
-    int64_t time = (getTime.tv_sec + 1000) * 1000 + getTime.tv_usec / 1000;
+    int64_t time = getTime.tv_sec * 1000;
     if (time < 0) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Time now invalid : %{public}" PRId64 "", time);
         time = 1627307312000;
@@ -155,6 +155,9 @@ HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level0)
     EXPECT_TRUE(result);
     auto getTimeZoneNicosia = TimeServiceClient::GetInstance()->GetTimeZone();
     EXPECT_EQ(timeZoneNicosia, getTimeZoneNicosia);
+
+    bool ret = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneShanghai);
+    EXPECT_TRUE(ret);
 }
 
 /**
