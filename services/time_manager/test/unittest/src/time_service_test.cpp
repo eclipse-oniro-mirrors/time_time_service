@@ -16,7 +16,7 @@
 #include <ctime>
 #include <chrono>
 #include <fstream>
-#include <limits.h>
+#include <climits>
 #include "ipc_skeleton.h"
 #include "want_agent.h"
 #include "json/json.h"
