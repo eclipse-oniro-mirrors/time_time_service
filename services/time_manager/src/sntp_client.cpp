@@ -67,7 +67,6 @@ SNTPClient::~SNTPClient() {}
 bool SNTPClient::RequestTime(std::string host)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    int iResult;
     int BufLen = NTP_PACKAGE_SIZE;
 
     struct addrinfo hints = {0}, *addrs;
@@ -102,8 +101,7 @@ bool SNTPClient::RequestTime(std::string host)
     // Create the NTP tx timestamp and fill the fields in the msg to be tx
     char SendBuf[NTP_PACKAGE_SIZE] = {0};
     CreateMessage(SendBuf);
-    iResult = send(SendSocket, SendBuf, BufLen, 0);
-    if (iResult == INVALID_RETURN) {
+    if (send(SendSocket, SendBuf, BufLen, 0) == INVALID_RETURN) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Send socket message failed. Host: %{public}s", host.c_str());
         close(SendSocket);
         return false;
@@ -111,8 +109,7 @@ bool SNTPClient::RequestTime(std::string host)
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime5.");
     char bufferRx[NTP_PACKAGE_SIZE] = { 0 };
     // Receive until the peer closes the connection
-    iResult = recv(SendSocket, bufferRx, NTP_PACKAGE_SIZE, 0);
-    if (iResult == INVALID_RETURN) {
+    if (recv(SendSocket, bufferRx, NTP_PACKAGE_SIZE, 0) == INVALID_RETURN) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Receive socket message failed. Host: %{public}s", host.c_str());
         close(SendSocket);
         return false;
