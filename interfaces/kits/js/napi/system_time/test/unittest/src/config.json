@@ -16,7 +16,8 @@
     "package": "ohos.acts.miscservices.time",
     "name": ".MyApplication",
     "deviceType": [
-      "phone"
+      "default",
+      "tablet"
     ],
     "distro": {
       "deliveryWithInstall": true,
