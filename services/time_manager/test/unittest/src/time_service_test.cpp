@@ -156,7 +156,7 @@ HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level0)
     auto getTimeZoneNicosia = TimeServiceClient::GetInstance()->GetTimeZone();
     EXPECT_EQ(timeZoneNicosia, getTimeZoneNicosia);
 
-    bool ret = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneShanghai);
+    bool ret = TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
     EXPECT_TRUE(ret);
 }
 
