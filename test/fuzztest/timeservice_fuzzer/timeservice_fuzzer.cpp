@@ -17,8 +17,13 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string_ex.h>
 
+#include "accesstoken_kit.h"
+#include "nativetoken_kit.h"
+#include "token_setproc.h"
 #include "time_service.h"
+#include "time_service_client.h"
 #include "message_parcel.h"
 
 using namespace OHOS::MiscServices;
@@ -27,16 +32,27 @@ namespace OHOS {
 constexpr size_t THRESHOLD = 10;
 const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscservices.time.ITimeService";
 
-uint32_t ConvertToUint32(const uint8_t* ptr)
+using namespace OHOS::Security::AccessToken;
+
+void GrantNativePermission()
 {
-    if (ptr == nullptr) {
-        return 0;
-    }
-    uint32_t bigVar = (static_cast<uint32_t>(ptr[0]) << 24) + \
-        (static_cast<uint32_t>(ptr[1]) << 16) + \
-        (static_cast<uint32_t>(ptr[2]) << 8) + \
-        static_cast<uint32_t>(ptr[3]);
-    return bigVar;
+    const char **perms = new const char *[2];
+    perms[0] = "ohos.permission.SET_TIME";
+    perms[1] = "ohos.permission.SET_TIME_ZONE";
+    TokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .processName = "time_service",
+        .aplStr = "system_core",
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    AccessTokenKit::ReloadNativeTokenInfo();
+    delete[] perms;
 }
 
 bool FuzzTimeService(const uint8_t* rawData, size_t size)
@@ -55,6 +71,16 @@ bool FuzzTimeService(const uint8_t* rawData, size_t size)
 
     return true;
 }
+
+bool FuzzTimeDump(const uint8_t *rawData, size_t size)
+{
+    std::vector<std::u16string> args;
+    std::string str(reinterpret_cast<const char *>(rawData), size);
+    args.push_back(Str8ToStr16(str));
+    int fd = 0;
+    TimeService::GetInstance()->Dump(fd, args);
+    return true;
+}
 }
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -64,6 +90,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
     /* Run your code on data */
     OHOS::FuzzTimeService(data, size);
+    OHOS::FuzzTimeDump(data, size);
     return 0;
 }
 
