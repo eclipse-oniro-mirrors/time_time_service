@@ -24,7 +24,6 @@ ohos_fuzztest("TimeServiceFuzzTest") {
 
   include_dirs = [
     "//base/time/time_service/services/time_manager/include",
-    "//base/time/time_service/services/time_manager/include",
     "//base/time/time_service/services/timer/include",
     "//base/time/time_service/utils/mock/include",
     "//base/time/time_service/interfaces/innerkits/include",
@@ -40,6 +39,7 @@ ohos_fuzztest("TimeServiceFuzzTest") {
   sources = [ "timeservice_fuzzer.cpp" ]
 
   deps = [
+    "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
     "//base/time/time_service/interfaces/innerkits:time_client",
     "//base/time/time_service/services:time_service",
     "//foundation/bundlemanager/bundle_framework/interfaces/inner_api/appexecfwk_core:appexecfwk_core",
@@ -49,6 +49,8 @@ ohos_fuzztest("TimeServiceFuzzTest") {
   external_deps = [
     "ability_base:want",
     "ability_runtime:wantagent_innerkits",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
     "hiviewdfx_hilog_native:libhilog",
