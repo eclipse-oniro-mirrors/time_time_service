@@ -187,7 +187,7 @@ HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level1)
     (void)time(&t);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time before: %{public}s", asctime(localtime(&t)));
     auto getCurrentTimeZone = TimeServiceClient::GetInstance()->GetTimeZone();
-    EXPECT_NE(getCurrentTimeZone, nullptr);
+    EXPECT_FALSE(getCurrentTimeZone.empty());
 
     std::string timeZoneNicosia("Asia/Nicosia");
     bool result = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneNicosia);
@@ -220,7 +220,7 @@ HWTEST_F(TimeServiceTest, SetTimeZone003, TestSize.Level1)
     (void)time(&t);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time before: %{public}s", asctime(localtime(&t)));
     auto getCurrentTimeZone = TimeServiceClient::GetInstance()->GetTimeZone();
-    EXPECT_NE(getCurrentTimeZone, nullptr);
+    EXPECT_FALSE(getCurrentTimeZone.empty());
 
     std::string timeZoneShanghai("Asia/Shanghai");
     int32_t code;
@@ -241,7 +241,7 @@ HWTEST_F(TimeServiceTest, SetTimeZone003, TestSize.Level1)
 HWTEST_F(TimeServiceTest, GetWallTimeMs001, TestSize.Level1)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
-    EXPECT_NE(time1 != -1);
+    EXPECT_TRUE(time1 != -1);
     auto time2 = TimeServiceClient::GetInstance()->GetWallTimeMs();
     EXPECT_TRUE(time2 >= time1);
 }
@@ -451,7 +451,8 @@ HWTEST_F(TimeServiceTest, CreateTimer005, TestSize.Level1)
 HWTEST_F(TimeServiceTest, CreateTimer006, TestSize.Level1)
 {
     auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(nullptr);
-    EXPECT_EQ(timerId1, 0);
+    uint64_t ret = 0;
+    EXPECT_EQ(timerId1, ret);
 }
 
 /**
