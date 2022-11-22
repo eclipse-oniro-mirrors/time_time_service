@@ -16,10 +16,13 @@
 #include <ctime>
 #include <chrono>
 #include <fstream>
+#include <climits>
 #include "ipc_skeleton.h"
+#include "want_agent.h"
 #include "json/json.h"
 #include "timer_info_test.h"
 #include "time_service_test.h"
+#include "time_common.h"
 
 namespace {
 using namespace testing::ext;
@@ -86,11 +89,11 @@ bool GetAutoTimeInfoFromFile(AutoTimeInfo &info)
 }
 
 /**
-* @tc.name: NetworkTimeStatusOn
+* @tc.name: NetworkTimeStatusOn001
 * @tc.desc: network time status on.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, NetworkTimeStatusOn, TestSize.Level1)
+HWTEST_F(TimeServiceTest, NetworkTimeStatusOn001, TestSize.Level1)
 {
     TimeServiceClient::GetInstance()->NetworkTimeStatusOn();
 
@@ -101,11 +104,11 @@ HWTEST_F(TimeServiceTest, NetworkTimeStatusOn, TestSize.Level1)
 }
 
 /**
-* @tc.name: NetworkTimeStatusOff
+* @tc.name: NetworkTimeStatusOff001
 * @tc.desc: network time status off.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, NetworkTimeStatusOff, TestSize.Level1)
+HWTEST_F(TimeServiceTest, NetworkTimeStatusOff001, TestSize.Level1)
 {
     TimeServiceClient::GetInstance()->NetworkTimeStatusOff();
 
@@ -119,21 +122,58 @@ HWTEST_F(TimeServiceTest, NetworkTimeStatusOff, TestSize.Level1)
 
 /**
 * @tc.name: SetTime001
-* @tc.desc: get system time.
+* @tc.desc: set system time.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
+HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level1)
 {
-    struct timeval getTime {};
-    gettimeofday(&getTime, NULL);
-    int64_t time = getTime.tv_sec * 1000;
-    if (time < 0) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Time now invalid : %{public}" PRId64 "", time);
-        time = 1627307312000;
-    }
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, NULL);
+    int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
+    ASSERT_TRUE(time > 0);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
     bool result = TimeServiceClient::GetInstance()->SetTime(time);
     EXPECT_TRUE(result);
+}
+
+/**
+* @tc.name: SetTime002
+* @tc.desc: set system time.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, SetTime002, TestSize.Level1)
+{
+    bool result = TimeServiceClient::GetInstance()->SetTime(-1);
+    EXPECT_FALSE(result);
+}
+
+/**
+* @tc.name: SetTime003
+* @tc.desc: set system time.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, SetTime003, TestSize.Level1)
+{
+    bool result = TimeServiceClient::GetInstance()->SetTime(LLONG_MAX);
+    EXPECT_FALSE(result);
+}
+
+/**
+* @tc.name: SetTime004
+* @tc.desc: set system time.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, SetTime004, TestSize.Level1)
+{
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, NULL);
+    int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
+    ASSERT_TRUE(time > 0);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
+    int32_t code;
+    bool result = TimeServiceClient::GetInstance()->SetTime(time, code);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(code, 0);
 }
 
 /**
@@ -141,31 +181,64 @@ HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level0)
 * @tc.desc: set system time zone.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level0)
+HWTEST_F(TimeServiceTest, SetTimeZone001, TestSize.Level1)
 {
     time_t t;
     (void)time(&t);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time before: %{public}s", asctime(localtime(&t)));
-    std::string timeZoneShanghai("Asia/Shanghai");
-    auto getTimeZoneShanghai = TimeServiceClient::GetInstance()->GetTimeZone();
-    EXPECT_EQ(timeZoneShanghai, getTimeZoneShanghai);
+    auto getCurrentTimeZone = TimeServiceClient::GetInstance()->GetTimeZone();
+    EXPECT_FALSE(getCurrentTimeZone.empty());
 
     std::string timeZoneNicosia("Asia/Nicosia");
     bool result = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneNicosia);
     EXPECT_TRUE(result);
     auto getTimeZoneNicosia = TimeServiceClient::GetInstance()->GetTimeZone();
     EXPECT_EQ(timeZoneNicosia, getTimeZoneNicosia);
-
-    bool ret = TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
+    bool ret = TimeServiceClient::GetInstance()->SetTimeZone(getCurrentTimeZone);
     EXPECT_TRUE(ret);
 }
 
 /**
-* @tc.name: GetWallTimeMs
+* @tc.name: SetTimeZone002
+* @tc.desc: set system time zone.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, SetTimeZone002, TestSize.Level1)
+{
+    bool result = TimeServiceClient::GetInstance()->SetTimeZone("123");
+    EXPECT_FALSE(result);
+}
+
+/**
+* @tc.name: SetTimeZone003
+* @tc.desc: set system time zone.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, SetTimeZone003, TestSize.Level1)
+{
+    time_t t;
+    (void)time(&t);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "Time before: %{public}s", asctime(localtime(&t)));
+    auto getCurrentTimeZone = TimeServiceClient::GetInstance()->GetTimeZone();
+    EXPECT_FALSE(getCurrentTimeZone.empty());
+
+    std::string timeZoneShanghai("Asia/Shanghai");
+    int32_t code;
+    bool result = TimeServiceClient::GetInstance()->SetTimeZone(timeZoneShanghai, code);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(code, 0);
+    auto getTimeZone = TimeServiceClient::GetInstance()->GetTimeZone();
+    EXPECT_EQ(getTimeZone, timeZoneShanghai);
+    bool ret = TimeServiceClient::GetInstance()->SetTimeZone(getCurrentTimeZone);
+    EXPECT_TRUE(ret);
+}
+
+/**
+* @tc.name: GetWallTimeMs001
 * @tc.desc: get wall time (ms).
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, GetWallTimeMs, TestSize.Level0)
+HWTEST_F(TimeServiceTest, GetWallTimeMs001, TestSize.Level1)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
     EXPECT_TRUE(time1 != -1);
@@ -174,11 +247,11 @@ HWTEST_F(TimeServiceTest, GetWallTimeMs, TestSize.Level0)
 }
 
 /**
-* @tc.name: GetWallTimeNs
+* @tc.name: GetWallTimeNs001
 * @tc.desc: get wall time (ns).
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, GetWallTimeNs, TestSize.Level1)
+HWTEST_F(TimeServiceTest, GetWallTimeNs001, TestSize.Level1)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetWallTimeNs();
     EXPECT_TRUE(time1 != -1);
@@ -187,11 +260,11 @@ HWTEST_F(TimeServiceTest, GetWallTimeNs, TestSize.Level1)
 }
 
 /**
-* @tc.name: GetBootTimeNs
+* @tc.name: GetBootTimeNs001
 * @tc.desc: get boot time (ns).
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, GetBootTimeNs, TestSize.Level1)
+HWTEST_F(TimeServiceTest, GetBootTimeNs001, TestSize.Level1)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetBootTimeNs();
     EXPECT_TRUE(time1 != -1);
@@ -200,11 +273,11 @@ HWTEST_F(TimeServiceTest, GetBootTimeNs, TestSize.Level1)
 }
 
 /**
-* @tc.name: GetMonotonicTimeMs
+* @tc.name: GetMonotonicTimeMs001
 * @tc.desc: get monotonic time (ms).
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, GetMonotonicTimeMs, TestSize.Level1)
+HWTEST_F(TimeServiceTest, GetMonotonicTimeMs001, TestSize.Level1)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetMonotonicTimeMs();
     EXPECT_TRUE(time1 != -1);
@@ -213,11 +286,11 @@ HWTEST_F(TimeServiceTest, GetMonotonicTimeMs, TestSize.Level1)
 }
 
 /**
-* @tc.name: GetMonotonicTimeNs
+* @tc.name: GetMonotonicTimeNs001
 * @tc.desc: get monotonic time (ns).
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, GetMonotonicTimeNs, TestSize.Level1)
+HWTEST_F(TimeServiceTest, GetMonotonicTimeNs001, TestSize.Level1)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
     EXPECT_TRUE(time1 != -1);
@@ -226,11 +299,11 @@ HWTEST_F(TimeServiceTest, GetMonotonicTimeNs, TestSize.Level1)
 }
 
 /**
-* @tc.name: GetThreadTimeMs
+* @tc.name: GetThreadTimeMs001
 * @tc.desc: get thread time (ms).
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, GetThreadTimeMs, TestSize.Level1)
+HWTEST_F(TimeServiceTest, GetThreadTimeMs001, TestSize.Level1)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetThreadTimeMs();
     EXPECT_TRUE(time1 != -1);
@@ -239,11 +312,11 @@ HWTEST_F(TimeServiceTest, GetThreadTimeMs, TestSize.Level1)
 }
 
 /**
-* @tc.name: GetThreadTimeNs
+* @tc.name: GetThreadTimeNs001
 * @tc.desc: get thread time (ns).
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, GetThreadTimeNs, TestSize.Level1)
+HWTEST_F(TimeServiceTest, GetThreadTimeNs001, TestSize.Level1)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetThreadTimeNs();
     EXPECT_TRUE(time1 != -1);
@@ -252,11 +325,11 @@ HWTEST_F(TimeServiceTest, GetThreadTimeNs, TestSize.Level1)
 }
 
 /**
-* @tc.name: CreateTimer03
+* @tc.name: CreateTimer001
 * @tc.desc: Create system timer.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, CreateTimer003, TestSize.Level0)
+HWTEST_F(TimeServiceTest, CreateTimer001, TestSize.Level1)
 {
     uint64_t timerId = 0;
     auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId, 5);
@@ -268,11 +341,11 @@ HWTEST_F(TimeServiceTest, CreateTimer003, TestSize.Level0)
 }
 
 /**
-* @tc.name: CreateTimer04
+* @tc.name: CreateTimer002
 * @tc.desc: Create system timer.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, CreateTimer004, TestSize.Level0)
+HWTEST_F(TimeServiceTest, CreateTimer002, TestSize.Level1)
 {
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(1);
@@ -291,11 +364,29 @@ HWTEST_F(TimeServiceTest, CreateTimer004, TestSize.Level0)
 }
 
 /**
-* @tc.name: CreateTimer05
+* @tc.name: CreateTimer003
 * @tc.desc: Create system timer.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, CreateTimer005, TestSize.Level0)
+HWTEST_F(TimeServiceTest, CreateTimer003, TestSize.Level1)
+{
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(1);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(0);
+    auto ability = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    timerInfo->SetWantAgent(ability);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_TRUE(timerId1 > 0);
+}
+
+/**
+* @tc.name: CreateTimer004
+* @tc.desc: Create system timer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, CreateTimer004, TestSize.Level1)
 {
     g_data1 = 0;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -319,11 +410,11 @@ HWTEST_F(TimeServiceTest, CreateTimer005, TestSize.Level0)
 }
 
 /**
-* @tc.name: CreateTimer06.
+* @tc.name: CreateTimer005
 * @tc.desc: Create system timer.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, CreateTimer006, TestSize.Level0)
+HWTEST_F(TimeServiceTest, CreateTimer005, TestSize.Level1)
 {
     g_data1 = 1;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -333,16 +424,16 @@ HWTEST_F(TimeServiceTest, CreateTimer006, TestSize.Level0)
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
 
-    struct timeval getTime {};
-    gettimeofday(&getTime, NULL);
-    int64_t current_time = (getTime.tv_sec + 100) * 1000 + getTime.tv_usec / 1000;
-    if (current_time < 0) {
-        current_time = 0;
+    struct timeval timeOfDay {};
+    gettimeofday(&timeOfDay, NULL);
+    int64_t currentTime = (timeOfDay.tv_sec + 100) * 1000 + timeOfDay.tv_usec / 1000;
+    if (currentTime < 0) {
+        currentTime = 0;
     }
     auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
     EXPECT_TRUE(timerId1 > 0);
 
-    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, static_cast<uint64_t>(current_time));
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, static_cast<uint64_t>(currentTime));
     EXPECT_TRUE(ret);
     ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
     EXPECT_TRUE(ret);
@@ -350,6 +441,18 @@ HWTEST_F(TimeServiceTest, CreateTimer006, TestSize.Level0)
 
     ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
     EXPECT_FALSE(ret);
+}
+
+/**
+* @tc.name: CreateTimer006
+* @tc.desc: Create system timer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, CreateTimer006, TestSize.Level1)
+{
+    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(nullptr);
+    uint64_t ret = 0;
+    EXPECT_EQ(timerId1, ret);
 }
 
 /**
