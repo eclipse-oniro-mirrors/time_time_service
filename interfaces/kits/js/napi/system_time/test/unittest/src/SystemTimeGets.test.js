@@ -181,20 +181,6 @@ describe('TimeTest', function () {
     })
 
     /**
-     * @tc.number    systemTime_getTimezone_test1
-     * @tc.name      Test systemTime.getTimezone Invalid value
-     * @tc.desc      Test systemTime_getTimezone API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTime_getTimezone_test1', 0, async function (done) {
-        const timezone = await systemTime.getTimezone();
-        expect('Asia/Shanghai').assertEqual(timezone);
-        done();
-    })
-
-    /**
      * @tc.number    systemTime_getCurrentTime_401_test1
      * @tc.name      Test systemTime.getCurrentTime Invalid value
      * @tc.desc      Test systemTime_getCurrentTime API functionality.

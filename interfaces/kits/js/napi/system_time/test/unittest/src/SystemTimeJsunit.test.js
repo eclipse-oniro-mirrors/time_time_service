@@ -477,7 +477,7 @@ describe("TimeTest", function () {
      * @tc.level     : Level 0
      */
     it("systemTime_setTimezone_test26", 0, async function (done) {
-      var timezone = "Europe/Lisbon";
+      var timezone = "Asia/Shanghai";
       systemTime.setTimezone(timezone).then(() => {
         systemTime.getTimezone().then((data) => {
           expect(data).assertEqual(timezone);
