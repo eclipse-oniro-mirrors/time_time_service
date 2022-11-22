@@ -38,6 +38,7 @@ private:
 };
 
 std::mutex TimeServiceClient::instanceLock_;
+std::mutex TimeServiceClient::Lock_;
 std::mutex TimeServiceClient::proxyLock_;
 sptr<TimeServiceClient> TimeServiceClient::instance_;
 sptr<ITimeService> TimeServiceClient::timeServiceProxy_;
@@ -49,6 +50,7 @@ TimeServiceClient::TimeServiceClient()
 
 TimeServiceClient::~TimeServiceClient()
 {
+    std::lock_guard<std::mutex> autoLock(Lock_);
     if (timeServiceProxy_ != nullptr) {
         auto remoteObject = GetProxy()->AsObject();
         if (remoteObject != nullptr) {
