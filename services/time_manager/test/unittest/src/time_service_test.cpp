@@ -390,6 +390,9 @@ HWTEST_F(TimeServiceTest, ProxyTimer002, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, ProxyTimer003, TestSize.Level0)
 {
+    TimeSaDeathRecipient recipient;
+    recipient.OnRemoteDied(nullptr);
+    TimeServiceClient::GetInstance()->OnRemoteSaDied(nullptr);
     int32_t uid = RESERVED_UID;
     auto ret = TimeServiceClient::GetInstance()->ProxyTimer(uid, false, true);
     EXPECT_FALSE(ret);
