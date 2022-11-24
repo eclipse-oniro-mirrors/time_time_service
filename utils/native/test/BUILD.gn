@@ -20,7 +20,7 @@ config("module_private_config") {
     "//base/time/time_service/interfaces/innerkits/include",
     "//foundation/arkui/napi/interfaces/kits/napi",
     "//third_party/json/include",
-    "//base/time/time_service/utils/native/include"
+    "//base/time/time_service/utils/native/include",
   ]
 }
 
@@ -34,9 +34,9 @@ ohos_unittest("TimeFileUtilsTest") {
   configs = [ ":module_private_config" ]
 
   deps = [
+    "//base/time/time_service/utils:time_utils",
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
-    "//base/time/time_service/utils:time_utils",
   ]
 
   external_deps = [
@@ -60,11 +60,11 @@ ohos_unittest("TimePermissionTest") {
 
   deps = [
     "//base/time/time_service/interfaces/innerkits:time_client",
+    "//base/time/time_service/utils:time_utils",
     "//foundation/systemabilitymgr/safwk/interfaces/innerkits/safwk:system_ability_fwk",
     "//foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy:samgr_proxy",
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
-    "//base/time/time_service/utils:time_utils",
   ]
 
   external_deps = [
@@ -84,6 +84,6 @@ group("unittest") {
 
   deps = [
     ":TimeFileUtilsTest",
-    ":TimePermissionTest"
+    ":TimePermissionTest",
   ]
 }

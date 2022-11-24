@@ -27,8 +27,7 @@ using namespace OHOS;
 using namespace OHOS::MiscServices;
 using namespace std::chrono;
 
-class TimeFileUtilsTest : public testing::Test
-{
+class TimeFileUtilsTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
     static void TearDownTestCase(void);
@@ -306,7 +305,6 @@ HWTEST_F(TimeFileUtilsTest, WriteFile001, TestSize.Level1)
 */
 HWTEST_F(TimeFileUtilsTest, WriteFile002, TestSize.Level1)
 {
-
     const char buffer[1024] = "test";
     bool ret = TimeFileUtils::WriteFile("/data/1.txt", buffer, 512);
     EXPECT_EQ(true, ret);
@@ -319,7 +317,6 @@ HWTEST_F(TimeFileUtilsTest, WriteFile002, TestSize.Level1)
 */
 HWTEST_F(TimeFileUtilsTest, IsValidPath001, TestSize.Level1)
 {
-
     bool ret = TimeFileUtils::IsValidPath("/data/", "/data/");
     EXPECT_EQ(true, ret);
 
@@ -351,6 +348,5 @@ HWTEST_F(TimeFileUtilsTest, GetPathDir001, TestSize.Level1)
 
     std::string ret1 = TimeFileUtils::GetPathDir("data/");
     EXPECT_EQ(std::string("data/"), ret1);
-
 }
 }
