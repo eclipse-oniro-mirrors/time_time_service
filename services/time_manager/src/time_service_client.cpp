@@ -35,17 +35,20 @@ TimeServiceClient::TimeServiceClient()
 
 TimeServiceClient::~TimeServiceClient()
 {
-    if (timeServiceProxy_ != nullptr) {
-        auto remoteObject = GetProxy()->AsObject();
-        if (remoteObject != nullptr) {
-            remoteObject->RemoveDeathRecipient(deathRecipient_);
+    if (timeServiceProxy_ != nullptr)
+    {
+        std::lock_guard<std::mutex> autoLock(Lock_);
+        if (timeServiceProxy_ != nullptr) {
+            auto remoteObject = GetProxy()->AsObject();
+            if (remoteObject != nullptr) {
+                remoteObject->RemoveDeathRecipient(deathRecipient_);
+            }
         }
     }
 }
 
 sptr<TimeServiceClient> TimeServiceClient::GetInstance()
 {
-    std::lock_guard<std::mutex> autoLock(Lock_);
     if (instance_ == nullptr) {
         std::lock_guard<std::mutex> autoLock(instanceLock_);
         if (instance_ == nullptr) {
