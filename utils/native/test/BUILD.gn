@@ -1,0 +1,89 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+
+  include_dirs = [
+    "//base/time/time_service/interfaces/innerkits/include",
+    "//foundation/arkui/napi/interfaces/kits/napi",
+    "//third_party/json/include",
+    "//base/time/time_service/utils/native/include"
+  ]
+}
+
+module_output_path = "time_utils/time_native"
+
+ohos_unittest("TimeFileUtilsTest") {
+  module_out_path = module_output_path
+
+  sources = [ "unittest/time_file_utils_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//third_party/googletest:gtest_main",
+    "//third_party/jsoncpp:jsoncpp",
+    "//base/time/time_service/utils:time_utils",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "ability_runtime:runtime",
+    "ability_runtime:wantagent_innerkits",
+    "c_utils:utils",
+    "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+}
+
+ohos_unittest("TimePermissionTest") {
+  module_out_path = module_output_path
+
+  sources = [ "unittest/time_permission_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//base/time/time_service/interfaces/innerkits:time_client",
+    "//foundation/systemabilitymgr/safwk/interfaces/innerkits/safwk:system_ability_fwk",
+    "//foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy:samgr_proxy",
+    "//third_party/googletest:gtest_main",
+    "//third_party/jsoncpp:jsoncpp",
+    "//base/time/time_service/utils:time_utils",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "ability_runtime:runtime",
+    "ability_runtime:wantagent_innerkits",
+    "c_utils:utils",
+    "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+}
+
+group("unittest") {
+  testonly = true
+
+  deps = [
+    ":TimeFileUtilsTest",
+    ":TimePermissionTest"
+  ]
+}
