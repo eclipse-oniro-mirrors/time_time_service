@@ -205,6 +205,7 @@ private:
 
     static std::mutex instanceLock_;
     static sptr<TimeServiceClient> instance_;
+    static sptr<TimeServiceClient> destroyLock_;
     static sptr<ITimeService> timeServiceProxy_;
     static sptr<TimeSaDeathRecipient> deathRecipient_;
 };
