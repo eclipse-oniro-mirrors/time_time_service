@@ -204,6 +204,7 @@ private:
     static void SetProxy(sptr<ITimeService> proxy);
 
     static std::mutex instanceLock_;
+    static std::mutex destroyLock_;
     static sptr<TimeServiceClient> instance_;
     static sptr<ITimeService> timeServiceProxy_;
     static sptr<TimeSaDeathRecipient> deathRecipient_;

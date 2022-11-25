@@ -23,6 +23,7 @@
 namespace OHOS {
 namespace MiscServices {
 std::mutex TimeServiceClient::instanceLock_;
+std::mutex TimeServiceClient::destroyLock_;
 std::mutex TimeServiceClient::proxyLock_;
 sptr<TimeServiceClient> TimeServiceClient::instance_;
 sptr<ITimeService> TimeServiceClient::timeServiceProxy_;
@@ -35,16 +36,18 @@ TimeServiceClient::TimeServiceClient()
 TimeServiceClient::~TimeServiceClient()
 {
     if (timeServiceProxy_ != nullptr) {
-        auto remoteObject = GetProxy()->AsObject();
-        if (remoteObject != nullptr) {
-            remoteObject->RemoveDeathRecipient(deathRecipient_);
+        std::lock_guard<std::mutex> autoLock(destroyLock_);
+        if (timeServiceProxy_ != nullptr) {
+            auto remoteObject = GetProxy()->AsObject();
+            if (remoteObject != nullptr) {
+                remoteObject->RemoveDeathRecipient(deathRecipient_);
+            }
         }
     }
 }
 
 sptr<TimeServiceClient> TimeServiceClient::GetInstance()
 {
-    std::lock_guard<std::mutex> autoLock(instanceLock_);
     if (instance_ == nullptr) {
         std::lock_guard<std::mutex> autoLock(instanceLock_);
         if (instance_ == nullptr) {
