@@ -36,9 +36,9 @@ ohos_unittest("TimeDfxTest") {
   configs = [ ":module_private_config" ]
 
   deps = [
+    "//base/time/time_service/interfaces/innerkits:time_client",
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
-    "//base/time/time_service/interfaces/innerkits:time_client",
   ]
 
   external_deps = [
@@ -47,17 +47,15 @@ ohos_unittest("TimeDfxTest") {
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
+    "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "hiviewdfx_hilog_native:libhilog",
   ]
 }
 
 group("unittest") {
   testonly = true
 
-  deps = [
-    ":TimeDfxTest",
-  ]
+  deps = [ ":TimeDfxTest" ]
 }
