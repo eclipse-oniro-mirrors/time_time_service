@@ -90,7 +90,8 @@
         "//base/time/time_service/interfaces/kits/js/napi/system_time/test:unittest",
         "//base/time/time_service/interfaces/kits/js/napi/system_timer/test:unittest",
         "//base/time/time_service/services/time_manager/test:TimeServiceTest",
-        "//base/time/time_service/test/fuzztest:fuzztest"
+        "//base/time/time_service/test/fuzztest:fuzztest",
+		"//base/time/time_service/test/unittest:TimeDfxTest"
       ]
     }
   }
