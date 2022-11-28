@@ -92,8 +92,7 @@
         "//base/time/time_service/services/time_manager/test:TimeServiceTest",
         "//base/time/time_service/test/fuzztest:fuzztest",
         "//base/time/time_service/utils/native/test:TimeFileUtilsTest",
-        "//base/time/time_service/utils/native/test:TimePermissionTest",
-        "//base/time/time_service/test/unittest:TimeDfxTest"
+        "//base/time/time_service/utils/native/test:TimePermissionTest"
       ]
     }
   }
