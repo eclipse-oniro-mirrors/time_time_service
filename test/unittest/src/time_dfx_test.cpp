@@ -37,8 +37,7 @@ constexpr const char *CMD3 = "hidumper -s 3702 -a \"-timer -i\"";
 constexpr const char *CMD4 = "hidumper -s 3702 -a \"-timer -s\"";
 constexpr const char *CMD5 = "hidumper -s 3702 -a -h";
 
-class TimeDfxTest : public testing::Test
-{
+class TimeDfxTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
     static void TearDownTestCase(void);
