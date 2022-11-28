@@ -143,9 +143,9 @@ HWTEST_F(TimeFileUtilsTest, RemoveFile001, TestSize.Level1)
 {
     system("mkdir /data/test/time/tmp_dir/");
     system("touch /data/test/time/tmp_dir/1.txt");
-    bool ret = TimeFileUtils::RemoveFile(file);
+    bool ret = TimeFileUtils::RemoveFile(FILE);
     EXPECT_EQ(true, ret);
-    bool ret1 = TimeFileUtils::IsExistFile(file);
+    bool ret1 = TimeFileUtils::IsExistFile(FILE);
     EXPECT_EQ(false, ret1);
 
     bool ret2 = TimeFileUtils::RemoveFile(DIR);
