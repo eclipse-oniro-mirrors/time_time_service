@@ -27,9 +27,9 @@ using namespace OHOS;
 using namespace OHOS::MiscServices;
 using namespace std::chrono;
 
-const char *dir = "/data/test/time/tmp_dir";
-const char *file = "/data/test/time/tmp_dir/1.txt";
-const char *newFile = "/data/test/time/tmp_dir/2.txt";
+constexpr const char *DIR = "/data/test/time/tmp_dir";
+constexpr const char *FILE = "/data/test/time/tmp_dir/1.txt";
+constexpr const char *NEWFILE = "/data/test/time/tmp_dir/2.txt";
 class TimeFileUtilsTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
@@ -62,13 +62,13 @@ void TimeFileUtilsTest::TearDown(void)
 */
 HWTEST_F(TimeFileUtilsTest, MkRecursiveDir001, TestSize.Level1)
 {
-    bool ret = TimeFileUtils::MkRecursiveDir(dir, true);
+    bool ret = TimeFileUtils::MkRecursiveDir(DIR, true);
     EXPECT_EQ(true, ret);
-    bool ret1 = TimeFileUtils::IsExistDir(dir);
+    bool ret1 = TimeFileUtils::IsExistDir(DIR);
     EXPECT_EQ(true, ret1);
-    bool ret2 = TimeFileUtils::RemoveFile(dir);
+    bool ret2 = TimeFileUtils::RemoveFile(DIR);
     EXPECT_EQ(true, ret2);
-    bool ret3 = TimeFileUtils::IsExistDir(dir);
+    bool ret3 = TimeFileUtils::IsExistDir(DIR);
     EXPECT_EQ(false, ret3);
 }
 
@@ -79,13 +79,13 @@ HWTEST_F(TimeFileUtilsTest, MkRecursiveDir001, TestSize.Level1)
 */
 HWTEST_F(TimeFileUtilsTest, MkRecursiveDir002, TestSize.Level1)
 {
-    bool ret = TimeFileUtils::MkRecursiveDir(dir, false);
+    bool ret = TimeFileUtils::MkRecursiveDir(DIR, false);
     EXPECT_EQ(true, ret);
-    bool ret1 = TimeFileUtils::IsExistDir(dir);
+    bool ret1 = TimeFileUtils::IsExistDir(DIR);
     EXPECT_EQ(true, ret1);
-    bool ret2 = TimeFileUtils::RemoveFile(dir);
+    bool ret2 = TimeFileUtils::RemoveFile(DIR);
     EXPECT_EQ(true, ret2);
-    bool ret3 = TimeFileUtils::IsExistDir(dir);
+    bool ret3 = TimeFileUtils::IsExistDir(DIR);
     EXPECT_EQ(false, ret3);
 }
 
@@ -148,9 +148,9 @@ HWTEST_F(TimeFileUtilsTest, RemoveFile001, TestSize.Level1)
     bool ret1 = TimeFileUtils::IsExistFile(file);
     EXPECT_EQ(false, ret1);
 
-    bool ret2 = TimeFileUtils::RemoveFile(dir);
+    bool ret2 = TimeFileUtils::RemoveFile(DIR);
     EXPECT_EQ(true, ret2);
-    bool ret3 = TimeFileUtils::IsExistDir(dir);
+    bool ret3 = TimeFileUtils::IsExistDir(DIR);
     EXPECT_EQ(false, ret3);
 }
 
@@ -161,14 +161,14 @@ HWTEST_F(TimeFileUtilsTest, RemoveFile001, TestSize.Level1)
 */
 HWTEST_F(TimeFileUtilsTest, RemoveFile002, TestSize.Level1)
 {
-    bool ret = TimeFileUtils::IsExistDir(file);
+    bool ret = TimeFileUtils::IsExistDir(FILE);
     EXPECT_EQ(false, ret);
-    bool ret1 = TimeFileUtils::RemoveFile(file);
+    bool ret1 = TimeFileUtils::RemoveFile(FILE);
     EXPECT_EQ(true, ret1);
 
-    bool ret2 = TimeFileUtils::IsExistDir(dir);
+    bool ret2 = TimeFileUtils::IsExistDir(DIR);
     EXPECT_EQ(false, ret2);
-    bool ret3 = TimeFileUtils::RemoveFile(dir);
+    bool ret3 = TimeFileUtils::RemoveFile(DIR);
     EXPECT_EQ(true, ret3);
 }
 
@@ -179,26 +179,26 @@ HWTEST_F(TimeFileUtilsTest, RemoveFile002, TestSize.Level1)
 */
 HWTEST_F(TimeFileUtilsTest, RenameFile001, TestSize.Level1)
 {
-    bool ret = TimeFileUtils::RemoveFile(dir);
+    bool ret = TimeFileUtils::RemoveFile(DIR);
     EXPECT_EQ(true, ret);
-    bool ret1 = TimeFileUtils::RenameFile(nullptr, dir);
+    bool ret1 = TimeFileUtils::RenameFile(nullptr, DIR);
     EXPECT_EQ(false, ret1);
 
-    bool ret2 = TimeFileUtils::RenameFile(dir, nullptr);
+    bool ret2 = TimeFileUtils::RenameFile(DIR, nullptr);
     EXPECT_EQ(false, ret2);
 
-    bool ret3 = TimeFileUtils::RenameFile(dir, file);
+    bool ret3 = TimeFileUtils::RenameFile(DIR, FILE);
     EXPECT_EQ(false, ret3);
 
     system("mkdir /data/test/time/tmp_dir/");
     system("touch /data/test/time/tmp_dir/1.txt");
-    bool ret4 = TimeFileUtils::RenameFile(file, newFile);
+    bool ret4 = TimeFileUtils::RenameFile(FILE, NEWFILE);
     EXPECT_EQ(true, ret4);
 
-    bool ret5 = TimeFileUtils::RemoveFile(newFile);
+    bool ret5 = TimeFileUtils::RemoveFile(NEWFILE);
     EXPECT_EQ(true, ret5);
 
-    bool ret6 = TimeFileUtils::RemoveFile(dir);
+    bool ret6 = TimeFileUtils::RemoveFile(DIR);
     EXPECT_EQ(true, ret6);
 }
 
@@ -211,13 +211,13 @@ HWTEST_F(TimeFileUtilsTest, ChownFile001, TestSize.Level1)
 {
     system("mkdir /data/test/time/tmp_dir/");
     system("touch /data/test/time/tmp_dir/1.txt");
-    bool ret = TimeFileUtils::IsExistFile(file);
+    bool ret = TimeFileUtils::IsExistFile(FILE);
     EXPECT_EQ(true, ret);
-    bool ret1 = TimeFileUtils::ChownFile(file, 0, 0);
+    bool ret1 = TimeFileUtils::ChownFile(FILE, 0, 0);
     EXPECT_EQ(true, ret1);
-    bool ret2 = TimeFileUtils::RemoveFile(file);
+    bool ret2 = TimeFileUtils::RemoveFile(FILE);
     EXPECT_EQ(true, ret2);
-    bool ret3 = TimeFileUtils::RemoveFile(dir);
+    bool ret3 = TimeFileUtils::RemoveFile(DIR);
     EXPECT_EQ(true, ret3);
 }
 
@@ -234,20 +234,19 @@ HWTEST_F(TimeFileUtilsTest, WriteFile001, TestSize.Level1)
     bool ret = TimeFileUtils::WriteFile(nullptr, buffer, 512);
     EXPECT_EQ(false, ret);
 
-    bool ret1 = TimeFileUtils::WriteFile(file, nullptr, 512);
+    bool ret1 = TimeFileUtils::WriteFile(FILE, nullptr, 512);
     EXPECT_EQ(false, ret1);
 
-    bool ret2 = TimeFileUtils::WriteFile(file, buffer, 0);
+    bool ret2 = TimeFileUtils::WriteFile(FILE, buffer, 0);
     EXPECT_EQ(false, ret2);
 
-    bool ret3 = TimeFileUtils::WriteFile(file, buffer, 512);
+    bool ret3 = TimeFileUtils::WriteFile(FILE, buffer, 512);
     EXPECT_EQ(true, ret3);
 
-    bool ret4 = TimeFileUtils::RemoveFile(file);
+    bool ret4 = TimeFileUtils::RemoveFile(FILE);
     EXPECT_EQ(true, ret4);
-    bool ret5 = TimeFileUtils::RemoveFile(dir);
+    bool ret5 = TimeFileUtils::RemoveFile(DIR);
     EXPECT_EQ(true, ret5);
-
 }
 
 /**
