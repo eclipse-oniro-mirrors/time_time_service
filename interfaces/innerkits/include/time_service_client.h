@@ -199,15 +199,13 @@ public:
 private:
     TimeServiceClient();
     ~TimeServiceClient();
-    static std::mutex proxyLock_;
-    static sptr<ITimeService> GetProxy();
-    static void SetProxy(sptr<ITimeService> proxy);
+    sptr<ITimeService> GetProxy();
+    void SetProxy(sptr<ITimeService> proxy);
 
     static std::mutex instanceLock_;
-    static std::mutex destroyLock_;
     static sptr<TimeServiceClient> instance_;
-    static sptr<ITimeService> timeServiceProxy_;
-    static sptr<TimeSaDeathRecipient> deathRecipient_;
+    std::mutex proxyLock_;
+    sptr<ITimeService> timeServiceProxy_;
 };
 } // MiscServices
 } // OHOS
