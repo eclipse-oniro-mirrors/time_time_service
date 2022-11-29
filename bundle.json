@@ -70,7 +70,7 @@
           "header": {
             "header_files": [
               "itimer_info.h",
-              "time_service_client.h"                                                               
+              "time_service_client.h"
             ],
             "header_base":"//base/time/time_service/interfaces/innerkits/include"
           }
@@ -91,7 +91,9 @@
         "//base/time/time_service/interfaces/kits/js/napi/system_timer/test:unittest",
         "//base/time/time_service/services/time_manager/test:TimeServiceTest",
         "//base/time/time_service/test/fuzztest:fuzztest",
-		"//base/time/time_service/test/unittest:TimeDfxTest"
+        "//base/time/time_service/utils/native/test:TimeFileUtilsTest",
+        "//base/time/time_service/utils/native/test:TimePermissionTest",
+        "//base/time/time_service/test/unittest:TimeDfxTest"
       ]
     }
   }
