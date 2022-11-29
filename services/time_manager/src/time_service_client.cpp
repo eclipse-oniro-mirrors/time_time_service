@@ -38,25 +38,19 @@ private:
 };
 
 std::mutex TimeServiceClient::instanceLock_;
-std::mutex TimeServiceClient::Lock_;
-std::mutex TimeServiceClient::proxyLock_;
 sptr<TimeServiceClient> TimeServiceClient::instance_;
-sptr<ITimeService> TimeServiceClient::timeServiceProxy_;
 sptr<TimeSaDeathRecipient> deathRecipient_;
-
 TimeServiceClient::TimeServiceClient()
 {
 }
 
 TimeServiceClient::~TimeServiceClient()
 {
-    if (timeServiceProxy_ != nullptr) {
-        std::lock_guard<std::mutex> autoLock(Lock_);
-        if (timeServiceProxy_ != nullptr) {
-            auto remoteObject = GetProxy()->AsObject();
-            if (remoteObject != nullptr) {
-                remoteObject->RemoveDeathRecipient(deathRecipient_);
-            }
+    auto proxy = GetProxy();
+    if (proxy != nullptr) {
+        auto remoteObject = proxy->AsObject();
+        if (remoteObject != nullptr) {
+            remoteObject->RemoveDeathRecipient(deathRecipient_);
         }
     }
 }
@@ -74,11 +68,7 @@ sptr<TimeServiceClient> TimeServiceClient::GetInstance()
 
 bool TimeServiceClient::ConnectService()
 {
-    if (timeServiceProxy_ != nullptr) {
-        return true;
-    }
-    std::lock_guard<std::mutex> autoLock(instanceLock_);
-    if (timeServiceProxy_ != nullptr) {
+    if (GetProxy() != nullptr) {
         return true;
     }
     sptr<ISystemAbilityManager> systemAbilityManager =
