@@ -18,633 +18,260 @@ import {describe, beforeAll, beforeEach, afterEach, afterAll, it, expect} from '
 import systemTimer from '@ohos.systemTimer'
 
 describe('TimerTest', function() {
+
     /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_0100
-     * @tc.name      Test systemTimer.createTimer type = TIMER_TYPE_REALTIME
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
+     * @tc.number SUB_time_systemTimer_createTimer_0000
+     * @tc.name SUB_time_systemTimer_createTimer_0000
+     * @tc.desc Test createTimer() interfaces, type = TIMER_TYPE_REALTIME, repeat = false (Callback)
+     * @tc.size MEDIUM
+     * @tc.type Function
+     * @tc.level Level 0
      */
-    it('systemTimer_Timer_test1',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
+    it('SUB_time_systemTimer_createTimer_0000', 0, async function (done) {
+        console.info("SUB_time_systemTimer_createTimer_0000 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_REALTIME,
+            repeat: false
+        };
+        try {
+            console.info("SUB_time_systemTimer_createTimer_0000 create timer")
+            systemTimer.createTimer(options, function (err, timerID) {
+                if (err) {
+                    expect(false).assertTrue();
+                }
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.destroyTimer(timerID, function (e) {
+                    console.info('SUB_time_systemTimer_createTimer_0000 destroyTimerID: ' + timerID);
+                });
+            });
+        } catch (err) {
+            console.info('SUB_time_systemTimer_createTimer_0000 has failed for ' + e);
+            expect(false).assertTrue();
         }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
+        done();
     });
 
     /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_0200
-     * @tc.name      Test systemTimer.createTimer type = TIMER_TYPE_REALTIME_WAKEUP
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
+     * @tc.number SUB_time_systemTimer_createTimer_0001
+     * @tc.name SUB_time_systemTimer_createTimer_0001
+     * @tc.desc Test createTimer() interfaces, type = TIMER_TYPE_REALTIME, repeat = true (callback)
+     * @tc.size MEDIUM
+     * @tc.type Function
+     * @tc.level Level 0
      */
-    it('systemTimer_Timer_test2',0, async () => {
-        var options = {
-            type:TIMER_TYPE_WAKEUP,
-            repeat:false,
-            persistent:false
+    it('SUB_time_systemTimer_createTimer_0001', 0, async function (done) {
+        console.info("SUB_time_systemTimer_createTimer_0001 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_REALTIME,
+            repeat: true
         }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
+        try {
+            console.info("SUB_time_systemTimer_createTimer_0001 create timer")
+            systemTimer.createTimer(options, function (err, timerID) {
+                if (err) {
+                    expect(false).assertTrue();
+                }
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.destroyTimer(timerID, function (e) {
+                    console.info('SUB_time_systemTimer_createTimer_0001 destroy timerID: ' + timerID);
+                });
+            });
+        } catch (e) {
+            console.info('SUB_time_systemTimer_createTimer_0001 has failed for ' + e);
+            expect(false).assertTrue();
+        }
+        done();
     });
 
     /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_0300
-     * @tc.name      Test systemTimer.createTimer type = TIMER_TYPE_EXACT
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
+     * @tc.number SUB_time_systemTimer_createTimer_0002
+     * @tc.name SUB_time_systemTimer_createTimer_0002
+     * @tc.desc Test createTimer() interfaces, type = TIMER_TYPE_WAKEUP, repeat = true, interval (Callback)
+     * @tc.size MEDIUM
+     * @tc.type Function
+     * @tc.level Level 0
      */
-    it('systemTimer_Timer_test3',0, async () => {
-        var options = {
-            type:TIMER_TYPE_EXACT,
-            repeat:false,
-            persistent:false
+    it('SUB_time_systemTimer_createTimer_0002', 0, async function (done) {
+        console.info("SUB_time_systemTimer_createTimer_0002 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_WAKEUP,
+            repeat: true,
+            interval: 5001
         }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
+        try {
+            console.info("SUB_time_systemTimer_createTimer_0002 create timer")
+            systemTimer.createTimer(options, function (err, timerID) {
+                if (err) {
+                    expect(false).assertTrue();
+                }
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.destroyTimer(timerID, function (e) {
+                    console.info('SUB_time_systemTimer_createTimer_0002 destroy timerID: ' + timerID);
+                });
+            });
+        } catch (e) {
+            console.info('SUB_time_systemTimer_createTimer_0002 has failed for ' + e);
+            expect(false).assertTrue();
+        }
+        done();
     });
 
     /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_0400
-     * @tc.name      Test systemTimer.createTimer type = TIMER_TYPE_REALTIME
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
+     * @tc.number SUB_time_systemTimer_createTimer_0003
+     * @tc.name SUB_time_systemTimer_createTimer_0003
+     * @tc.desc Test createTimer() interfaces, type = TIMER_TYPE_EXACT, repeat = false (Callback)
+     * @tc.size MEDIUM
+     * @tc.type Function
+     * @tc.level Level 0
      */
-    it('systemTimer_Timer_test4',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
+    it('SUB_time_systemTimer_createTimer_0003', 0, async function (done) {
+        console.info("SUB_time_systemTimer_createTimer_0003 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_EXACT,
+            repeat: false
         }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
+        try {
+            console.info("SUB_time_systemTimer_createTimer_0003 create timer")
+            systemTimer.createTimer(options, function (err, timerID) {
+                if (err) {
+                    expect(false).assertTrue();
+                }
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.destroyTimer(timerID, function (e) {
+                    console.info('SUB_time_systemTimer_createTimer_0003 destroy timerID: ' + timerID);
+                });
+            });
+        } catch (e) {
+            console.info('SUB_time_systemTimer_createTimer_0003 has failed for ' + e);
+            expect(false).assertTrue();
+        }
+        done();
     });
 
     /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_0500
-     * @tc.name      Test systemTimer.createTimer triggerTime = 0
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
+     * @tc.number SUB_time_systemTimer_createTimer_0004
+     * @tc.name SUB_time_systemTimer_createTimer_0004
+     * @tc.desc Test createTimer() interfaces, type = TIMER_TYPE_IDLE, repeat = false(callback)
+     * @tc.size MEDIUM
+     * @tc.type Function
+     * @tc.level Level 0
      */
-    it('systemTimer_Timer_test5',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
+    it('SUB_time_systemTimer_createTimer_0004', 0, async function (done) {
+        console.info("SUB_time_systemTimer_createTimer_0004 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_WAKEUP | systemTimer.TIMER_TYPE_EXACT,
+            repeat: false,
         }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 0)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
+        try {
+            console.info("SUB_time_systemTimer_createTimer_0004 create timer")
+            systemTimer.createTimer(options, function (err, timerID) {
+                if (err) {
+                    expect(false).assertTrue();
+                }
+                expect(Number.isInteger(timerID)).assertTrue();
+                systemTimer.destroyTimer(timerID, function (e) {
+                    console.info('SUB_time_systemTimer_createTimer_0004 destroy timerID: ' + timerID);
+                });
+            });
+        } catch (e) {
+            console.info('SUB_time_systemTimer_createTimer_0004 has failed for ' + e);
+            expect(false).assertTrue();
+        }
+        done();
     });
 
     /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_0600
-     * @tc.name      Test systemTimer.createTimer triggerTime = 5000
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
+     * @tc.number SUB_time_systemTimer_startTimer_0005
+     * @tc.name SUB_time_systemTimer_startTimer_0005
+     * @tc.desc Test startTimer() interfaces, normal call(callback)
+     * @tc.size MEDIUM
+     * @tc.type Function
+     * @tc.level Level 0
      */
-    it('systemTimer_Timer_test6',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
+    it('SUB_time_systemTimer_createTimer_0005', 0, async function (done) {
+        console.info("SUB_time_systemTimer_startTimer_0005 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_IDLE,
+            repeat: false,
         }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 5000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
+        try {
+            console.info("SUB_time_systemTimer_startTimer_0005 create timer")
+            systemTimer.createTimer(options, function (err, timerID) {
+                if (err) {
+                    expect(false).assertTrue();
+                }
+                expect(Number.isInteger(timerID)).assertTrue();
+                let triggerTime = 5000;
+                systemTimer.startTimer(timerID, triggerTime, function (err, data) {
+                    systemTimer.stopTimer(timerID, function (err, data) {
+                        systemTimer.destroyTimer(timerID, function (err, data) {
+                            console.info('SUB_time_systemTimer_startTimer_0005 has SUCCESS');
+                        });
+                    });
+                });
+            });
+        } catch (e) {
+            console.info('SUB_time_systemTimer_startTimer_0005 has failed for ' + e);
+            expect(false).assertTrue();
+        }
+        done();
     });
 
     /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_0700
-     * @tc.name      Test systemTimer.createTimer triggerTime = Number.MAX_VALUE/2
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
+     * @tc.number SUB_time_systemTimer_createTimer_0006
+     * @tc.name SUB_time_systemTimer_createTimer_0006
+     * @tc.desc Test createTimer() interfaces, type = TIMER_TYPE_REALTIME, repeat = false (Promise)
+     * @tc.size MEDIUM
+     * @tc.type Function
+     * @tc.level Level 0
      */
-    it('systemTimer_Timer_test7',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
+    it('SUB_time_systemTimer_createTimer_0006', 0, async function (done) {
+        console.info("SUB_time_systemTimer_startTimer_0006 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_REALTIME,
+            repeat: false
+        };
+        try {
+            systemTimer.createTimer(options).then((timerID) => {
+                expect(Number.isInteger(timerID)).assertTrue();
+                console.info("SUB_time_systemTimer_startTimer_0006 create timer")
+            }, error => {
+                expect(false).assertTrue();
+            });
+        } catch (err) {
+            console.info('SUB_time_systemTimer_startTimer_0006 has failed for ' + err);
+            expect(false).assertTrue();
         }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, Number.MAX_VALUE/2)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
+        done();
     });
 
     /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_0800
-     * @tc.name      Test systemTimer.createTimer triggerTime = Number.MAX_VALUE-1
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
+     * @tc.number SUB_time_systemTimer_createTimer_0007
+     * @tc.name SUB_time_systemTimer_createTimer_0007
+     * @tc.desc Test createTimer() interfaces, type = TIMER_TYPE_REALTIME | TIMER_TYPE_WAKEUP(Callback)
+     * @tc.size MEDIUM
+     * @tc.type Function
+     * @tc.level Level 0
      */
-    it('systemTimer_Timer_test8',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
+    it('SUB_time_systemTimer_createTimer_0007', 0, async function (done) {
+        console.info("SUB_time_systemTimer_startTimer_0007 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_REALTIME | systemTimer.TIMER_TYPE_WAKEUP,
+            repeat: true,
+            interval: 5000
+        };
+        try {
+            console.info("SUB_time_systemTimer_startTimer_0007 create timer")
+            systemTimer.createTimer(options).then((timerID) => {
+                expect(Number.isInteger(timerID)).assertTrue();
+                console.info("SUB_time_systemTimer_startTimer_0007 create timer")
+            }).catch(() => {
+                expect(false).assertTrue();
+            });
+        } catch (err) {
+            console.info('SUB_time_systemTimer_startTimer_0007 has failed for ' + err);
+            expect(false).assertTrue();
         }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, Number.MAX_VALUE-1)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
+        done();
     });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_0900
-     * @tc.name      Test systemTimer.createTimer triggerTime = Number.MAX_VALUE
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test9',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, Number.MAX_VALUE)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_1000
-     * @tc.name      Test systemTimer.createTimer repeat = true
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test10',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:true,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_1100
-     * @tc.name      Test systemTimer.createTimer persistent = true
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test11',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:true
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_1200
-     * @tc.name      Test systemTimer.createTimer repeat,persistent = true
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test12',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:true,
-            persistent:true
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_1300
-     * @tc.name      Test systemTimer.createTimer create,start,stop,destroy 1000 timers
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test13',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
-        }
-        for (var index = 0; index < 1000; index++)
-        {
-            let timer = systemTimer.createTimer(options)
-            expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-            systemTimer.startTimer(timer, 100000)
-            systemTimer.stopTimer(timer)
-            systemTimer.destroyTimer(timer)
-        }
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_1400
-     * @tc.name      Test systemTimer.createTimer interval = 0
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test14',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            interval:0,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_1500
-     * @tc.name      Test systemTimer.createTimer interval = 5000
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test15',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            interval:5000,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_1600
-     * @tc.name      Test systemTimer.createTimer interval = Number.MAX_VALUE/2
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test16',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            interval:Number.MAX_VALUE/2,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_1700
-     * @tc.name      Test systemTimer.createTimer interval = Number.MAX_VALUE-1
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test17',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            interval:Number.MAX_VALUE-1,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_1800
-     * @tc.name      Test systemTimer.createTimer interval = Number.MAX_VALUE
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test18',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            interval:Number.MAX_VALUE,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_1900
-     * @tc.name      Test systemTimer.createTimer WantAgent
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test19',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            interval:100000,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2000
-     * @tc.name      Test systemTimer.createTimer Called back when the timer goes off.
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test20',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            interval:100000,
-            persistent:false,
-            callback:callbackFunction
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2100
-     * @tc.name      Test systemTimer.createTimer start a not exist timer
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test21',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer + 1, 100000)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2200
-     * @tc.name      Test systemTimer.createTimer stop a not exist timer
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test22',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer + 1)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2300
-     * @tc.name      Test systemTimer.createTimer destroy a not exist timer
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test23',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer + 1)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2400
-     * @tc.name      Test systemTimer.createTimer stop a not started timer
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test24',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2500
-     * @tc.name      Test systemTimer.createTimer destroy a started timer
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test25',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2600
-     * @tc.name      Test systemTimer.createTimer repeat to start a timer
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test26',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2700
-     * @tc.name      Test systemTimer.createTimer repeat to stop a timer
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test27',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2800
-     * @tc.name      Test systemTimer.createTimer repeat to destroy a timer
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test28',0, async () => {
-        var options = {
-            type:TIMER_TYPE_REALTIME,
-            repeat:false,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2900
-     * @tc.name      Test systemTimer.createTTimer type = TIMER_TYPE_IDLE
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_test29',0, async () => {
-        var options = {
-            type:TIMER_TYPE_IDLE,
-            repeat:false,
-            persistent:false
-        }
-        let timer = systemTimer.createTimer(options)
-        expect(parseInt(timer) == parseFloat(timer)).assertEqual(true)
-        systemTimer.startTimer(timer, 100000)
-        systemTimer.stopTimer(timer)
-        systemTimer.destroyTimer(timer)
-    });
-
-    /**
-     * @function     Used for callback functions
-     * @tc.name      callbackFunction
-     */
-    function callbackFunction()
-    {
-    }
 })

@@ -31,7 +31,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test1', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0100 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -62,7 +62,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test2', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0200 start")
         var options = {
-            type: TIMER_TYPE_WAKEUP,
+            type: systemTimer.TIMER_TYPE_WAKEUP,
             repeat: false,
             persistent: false
         }
@@ -93,7 +93,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test3', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0300 start")
         var options = {
-            type: TIMER_TYPE_EXACT,
+            type: systemTimer.TIMER_TYPE_EXACT,
             repeat: false,
             persistent: false
         }
@@ -124,7 +124,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test4', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0400 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -155,7 +155,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test5', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0500 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -186,7 +186,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test6', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0600 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -217,7 +217,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test7', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0700 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -248,7 +248,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test8', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0800 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -279,7 +279,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test9', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0900 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -310,7 +310,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test10', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1000 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: true,
             persistent: false
         }
@@ -341,7 +341,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test11', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1100 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: true
         }
@@ -372,7 +372,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test12', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1200 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: true,
             persistent: true
         }
@@ -403,7 +403,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test13', 0, async () => {
             console.log("SUB_systemTimer_Timer_JS_API_1300 start")
             var options = {
-                type: TIMER_TYPE_REALTIME,
+                type: systemTimer.TIMER_TYPE_REALTIME,
                 repeat: false,
                 persistent: false
             }
@@ -436,7 +436,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test14', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1400 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             interval: 0,
             persistent: false
@@ -468,7 +468,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test15', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1500 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             interval: 5000,
             persistent: false
@@ -491,7 +491,7 @@ describe('TimerTest', function () {
 
     /**
      * @tc.number    SUB_systemTimer_Timer_JS_API_1600
-     * @tc.name      Test systemTimer.createTimer interval = Number.MAX_VALUE/2
+     * @tc.name      Test systemTimer.createTimer interval = 0
      * @tc.desc      Test systemTimer_Timer API functionality.
      * @tc.size      : MEDIUM
      * @tc.type      : Function
@@ -500,9 +500,9 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test16', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1600 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
-            interval: Number.MAX_VALUE / 2,
+            interval: 0,
             persistent: false
         }
         console.log("create timer")
@@ -523,7 +523,7 @@ describe('TimerTest', function () {
 
     /**
      * @tc.number    SUB_systemTimer_Timer_JS_API_1700
-     * @tc.name      Test systemTimer.createTimer interval = Number.MAX_VALUE-1
+     * @tc.name      Test systemTimer.createTimer repeat = true
      * @tc.desc      Test systemTimer_Timer API functionality.
      * @tc.size      : MEDIUM
      * @tc.type      : Function
@@ -532,9 +532,8 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test17', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1700 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
-            repeat: false,
-            interval: Number.MAX_VALUE - 1,
+            type: systemTimer.TIMER_TYPE_REALTIME | systemTimer.TIMER_TYPE_WAKEUP,
+            repeat: true,
             persistent: false
         }
         console.log("create timer")
@@ -555,7 +554,7 @@ describe('TimerTest', function () {
 
     /**
      * @tc.number    SUB_systemTimer_Timer_JS_API_1800
-     * @tc.name      Test systemTimer.createTimer interval = Number.MAX_VALUE
+     * @tc.name      Test systemTimer.createTimer interval = 0
      * @tc.desc      Test systemTimer_Timer API functionality.
      * @tc.size      : MEDIUM
      * @tc.type      : Function
@@ -564,9 +563,9 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test18', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1800 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME | systemTimer.TIMER_TYPE_EXACT,
             repeat: false,
-            interval: Number.MAX_VALUE,
+            interval: 0,
             persistent: false
         }
         console.log("create timer")
@@ -596,7 +595,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test19', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1900 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             interval: 100000,
             persistent: false
@@ -628,7 +627,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test20', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2000 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             interval: 100000,
             persistent: false,
@@ -661,7 +660,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test21', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2100 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -688,7 +687,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test22', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2200 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -722,7 +721,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test23', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2300 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -756,7 +755,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test24', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2400 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -783,7 +782,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test25', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2500 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -811,7 +810,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test26', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2600 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -845,7 +844,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test27', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2700 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -879,7 +878,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test28', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2800 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -896,9 +895,6 @@ describe('TimerTest', function () {
             console.log("destroy timer")
             await systemTimer.destroyTimer(timer)
         })
-
-        console.log("destroy timer again")
-        await systemTimer.stopTimer(timer)
         console.log('SUB_systemTimer_Timer_JS_API_2800 end');
     });
 
@@ -913,7 +909,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test29', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2900 start")
         var options = {
-            type: TIMER_TYPE_IDLE,
+            type: systemTimer.TIMER_TYPE_IDLE,
             repeat: false,
             persistent: false
         }
@@ -944,7 +940,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test31', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0100 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -975,7 +971,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test32', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0200 start")
         var options = {
-            type: TIMER_TYPE_WAKEUP,
+            type: systemTimer.TIMER_TYPE_WAKEUP,
             repeat: false,
             persistent: false
         }
@@ -1006,7 +1002,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test33', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0300 start")
         var options = {
-            type: TIMER_TYPE_EXACT,
+            type: systemTimer.TIMER_TYPE_EXACT,
             repeat: false,
             persistent: false
         }
@@ -1037,7 +1033,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test34', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0400 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1068,7 +1064,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test35', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0500 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1099,7 +1095,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test36', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0600 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1130,7 +1126,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test37', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0700 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1161,7 +1157,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test38', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0800 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1192,7 +1188,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test39', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_0900 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1223,7 +1219,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test40', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1000 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: true,
             persistent: false
         }
@@ -1254,7 +1250,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test41', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1100 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: true
         }
@@ -1285,7 +1281,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test42', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1200 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: true,
             persistent: true
         }
@@ -1316,7 +1312,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test43', 0, async () => {
             console.log("SUB_systemTimer_Timer_JS_API_1300 start")
             var options = {
-                type: TIMER_TYPE_REALTIME,
+                type: systemTimer.TIMER_TYPE_REALTIME,
                 repeat: false,
                 persistent: false
             }
@@ -1349,7 +1345,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test44', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1400 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             interval: 0,
             persistent: false
@@ -1381,7 +1377,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test45', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1500 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             interval: 5000,
             persistent: false
@@ -1404,7 +1400,7 @@ describe('TimerTest', function () {
 
     /**
      * @tc.number    SUB_systemTimer_Timer_JS_API_1600
-     * @tc.name      Test systemTimer.createTimer interval = Number.MAX_VALUE/2
+     * @tc.name      Test systemTimer.createTimer interval = 0
      * @tc.desc      Test systemTimer_Timer API functionality.
      * @tc.size      : MEDIUM
      * @tc.type      : Function
@@ -1413,9 +1409,9 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test46', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1600 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME | systemTimer.TIMER_TYPE_WAKEUP,
             repeat: false,
-            interval: Number.MAX_VALUE / 2,
+            interval: 0,
             persistent: false
         }
         console.log("create timer")
@@ -1436,7 +1432,7 @@ describe('TimerTest', function () {
 
     /**
      * @tc.number    SUB_systemTimer_Timer_JS_API_1700
-     * @tc.name      Test systemTimer.createTimer interval = Number.MAX_VALUE-1
+     * @tc.name      Test systemTimer.createTimer interval = 0
      * @tc.desc      Test systemTimer_Timer API functionality.
      * @tc.size      : MEDIUM
      * @tc.type      : Function
@@ -1445,9 +1441,9 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test47', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1700 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
-            interval: Number.MAX_VALUE - 1,
+            interval: 0,
             persistent: false
         }
         console.log("create timer")
@@ -1455,7 +1451,7 @@ describe('TimerTest', function () {
             expect(timer > 0).assertEqual(true)
 
             console.log("start timer")
-            await systemTimer.startTimer(timer, 100000)
+            await systemTimer.startTimer(timer, 0)
 
             console.log("stop timer")
             await systemTimer.stopTimer(timer)
@@ -1468,7 +1464,7 @@ describe('TimerTest', function () {
 
     /**
      * @tc.number    SUB_systemTimer_Timer_JS_API_1800
-     * @tc.name      Test systemTimer.createTimer interval = Number.MAX_VALUE
+     * @tc.name      Test systemTimer.createTimer interval = 0
      * @tc.desc      Test systemTimer_Timer API functionality.
      * @tc.size      : MEDIUM
      * @tc.type      : Function
@@ -1477,9 +1473,9 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test48', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1800 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
-            interval: Number.MAX_VALUE,
+            interval: 0,
             persistent: false
         }
         console.log("create timer")
@@ -1487,7 +1483,7 @@ describe('TimerTest', function () {
             expect(timer > 0).assertEqual(true)
 
             console.log("start timer")
-            await systemTimer.startTimer(timer, 100000)
+            await systemTimer.startTimer(timer, 5000)
 
             console.log("stop timer")
             await systemTimer.stopTimer(timer)
@@ -1509,7 +1505,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test49', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_1900 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             interval: 100000,
             persistent: false
@@ -1541,7 +1537,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test50', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2000 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             interval: 100000,
             persistent: false,
@@ -1574,7 +1570,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test51', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2100 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1601,7 +1597,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test52', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2200 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1635,7 +1631,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test53', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2300 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1669,7 +1665,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test54', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2400 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1696,7 +1692,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test55', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2500 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1724,7 +1720,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test56', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2600 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1758,7 +1754,7 @@ describe('TimerTest', function () {
     it('systemTimer_Timer_CallBack_test57', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2700 start")
         var options = {
-            type: TIMER_TYPE_REALTIME,
+            type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false,
             persistent: false
         }
@@ -1782,40 +1778,6 @@ describe('TimerTest', function () {
     });
 
     /**
-     * @tc.number    SUB_systemTimer_Timer_JS_API_2800
-     * @tc.name      Test systemTimer.createTimer repeat to destroy a timer
-     * @tc.desc      Test systemTimer_Timer API functionality.
-     * @tc.size      : MEDIUM
-     * @tc.type      : Function
-     * @tc.level     : Level 0
-     */
-    it('systemTimer_Timer_CallBack_test58', 0, async () => {
-        console.log("SUB_systemTimer_Timer_JS_API_2800 start")
-        var options = {
-            type: TIMER_TYPE_REALTIME,
-            repeat: false,
-            persistent: false
-        }
-        console.log("create timer")
-        systemTimer.createTimer(options, async (error, timer) => {
-            expect(timer > 0).assertEqual(true)
-
-            console.log("start timer")
-            await systemTimer.startTimer(timer, 100000)
-
-            console.log("stop timer")
-            await systemTimer.stopTimer(timer)
-
-            console.log("destroy timer")
-            await systemTimer.destroyTimer(timer)
-        })
-
-        console.log("destroy timer again")
-        await systemTimer.stopTimer(timer)
-        console.log('SUB_systemTimer_Timer_JS_API_2800 end');
-    });
-
-    /**
      * @tc.number    SUB_systemTimer_Timer_JS_API_2900
      * @tc.name      Test systemTimer.createTTimer type = TIMER_TYPE_IDLE
      * @tc.desc      Test systemTimer_Timer API functionality.
@@ -1823,10 +1785,10 @@ describe('TimerTest', function () {
      * @tc.type      : Function
      * @tc.level     : Level 0
      */
-    it('systemTimer_Timer_CallBack_test59', 0, async () => {
+    it('systemTimer_Timer_CallBack_test58', 0, async () => {
         console.log("SUB_systemTimer_Timer_JS_API_2900 start")
         var options = {
-            type: TIMER_TYPE_IDLE,
+            type: systemTimer.TIMER_TYPE_IDLE,
             repeat: false,
             persistent: false
         }
