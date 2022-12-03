@@ -23,7 +23,6 @@
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 #include "time_service.h"
-#include "time_service_client.h"
 #include "message_parcel.h"
 
 using namespace OHOS::MiscServices;
@@ -57,7 +56,7 @@ void GrantNativePermission()
 
 bool FuzzTimeService(const uint8_t* rawData, size_t size)
 {
-    uint32_t code = (*rawData) % 9 + 1;
+    uint32_t code = (*rawData) % 10 + 1;
 
     MessageParcel data;
     data.WriteInterfaceToken(TIMESERVICE_INTERFACE_TOKEN);
