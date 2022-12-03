@@ -22,9 +22,7 @@ ohos_fuzztest("TimeServiceFuzzTest") {
 
   fuzz_config_file = "//base/time/time_service/test/fuzztest/timeservice_fuzzer"
 
-  include_dirs = [
-    "//base/time/time_service/services/time_manager/include",
-  ]
+  include_dirs = [ "//base/time/time_service/services/time_manager/include" ]
 
   cflags = [
     "-g",
