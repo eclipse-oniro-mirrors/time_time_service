@@ -22,12 +22,7 @@ ohos_fuzztest("TimeServiceFuzzTest") {
 
   fuzz_config_file = "//base/time/time_service/test/fuzztest/timeservice_fuzzer"
 
-  include_dirs = [
-    "//base/time/time_service/services/time_manager/include",
-    "//base/time/time_service/services/timer/include",
-    "//base/time/time_service/utils/mock/include",
-    "//base/time/time_service/interfaces/innerkits/include",
-  ]
+  include_dirs = [ "//base/time/time_service/services/time_manager/include" ]
 
   cflags = [
     "-g",
@@ -40,7 +35,6 @@ ohos_fuzztest("TimeServiceFuzzTest") {
 
   deps = [
     "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
-    "//base/time/time_service/interfaces/innerkits:time_client",
     "//base/time/time_service/services:time_service",
     "//foundation/bundlemanager/bundle_framework/interfaces/inner_api/appexecfwk_core:appexecfwk_core",
     "//third_party/jsoncpp:jsoncpp",
