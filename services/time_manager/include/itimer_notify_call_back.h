@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,31 +13,35 @@
  * limitations under the License.
  */
 
-#ifndef I_TIMER_CALL_BACK_H
-#define I_TIMER_CALL_BACK_H
+#ifndef I_TIMER_NOTIFY_CALL_BACK_H
+#define I_TIMER_NOTIFY_CALL_BACK_H
 
 #include "iremote_broker.h"
 
 namespace OHOS {
 namespace MiscServices {
-class ITimerCallback : public IRemoteBroker {
+class ITimerNotifyCallback : public IRemoteBroker {
 public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.miscservices.time.ITimerCallback");
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.miscservices.time.ITimerNotifyCallback");
+	
+    /**
+     * Notify trigger timer finished.
+     *
+     * @param timerId timer id.
+     */
+    virtual void Finish(const uint64_t timerId) = 0;
 
     /**
-     * trigger timer by id.
-     *
-     * @param timerId  timerId
-     * @param timerCallback callback to notify finish.
-     *
+     * IPC code of ITimerNotifyCallback.
      */
-    virtual void NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback) = 0;
-
     enum Message {
-        NOTIFY_TIMER = 1
+        /**
+         * IPC code of Finish method..
+         */
+        FINISH = 1
     };
 };
-}  // namespace MiscServices
-}  // namespace OHOS
+} // namespace MiscServices
+} // namespace OHOS
 
-#endif  // I_TIMER_CALL_BACK_H
+#endif // I_TIMER_NOTIFY_CALL_BACK_H

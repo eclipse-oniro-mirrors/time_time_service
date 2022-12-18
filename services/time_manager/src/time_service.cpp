@@ -269,7 +269,7 @@ uint64_t TimeService::CreateTimer(int32_t type, bool repeat, uint64_t interval,
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start create timer.");
     auto callbackFunc = [timerCallback](uint64_t id) {
-        timerCallback->NotifyTimer(id);
+        timerCallback->NotifyTimer(id, nullptr);
     };
     int64_t triggerTime = 0;
     GetWallTimeMs(triggerTime);
