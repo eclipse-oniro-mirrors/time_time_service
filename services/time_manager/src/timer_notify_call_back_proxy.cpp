@@ -17,8 +17,8 @@
 
 namespace OHOS {
 namespace MiscServices {
-TimerNotifyCallbackProxy::TimerNotifyCallbackProxy(const sptr<IRemoteObject> &object) :
-    IRemoteProxy<ITimerNotifyCallback>(object)
+TimerNotifyCallbackProxy::TimerNotifyCallbackProxy(const sptr<IRemoteObject> &object)
+    :IRemoteProxy<ITimerNotifyCallback>(object)
 {
 }
 
