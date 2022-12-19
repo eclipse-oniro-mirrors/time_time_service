@@ -33,9 +33,9 @@ config("native_module_config") {
 
 ohos_shared_library("systemtimer") {
   include_dirs = [
-    "//base/time/time_service/interfaces/innerkits/include",
-    "./include",
     "../common/include",
+    "../../../../../innerkits/include",
+    "include",
     "//foundation/arkui/napi/interfaces/kits/napi",
     "//third_party/node/src",
     "//third_party/libuv/include",
@@ -44,7 +44,10 @@ ohos_shared_library("systemtimer") {
   configs = [ ":native_module_config" ]
 
   sources = [
-    "src/system_timer.cpp",
+    "../common/src/napi_async_callback.cpp",
+    "../common/src/napi_async_work.cpp",
+    "../common/src/napi_utils.cpp",
+    "src/napi_system_timer.cpp",
     "src/timer_init.cpp",
     "src/timer_type.cpp",
   ]
@@ -59,6 +62,7 @@ ohos_shared_library("systemtimer") {
   external_deps = [
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
+    "hiviewdfx_hilog_native:libhilog",
   ]
 
   relative_install_dir = "module"

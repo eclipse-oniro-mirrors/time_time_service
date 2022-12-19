@@ -42,9 +42,8 @@ sptr<TimerCallback> TimerCallback::GetInstance()
     }
     return instance_;
 }
-    
-bool TimerCallback::InsertTimerCallbackInfo(const uint64_t timerId,
-                                            const std::shared_ptr<ITimerInfo> &timerInfo)
+
+bool TimerCallback::InsertTimerCallbackInfo(const uint64_t timerId, const std::shared_ptr<ITimerInfo> &timerInfo)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     if (timerInfo == nullptr) {

@@ -16,7 +16,9 @@
 #include "timer_type.h"
 
 namespace OHOS {
-namespace MiscServicesNapi {
+namespace MiscServices {
+namespace Time {
+
 void SetNamedPropertyByInteger(napi_env env, napi_value dstObj, int32_t objName, const char *propName)
 {
     napi_value prop = nullptr;
@@ -35,10 +37,11 @@ napi_value TimerTypeInit(napi_env env, napi_value exports)
     SetNamedPropertyByInteger(env, obj, 1 << TIMER_TYPE_EXACT, "TIMER_TYPE_EXACT");
     SetNamedPropertyByInteger(env, obj, 1 << TIMER_TYPE_IDLE, "TIMER_TYPE_IDLE");
 
-    napi_property_descriptor exportFuncs[] = {DECLARE_NAPI_PROPERTY("systemTimer", obj)};
+    napi_property_descriptor exportFuncs[] = { DECLARE_NAPI_PROPERTY("systemTimer", obj) };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
 
     return exports;
 }
-}  // namespace MiscServicesNapi
-}  // namespace OHOS
+} // namespace Time
+} // namespace MiscServices
+} // namespace OHOS

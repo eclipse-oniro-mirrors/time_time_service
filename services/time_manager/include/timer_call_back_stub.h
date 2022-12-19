@@ -19,8 +19,9 @@
 #include <inttypes.h>
 #include <iremote_stub.h>
 #include <nocopyable.h>
-#include "time_common.h"
+
 #include "itimer_call_back.h"
+#include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -32,7 +33,7 @@ public:
     int OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
 
 private:
-    int OnTriggerStub(MessageParcel& data);
+    int OnTriggerStub(MessageParcel &data);
 };
 } // namespace MiscServices
 } // namespace OHOS

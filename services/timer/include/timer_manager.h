@@ -33,16 +33,14 @@ namespace MiscServices {
 class TimerManager : public ITimerManager {
 public:
     static std::shared_ptr<TimerManager> Create();
-    uint64_t CreateTimer(int type,
-        uint64_t windowLength,
-        uint64_t interval,
-        int flag,
-        std::function<void (const uint64_t)> callback,
-        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-        int uid) override;
-    bool StartTimer(uint64_t timerNumber, uint64_t triggerTime) override;
-    bool StopTimer(uint64_t timerNumber) override;
-    bool DestroyTimer(uint64_t timerNumber) override;
+    int32_t CreateTimer(TimerPara &paras,
+                        std::function<void (const uint64_t)> callback,
+                        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+                        int uid,
+                        uint64_t &timerId) override;
+    int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
+    int32_t StopTimer(uint64_t timerId) override;
+    int32_t DestroyTimer(uint64_t timerId) override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
     bool ResetAllProxy() override;
     bool ShowtimerEntryMap(int fd);
@@ -55,43 +53,42 @@ private:
     void TimerLooper();
 
     void SetHandler(uint64_t id,
-        int type,
-        uint64_t triggerAtTime,
-        uint64_t windowLength,
-        uint64_t interval,
-        int flag,
-        std::function<void (const uint64_t)> callback,
-        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-        int uid);
+                    int type,
+                    uint64_t triggerAtTime,
+                    uint64_t windowLength,
+                    uint64_t interval,
+                    int flag,
+                    std::function<void (const uint64_t)> callback,
+                    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+                    int uid);
     void SetHandlerLocked(uint64_t id,
-        int type,
-        std::chrono::milliseconds when,
-        std::chrono::steady_clock::time_point whenElapsed,
-        std::chrono::milliseconds windowLength,
-        std::chrono::steady_clock::time_point maxWhen,
-        std::chrono::milliseconds interval,
-        std::function<void (const uint64_t)> callback,
-        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-        uint32_t flags,
-        bool doValidate,
-        uint64_t callingUid);
+                          int type,
+                          std::chrono::milliseconds when,
+                          std::chrono::steady_clock::time_point whenElapsed,
+                          std::chrono::milliseconds windowLength,
+                          std::chrono::steady_clock::time_point maxWhen,
+                          std::chrono::milliseconds interval,
+                          std::function<void (const uint64_t)> callback,
+                          std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+                          uint32_t flags,
+                          bool doValidate,
+                          uint64_t callingUid);
     void RemoveHandler(uint64_t id);
     void RemoveLocked(uint64_t id);
-    bool IsSystemUid(int uid);
     void ReBatchAllTimers();
     void ReBatchAllTimersLocked(bool doValidate);
     void ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
-        std::chrono::steady_clock::time_point nowElapsed,
-        bool doValidate);
+                          std::chrono::steady_clock::time_point nowElapsed,
+                          bool doValidate);
     void SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool doValidate);
     void InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm);
     int64_t AttemptCoalesceLocked(std::chrono::steady_clock::time_point whenElapsed,
-        std::chrono::steady_clock::time_point maxWhen);
+                                  std::chrono::steady_clock::time_point maxWhen);
     bool TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &triggerList,
-        std::chrono::steady_clock::time_point nowElapsed);
+                             std::chrono::steady_clock::time_point nowElapsed);
     void RescheduleKernelTimerLocked();
     void DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList,
-        std::chrono::steady_clock::time_point nowElapsed);
+                             std::chrono::steady_clock::time_point nowElapsed);
     std::shared_ptr<Batch> FindFirstWakeupBatchLocked();
     void SetLocked(int type, std::chrono::nanoseconds when);
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);

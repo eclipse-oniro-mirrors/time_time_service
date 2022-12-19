@@ -15,16 +15,17 @@
 
 #ifndef TIME_SERVICE_NOTIFY_H
 #define TIME_SERVICE_NOTIFY_H
-#include <singleton.h>
-
 #include <common_event_publish_info.h>
+#include <singleton.h>
 #include <want.h>
+
 #include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {
 class TimeServiceNotify : public DelayedSingleton<TimeServiceNotify> {
     DECLARE_DELAYED_SINGLETON(TimeServiceNotify);
+
 public:
     DISALLOW_COPY_AND_MOVE(TimeServiceNotify);
     void RegisterPublishEvents();
@@ -32,6 +33,7 @@ public:
     void PublishTimeZoneChangeEvents(int64_t eventTime);
     void PublishTimeTickEvents(int64_t eventTime);
     bool RepublishEvents();
+
 private:
     using IntentWant = OHOS::AAFwk::Want;
 

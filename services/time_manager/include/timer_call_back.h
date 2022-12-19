@@ -17,10 +17,11 @@
 #define TIMER_CALL_BACK_H
 
 #include <mutex>
-#include "timer_call_back_stub.h"
+
+#include "ability_context.h"
 #include "itimer_info.h"
 #include "time_common.h"
-#include "ability_context.h"
+#include "timer_call_back_stub.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -48,7 +49,7 @@ private:
     static std::map<uint64_t, std::shared_ptr<ITimerInfo>> TimerInfoMap_;
     static std::mutex timerInfoMutex_;
 };
-}  // namespace MiscServices
-}  // namespace OHOS
+} // namespace MiscServices
+} // namespace OHOS
 
-#endif  // TIMER_CALL_BACK_H
+#endif // TIMER_CALL_BACK_H

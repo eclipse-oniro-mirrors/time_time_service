@@ -13,30 +13,31 @@
  * limitations under the License.
  */
 
+#include "time_service_notify.h"
+
 #include "common_event_data.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
-#include "time_service_notify.h"
 
 using namespace OHOS::AAFwk;
 using namespace OHOS::EventFwk;
 
 namespace OHOS {
 namespace MiscServices {
-TimeServiceNotify::TimeServiceNotify() {};
-TimeServiceNotify::~TimeServiceNotify() {};
+TimeServiceNotify::TimeServiceNotify(){};
+TimeServiceNotify::~TimeServiceNotify(){};
 void TimeServiceNotify::RegisterPublishEvents()
 {
     if (publishInfo_ != nullptr) {
         return;
     }
-    publishInfo_ = new (std::nothrow)CommonEventPublishInfo();
+    publishInfo_ = new (std::nothrow) CommonEventPublishInfo();
     publishInfo_->SetOrdered(false);
-    timeChangeWant_ = new (std::nothrow)IntentWant();
+    timeChangeWant_ = new (std::nothrow) IntentWant();
     timeChangeWant_->SetAction(CommonEventSupport::COMMON_EVENT_TIME_CHANGED);
-    timeZoneChangeWant_ = new (std::nothrow)IntentWant();
+    timeZoneChangeWant_ = new (std::nothrow) IntentWant();
     timeZoneChangeWant_->SetAction(CommonEventSupport::COMMON_EVENT_TIMEZONE_CHANGED);
-    timeTickWant_ = new (std::nothrow)IntentWant();
+    timeTickWant_ = new (std::nothrow) IntentWant();
     timeTickWant_->SetAction(CommonEventSupport::COMMON_EVENT_TIME_TICK);
 }
 
@@ -59,8 +60,8 @@ bool TimeServiceNotify::PublishEvents(int64_t eventTime, sptr<IntentWant> want)
         return false;
     }
 
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start to publish event %{public}s at %{public}lld",
-        want->GetAction().c_str(), static_cast<long long>(eventTime));
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Start to publish event %{public}s at %{public}lld", want->GetAction().c_str(),
+        static_cast<long long>(eventTime));
     CommonEventData event(*want);
     bool publishResult = CommonEventManager::PublishCommonEvent(event, *publishInfo_, nullptr);
     if (!publishResult) {
@@ -85,5 +86,5 @@ void TimeServiceNotify::PublishTimeTickEvents(int64_t eventTime)
 {
     PublishEvents(eventTime, timeTickWant_);
 }
-} // MiscService
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS

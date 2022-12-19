@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 #include "timer_call_back_proxy.h"
 
 namespace OHOS {
@@ -21,7 +20,6 @@ namespace MiscServices {
 TimerCallbackProxy::TimerCallbackProxy(const sptr<IRemoteObject> &object) : IRemoteProxy<ITimerCallback>(object)
 {
 }
-
 
 TimerCallbackProxy::~TimerCallbackProxy()
 {

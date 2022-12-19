@@ -16,12 +16,12 @@
 #ifndef SNTP_CLIENT_SNTP_CLIENT_H
 #define SNTP_CLIENT_SNTP_CLIENT_H
 
+#include <cstdlib>
+#include <ctime>
+#include <netinet/in.h>
+#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <ctime>
-#include <string>
-#include <cstdlib>
-#include <netinet/in.h>
 
 namespace OHOS {
 namespace MiscServices {
@@ -34,6 +34,7 @@ public:
     int64_t getNtpTimeReference();
     int64_t getRoundTripTime();
     int GetClockOffset(void);
+
 private:
     struct ntp_timestamp {
         uint32_t second;
@@ -68,7 +69,7 @@ private:
         void clear();
     };
 
-    unsigned int GetNtpField32(int offset, char* buffer);
+    unsigned int GetNtpField32(int offset, char *buffer);
     /**
      * This function returns an array based on the Reference ID
      * (converted from NTP message), given the offset provided.
@@ -78,7 +79,7 @@ private:
      *
      * Returns the array of Reference ID
      */
-    void GetReferenceId(int offset, char* buffer, int* _outArray);
+    void GetReferenceId(int offset, char *buffer, int *_outArray);
     /**
      * This function sets the clock offset in ms.
      * Negative value means the local clock is ahead,
@@ -94,14 +95,14 @@ private:
      * @param ntpTs the structure NTP where the NTP values are stored
      * @param unixTs the structure UNIX (with the already set tv_sec and tv_usec)
      */
-    void ConvertUnixToNtp(struct ntp_timestamp* ntpTs, struct timeval* unixTs);
+    void ConvertUnixToNtp(struct ntp_timestamp *ntpTs, struct timeval *unixTs);
     /**
      * This function converts the NTP time to UNIX
      *
      * @param ntpTs the structure NTP where the NTP values are already set
      * @param unixTs the structure UNIX where the UNIX values are stored
      */
-    void ConvertNtpToUnix(struct ntp_timestamp* ntpTs, struct timeval* unixTs);
+    void ConvertNtpToUnix(struct ntp_timestamp *ntpTs, struct timeval *unixTs);
 
     /**
     * This function creates the SNTP message ready for transmission (SNTP Req)
@@ -109,7 +110,7 @@ private:
     *
     * @param buffer the message to be sent
     */
-    void CreateMessage(char* buffer);
+    void CreateMessage(char *buffer);
 
     /**
     * This function creates the SNTP message ready for transmission (SNTP Req)
@@ -117,7 +118,7 @@ private:
     *
     * @param buffer the message to be sent
     */
-    void WriteTimeStamp(char* buffer, ntp_timestamp *ntp);
+    void WriteTimeStamp(char *buffer, ntp_timestamp *ntp);
 
     /**
      * This function gets the information received from the SNTP response
@@ -125,7 +126,7 @@ private:
      *
      * @param buffer the message received
      */
-    void ReceivedMessage(char* buffer);
+    void ReceivedMessage(char *buffer);
 
     /**
      * This function returns the timestamp (64-bit) from the received
@@ -136,7 +137,7 @@ private:
      *
      * Returns the ntp timestamp
      */
-    uint64_t GetNtpTimestamp64(int offset, char* buffer);
+    uint64_t GetNtpTimestamp64(int offset, char *buffer);
 
     /**
      * This function converts the NTP time to timestamp
@@ -151,6 +152,6 @@ private:
     int64_t mNtpTimeReference;
     int64_t mRoundTripTime;
 };
-} // MiscServices
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS
 #endif // SNTP_CLIENT_SNTP_CLIENT_H

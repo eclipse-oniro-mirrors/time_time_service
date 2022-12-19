@@ -13,63 +13,69 @@
  * limitations under the License.
  */
 
+#include "sntp_client.h"
+
+#include <chrono>
 #include <cstdio>
-#include <unistd.h>
-#include <sstream>
 #include <ctime>
-#include <sys/time.h>
-#include <string>
-#include <securec.h>
 #include <iomanip>
 #include <netdb.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
-#include <chrono>
+#include <securec.h>
+#include <sstream>
+#include <string>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "time_common.h"
-#include "sntp_client.h"
 
 namespace OHOS {
 namespace MiscServices {
 namespace {
-    constexpr auto SECONDS_SINCE_FIRST_EPOCH = (2208988800UL); // Seconds from 1/1/1900 00.00 to 1/1/1970 00.00;
-    constexpr uint64_t MILLISECOND_TO_SECOND = 1000;
-    constexpr uint64_t FRACTION_TO_SECOND = 0x100000000;
-    constexpr uint64_t UINT32_MASK = 0xFFFFFFFF;
-    const int VERSION_MASK = 0x38;
-    const int MODE_MASK = 0x7;
-    constexpr int INVALID_RETURN = -1;
-    constexpr int INDEX_ZERO = 0;
-    constexpr int INDEX_ONE = 1;
-    constexpr int INDEX_TWO = 2;
-    constexpr int INDEX_THREE = 3;
-    constexpr int INDEX_FOUR = 4;
-    constexpr int TIME_OUT = 5;
-    constexpr unsigned char MODE_THREE = 3;
-    constexpr unsigned char VERSION_THREE = 3;
-    constexpr double TEN_TO_MINUS_SIX_POWER = 1.0e-6;
-    constexpr double TEN_TO_SIX_POWER = 1.0e6;
-    char const *NTP_PORT = "123";
-    constexpr int NTP_MSG_OFFSET_ROOT_DELAY = 4;
-    constexpr int NTP_MSG_OFFSET_ROOT_DISPERSION = 8;
-    constexpr int NTP_MSG_OFFSET_REFERENCE_IDENTIFIER = 12;
-    constexpr int REFERENCE_TIMESTAMP_OFFSET = 16;
-    constexpr int ORIGINATE_TIMESTAMP_OFFSET = 24;
-    constexpr int RECEIVE_TIMESTAMP_OFFSET = 32;
-    constexpr int TRANSMIT_TIMESTAMP_OFFSET = 40;
-    constexpr int NTP_PACKAGE_SIZE = 48;
-    constexpr int SNTP_MSG_OFFSET_SIX = 6;
-    constexpr int SNTP_MSG_OFFSET_THREE = 3;
+constexpr auto SECONDS_SINCE_FIRST_EPOCH = (2208988800UL); // Seconds from 1/1/1900 00.00 to 1/1/1970 00.00;
+constexpr uint64_t MILLISECOND_TO_SECOND = 1000;
+constexpr uint64_t FRACTION_TO_SECOND = 0x100000000;
+constexpr uint64_t UINT32_MASK = 0xFFFFFFFF;
+const int VERSION_MASK = 0x38;
+const int MODE_MASK = 0x7;
+constexpr int INVALID_RETURN = -1;
+constexpr int INDEX_ZERO = 0;
+constexpr int INDEX_ONE = 1;
+constexpr int INDEX_TWO = 2;
+constexpr int INDEX_THREE = 3;
+constexpr int INDEX_FOUR = 4;
+constexpr int TIME_OUT = 5;
+constexpr unsigned char MODE_THREE = 3;
+constexpr unsigned char VERSION_THREE = 3;
+constexpr double TEN_TO_MINUS_SIX_POWER = 1.0e-6;
+constexpr double TEN_TO_SIX_POWER = 1.0e6;
+char const *NTP_PORT = "123";
+constexpr int NTP_MSG_OFFSET_ROOT_DELAY = 4;
+constexpr int NTP_MSG_OFFSET_ROOT_DISPERSION = 8;
+constexpr int NTP_MSG_OFFSET_REFERENCE_IDENTIFIER = 12;
+constexpr int REFERENCE_TIMESTAMP_OFFSET = 16;
+constexpr int ORIGINATE_TIMESTAMP_OFFSET = 24;
+constexpr int RECEIVE_TIMESTAMP_OFFSET = 32;
+constexpr int TRANSMIT_TIMESTAMP_OFFSET = 40;
+constexpr int NTP_PACKAGE_SIZE = 48;
+constexpr int SNTP_MSG_OFFSET_SIX = 6;
+constexpr int SNTP_MSG_OFFSET_THREE = 3;
+} // namespace
+SNTPClient::SNTPClient()
+{
 }
-SNTPClient::SNTPClient() {}
-SNTPClient::~SNTPClient() {}
+SNTPClient::~SNTPClient()
+{
+}
 
 bool SNTPClient::RequestTime(std::string host)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     int BufLen = NTP_PACKAGE_SIZE;
 
-    struct addrinfo hints = {0}, *addrs;
+    struct addrinfo hints = { 0 }, *addrs;
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
@@ -89,7 +95,7 @@ bool SNTPClient::RequestTime(std::string host)
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime3.");
     // Set send and recv function timeout
-    struct timeval timeout = {TIME_OUT, 0};
+    struct timeval timeout = { TIME_OUT, 0 };
     setsockopt(SendSocket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(struct timeval));
     setsockopt(SendSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 
@@ -99,7 +105,7 @@ bool SNTPClient::RequestTime(std::string host)
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime4.");
     // Create the NTP tx timestamp and fill the fields in the msg to be tx
-    char SendBuf[NTP_PACKAGE_SIZE] = {0};
+    char SendBuf[NTP_PACKAGE_SIZE] = { 0 };
     CreateMessage(SendBuf);
     if (send(SendSocket, SendBuf, BufLen, 0) == INVALID_RETURN) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Send socket message failed. Host: %{public}s", host.c_str());
@@ -121,7 +127,6 @@ bool SNTPClient::RequestTime(std::string host)
     return true;
 }
 
-
 void SNTPClient::SetClockOffset(int clockOffset)
 {
     m_clockOffset = clockOffset;
@@ -132,7 +137,7 @@ int SNTPClient::GetClockOffset(void)
     return m_clockOffset;
 }
 
-uint64_t SNTPClient::GetNtpTimestamp64(int offset, char* buffer)
+uint64_t SNTPClient::GetNtpTimestamp64(int offset, char *buffer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     const int _len = sizeof(uint64_t);
@@ -196,10 +201,10 @@ int64_t SNTPClient::ConvertNtpToStamp(uint64_t _ntpTs)
         return 0;
     }
     return ((second - SECONDS_SINCE_FIRST_EPOCH) * MILLISECOND_TO_SECOND) +
-        ((fraction * MILLISECOND_TO_SECOND) / FRACTION_TO_SECOND);
+           ((fraction * MILLISECOND_TO_SECOND) / FRACTION_TO_SECOND);
 }
 
-void SNTPClient::CreateMessage(char* buffer)
+void SNTPClient::CreateMessage(char *buffer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     struct ntp_timestamp ntp;
@@ -235,11 +240,11 @@ void SNTPClient::CreateMessage(char* buffer)
     }
     // create the 1-byte info in one go... the result should be 27 :)
     buffer[INDEX_ZERO] = (_sntpMsg._leapIndicator << SNTP_MSG_OFFSET_SIX) |
-        (_sntpMsg._versionNumber << SNTP_MSG_OFFSET_THREE) | _sntpMsg._mode;
+                         (_sntpMsg._versionNumber << SNTP_MSG_OFFSET_THREE) | _sntpMsg._mode;
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
-void SNTPClient::WriteTimeStamp(char* buffer, ntp_timestamp *ntp)
+void SNTPClient::WriteTimeStamp(char *buffer, ntp_timestamp *ntp)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     uint64_t _ntpTs = ntp->second;
@@ -267,11 +272,11 @@ void SNTPClient::WriteTimeStamp(char* buffer, ntp_timestamp *ntp)
     }
     // create the 1-byte info in one go... the result should be 27 :)
     buffer[INDEX_ZERO] = (_sntpMsg._leapIndicator << SNTP_MSG_OFFSET_SIX) |
-        (_sntpMsg._versionNumber << SNTP_MSG_OFFSET_THREE) | _sntpMsg._mode;
+                         (_sntpMsg._versionNumber << SNTP_MSG_OFFSET_THREE) | _sntpMsg._mode;
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
-void SNTPClient::ReceivedMessage(char* buffer)
+void SNTPClient::ReceivedMessage(char *buffer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     struct ntp_timestamp ntp;
@@ -317,13 +322,14 @@ void SNTPClient::ReceivedMessage(char* buffer)
     int64_t _roundTripDelay = (_receiveClient - _originClient) - (_transmitServer - _receiveServer);
     mRoundTripTime = _roundTripDelay;
     mNtpTime = ConvertNtpToStamp(_ntpTs) + _clockOffset;
-    mNtpTimeReference = std::chrono::duration_cast<std::chrono::milliseconds>
-        (std::chrono::steady_clock::now().time_since_epoch()).count();
+    mNtpTimeReference =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+            .count();
     SetClockOffset(_clockOffset);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
-unsigned int SNTPClient::GetNtpField32(int offset, char* buffer)
+unsigned int SNTPClient::GetNtpField32(int offset, char *buffer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     const int _len = sizeof(int);
@@ -349,7 +355,7 @@ unsigned int SNTPClient::GetNtpField32(int offset, char* buffer)
     return milliseconds;
 }
 
-void SNTPClient::GetReferenceId(int offset, char* buffer, int* _outArray)
+void SNTPClient::GetReferenceId(int offset, char *buffer, int *_outArray)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     const int _len = sizeof(int);
@@ -384,5 +390,5 @@ int64_t SNTPClient::getRoundTripTime()
 {
     return mRoundTripTime;
 }
-} // MiscServices
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS

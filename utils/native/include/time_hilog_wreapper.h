@@ -46,25 +46,45 @@ enum TimeDomainId {
 };
 
 static constexpr OHOS::HiviewDFX::HiLogLabel TIME_MODULE_LABEL[TIME_MODULE_BUTT] = {
-    {LOG_CORE, TIME_INNERKIT_DOMAIN, "TimeInnerKit"},
-    {LOG_CORE, TIME_CLIENT_DOMAIN, "TimeClient"},
-    {LOG_CORE, TIME_SERVICE_DOMAIN, "TimeService"},
-    {LOG_CORE, TIME_JAVAKIT_DOMAIN, "TimeJavaKit"},
-    {LOG_CORE, TIME_JNI_DOMAIN, "TimeJni"},
-    {LOG_CORE, TIME_COMMON_DOMAIN, "TimeCommon"},
-    {LOG_CORE, TIME_JS_NAPI, "TimeJSNAPI"},
+    { LOG_CORE, TIME_INNERKIT_DOMAIN, "TimeInnerKit" },
+    { LOG_CORE, TIME_CLIENT_DOMAIN, "TimeClient" },
+    { LOG_CORE, TIME_SERVICE_DOMAIN, "TimeService" },
+    { LOG_CORE, TIME_JAVAKIT_DOMAIN, "TimeJavaKit" },
+    { LOG_CORE, TIME_JNI_DOMAIN, "TimeJni" },
+    { LOG_CORE, TIME_COMMON_DOMAIN, "TimeCommon" },
+    { LOG_CORE, TIME_JS_NAPI, "TimeJSNAPI" },
 };
 
-#define R_FILENAME__            (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
-#define R_FORMATED(fmt, ...)    "[%{public}s] %{public}s# " fmt, R_FILENAME__, __FUNCTION__, ##__VA_ARGS__
+#define R_FILENAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
+#define R_FORMATED(fmt, ...) "[%{public}s] %{public}s# " fmt, R_FILENAME__, __FUNCTION__, ##__VA_ARGS__
 
 // In order to improve performance, do not check the module range.
 // Besides, make sure module is less than TIME_MODULE_BUTT.
-#define TIME_HILOGF(module, ...) (void)OHOS::HiviewDFX::HiLog::Fatal(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
-#define TIME_HILOGE(module, ...) (void)OHOS::HiviewDFX::HiLog::Error(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
+#define TIME_HILOGF(module, ...) \
+    (void)OHOS::HiviewDFX::HiLog::Fatal(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
+#define TIME_HILOGE(module, ...) \
+    (void)OHOS::HiviewDFX::HiLog::Error(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
 #define TIME_HILOGW(module, ...) (void)OHOS::HiviewDFX::HiLog::Warn(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
 #define TIME_HILOGI(module, ...) (void)OHOS::HiviewDFX::HiLog::Info(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
-#define TIME_HILOGD(module, ...) (void)OHOS::HiviewDFX::HiLog::Debug(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
+#define TIME_HILOGD(module, ...) \
+    (void)OHOS::HiviewDFX::HiLog::Debug(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
+
+#define CHECK_AND_RETURN_RET_LOG(module, cond, ret, ...)  \
+    do {                                                  \
+        if (!(cond)) {                                    \
+            TIME_HILOGE(module, R_FORMATED(__VA_ARGS__)); \
+            return ret;                                   \
+        }                                                 \
+    } while (0)
+
+#define CHECK_AND_RETURN_LOG(module, cond, ...)           \
+    do {                                                  \
+        if (!(cond)) {                                    \
+            TIME_HILOGE(module, R_FORMATED(__VA_ARGS__)); \
+            return;                                       \
+        }                                                 \
+    } while (0)
+
 } // namespace MiscServices
 } // namespace OHOS
 #endif // TIME_HILOG_WRAPPER_H

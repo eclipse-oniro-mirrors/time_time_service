@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Copyright (C) 2022 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -36,7 +36,8 @@ ohos_unittest("TimeDfxTest") {
   configs = [ ":module_private_config" ]
 
   deps = [
-    "//base/time/time_service/interfaces/innerkits:time_client",
+    "../../interfaces/innerkits:time_client",
+    "../../services:time_service",
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
   ]
@@ -45,8 +46,8 @@ ohos_unittest("TimeDfxTest") {
     "ability_base:want",
     "ability_runtime:runtime",
     "ability_runtime:wantagent_innerkits",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
-    "hiviewdfx_hilog_native:libhilog",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",

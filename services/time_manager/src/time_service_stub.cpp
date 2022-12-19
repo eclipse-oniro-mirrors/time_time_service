@@ -13,8 +13,10 @@
  * limitations under the License.
  */
 
-#include "time_common.h"
 #include "time_service_stub.h"
+
+#include "simple_timer_info.h"
+#include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -37,7 +39,7 @@ TimeServiceStub::TimeServiceStub()
     memberFuncMap_[CREATE_TIMER] = &TimeServiceStub::OnCreateTimer;
     memberFuncMap_[START_TIMER] = &TimeServiceStub::OnStartTimer;
     memberFuncMap_[STOP_TIMER] = &TimeServiceStub::OnStopTimer;
-    memberFuncMap_[DESTORY_TIMER] = &TimeServiceStub::OnDestoryTimer;
+    memberFuncMap_[DESTROY_TIMER] = &TimeServiceStub::OnDestroyTimer;
     memberFuncMap_[NETWORK_TIME_ON] = &TimeServiceStub::OnNetworkTimeStatusOn;
     memberFuncMap_[NETWORK_TIME_OFF] = &TimeServiceStub::OnNetworkTimeStatusOff;
     memberFuncMap_[PROXY_TIMER] = &TimeServiceStub::OnTimerProxy;
@@ -61,8 +63,8 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
     }
     pid_t p = IPCSkeleton::GetCallingPid();
     pid_t p1 = IPCSkeleton::GetCallingUid();
-    TIME_HILOGI(TIME_MODULE_SERVICE,
-                "CallingPid = %{public}d, CallingUid = %{public}d, code = %{public}u", p, p1, code);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "CallingPid = %{public}d, CallingUid = %{public}d, code = %{public}u", p, p1,
+        code);
     auto itFunc = memberFuncMap_.find(code);
     if (itFunc != memberFuncMap_.end()) {
         auto memberFunc = itFunc->second;
@@ -75,7 +77,7 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
     return ret;
 }
 
-int32_t TimeServiceStub::OnSetTime(MessageParcel& data, MessageParcel& reply)
+int32_t TimeServiceStub::OnSetTime(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     int64_t time = data.ReadInt64();
@@ -242,32 +244,45 @@ int32_t TimeServiceStub::OnGetThreadTimeNs(MessageParcel &data, MessageParcel &r
 int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
-    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantagent {nullptr};
+    if (!TimePermission::CheckSystemUidCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent{ nullptr };
     auto type = data.ReadInt32();
     auto repeat = data.ReadBool();
     auto interval = data.ReadUint64();
-    auto hasWantagent = data.ReadBool();
-    if (hasWantagent) {
-        wantagent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>
-            (data.ReadParcelable<OHOS::AbilityRuntime::WantAgent::WantAgent>());
-        if (!wantagent) {
+    if (data.ReadBool()) {
+        wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>(
+            data.ReadParcelable<OHOS::AbilityRuntime::WantAgent::WantAgent>());
+        if (!wantAgent) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "Input wantagent nullptr");
-            return E_TIME_PARAMETERS_INVALID;
+            return E_TIME_NULLPTR;
         }
     }
-    
+
     sptr<IRemoteObject> obj = data.ReadRemoteObject();
     if (obj == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Input nullptr");
-        return E_TIME_PARAMETERS_INVALID;
+        return E_TIME_NULLPTR;
     }
-    auto timerId = CreateTimer(type, repeat, interval, wantagent, obj);
-    if (timerId == 0) {
+
+    auto timerOptions = std::make_shared<SimpleTimerInfo>();
+    if (timerOptions == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    timerOptions->type = type;
+    timerOptions->repeat = repeat;
+    timerOptions->interval = interval;
+    timerOptions->wantAgent = wantAgent;
+    uint64_t timerId = 0;
+    auto errCode = CreateTimer(timerOptions, obj, timerId);
+    if (errCode != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Create timer failed");
         return E_TIME_DEAL_FAILED;
     }
     if (!reply.WriteUint64(timerId)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to write parcelable");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to write timerId");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "end.");
@@ -277,9 +292,13 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
 int32_t TimeServiceStub::OnStartTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
+    if (!TimePermission::CheckSystemUidCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto timerId = data.ReadUint64();
     auto triggerTime = data.ReadUint64();
-    if (!StartTimer(timerId, triggerTime)) {
+    if (StartTimer(timerId, triggerTime) != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to start timer");
         return E_TIME_DEAL_FAILED;
     }
@@ -290,8 +309,12 @@ int32_t TimeServiceStub::OnStartTimer(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnStopTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
+    if (!TimePermission::CheckSystemUidCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto timerId = data.ReadUint64();
-    if (!StopTimer(timerId)) {
+    if (StopTimer(timerId) != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to stop timer");
         return E_TIME_DEAL_FAILED;
     }
@@ -299,11 +322,15 @@ int32_t TimeServiceStub::OnStopTimer(MessageParcel &data, MessageParcel &reply)
     return ERR_OK;
 }
 
-int32_t TimeServiceStub::OnDestoryTimer(MessageParcel &data, MessageParcel &reply)
+int32_t TimeServiceStub::OnDestroyTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
+    if (!TimePermission::CheckSystemUidCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto timerId = data.ReadUint64();
-    if (!DestroyTimer(timerId)) {
+    if (DestroyTimer(timerId) != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to destory timer");
         return E_TIME_DEAL_FAILED;
     }

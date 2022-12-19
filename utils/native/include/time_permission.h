@@ -17,13 +17,13 @@
 
 #include <cstdint>
 #include <mutex>
-#include <string>
 #include <singleton.h>
+#include <string>
 
 #include "bundle_mgr_proxy.h"
-#include "time_common.h"
-#include "system_ability_definition.h"
 #include "iservice_registry.h"
+#include "system_ability_definition.h"
+#include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -31,6 +31,7 @@ class TimePermission {
 public:
     static bool CheckCallingPermission(const std::string &permissionName);
     static bool CheckProxyCallingPermission();
+    static bool CheckSystemUidCallingPermission();
 };
 } // namespace MiscServices
 } // namespace OHOS

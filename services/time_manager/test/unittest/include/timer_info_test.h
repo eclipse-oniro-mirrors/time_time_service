@@ -15,14 +15,14 @@
 #ifndef OHOS_GLOBAL_TIME_SERVICE_TEST_H
 #define OHOS_GLOBAL_TIME_SERVICE_TEST_H
 
-#include <string>
-#include <inttypes.h>
+#include <cstdint>
 #include <functional>
 #include <gtest/gtest.h>
-#include <cstdint>
-#include <vector>
+#include <inttypes.h>
+#include <string>
 #include <sys/time.h>
 #include <thread>
+#include <vector>
 
 #include "time_common.h"
 #include "time_service_client.h"
@@ -30,7 +30,7 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
-    constexpr uint64_t NANO_TO_MILESECOND = 100000;
+constexpr uint64_t NANO_TO_MILESECOND = 100000;
 }
 class TimerInfoTest : public ITimerInfo {
 public:
@@ -87,6 +87,6 @@ void TimerInfoTest::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent
 {
     wantAgent = _wantAgent;
 }
-}
-}
+} // namespace MiscServices
+} // namespace OHOS
 #endif

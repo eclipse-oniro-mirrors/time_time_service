@@ -28,6 +28,7 @@ struct autoTimeInfo {
 
 class NtpUpdateTime : public DelayedSingleton<NtpUpdateTime> {
     DECLARE_DELAYED_SINGLETON(NtpUpdateTime);
+
 public:
     DISALLOW_COPY_AND_MOVE(NtpUpdateTime);
     void RefreshNetworkTimeByTimer(const uint64_t timerid);
@@ -38,6 +39,7 @@ public:
     void Stop();
     void Init();
     int32_t MonitorNetwork();
+
 private:
     bool GetAutoTimeInfoFromFile(autoTimeInfo &info);
     bool SaveAutoTimeInfoToFile(autoTimeInfo &info);
@@ -52,6 +54,6 @@ private:
     uint64_t nitzUpdateTimeMili_;
     uint64_t nextTriggerTime_;
 };
-} // MiscServices
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS
 #endif

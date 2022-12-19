@@ -17,11 +17,12 @@
 #define SERVICES_INCLUDE_TIME_SERVICE_STUB_H
 
 #include <map>
-#include "iremote_stub.h"
-#include "time_service_interface.h"
-#include "itimer_call_back.h"
+
 #include "ipc_skeleton.h"
+#include "iremote_stub.h"
+#include "itimer_call_back.h"
 #include "time_permission.h"
+#include "time_service_interface.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -48,7 +49,7 @@ private:
     int32_t OnCreateTimer(MessageParcel &data, MessageParcel &reply);
     int32_t OnStartTimer(MessageParcel &data, MessageParcel &reply);
     int32_t OnStopTimer(MessageParcel &data, MessageParcel &reply);
-    int32_t OnDestoryTimer(MessageParcel &data, MessageParcel &reply);
+    int32_t OnDestroyTimer(MessageParcel &data, MessageParcel &reply);
     int32_t OnNetworkTimeStatusOff(MessageParcel &data, MessageParcel &reply);
     int32_t OnNetworkTimeStatusOn(MessageParcel &data, MessageParcel &reply);
     int32_t OnTimerProxy(MessageParcel &data, MessageParcel &reply);

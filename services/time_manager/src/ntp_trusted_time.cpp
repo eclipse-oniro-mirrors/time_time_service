@@ -13,25 +13,31 @@
  * limitations under the License.
  */
 
-#include <cstdint>
+#include "ntp_trusted_time.h"
+
 #include <cinttypes>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
-#include <unistd.h>
 #include <securec.h>
-#include "time_common.h"
+#include <unistd.h>
+
 #include "sntp_client.h"
-#include "ntp_trusted_time.h"
+#include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr int64_t INVALID_MILLIS = -1;
 constexpr int64_t HALF = 2;
-}
+} // namespace
 
-NtpTrustedTime::NtpTrustedTime() {}
-NtpTrustedTime::~NtpTrustedTime() {}
+NtpTrustedTime::NtpTrustedTime()
+{
+}
+NtpTrustedTime::~NtpTrustedTime()
+{
+}
 
 bool NtpTrustedTime::ForceRefresh(std::string ntpServer)
 {
@@ -82,8 +88,10 @@ bool NtpTrustedTime::HasCache()
 int64_t NtpTrustedTime::GetCacheAge()
 {
     if (mTimeResult != nullptr) {
-        return std::chrono::duration_cast<std::chrono::milliseconds>
-            (std::chrono::steady_clock::now().time_since_epoch()).count() - mTimeResult->GetElapsedRealtimeMillis();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::steady_clock::now().time_since_epoch())
+                   .count() -
+               mTimeResult->GetElapsedRealtimeMillis();
     } else {
         return INT_MAX;
     }
@@ -121,12 +129,17 @@ int64_t NtpTrustedTime::TimeResult::CurrentTimeMillis()
 
 int64_t NtpTrustedTime::TimeResult::GetAgeMillis()
 {
-    return std::chrono::duration_cast<std::chrono::milliseconds>
-        (std::chrono::steady_clock::now().time_since_epoch()).count() - this->mElapsedRealtimeMillis;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+               .count() -
+           this->mElapsedRealtimeMillis;
 }
 
-NtpTrustedTime::TimeResult::TimeResult() {}
-NtpTrustedTime::TimeResult::~TimeResult() {}
+NtpTrustedTime::TimeResult::TimeResult()
+{
+}
+NtpTrustedTime::TimeResult::~TimeResult()
+{
+}
 
 NtpTrustedTime::TimeResult::TimeResult(int64_t mTimeMillis, int64_t mElapsedRealtimeMills, int64_t mCertaintyMillis)
 {
@@ -144,5 +157,5 @@ void NtpTrustedTime::TimeResult::Clear()
     (void)memset_s(this, sizeof(*this), 0, sizeof(*this));
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
-} // MiscServices
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS

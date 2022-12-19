@@ -16,11 +16,11 @@
 #ifndef NITZ_SUBSCRIBER_H
 #define NITZ_SUBSCRIBER_H
 
+#include <common_event_publish_info.h>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
-#include <common_event_publish_info.h>
 #include "common_event.h"
 #include "common_event_data.h"
 #include "common_event_manager.h"
@@ -48,6 +48,6 @@ private:
     void NITZTimezoneChangeBroadcast(const CommonEventData &data);
     std::map<uint32_t, broadcastSubscriberFunc> memberFuncMap_;
 };
-} // MiscServices
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS
 #endif // NITZ_SUBSCRIBER_H

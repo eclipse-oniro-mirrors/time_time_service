@@ -14,6 +14,7 @@
  */
 
 #include "net_conn_callback_observer.h"
+
 #include "ntp_update_time.h"
 #include "time_common.h"
 
@@ -27,7 +28,7 @@ int32_t NetConnCallbackObserver::NetAvailable(sptr<NetHandle> &netHandle)
 }
 
 int32_t NetConnCallbackObserver::NetCapabilitiesChange(sptr<NetHandle> &netHandle,
-                                                       const sptr<NetAllCapabilities> &netAllCap)
+    const sptr<NetAllCapabilities> &netAllCap)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Observe net capabilities change. start");
     if (netAllCap->netCaps_.count(NetCap::NET_CAPABILITY_INTERNET)) {
@@ -39,7 +40,7 @@ int32_t NetConnCallbackObserver::NetCapabilitiesChange(sptr<NetHandle> &netHandl
 }
 
 int32_t NetConnCallbackObserver::NetConnectionPropertiesChange(sptr<NetHandle> &netHandle,
-                                                               const sptr<NetLinkInfo> &info)
+    const sptr<NetLinkInfo> &info)
 {
     return 0;
 }

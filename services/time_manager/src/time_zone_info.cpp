@@ -14,52 +14,32 @@
  */
 
 #include "time_zone_info.h"
+
 #include "time_file_utils.h"
 
 namespace OHOS {
 namespace MiscServices {
 namespace {
-    constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
-    const int TIMEZONE_OK = 0;
-    const int CONFIG_LEN = 35;
-    const int HOUR_TO_MILLI = 60;
-}
+constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
+const int TIMEZONE_OK = 0;
+const int CONFIG_LEN = 35;
+const int HOUR_TO_MILLI = 60;
+} // namespace
 
 TimeZoneInfo::TimeZoneInfo()
 {
-    std::vector<struct zoneInfoEntry> timezoneList = {
-        {"Antarctica/McMurdo", "AQ", 12},
-        {"America/Argentina/Buenos_Aires", "AR", -3},
-        {"Australia/Sydney", "AU", 10},
-        {"America/Noronha", "BR", -2},
-        {"America/St_Johns", "CA", -3},
-        {"Africa/Kinshasa", "CD", 1},
-        {"America/Santiago", "CL", -3},
-        {"Asia/Shanghai", "CN", 8},
-        {"Asia/Nicosia", "CY", 3},
-        {"Europe/Berlin", "DE", 2},
-        {"America/Guayaquil", "CEST", -5},
-        {"Europe/Madrid", "ES", 2},
-        {"Pacific/Pohnpei", "FM", 11},
-        {"America/Godthab", "GL", -2},
-        {"Asia/Jakarta", "ID", 7},
-        {"Pacific/Tarawa", "KI", 12},
-        {"Asia/Almaty", "KZ", 6},
-        {"Pacific/Majuro", "MH", 12},
-        {"Asia/Ulaanbaatar", "MN", 8},
-        {"America/Mexico_City", "MX", -5},
-        {"Asia/Kuala_Lumpur", "MY", 8},
-        {"Pacific/Auckland", "NZ", 12},
-        {"Pacific/Tahiti", "PF", -10},
-        {"Pacific/Port_Moresby", "PG", 10},
-        {"Asia/Gaza", "PS", 3},
-        {"Europe/Lisbon", "PT", 1},
-        {"Europe/Moscow", "RU", 3},
-        {"Europe/Kiev", "UA", 3},
-        {"Pacific/Wake", "UM", 12},
-        {"America/New_York", "US", -4},
-        {"Asia/Tashkent", "UZ", 5}
-    };
+    std::vector<struct zoneInfoEntry> timezoneList = { { "Antarctica/McMurdo", "AQ", 12 },
+        { "America/Argentina/Buenos_Aires", "AR", -3 }, { "Australia/Sydney", "AU", 10 },
+        { "America/Noronha", "BR", -2 }, { "America/St_Johns", "CA", -3 }, { "Africa/Kinshasa", "CD", 1 },
+        { "America/Santiago", "CL", -3 }, { "Asia/Shanghai", "CN", 8 }, { "Asia/Nicosia", "CY", 3 },
+        { "Europe/Berlin", "DE", 2 }, { "America/Guayaquil", "CEST", -5 }, { "Europe/Madrid", "ES", 2 },
+        { "Pacific/Pohnpei", "FM", 11 }, { "America/Godthab", "GL", -2 }, { "Asia/Jakarta", "ID", 7 },
+        { "Pacific/Tarawa", "KI", 12 }, { "Asia/Almaty", "KZ", 6 }, { "Pacific/Majuro", "MH", 12 },
+        { "Asia/Ulaanbaatar", "MN", 8 }, { "America/Mexico_City", "MX", -5 }, { "Asia/Kuala_Lumpur", "MY", 8 },
+        { "Pacific/Auckland", "NZ", 12 }, { "Pacific/Tahiti", "PF", -10 }, { "Pacific/Port_Moresby", "PG", 10 },
+        { "Asia/Gaza", "PS", 3 }, { "Europe/Lisbon", "PT", 1 }, { "Europe/Moscow", "RU", 3 },
+        { "Europe/Kiev", "UA", 3 }, { "Pacific/Wake", "UM", 12 }, { "America/New_York", "US", -4 },
+        { "Asia/Tashkent", "UZ", 5 } };
 
     for (auto tz : timezoneList) {
         timezoneInfoMap_[tz.ID] = tz;
@@ -133,5 +113,5 @@ bool TimeZoneInfo::SetTimezoneToKernel(std::string timezoneId)
     }
     return false;
 }
-}
-}
+} // namespace MiscServices
+} // namespace OHOS

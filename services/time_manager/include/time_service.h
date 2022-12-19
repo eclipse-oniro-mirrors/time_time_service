@@ -16,29 +16,27 @@
 #ifndef SERVICES_INCLUDE_TIME_SERVICES_H
 #define SERVICES_INCLUDE_TIME_SERVICES_H
 
-#include <mutex>
 #include <inttypes.h>
+#include <mutex>
 
-#include "time_service_stub.h"
-#include "time_service_notify.h"
-#include "timer_manager.h"
-#include "system_ability.h"
 #include "event_handler.h"
-#include "time.h"
 #include "securec.h"
+#include "system_ability.h"
+#include "time.h"
 #include "time_cmd_dispatcher.h"
 #include "time_cmd_parse.h"
+#include "time_service_notify.h"
+#include "time_service_stub.h"
 #include "time_sysevent.h"
+#include "timer_manager.h"
 
 namespace OHOS {
 namespace MiscServices {
-enum class ServiceRunningState {
-    STATE_NOT_START,
-    STATE_RUNNING
-};
+enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
 
 class TimeService : public SystemAbility, public TimeServiceStub {
     DECLARE_SYSTEM_ABILITY(TimeService);
+
 public:
     DISALLOW_COPY_AND_MOVE(TimeService);
     TimeService(int32_t systemAbilityId, bool runOnCreate);
@@ -58,14 +56,12 @@ public:
     int32_t GetThreadTimeMs(int64_t &times) override;
     int32_t GetThreadTimeNs(int64_t &times) override;
 
-    uint64_t CreateTimer(int32_t type, bool repeat, uint64_t interval,
-        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-        sptr<IRemoteObject> &timerCallback) override;
-    uint64_t CreateTimer(int32_t type, uint64_t windowLength, uint64_t interval, int flag,
-        std::function<void (const uint64_t)> Callback);
-    bool StartTimer(uint64_t timerId, uint64_t triggerTime) override;
-    bool StopTimer(uint64_t  timerId) override;
-    bool DestroyTimer(uint64_t  timerId) override;
+    int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
+        uint64_t &timerId) override;
+    int32_t CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> Callback, uint64_t &timerId);
+    int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
+    int32_t StopTimer(uint64_t timerId) override;
+    int32_t DestroyTimer(uint64_t timerId) override;
     void NetworkTimeStatusOff() override;
     void NetworkTimeStatusOn() override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
@@ -84,18 +80,12 @@ protected:
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override;
 
 private:
-    struct TimerPara {
-        int timerType;
-        int64_t windowLength;
-        uint64_t interval;
-        int flag;
-    };
     int32_t Init();
     void InitServiceHandler();
     void InitNotifyHandler();
     void InitTimeZone();
     void InitTimerHandler();
-    void PaserTimerPara(int32_t type, bool repeat, uint64_t interval, TimerPara &paras);
+    void ParseTimerPara(std::shared_ptr<ITimerInfo> timerOptions, TimerPara &paras);
     bool GetTimeByClockid(clockid_t clockID, struct timespec &tv);
     int set_rtc_time(time_t sec);
 
@@ -109,6 +99,6 @@ private:
     static std::shared_ptr<AppExecFwk::EventHandler> serviceHandler_;
     static std::shared_ptr<TimerManager> timerManagerHandler_;
 };
-} // MiscServices
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS
 #endif // SERVICES_INCLUDE_TIME_SERVICES_H

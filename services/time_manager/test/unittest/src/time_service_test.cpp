@@ -1,28 +1,30 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2021 Huawei Device Co., Ltd.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+#include "time_service_test.h"
+
+#include <chrono>
+#include <climits>
 #include <cstdlib>
 #include <ctime>
-#include <chrono>
 #include <fstream>
-#include <climits>
+
 #include "ipc_skeleton.h"
-#include "want_agent.h"
 #include "json/json.h"
-#include "timer_info_test.h"
-#include "time_service_test.h"
 #include "time_common.h"
+#include "timer_info_test.h"
+#include "want_agent.h"
 
 namespace {
 using namespace testing::ext;
@@ -38,8 +40,7 @@ const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NTP_CN_SERVER = "ntp.aliyun.com";
 const int64_t INVALID_TIMES = -1;
 
-class TimeServiceTest : public testing::Test
-{
+class TimeServiceTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
     static void TearDownTestCase(void);
@@ -354,13 +355,13 @@ HWTEST_F(TimeServiceTest, CreateTimer002, TestSize.Level1)
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
+    EXPECT_EQ(timerId1, static_cast<uint64_t>(0));
     auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, 2000);
-    EXPECT_TRUE(ret);
+    EXPECT_FALSE(ret);
     ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
-    EXPECT_TRUE(ret);
+    EXPECT_FALSE(ret);
     ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
-    EXPECT_TRUE(ret);
+    EXPECT_FALSE(ret);
 }
 
 /**
@@ -377,8 +378,8 @@ HWTEST_F(TimeServiceTest, CreateTimer003, TestSize.Level1)
     auto ability = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     timerInfo->SetWantAgent(ability);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
-    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
+    auto ret = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_EQ(ret, static_cast<uint64_t>(0));
 }
 
 /**
@@ -396,13 +397,13 @@ HWTEST_F(TimeServiceTest, CreateTimer004, TestSize.Level1)
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
-    auto BootTimeNano = system_clock::now().time_since_epoch().count();
-    auto BootTimeMilli = BootTimeNano / NANO_TO_MILESECOND;
-    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, BootTimeMilli + 2000);
-    EXPECT_TRUE(ret);
+    EXPECT_EQ(timerId1, static_cast<uint64_t>(0));
+    auto bootTimeNano = system_clock::now().time_since_epoch().count();
+    auto bootTimeMilli = bootTimeNano / NANO_TO_MILESECOND;
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, bootTimeMilli + 2000);
+    EXPECT_FALSE(ret);
     ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
-    EXPECT_TRUE(ret);
+    EXPECT_FALSE(ret);
     EXPECT_TRUE(g_data1 == 0);
 
     ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
@@ -431,12 +432,12 @@ HWTEST_F(TimeServiceTest, CreateTimer005, TestSize.Level1)
         currentTime = 0;
     }
     auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
+    EXPECT_EQ(timerId1, static_cast<uint64_t>(0));
 
     auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, static_cast<uint64_t>(currentTime));
-    EXPECT_TRUE(ret);
+    EXPECT_FALSE(ret);
     ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
-    EXPECT_TRUE(ret);
+    EXPECT_FALSE(ret);
     EXPECT_TRUE(g_data1 == 1);
 
     ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
@@ -512,4 +513,4 @@ HWTEST_F(TimeServiceTest, ProxyTimer004, TestSize.Level0)
     ret = TimeServiceClient::GetInstance()->ProxyTimer(uid, false, false);
     EXPECT_TRUE(ret);
 }
-}
+} // namespace

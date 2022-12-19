@@ -15,9 +15,9 @@ import("//base/time/time_service/time.gni")
 
 ohos_shared_library("systemtime") {
   include_dirs = [
+    "../common/include",
     "//base/time/time_service/interfaces/innerkits/include",
     "include",
-    "../common/include",
     "//third_party/node/src",
     "//foundation/arkui/napi/interfaces/kits",
   ]
@@ -29,7 +29,13 @@ ohos_shared_library("systemtime") {
     "-g3",
   ]
 
-  sources = [ "src/js_systemtime.cpp" ]
+  sources = [
+    "../common/src/napi_async_callback.cpp",
+    "../common/src/napi_async_work.cpp",
+    "../common/src/napi_utils.cpp",
+    "src/napi_system_time.cpp",
+    "src/time_init.cpp",
+  ]
 
   deps = [
     "${ability_runtime_path}/frameworks/native/ability/native:abilitykit_native",

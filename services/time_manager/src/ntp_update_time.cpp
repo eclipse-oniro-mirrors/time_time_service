@@ -12,25 +12,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ntp_update_time.h"
+
 #include <chrono>
-#include <thread>
 #include <cinttypes>
 #include <ctime>
-#include <string>
 #include <fstream>
 #include <mutex>
+#include <string>
+#include <thread>
 #include <unistd.h>
 
-#include "ntp_trusted_time.h"
-#include "time_common.h"
 #include "json/json.h"
-#include "time_service.h"
-#include "nitz_subscriber.h"
-#include "time_zone_info.h"
 #include "net_conn_callback_observer.h"
-#include "net_specifier.h"
 #include "net_conn_client.h"
-#include "ntp_update_time.h"
+#include "net_specifier.h"
+#include "nitz_subscriber.h"
+#include "ntp_trusted_time.h"
+#include "simple_timer_info.h"
+#include "time_common.h"
+#include "time_service.h"
+#include "time_zone_info.h"
 
 using namespace std::chrono;
 using namespace OHOS::NetManagerStandard;
@@ -45,10 +47,10 @@ const std::string NETWORK_TIME_STATUS_ON = "ON";
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NTP_CN_SERVER = "ntp.aliyun.com";
 const int64_t INVALID_TIMES = -1;
-}
+} // namespace
 
-NtpUpdateTime::NtpUpdateTime() : nitzUpdateTimeMili_(0) {};
-NtpUpdateTime::~NtpUpdateTime() {};
+NtpUpdateTime::NtpUpdateTime() : nitzUpdateTimeMili_(0){};
+NtpUpdateTime::~NtpUpdateTime(){};
 
 void NtpUpdateTime::Init()
 {
@@ -69,24 +71,29 @@ void NtpUpdateTime::Init()
     }
 
     std::thread th = std::thread([this]() {
-    constexpr int RETRY_MAX_TIMES = 100;
-    int retryCount = 0;
-    constexpr int RETRY_TIME_INTERVAL_MILLISECOND = 1 * 1000 * 1000; // retry after 2 second
-    do {
-        if (this->MonitorNetwork() == NET_CONN_SUCCESS) {
-            break;
-        }
-        retryCount++;
-        usleep(RETRY_TIME_INTERVAL_MILLISECOND);
-    } while (retryCount < RETRY_MAX_TIMES);
+        constexpr int RETRY_MAX_TIMES = 100;
+        int retryCount = 0;
+        constexpr int RETRY_TIME_INTERVAL_MILLISECOND = 1 * 1000 * 1000; // retry after 2 second
+        do {
+            if (this->MonitorNetwork() == NET_CONN_SUCCESS) {
+                break;
+            }
+            retryCount++;
+            usleep(RETRY_TIME_INTERVAL_MILLISECOND);
+        } while (retryCount < RETRY_MAX_TIMES);
     });
     th.detach();
 
     int32_t timerType = ITimerManager::TimerType::ELAPSED_REALTIME;
-    auto callback = [this](uint64_t id) {
-        this->RefreshNetworkTimeByTimer(id);
-    };
-    timerId_ = TimeService::GetInstance()->CreateTimer(timerType, 0, DAY_TO_MILLISECOND, 0, callback);
+    auto callback = [this](uint64_t id) { this->RefreshNetworkTimeByTimer(id); };
+
+    TimerPara timerPara;
+    timerPara.timerType = timerType;
+    timerPara.windowLength = 0;
+    timerPara.interval = DAY_TO_MILLISECOND;
+    timerPara.flag = 0;
+
+    TimeService::GetInstance()->CreateTimer(timerPara, callback, timerId_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update timerId: %{public}" PRId64 "", timerId_);
     RefreshNextTriggerTime();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update triggertime: %{public}" PRId64 "", nextTriggerTime_);
@@ -101,12 +108,12 @@ int32_t NtpUpdateTime::MonitorNetwork()
     NetAllCapabilities netAllCapabilities;
     netAllCapabilities.netCaps_.insert(NetManagerStandard::NetCap::NET_CAPABILITY_INTERNET);
     netSpecifier.netCapabilities_ = netAllCapabilities;
-    sptr<NetSpecifier> specifier = new(std::nothrow) NetSpecifier(netSpecifier);
+    sptr<NetSpecifier> specifier = new (std::nothrow) NetSpecifier(netSpecifier);
     if (specifier == nullptr) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "new operator error.specifier is nullptr");
         return NET_CONN_ERR_INPUT_NULL_PTR;
     }
-    sptr<NetConnCallbackObserver> observer = new(std::nothrow) NetConnCallbackObserver();
+    sptr<NetConnCallbackObserver> observer = new (std::nothrow) NetConnCallbackObserver();
     if (observer == nullptr) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "new operator error.observer is nullptr");
         return NET_CONN_ERR_INPUT_NULL_PTR;
@@ -123,8 +130,7 @@ void NtpUpdateTime::SubscriberNITZTimeChangeCommonEvent()
     MatchingSkills matchingSkills;
     matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED);
     CommonEventSubscribeInfo subscriberInfo(matchingSkills);
-    std::shared_ptr<NITZSubscriber> subscriberPtr =
-        std::make_shared<NITZSubscriber>(subscriberInfo);
+    std::shared_ptr<NITZSubscriber> subscriberPtr = std::make_shared<NITZSubscriber>(subscriberInfo);
     if (subscriberPtr != nullptr) {
         bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
         if (!subscribeResult) {
@@ -184,7 +190,7 @@ void NtpUpdateTime::RefreshNextTriggerTime()
 {
     auto BootTimeNano = steady_clock::now().time_since_epoch().count();
     auto BootTimeMilli = BootTimeNano / NANO_TO_MILLISECOND;
-    nextTriggerTime_ = BootTimeMilli +  DAY_TO_MILLISECOND;
+    nextTriggerTime_ = BootTimeMilli + DAY_TO_MILLISECOND;
 }
 
 void NtpUpdateTime::UpdateStatusOff()
@@ -280,5 +286,5 @@ bool NtpUpdateTime::SaveAutoTimeInfoToFile(autoTimeInfo &info)
     TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}" PRId64 "", info.lastUpdateTime);
     return true;
 }
-} // MiscServices
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS

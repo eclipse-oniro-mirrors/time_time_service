@@ -27,7 +27,7 @@ namespace OHOS {
 namespace MiscServices {
 class TimerCallbackProxy : public IRemoteProxy<ITimerCallback> {
 public:
-    explicit TimerCallbackProxy(const sptr<IRemoteObject>& impl);
+    explicit TimerCallbackProxy(const sptr<IRemoteObject> &impl);
 
     ~TimerCallbackProxy();
     DISALLOW_COPY_AND_MOVE(TimerCallbackProxy);
@@ -36,7 +36,7 @@ public:
 private:
     static inline BrokerDelegator<TimerCallbackProxy> delegator_;
 };
-} // namespace PowerMgr
+} // namespace MiscServices
 } // namespace OHOS
 
 #endif // TIMER_CALL_BACK_PROXY_H
