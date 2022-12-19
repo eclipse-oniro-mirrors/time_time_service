@@ -30,5 +30,3 @@ void TimerNotifyCallback::Finish(const uint64_t timerId)
 }
 } // namespace MiscServices
 } // namespace OHOS
-
-

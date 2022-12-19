@@ -27,7 +27,7 @@ namespace OHOS {
 namespace MiscServices {
 class TimerNotifyCallbackStub : public IRemoteStub<ITimerNotifyCallback> {
 public:
-    DISALLOW_COPY_AND_MOVE(TimerNotifyCallbackStub);	
+    DISALLOW_COPY_AND_MOVE(TimerNotifyCallbackStub);
     TimerNotifyCallbackStub() = default;
     virtual ~TimerNotifyCallbackStub() = default;
     int OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
