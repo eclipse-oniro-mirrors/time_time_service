@@ -44,7 +44,6 @@ ohos_shared_library("systemtimer") {
   configs = [ ":native_module_config" ]
 
   sources = [
-    "../common/src/napi_async_callback.cpp",
     "../common/src/napi_async_work.cpp",
     "../common/src/napi_utils.cpp",
     "src/napi_system_timer.cpp",

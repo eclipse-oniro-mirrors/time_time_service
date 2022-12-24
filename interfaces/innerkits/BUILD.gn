@@ -31,6 +31,9 @@ ohos_shared_library("time_client") {
     "${time_service_path}/time_manager/src/timer_call_back.cpp",
     "${time_service_path}/time_manager/src/timer_call_back_proxy.cpp",
     "${time_service_path}/time_manager/src/timer_call_back_stub.cpp",
+    "${time_service_path}/time_manager/src/timer_notify_call_back.cpp",
+    "${time_service_path}/time_manager/src/timer_notify_call_back_proxy.cpp",
+    "${time_service_path}/time_manager/src/timer_notify_call_back_stub.cpp",
   ]
 
   configs = [ ":time_client_config" ]

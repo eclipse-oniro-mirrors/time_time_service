@@ -41,12 +41,14 @@ void ContextBase::GetCbInfo(napi_env envi, napi_callback_info info, NapiCbInfoPa
     size_t argc = ARGC_MAX;
     napi_value argv[ARGC_MAX] = { nullptr };
     status = napi_get_cb_info(env, info, &argc, argv, &self, nullptr);
-    CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, "napi_get_cb_info failed!", PARAMETER_ERROR);
-    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, argc <= ARGC_MAX, "too many arguments!", PARAMETER_ERROR);
-    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, self != nullptr, "no JavaScript this argument!", PARAMETER_ERROR);
+    CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, "napi_get_cb_info failed!", JsErrorCode::PARAMETER_ERROR);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, argc <= ARGC_MAX, "too many arguments!",
+        JsErrorCode::PARAMETER_ERROR);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, self != nullptr, "no JavaScript this argument!",
+        JsErrorCode::PARAMETER_ERROR);
     napi_create_reference(env, self, 1, &selfRef);
     status = napi_unwrap(env, self, &native);
-    CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, "self unwrap failed!", PARAMETER_ERROR);
+    CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, "self unwrap failed!", JsErrorCode::PARAMETER_ERROR);
 
     if (!sync && (argc > 0)) {
         // get the last arguments :: <callback>
@@ -55,7 +57,7 @@ void ContextBase::GetCbInfo(napi_env envi, napi_callback_info info, NapiCbInfoPa
         napi_status tyst = napi_typeof(env, argv[index], &type);
         if ((tyst == napi_ok) && (type == napi_function)) {
             status = napi_create_reference(env, argv[index], 1, &callbackRef);
-            CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, "ref callback failed!", PARAMETER_ERROR);
+            CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, "ref callback failed!", JsErrorCode::PARAMETER_ERROR);
             argc = index;
             TIME_HILOGD(TIME_MODULE_JS_NAPI, "async callback, no promise");
         } else {
@@ -66,13 +68,19 @@ void ContextBase::GetCbInfo(napi_env envi, napi_callback_info info, NapiCbInfoPa
     if (parser) {
         parser(argc, argv);
     } else {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, argc == 0, "required no arguments!", PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, argc == 0, "required no arguments!",
+            JsErrorCode::PARAMETER_ERROR);
     }
 }
 
 napi_value NapiAsyncWork::Enqueue(napi_env env, std::shared_ptr<ContextBase> ctxt, const std::string &name,
     NapiAsyncExecute execute, NapiAsyncComplete complete)
 {
+    if (ctxt->status != napi_ok) {
+        TIME_HILOGI(TIME_MODULE_JS_NAPI, "exist error");
+        NapiUtils::ThrowError(env, CODE_TO_MESSAGE.find(ctxt->errCode)->second.c_str(), ctxt->errCode);
+        return NapiUtils::GetUndefinedValue(env);
+    }
     ctxt->execute = std::move(execute);
     ctxt->complete = std::move(complete);
     napi_value promise = nullptr;
@@ -91,7 +99,7 @@ napi_value NapiAsyncWork::Enqueue(napi_env env, std::shared_ptr<ContextBase> ctx
             CHECK_RETURN_VOID(TIME_MODULE_JS_NAPI, data != nullptr, "napi_async_execute_callback nullptr");
             auto ctxt = reinterpret_cast<ContextBase *>(data);
             TIME_HILOGD(TIME_MODULE_JS_NAPI, "napi_async_execute_callback ctxt->status=%{public}d", ctxt->status);
-            if (ctxt->execute && ctxt->status == napi_ok) {
+            if (ctxt->execute != nullptr && ctxt->status == napi_ok) {
                 ctxt->execute();
             }
         },
@@ -126,10 +134,13 @@ void NapiAsyncWork::GenerateOutput(ContextBase *ctxt)
     } else {
         napi_value message = nullptr;
         napi_value code = nullptr;
-        napi_create_string_utf8(ctxt->env, ctxt->errMessage.c_str(), NAPI_AUTO_LENGTH, &message);
+        napi_create_string_utf8(ctxt->env, CODE_TO_MESSAGE.find(ctxt->errCode)->second.c_str(), NAPI_AUTO_LENGTH,
+            &message);
         napi_create_error(ctxt->env, nullptr, message, &result[RESULT_ERROR]);
-        napi_create_int32(ctxt->env, ctxt->errCode, &code);
-        napi_set_named_property(ctxt->env, result[RESULT_ERROR], "code", code);
+        if (ctxt->errCode != JsErrorCode::ERROR) {
+            napi_create_int32(ctxt->env, ctxt->errCode, &code);
+            napi_set_named_property(ctxt->env, result[RESULT_ERROR], "code", code);
+        }
         napi_get_undefined(ctxt->env, &result[RESULT_DATA]);
     }
     if (ctxt->deferred != nullptr) {

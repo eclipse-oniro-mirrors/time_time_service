@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,30 +13,35 @@
  * limitations under the License.
  */
 
-#ifndef TIMER_CALL_BACK_PROXY_H
-#define TIMER_CALL_BACK_PROXY_H
+#ifndef I_TIMER_NOTIFY_CALL_BACK_H
+#define I_TIMER_NOTIFY_CALL_BACK_H
 
-#include <inttypes.h>
-#include <iremote_proxy.h>
-#include <nocopyable.h>
-
-#include "itimer_call_back.h"
-#include "time_common.h"
+#include "iremote_broker.h"
 
 namespace OHOS {
 namespace MiscServices {
-class TimerCallbackProxy : public IRemoteProxy<ITimerCallback> {
+class ITimerNotifyCallback : public IRemoteBroker {
 public:
-    explicit TimerCallbackProxy(const sptr<IRemoteObject> &impl);
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.miscservices.time.ITimerNotifyCallback");
+	
+    /**
+     * Notify trigger timer finished.
+     *
+     * @param timerId timer id.
+     */
+    virtual void Finish(const uint64_t timerId) = 0;
 
-    ~TimerCallbackProxy();
-    DISALLOW_COPY_AND_MOVE(TimerCallbackProxy);
-    virtual void NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback) override;
-
-private:
-    static inline BrokerDelegator<TimerCallbackProxy> delegator_;
+    /**
+     * IPC code of ITimerNotifyCallback.
+     */
+    enum Message {
+        /**
+         * IPC code of Finish method..
+         */
+        FINISH = 1
+    };
 };
 } // namespace MiscServices
 } // namespace OHOS
 
-#endif // TIMER_CALL_BACK_PROXY_H
+#endif // I_TIMER_NOTIFY_CALL_BACK_H

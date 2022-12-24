@@ -114,6 +114,14 @@ bool TimeServiceClient::SetTime(const int64_t milliseconds, int32_t &code)
     return code == ERR_OK;
 }
 
+int32_t TimeServiceClient::SetTimeV9(const int64_t &time)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    return GetProxy()->SetTime(time);
+}
+
 bool TimeServiceClient::SetTimeZone(const std::string timezoneId)
 {
     if (!ConnectService()) {
@@ -133,6 +141,14 @@ bool TimeServiceClient::SetTimeZone(const std::string timezoneId, int32_t &code)
     return code == ERR_OK;
 }
 
+int32_t TimeServiceClient::SetTimeZoneV9(const std::string timezoneId)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    return GetProxy()->SetTimeZone(timezoneId);
+}
+
 uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> TimerOptions)
 {
     uint64_t timerId = 0;
@@ -147,10 +163,6 @@ uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> TimerOptions
         return 0;
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "CreateTimer id: %{public}" PRId64 "", timerId);
-    auto ret = TimerCallback::GetInstance()->InsertTimerCallbackInfo(timerId, TimerOptions);
-    if (!ret) {
-        return 0;
-    }
     return timerId;
 }
 
@@ -263,6 +275,18 @@ std::string TimeServiceClient::GetTimeZone()
     return timeZoneId;
 }
 
+int32_t TimeServiceClient::GetTimeZone(std::string &timezoneId)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    if (GetProxy()->GetTimeZone(timezoneId) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        return E_TIME_SA_DIED;
+    }
+    return E_TIME_OK;
+}
+
 int64_t TimeServiceClient::GetWallTimeMs()
 {
     int64_t times;
@@ -276,6 +300,20 @@ int64_t TimeServiceClient::GetWallTimeMs()
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
     return times;
+}
+
+int32_t TimeServiceClient::GetWallTimeMs(int64_t &times)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    TIME_HILOGW(TIME_MODULE_CLIENT, "timeServiceProxy_: %{public}p", timeServiceProxy_.GetRefPtr());
+    if (GetProxy()->GetWallTimeMs(times) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        return E_TIME_SA_DIED;
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
+    return E_TIME_OK;
 }
 
 int64_t TimeServiceClient::GetWallTimeNs()
@@ -292,6 +330,20 @@ int64_t TimeServiceClient::GetWallTimeNs()
     return times;
 }
 
+int32_t TimeServiceClient::GetWallTimeNs(int64_t &times)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    TIME_HILOGW(TIME_MODULE_CLIENT, "timeServiceProxy_: %{public}p", timeServiceProxy_.GetRefPtr());
+    if (GetProxy()->GetWallTimeNs(times) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        return E_TIME_SA_DIED;
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
+    return E_TIME_OK;
+}
+
 int64_t TimeServiceClient::GetBootTimeMs()
 {
     int64_t times;
@@ -304,6 +356,19 @@ int64_t TimeServiceClient::GetBootTimeMs()
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
     return times;
+}
+
+int32_t TimeServiceClient::GetBootTimeMs(int64_t &times)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    if (GetProxy()->GetBootTimeMs(times) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        return E_TIME_SA_DIED;
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
+    return E_TIME_OK;
 }
 
 int64_t TimeServiceClient::GetBootTimeNs()
@@ -320,6 +385,19 @@ int64_t TimeServiceClient::GetBootTimeNs()
     return times;
 }
 
+int32_t TimeServiceClient::GetBootTimeNs(int64_t &times)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    if (GetProxy()->GetBootTimeNs(times) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        return E_TIME_SA_DIED;
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
+    return E_TIME_OK;
+}
+
 int64_t TimeServiceClient::GetMonotonicTimeMs()
 {
     int64_t times;
@@ -332,6 +410,19 @@ int64_t TimeServiceClient::GetMonotonicTimeMs()
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
     return times;
+}
+
+int32_t TimeServiceClient::GetMonotonicTimeMs(int64_t &times)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    if (GetProxy()->GetMonotonicTimeMs(times) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        return E_TIME_SA_DIED;
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
+    return E_TIME_OK;
 }
 
 int64_t TimeServiceClient::GetMonotonicTimeNs()
@@ -348,6 +439,19 @@ int64_t TimeServiceClient::GetMonotonicTimeNs()
     return times;
 }
 
+int32_t TimeServiceClient::GetMonotonicTimeNs(int64_t &times)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    if (GetProxy()->GetMonotonicTimeNs(times) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        return E_TIME_SA_DIED;
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
+    return E_TIME_OK;
+}
+
 int64_t TimeServiceClient::GetThreadTimeMs()
 {
     int64_t times;
@@ -362,6 +466,19 @@ int64_t TimeServiceClient::GetThreadTimeMs()
     return times;
 }
 
+int32_t TimeServiceClient::GetThreadTimeMs(int64_t &times)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    if (GetProxy()->GetThreadTimeMs(times) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        return E_TIME_SA_DIED;
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
+    return E_TIME_OK;
+}
+
 int64_t TimeServiceClient::GetThreadTimeNs()
 {
     int64_t times;
@@ -374,6 +491,19 @@ int64_t TimeServiceClient::GetThreadTimeNs()
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
     return times;
+}
+
+int32_t TimeServiceClient::GetThreadTimeNs(int64_t &times)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    if (GetProxy()->GetThreadTimeNs(times) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        return E_TIME_SA_DIED;
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", times);
+    return E_TIME_OK;
 }
 
 void TimeServiceClient::NetworkTimeStatusOff()

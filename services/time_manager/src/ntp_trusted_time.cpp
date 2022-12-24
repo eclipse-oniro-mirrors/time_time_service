@@ -130,8 +130,7 @@ int64_t NtpTrustedTime::TimeResult::CurrentTimeMillis()
 int64_t NtpTrustedTime::TimeResult::GetAgeMillis()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-               .count() -
-           this->mElapsedRealtimeMillis;
+        .count() - this->mElapsedRealtimeMillis;
 }
 
 NtpTrustedTime::TimeResult::TimeResult()

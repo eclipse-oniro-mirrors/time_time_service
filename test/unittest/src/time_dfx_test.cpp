@@ -25,19 +25,32 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "accesstoken_kit.h"
+#include "nativetoken_kit.h"
 #include "securec.h"
 #include "time_service_test.h"
 #include "timer_info_test.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace MiscServices {
 using namespace testing::ext;
 using namespace OHOS;
 using namespace OHOS::MiscServices;
+using namespace OHOS::Security::AccessToken;
 
 constexpr const uint16_t EACH_LINE_LENGTH = 100;
+constexpr const char *CMD = "hidumper -s 3702 -a";
+uint64_t g_selfTokenId = 0;
 
-std::string CMD("hidumper -s 3702 -a");
+static HapPolicyParams g_policyA = { .apl = APL_SYSTEM_CORE, .domain = "test.domain" };
+
+HapInfoParams g_systemInfoParams = { .userID = 1,
+    .bundleName = "timer",
+    .instIndex = 0,
+    .appIDDesc = "test",
+    .apiVersion = 8,
+    .isSystemApp = true };
 
 class TimeDfxTest : public testing::Test {
 public:
@@ -58,10 +71,15 @@ void TimeDfxTest::TearDownTestCase(void)
 
 void TimeDfxTest::SetUp(void)
 {
+    g_selfTokenId = GetSelfTokenID();
+    AccessTokenIDEx tokenIdEx = { 0 };
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_systemInfoParams, g_policyA);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
 }
 
 void TimeDfxTest::TearDown(void)
 {
+    SetSelfTokenID(g_selfTokenId);
 }
 
 bool TimeDfxTest::ExecuteCmd(const std::string &cmd, std::string &result)
@@ -115,12 +133,23 @@ HWTEST_F(TimeDfxTest, DumpTimerInfo001, TestSize.Level0)
 */
 HWTEST_F(TimeDfxTest, DumpTimerInfoById001, TestSize.Level0)
 {
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(1);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(0);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_TRUE(timerId1 > 0);
     std::string result;
     TimeService::GetInstance()->timerManagerHandler_ = nullptr;
-    auto CMD1 = std::string(CMD).append(" \"-timer -i ").append(std::to_string(123456)).append(" \"");
+    auto CMD1 = std::string(CMD).append(" \"-timer -i ").append(std::to_string(timerId1)).append(" \"");
     auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("timer id"), std::string::npos);
+    EXPECT_NE(result.find("timer type"), std::string::npos);
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    EXPECT_TRUE(ret);
 }
 
 /**
@@ -130,12 +159,23 @@ HWTEST_F(TimeDfxTest, DumpTimerInfoById001, TestSize.Level0)
 */
 HWTEST_F(TimeDfxTest, DumpTimerTriggerById001, TestSize.Level0)
 {
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(1);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(5);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_TRUE(timerId1 > 0);
     std::string result;
     TimeService::GetInstance()->timerManagerHandler_ = nullptr;
-    auto CMD1 = std::string(CMD).append(" \"-timer -s ").append(std::to_string(123456)).append(" \"");
+    auto CMD1 = std::string(CMD).append(" \"-timer -s ").append(std::to_string(timerId1)).append(" \"");
     auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("timer id"), std::string::npos);
+    EXPECT_NE(result.find("timer trigger"), std::string::npos);
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    EXPECT_TRUE(ret);
 }
 
 /**
@@ -146,7 +186,7 @@ HWTEST_F(TimeDfxTest, DumpTimerTriggerById001, TestSize.Level0)
 HWTEST_F(TimeDfxTest, DumpShowHelp001, TestSize.Level0)
 {
     std::string result;
-    auto ret = TimeDfxTest::ExecuteCmd(CMD.append(" -h"), result);
+    auto ret = TimeDfxTest::ExecuteCmd(std::string(CMD).append(" -h"), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("dump current time info,include localtime,timezone info"), std::string::npos);
     EXPECT_NE(result.find("dump all timer info"), std::string::npos);

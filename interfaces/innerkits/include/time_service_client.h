@@ -45,7 +45,7 @@ public:
      * @return bool true on success, false on failure.
      */
     bool SetTime(const int64_t milliseconds, int32_t &code);
-
+    int32_t SetTimeV9(const int64_t &time);
     /**
      * SetTimeZone
      * @description
@@ -62,19 +62,21 @@ public:
      * @return bool true on success, false on failure.
      */
     bool SetTimeZone(const std::string timezoneId, int32_t &code);
-
+    int32_t SetTimeZoneV9(const std::string timezoneId);
     /**
      * GetTimeZone
      * @description
      * @return std::string, time zone example: "Beijing, China", if result length == 0 on failed.
      */
     std::string GetTimeZone();
+    int32_t GetTimeZone(std::string &timezoneId);
     /**
      * GetWallTimeMs
      * @description get the wall time(the UTC time from 1970 0H:0M:0S) in milliseconds
      * @return int64_t, milliseconds in wall time, ret < 0 on failed.
      */
     int64_t GetWallTimeMs();
+    int32_t GetWallTimeMs(int64_t &times);
 
     /**
      * GetWallTimeNs
@@ -82,49 +84,49 @@ public:
      * @return int64_t, nanoseconds in wall time, ret < 0 on failed.
      */
     int64_t GetWallTimeNs();
-
+    int32_t GetWallTimeNs(int64_t &times);
     /**
      * GetBootTimeMs
      * @description get the time since boot(include time spent in sleep) in milliseconds.
      * @return int64_t, milliseconds in boot time, ret < 0 on failed.
      */
     int64_t GetBootTimeMs();
-
+    int32_t GetBootTimeMs(int64_t &times);
     /**
      * GetBootTimeNs
      * @description // get the time since boot(include time spent in sleep) in nanoseconds.
      * @return int64_t, nanoseconds in boot time, ret < 0 on failed.
      */
     int64_t GetBootTimeNs();
-
+    int32_t GetBootTimeNs(int64_t &times);
     /**
      * GetMonotonicTimeMs
      * @description get the time since boot(exclude time spent in sleep) in milliseconds.
      * @return int64_t, milliseconds in Monotonic time, ret < 0 on failed.
      */
     int64_t GetMonotonicTimeMs();
-
+    int32_t GetMonotonicTimeMs(int64_t &times);
     /**
      * GetMonotonicTimeNs
      * @description get the time since boot(exclude time spent in sleep) in nanoseconds.
      * @return int64_t, nanoseconds in Monotonic time, ret < 0 on failed.
      */
     int64_t GetMonotonicTimeNs();
-
+    int32_t GetMonotonicTimeNs(int64_t &times);
     /**
      * GetThreadTimeMs
      * @description get the Thread-specific CPU-time in milliseconds.
      * @return int64_t, milliseconds in Thread-specific CPU-time, ret < 0 on failed.
      */
     int64_t GetThreadTimeMs();
-
+    int32_t GetThreadTimeMs(int64_t &times);
     /**
      * GetThreadTimeNs
      * @description get the Thread-specific CPU-time in nanoseconds.
      * @return int64_t, nanoseconds in Thread-specific CPU-time, ret < 0 on failed.
      */
     int64_t GetThreadTimeNs();
-
+    int32_t GetThreadTimeNs(int64_t &times);
     /**
      * CreateTimer
      * @param TimerInfo  timer info

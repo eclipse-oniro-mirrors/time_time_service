@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,45 +13,41 @@
  * limitations under the License.
  */
 
-#include "timer_call_back_proxy.h"
+#include "timer_notify_call_back_proxy.h"
 
 namespace OHOS {
 namespace MiscServices {
-TimerCallbackProxy::TimerCallbackProxy(const sptr<IRemoteObject> &object) : IRemoteProxy<ITimerCallback>(object)
+TimerNotifyCallbackProxy::TimerNotifyCallbackProxy(const sptr<IRemoteObject> &object)
+    :IRemoteProxy<ITimerNotifyCallback>(object)
 {
 }
 
-TimerCallbackProxy::~TimerCallbackProxy()
+TimerNotifyCallbackProxy::~TimerNotifyCallbackProxy()
 {
-    TIME_HILOGD(TIME_MODULE_CLIENT, "TimerCallbackProxy instance destoryed");
+    TIME_HILOGD(TIME_MODULE_CLIENT, "TimerNotifyCallbackProxy instance destoryed");
 }
 
-void TimerCallbackProxy::NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback)
+void TimerNotifyCallbackProxy::Finish(const uint64_t timerId)
 {
-    TIME_HILOGD(TIME_MODULE_CLIENT, "start id: %{public}" PRId64 "", timerId);
+    TIME_HILOGD(TIME_MODULE_CLIENT, "start id:%{public}" PRId64 "", timerId);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         return;
     }
-
     MessageParcel data;
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_ASYNC);
-
+    MessageOption option;
+	
     if (!data.WriteInterfaceToken(GetDescriptor())) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "write descriptor failed!");
         return;
     }
-
+	
     if (!data.WriteUint64(timerId)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "write timerId failed!");
         return;
     }
-    if (!data.WriteRemoteObject(timerCallback)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "write timerCallback failed!");
-        return;
-    }
-    int ret = remote->SendRequest(static_cast<int>(ITimerCallback::Message::NOTIFY_TIMER), data, reply, option);
+    int ret = remote->SendRequest(static_cast<int>(ITimerNotifyCallback::Message::FINISH), data, reply, option);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "SendRequest is failed, error code: %{public}d", ret);
     }

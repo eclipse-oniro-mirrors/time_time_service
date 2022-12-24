@@ -22,6 +22,8 @@
 #include "time_hilog_wreapper.h"
 #include "timer_type.h"
 
+using namespace OHOS::MiscServices;
+
 namespace OHOS {
 namespace MiscServices {
 namespace Time {
@@ -129,75 +131,91 @@ napi_value NapiSystemTimer::SystemTimerInit(napi_env env, napi_value exports)
     return exports;
 }
 
+std::map<std::string, napi_valuetype> TYPE_STRING_MAP = {
+    { "type", napi_number },
+    { "repeat", napi_boolean },
+    { "interval", napi_number },
+    { "wantAgent", napi_object },
+    { "callback", napi_function },
+};
+
+void ParseTimerOptions(napi_env env, std::shared_ptr<ContextBase> context, std::string paraType,
+    const napi_value &value, std::shared_ptr<ITimerInfoInstance> &iTimerInfoInstance)
+{
+    napi_value result = nullptr;
+    OHOS::AbilityRuntime::WantAgent::WantAgent *wantAgent = nullptr;
+    napi_valuetype valueType = napi_undefined;
+    napi_get_named_property(env, value, paraType.c_str(), &result);
+    napi_typeof(env, result, &valueType);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, valueType == TYPE_STRING_MAP[paraType],
+        "Parameter error. The type of type must be number.", JsErrorCode::PARAMETER_ERROR);
+    if (paraType == "type") {
+        int type = 0;
+        napi_get_value_int32(env, result, &type);
+        iTimerInfoInstance->SetType(type);
+    } else if (paraType == "repeat") {
+        bool repeat = false;
+        napi_get_value_bool(env, result, &repeat);
+        iTimerInfoInstance->SetRepeat(repeat);
+    } else if (paraType == "interval") {
+        int64_t interval = 0;
+        napi_get_value_int64(env, result, &interval);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, interval >= 0,
+            "Wrong argument number. Positive number expected.", JsErrorCode::PARAMETER_ERROR);
+        iTimerInfoInstance->SetInterval((uint64_t)interval);
+    } else if (paraType == "wantAgent") {
+        napi_unwrap(env, result, (void **)&wantAgent);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, wantAgent != nullptr, "wantAgent is nullptr.",
+            JsErrorCode::PARAMETER_ERROR);
+        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> sWantAgent =
+            std::make_shared<OHOS::AbilityRuntime::WantAgent::WantAgent>(*wantAgent);
+        iTimerInfoInstance->SetWantAgent(sWantAgent);
+    } else if (paraType == "callback") {
+        napi_ref onTriggerCallback;
+        napi_create_reference(env, result, 1, &onTriggerCallback);
+        iTimerInfoInstance->SetCallbackInfo(env, onTriggerCallback);
+    }
+}
+
 void NapiSystemTimer::GetTimerOptions(const napi_env &env, std::shared_ptr<ContextBase> context,
     const napi_value &value, std::shared_ptr<ITimerInfoInstance> &iTimerInfoInstance)
 {
-    napi_valuetype valueType = napi_undefined;
-    napi_value result = nullptr;
-    OHOS::AbilityRuntime::WantAgent::WantAgent *wantAgent = nullptr;
     bool hasProperty = false;
 
     // type: number
-    int type = 0;
     napi_has_named_property(env, value, "type", &hasProperty);
-    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, hasProperty, "type expected.", PARAMETER_ERROR);
-    napi_get_named_property(env, value, "type", &result);
-    napi_typeof(env, result, &valueType);
-    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, valueType == napi_number,
-        "Parameter error. The type of type must be number.", PARAMETER_ERROR);
-    napi_get_value_int32(env, result, &type);
-    iTimerInfoInstance->SetType(type);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, hasProperty, "type expected.", JsErrorCode::PARAMETER_ERROR);
+    ParseTimerOptions(env, context, "type", value, iTimerInfoInstance);
+    CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "type parameter error.", JsErrorCode::PARAMETER_ERROR);
 
     // repeat: boolean
-    bool repeat = false;
     napi_has_named_property(env, value, "repeat", &hasProperty);
-    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, hasProperty, "repeat expected.", PARAMETER_ERROR);
-    napi_get_named_property(env, value, "repeat", &result);
-    napi_typeof(env, result, &valueType);
-    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, valueType == napi_boolean,
-        "Parameter error. The type of repeat must be boolean.", PARAMETER_ERROR);
-    napi_get_value_bool(env, result, &repeat);
-    iTimerInfoInstance->SetRepeat(repeat);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, hasProperty, "repeat expected.", JsErrorCode::PARAMETER_ERROR);
+    ParseTimerOptions(env, context, "repeat", value, iTimerInfoInstance);
+    CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "repeat parameter error.", JsErrorCode::PARAMETER_ERROR);
 
     // interval?: number
-    int64_t interval = 0;
     napi_has_named_property(env, value, "interval", &hasProperty);
     if (hasProperty) {
-        napi_get_named_property(env, value, "interval", &result);
-        napi_typeof(env, result, &valueType);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, valueType == napi_number,
-            "Parameter error. The type of interval must be number.", PARAMETER_ERROR);
-        napi_get_value_int64(env, result, &interval);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, interval >= 0,
-            "Wrong argument number. Positive number expected.", PARAMETER_ERROR);
-        iTimerInfoInstance->SetInterval((uint64_t)interval);
+        ParseTimerOptions(env, context, "interval", value, iTimerInfoInstance);
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "interval parameter error.",
+            JsErrorCode::PARAMETER_ERROR);
     }
 
     // wantAgent?: WantAgent
     napi_has_named_property(env, value, "wantAgent", &hasProperty);
     if (hasProperty) {
-        napi_get_named_property(env, value, "wantAgent", &result);
-        napi_typeof(env, result, &valueType);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, valueType == napi_object,
-            "Parameter error. The type of wantAgent must be WantAgent.", PARAMETER_ERROR);
-        napi_unwrap(env, result, (void **)&wantAgent);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, wantAgent != nullptr, "wantAgent is nullptr.",
-            PARAMETER_ERROR);
-        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> sWantAgent =
-            std::make_shared<OHOS::AbilityRuntime::WantAgent::WantAgent>(*wantAgent);
-        iTimerInfoInstance->SetWantAgent(sWantAgent);
+        ParseTimerOptions(env, context, "wantAgent", value, iTimerInfoInstance);
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "wantAgent parameter error.",
+            JsErrorCode::PARAMETER_ERROR);
     }
 
     // callback?: () => void
     napi_has_named_property(env, value, "callback", &hasProperty);
     if (hasProperty) {
-        napi_get_named_property(env, value, "callback", &result);
-        napi_typeof(env, result, &valueType);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, valueType == napi_function,
-            "Parameter error. The type of callback must be function.", PARAMETER_ERROR);
-        napi_ref onTriggerCallback;
-        napi_create_reference(env, result, 1, &onTriggerCallback);
-        iTimerInfoInstance->SetCallbackInfo(env, onTriggerCallback);
+        ParseTimerOptions(env, context, "callback", value, iTimerInfoInstance);
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "callback parameter error.",
+            JsErrorCode::PARAMETER_ERROR);
     }
 }
 
@@ -210,25 +228,19 @@ napi_value NapiSystemTimer::CreateTimer(napi_env env, napi_callback_info info)
     auto context = std::make_shared<ConcreteContext>();
 
     auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc == ARGC_ONE, "invalid arguments", PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc >= ARGC_ONE, "invalid arguments",
+            JsErrorCode::PARAMETER_ERROR);
         GetTimerOptions(env, context, argv[ARGV_FIRST], context->iTimerInfoInstance);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid timer",
-            PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid timer parameter",
+            JsErrorCode::PARAMETER_ERROR);
         context->status = napi_ok;
     };
     context->GetCbInfo(env, info, inputParser);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
 
     auto executor = [context]() {
-        auto errCode = OHOS::MiscServices::TimeServiceClient::GetInstance()->CreateTimerV9(context->iTimerInfoInstance,
-            context->timerId);
-        if (errCode != ERROR_OK) {
-            JsErrorInfo errorObject = NapiUtils::ConvertErrorCode(errCode);
-            context->errMessage = errorObject.message.c_str();
-            context->errCode = errorObject.code;
+        auto innerCode = TimeServiceClient::GetInstance()->CreateTimerV9(context->iTimerInfoInstance, context->timerId);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
@@ -252,32 +264,26 @@ napi_value NapiSystemTimer::StartTimer(napi_env env, napi_callback_info info)
     auto context = std::make_shared<ConcreteContext>();
 
     auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc == ARGC_TWO, "invalid arguments", PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc >= ARGC_TWO, "invalid arguments",
+            JsErrorCode::PARAMETER_ERROR);
         int64_t timerId = 0;
         context->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid timerId",
-            PARAMETER_ERROR);
+            JsErrorCode::PARAMETER_ERROR);
         context->timerId = static_cast<uint64_t>(timerId);
         int64_t triggerTime = 0;
         context->status = napi_get_value_int64(env, argv[ARGV_SECOND], &triggerTime);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid triggerTime",
-            PARAMETER_ERROR);
+            JsErrorCode::PARAMETER_ERROR);
         context->triggerTime = static_cast<uint64_t>(triggerTime);
         context->status = napi_ok;
     };
     context->GetCbInfo(env, info, inputParser);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
 
     auto executor = [context]() {
-        auto errCode =
-            OHOS::MiscServices::TimeServiceClient::GetInstance()->StartTimerV9(context->timerId, context->triggerTime);
-        if (errCode != ERROR_OK) {
-            JsErrorInfo errorObject = NapiUtils::ConvertErrorCode(errCode);
-            context->errMessage = errorObject.message.c_str();
-            context->errCode = errorObject.code;
+        auto innerCode = TimeServiceClient::GetInstance()->StartTimerV9(context->timerId, context->triggerTime);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
@@ -295,26 +301,21 @@ napi_value NapiSystemTimer::StopTimer(napi_env env, napi_callback_info info)
     auto context = std::make_shared<ConcreteContext>();
 
     auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc == ARGC_ONE, "invalid arguments", PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc >= ARGC_ONE, "invalid arguments",
+            JsErrorCode::PARAMETER_ERROR);
         int64_t timerId = 0;
         context->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
         context->timerId = static_cast<uint64_t>(timerId);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid timerId",
-            PARAMETER_ERROR);
+            JsErrorCode::PARAMETER_ERROR);
         context->status = napi_ok;
     };
     context->GetCbInfo(env, info, inputParser);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
 
     auto executor = [context]() {
-        auto errCode = TimeServiceClient::GetInstance()->StopTimerV9(context->timerId);
-        if (errCode != ERROR_OK) {
-            JsErrorInfo errorObject = NapiUtils::ConvertErrorCode(errCode);
-            context->errMessage = errorObject.message.c_str();
-            context->errCode = errorObject.code;
+        auto innerCode = TimeServiceClient::GetInstance()->StopTimerV9(context->timerId);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
@@ -332,26 +333,21 @@ napi_value NapiSystemTimer::DestroyTimer(napi_env env, napi_callback_info info)
     auto context = std::make_shared<ConcreteContext>();
 
     auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc == ARGC_ONE, "invalid arguments", PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc == ARGC_ONE, "invalid arguments",
+            JsErrorCode::PARAMETER_ERROR);
         int64_t timerId = 0;
         context->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
         context->timerId = static_cast<uint64_t>(timerId);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid timerId",
-            PARAMETER_ERROR);
+            JsErrorCode::PARAMETER_ERROR);
         context->status = napi_ok;
     };
     context->GetCbInfo(env, info, inputParser);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
 
     auto executor = [context]() {
-        auto errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(context->timerId);
-        if (errCode != ERROR_OK) {
-            JsErrorInfo errorObject = NapiUtils::ConvertErrorCode(errCode);
-            context->errMessage = errorObject.message.c_str();
-            context->errCode = errorObject.code;
+        auto innerCode = TimeServiceClient::GetInstance()->DestroyTimerV9(context->timerId);
+        if (innerCode != ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };

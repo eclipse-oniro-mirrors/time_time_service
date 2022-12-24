@@ -26,22 +26,19 @@ namespace Time {
 static constexpr int32_t STR_MAX_LENGTH = 4096;
 static constexpr size_t STR_TAIL_LENGTH = 1;
 
-JsErrorInfo NapiUtils::ConvertErrorCode(int32_t timeErrorCode)
+int32_t NapiUtils::ConvertErrorCode(int32_t timeErrorCode)
 {
-    JsErrorInfo errorObject;
     switch (timeErrorCode) {
         case MiscServices::E_TIME_NOT_SYSTEM_APP:
-            errorObject.code = static_cast<int32_t>(SYSTEM_APP_ERROR);
-            errorObject.message = "not system app";
-            break;
+            return static_cast<int32_t>(JsErrorCode::SYSTEM_APP_ERROR);
         case MiscServices::E_TIME_NO_PERMISSION:
-            errorObject.code = static_cast<int32_t>(PERMISSION_ERROR);
-            errorObject.message = "permission deny";
-            break;
+            return static_cast<int32_t>(JsErrorCode::PERMISSION_ERROR);
+        case MiscServices::E_TIME_PARAMETERS_INVALID:
+            return static_cast<int32_t>(JsErrorCode::PARAMETER_ERROR);
         default:
             break;
     }
-    return errorObject;
+    return JsErrorCode::ERROR;
 }
 
 napi_value NapiUtils::CreateNapiNumber(napi_env env, int32_t objName)
@@ -90,13 +87,13 @@ void NapiUtils::SetCallback(const napi_env &env, const napi_ref &callbackIn, con
     napi_get_reference_value(env, callbackIn, &callback);
     napi_value results[2] = { 0 };
 
-    JsErrorInfo errorObject = ConvertErrorCode(errorCode);
+    auto innerCode = ConvertErrorCode(errorCode);
     napi_value eCode = nullptr;
-    napi_create_int32(env, errorObject.code, &eCode);
+    napi_create_int32(env, innerCode, &eCode);
     napi_set_named_property(env, result, "code", eCode);
 
     napi_value str;
-    napi_create_string_utf8(env, errorObject.message.c_str(), NAPI_AUTO_LENGTH, &str);
+    napi_create_string_utf8(env, CODE_TO_MESSAGE.find(innerCode)->second.c_str(), NAPI_AUTO_LENGTH, &str);
     napi_set_named_property(env, results[0], "message", str);
     results[1] = result;
     NAPI_CALL_RETURN_VOID(env, napi_call_function(env, undefined, callback, ARGC_TWO, &results[0], &resultOut));

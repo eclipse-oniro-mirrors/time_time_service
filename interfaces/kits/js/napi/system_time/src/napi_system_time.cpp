@@ -55,24 +55,19 @@ napi_value NapiSystemTime::SetTime(napi_env env, napi_callback_info info)
     auto context = std::make_shared<ConcreteContext>();
 
     auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc == ARGC_ONE, "invalid arguments", PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc >= ARGC_ONE, "invalid arguments",
+            JsErrorCode::PARAMETER_ERROR);
         context->status = napi_get_value_int64(env, argv[ARGV_FIRST], &context->time);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid time",
-            PARAMETER_ERROR);
+            JsErrorCode::PARAMETER_ERROR);
         context->status = napi_ok;
     };
     context->GetCbInfo(env, info, inputParser);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
 
     auto executor = [context]() {
-        auto ret = TimeServiceClient::GetInstance()->SetTime(context->time, context->errCode);
-        if (!ret) {
-            JsErrorInfo errorObject = NapiUtils::ConvertErrorCode(context->errCode);
-            context->errMessage = errorObject.message.c_str();
-            context->errCode = errorObject.code;
+        auto innerCode = TimeServiceClient::GetInstance()->SetTimeV9(context->time);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
@@ -90,42 +85,46 @@ napi_value NapiSystemTime::SetDate(napi_env env, napi_callback_info info)
     auto context = std::make_shared<ConcreteContext>();
 
     auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc == ARGC_ONE, "invalid arguments", PARAMETER_ERROR);
-        bool hasProperty = false;
-        napi_valuetype resValueType = napi_undefined;
-        napi_has_named_property(env, argv[ARGV_FIRST], "getTime", &hasProperty);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, hasProperty, "getTime failed", PARAMETER_ERROR);
-        napi_value getTimeFunc = nullptr;
-        napi_get_named_property(env, argv[0], "getTime", &getTimeFunc);
-        napi_value getTimeResult = nullptr;
-        napi_call_function(env, argv[0], getTimeFunc, 0, nullptr, &getTimeResult);
-        napi_typeof(env, getTimeResult, &resValueType);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, resValueType == napi_number, "type mismatch",
-            PARAMETER_ERROR);
-        context->status = napi_get_value_int64(env, getTimeResult, &context->time);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc >= ARGC_ONE, "invalid arguments",
+            JsErrorCode::PARAMETER_ERROR);
+        napi_valuetype valueType = napi_undefined;
+        napi_typeof(env, argv[ARGV_FIRST], &valueType);
+        if (valueType == napi_number) {
+            napi_get_value_int64(env, argv[ARGV_FIRST], &context->time);
+            CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->time >= 0, "invalid time",
+                JsErrorCode::PARAMETER_ERROR);
+        } else {
+            bool hasProperty = false;
+            napi_valuetype resValueType = napi_undefined;
+            napi_has_named_property(env, argv[ARGV_FIRST], "getTime", &hasProperty);
+            CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, hasProperty, "getTime failed",
+                JsErrorCode::PARAMETER_ERROR);
+            napi_value getTimeFunc = nullptr;
+            napi_get_named_property(env, argv[0], "getTime", &getTimeFunc);
+            napi_value getTimeResult = nullptr;
+            napi_call_function(env, argv[0], getTimeFunc, 0, nullptr, &getTimeResult);
+            napi_typeof(env, getTimeResult, &resValueType);
+            CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, resValueType == napi_number, "type mismatch",
+                JsErrorCode::PARAMETER_ERROR);
+            context->status = napi_get_value_int64(env, getTimeResult, &context->time);
+        }
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid time",
-            PARAMETER_ERROR);
+            JsErrorCode::PARAMETER_ERROR);
         context->status = napi_ok;
     };
     context->GetCbInfo(env, info, inputParser);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
 
     auto executor = [context]() {
-        auto ret = TimeServiceClient::GetInstance()->SetTime(context->time, context->errCode);
-        if (!ret) {
-            JsErrorInfo errorObject = NapiUtils::ConvertErrorCode(context->errCode);
-            context->errMessage = errorObject.message.c_str();
-            context->errCode = errorObject.code;
+        auto innerCode = TimeServiceClient::GetInstance()->SetTimeV9(context->time);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
 
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
 
-    return NapiAsyncWork::Enqueue(env, context, "SetTime", executor, complete);
+    return NapiAsyncWork::Enqueue(env, context, "SetDate", executor, complete);
 }
 
 napi_value NapiSystemTime::GetRealActiveTime(napi_env env, napi_callback_info info)
@@ -137,29 +136,24 @@ napi_value NapiSystemTime::GetRealActiveTime(napi_env env, napi_callback_info in
     auto context = std::make_shared<ConcreteContext>();
 
     auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc <= ARGC_ONE, "invalid arguments", PARAMETER_ERROR);
-        if (argc == ARGC_ONE) {
+        if (argc >= ARGC_ONE) {
             context->status = napi_get_value_bool(env, argv[ARGV_FIRST], &context->isNano);
         }
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid isNano",
-            PARAMETER_ERROR);
+            JsErrorCode::PARAMETER_ERROR);
         context->status = napi_ok;
     };
     context->GetCbInfo(env, info, inputParser);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
 
     auto executor = [context]() {
+        int32_t innerCode;
         if (context->isNano) {
-            context->time = TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
+            innerCode = TimeServiceClient::GetInstance()->GetMonotonicTimeNs(context->time);
         } else {
-            context->time = TimeServiceClient::GetInstance()->GetMonotonicTimeMs();
+            innerCode = TimeServiceClient::GetInstance()->GetMonotonicTimeMs(context->time);
         }
-        if (context->time < 0) {
-            context->errMessage = SYSTEM_ERROR;
-            context->errCode = ERROR;
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
@@ -167,7 +161,7 @@ napi_value NapiSystemTime::GetRealActiveTime(napi_env env, napi_callback_info in
     auto complete = [env, context](napi_value &output) {
         context->status = napi_create_int64(env, context->time, &output);
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "convert native object to javascript object failed",
-            ERROR);
+            JsErrorCode::ERROR);
     };
 
     return NapiAsyncWork::Enqueue(env, context, "GetRealActiveTime", executor, complete);
@@ -182,29 +176,24 @@ napi_value NapiSystemTime::GetCurrentTime(napi_env env, napi_callback_info info)
     auto context = std::make_shared<ConcreteContext>();
 
     auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc <= ARGC_ONE, "invalid arguments", PARAMETER_ERROR);
-        if (argc == ARGC_ONE) {
+        if (argc >= ARGC_ONE) {
             context->status = napi_get_value_bool(env, argv[ARGV_FIRST], &context->isNano);
         }
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid isNano",
-            PARAMETER_ERROR);
+            JsErrorCode::PARAMETER_ERROR);
         context->status = napi_ok;
     };
     context->GetCbInfo(env, info, inputParser);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
 
     auto executor = [context]() {
+        int32_t innerCode;
         if (context->isNano) {
-            context->time = TimeServiceClient::GetInstance()->GetWallTimeNs();
+            innerCode = TimeServiceClient::GetInstance()->GetWallTimeNs(context->time);
         } else {
-            context->time = TimeServiceClient::GetInstance()->GetWallTimeMs();
+            innerCode = TimeServiceClient::GetInstance()->GetWallTimeMs(context->time);
         }
-        if (context->time < 0) {
-            context->errMessage = SYSTEM_ERROR;
-            context->errCode = ERROR;
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
@@ -212,7 +201,7 @@ napi_value NapiSystemTime::GetCurrentTime(napi_env env, napi_callback_info info)
     auto complete = [context](napi_value &output) {
         context->status = napi_create_int64(context->env, context->time, &output);
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "convert native object to javascript object failed",
-            ERROR);
+            JsErrorCode::ERROR);
     };
 
     return NapiAsyncWork::Enqueue(env, context, "GetCurrentTime", executor, complete);
@@ -227,29 +216,24 @@ napi_value NapiSystemTime::GetRealTime(napi_env env, napi_callback_info info)
     auto context = std::make_shared<ConcreteContext>();
 
     auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc <= ARGC_ONE, "invalid arguments", PARAMETER_ERROR);
-        if (argc == ARGC_ONE) {
+        if (argc >= ARGC_ONE) {
             context->status = napi_get_value_bool(env, argv[ARGV_FIRST], &context->isNano);
         }
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid isNano",
-            PARAMETER_ERROR);
+            JsErrorCode::PARAMETER_ERROR);
         context->status = napi_ok;
     };
     context->GetCbInfo(env, info, inputParser);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
 
     auto executor = [context]() {
+        int32_t innerCode;
         if (context->isNano) {
-            context->time = TimeServiceClient::GetInstance()->GetBootTimeNs();
+            innerCode = TimeServiceClient::GetInstance()->GetBootTimeNs(context->time);
         } else {
-            context->time = TimeServiceClient::GetInstance()->GetBootTimeMs();
+            innerCode = TimeServiceClient::GetInstance()->GetBootTimeMs(context->time);
         }
-        if (context->time < 0) {
-            context->errMessage = SYSTEM_ERROR;
-            context->errCode = ERROR;
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
@@ -257,7 +241,7 @@ napi_value NapiSystemTime::GetRealTime(napi_env env, napi_callback_info info)
     auto complete = [context](napi_value &output) {
         context->status = napi_create_int64(context->env, context->time, &output);
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "convert native object to javascript object failed",
-            ERROR);
+            JsErrorCode::ERROR);
     };
 
     return NapiAsyncWork::Enqueue(env, context, "GetRealTime", executor, complete);
@@ -269,17 +253,13 @@ napi_value NapiSystemTime::GetDate(napi_env env, napi_callback_info info)
         int64_t time;
     };
     auto context = std::make_shared<ConcreteContext>();
-    context->GetCbInfo(env, info);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
+    auto inputParser = [env, context](size_t argc, napi_value *argv) { context->status = napi_ok; };
+    context->GetCbInfo(env, info, inputParser);
 
     auto executor = [context]() {
-        context->time = TimeServiceClient::GetInstance()->GetWallTimeMs();
-        if (context->time < 0) {
-            context->errMessage = SYSTEM_ERROR;
-            context->errCode = ERROR;
+        auto innerCode = TimeServiceClient::GetInstance()->GetWallTimeMs(context->time);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
@@ -287,7 +267,7 @@ napi_value NapiSystemTime::GetDate(napi_env env, napi_callback_info info)
     auto complete = [env, context](napi_value &output) {
         context->status = napi_create_date(env, context->time, &output);
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "convert native object to javascript object failed",
-            ERROR);
+            JsErrorCode::ERROR);
     };
 
     return NapiAsyncWork::Enqueue(env, context, "GetDate", executor, complete);
@@ -301,24 +281,19 @@ napi_value NapiSystemTime::SetTimezone(napi_env env, napi_callback_info info)
     auto context = std::make_shared<ConcreteContext>();
 
     auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc == ARGC_ONE, "invalid arguments", PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc >= ARGC_ONE, "invalid arguments",
+            JsErrorCode::PARAMETER_ERROR);
         context->status = NapiUtils::GetValue(env, argv[ARGV_FIRST], context->timezone);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid timezone",
-            PARAMETER_ERROR);
+            JsErrorCode::PARAMETER_ERROR);
         context->status = napi_ok;
     };
     context->GetCbInfo(env, info, inputParser);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
 
     auto executor = [context]() {
-        auto ret = TimeServiceClient::GetInstance()->SetTimeZone(context->timezone, context->errCode);
-        if (!ret) {
-            JsErrorInfo errorObject = NapiUtils::ConvertErrorCode(context->errCode);
-            context->errMessage = errorObject.message.c_str();
-            context->errCode = errorObject.code;
+        auto innerCode = TimeServiceClient::GetInstance()->SetTimeZoneV9(context->timezone);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
@@ -334,26 +309,23 @@ napi_value NapiSystemTime::GetTimezone(napi_env env, napi_callback_info info)
         std::string timezone;
     };
     auto context = std::make_shared<ConcreteContext>();
-    context->GetCbInfo(env, info);
-    if (context->status != napi_ok) {
-        NapiUtils::ThrowError(env, context->errMessage.c_str(), context->errCode);
-        return NapiUtils::GetUndefinedValue(env);
-    }
+
+    auto inputParser = [env, context](size_t argc, napi_value *argv) { context->status = napi_ok; };
+    context->GetCbInfo(env, info, inputParser);
 
     auto executor = [context]() {
-        context->timezone = TimeServiceClient::GetInstance()->GetTimeZone();
-
-        if (context->timezone.empty()) {
-            context->errMessage = SYSTEM_ERROR;
-            context->errCode = ERROR;
+        auto innerCode = TimeServiceClient::GetInstance()->GetTimeZone(context->timezone);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
             context->status = napi_generic_failure;
         }
     };
 
     auto complete = [env, context](napi_value &output) {
         context->status = napi_create_string_utf8(env, context->timezone.c_str(), context->timezone.size(), &output);
+        TIME_HILOGI(TIME_MODULE_JS_NAPI, "%{public}s, ", context->timezone.c_str());
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "convert native object to javascript object failed",
-            ERROR);
+            JsErrorCode::ERROR);
     };
 
     return NapiAsyncWork::Enqueue(env, context, "GetTimezone", executor, complete);

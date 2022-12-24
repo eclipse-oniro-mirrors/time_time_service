@@ -16,6 +16,7 @@
 #ifndef NAPI_UTILS_H
 #define NAPI_UTILS_H
 
+#include <map>
 #include <memory>
 #include <string>
 
@@ -69,27 +70,30 @@ namespace Time {
 
 constexpr size_t ARGC_ONE = 1;
 constexpr size_t ARGC_TWO = 2;
-constexpr size_t ARGC_THERE = 3;
+constexpr size_t ARGC_THREE = 3;
 
 constexpr size_t ARGV_FIRST = 0;
 constexpr size_t ARGV_SECOND = 1;
 constexpr size_t ARGV_THIRD = 2;
 
-const int32_t ERROR_OK = 0;
-const int32_t ERROR = 13000001;
-const int32_t PERMISSION_ERROR = 201;
-const int32_t SYSTEM_APP_ERROR = 202;
-const int32_t PARAMETER_ERROR = 401;
-
-constexpr const char *SYSTEM_ERROR = "system error";
-
-struct JsErrorInfo {
-    int32_t code = ERROR_OK;
-    std::string message;
+enum JsErrorCode : uint32_t {
+    ERROR_OK = 0,
+    ERROR = 13000001,
+    PERMISSION_ERROR = 201,
+    SYSTEM_APP_ERROR = 202,
+    PARAMETER_ERROR = 401,
 };
+
+const std::map<int32_t, std::string> CODE_TO_MESSAGE = {
+    { JsErrorCode::SYSTEM_APP_ERROR, "not system app" },
+    { JsErrorCode::PARAMETER_ERROR, "parameter invalid" },
+    { JsErrorCode::PERMISSION_ERROR, "permission denied" },
+    { JsErrorCode::ERROR, "system error" },
+};
+
 class NapiUtils {
 public:
-    static JsErrorInfo ConvertErrorCode(int32_t timeErrorCode);
+    static int32_t ConvertErrorCode(int32_t timeErrorCode);
     static napi_value CreateNapiNumber(napi_env env, int32_t objName);
     static napi_value GetUndefinedValue(napi_env env);
     static napi_status GetValue(napi_env env, napi_value in, std::string &out);

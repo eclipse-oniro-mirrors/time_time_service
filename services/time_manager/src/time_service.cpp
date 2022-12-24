@@ -32,6 +32,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <climits>
 
 #include "iservice_registry.h"
 #include "ntp_update_time.h"
@@ -252,7 +253,9 @@ int32_t TimeService::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions
         return E_TIME_NULLPTR;
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start create timer.");
-    auto callbackFunc = [timerCallback](uint64_t id) { timerCallback->NotifyTimer(id); };
+    auto callbackFunc = [timerCallback](uint64_t id) {
+        timerCallback->NotifyTimer(id, nullptr);
+    };
     int64_t triggerTime = 0;
     GetWallTimeMs(triggerTime);
     StatisticReporter(IPCSkeleton::GetCallingPid(), uid, timerOptions->type, triggerTime, timerOptions->interval);
@@ -334,7 +337,7 @@ int32_t TimeService::DestroyTimer(uint64_t timerId)
 bool TimeService::SetRealTime(const int64_t time)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Setting time of day to milliseconds: %{public}" PRId64 "", time);
-    if (time < 0 || time / 1000LL >= LONG_MAX) {
+    if (time < 0 || time / 1000LL >= LLONG_MAX) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "input param error");
         return false;
     }
@@ -346,7 +349,6 @@ bool TimeService::SetRealTime(const int64_t time)
     struct timeval tv {};
     tv.tv_sec = (time_t)(time / MILLI_TO_BASE);
     tv.tv_usec = (suseconds_t)((time % MILLI_TO_BASE) * MILLI_TO_MICR);
-
     int result = settimeofday(&tv, NULL);
     if (result < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday time fail: %{public}d.", result);
