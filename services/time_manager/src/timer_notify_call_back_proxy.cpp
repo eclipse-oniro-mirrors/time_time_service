@@ -55,5 +55,3 @@ void TimerNotifyCallbackProxy::Finish(const uint64_t timerId)
 }
 } // namespace MiscServices
 } // namespace OHOS
-
-
