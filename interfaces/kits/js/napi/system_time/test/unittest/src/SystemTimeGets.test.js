@@ -181,22 +181,22 @@ describe('TimeTest', function () {
     })
 
     /**
-     * @tc.number    systemTime_getCurrentTime_401_test1
+     * @tc.number    systemTime_getCurrentTime_-1_test1
      * @tc.name      Test systemTime.getCurrentTime Invalid value
      * @tc.desc      Test systemTime_getCurrentTime API functionality.
      * @tc.size      : MEDIUM
      * @tc.type      : Function
      * @tc.level     : Level 0
      */
-    it('systemTime_getCurrentTime_401_test1', 0, async function (done) {
-        console.log("systemTime_getCurrentTime_401_test1 start");
+    it('systemTime_getCurrentTime_-1_test1', 0, async function (done) {
+        console.log("systemTime_getCurrentTime_-1_test1 start");
 
         try {
             systemTime.getCurrentTime("true", function (err, data) {
                 expect(false).assertTrue;
             });
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(err.code).assertEqual(-1);
         }
 
         try {
@@ -204,22 +204,22 @@ describe('TimeTest', function () {
                 expect(false).assertTrue;
             });
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(err.code).assertEqual(-1);
         }
-        console.log('systemTime_getCurrentTime_401_test1 end');
+        console.log('systemTime_getCurrentTime_-1_test1 end');
         done();
     })
 
     /**
-     * @tc.number    systemTime_getCurrentTime_401_test1
+     * @tc.number    systemTime_getCurrentTime_-1_test1
      * @tc.name      Test systemTime.getCurrentTime Invalid value
      * @tc.desc      Test systemTime_getCurrentTime API functionality.
      * @tc.size      : MEDIUM
      * @tc.type      : Function
      * @tc.level     : Level 0
      */
-    it('systemTime_getRealActiveTime_401_test1', 0, async function (done) {
-        console.log("systemTime_getRealActiveTime_401_test1 start");
+    it('systemTime_getRealActiveTime_-1_test1', 0, async function (done) {
+        console.log("systemTime_getRealActiveTime_-1_test1 start");
 
         try {
             systemTime.getRealActiveTime("true", function (err, data) {
@@ -227,7 +227,7 @@ describe('TimeTest', function () {
             });
             expect(false).assertTrue;
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(err.code).assertEqual(-1);
         }
 
         try {
@@ -235,22 +235,22 @@ describe('TimeTest', function () {
                 expect(false).assertTrue;
             });
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(err.code).assertEqual(-1);
         }
-        console.log('systemTime_getRealActiveTime_401_test1 end');
+        console.log('systemTime_getRealActiveTime_-1_test1 end');
         done();
     })
 
     /**
-     * @tc.number    systemTime_getRealTime_401_test1
+     * @tc.number    systemTime_getRealTime_-1_test1
      * @tc.name      Test systemTime.getRealTime Invalid value
      * @tc.desc      Test systemTime_getRealTime API functionality.
      * @tc.size      : MEDIUM
      * @tc.type      : Function
      * @tc.level     : Level 0
      */
-    it('systemTime_getRealTime_401_test1', 0, async function (done) {
-        console.log("systemTime_getRealTime_401_test1 start");
+    it('systemTime_getRealTime_-1_test1', 0, async function (done) {
+        console.log("systemTime_getRealTime_-1_test1 start");
 
         try {
             systemTime.getRealTime("true", function (err, data) {
@@ -258,7 +258,7 @@ describe('TimeTest', function () {
             });
             expect(false).assertTrue;
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(err.code).assertEqual(-1);
         }
 
         try {
@@ -266,9 +266,9 @@ describe('TimeTest', function () {
                 expect(false).assertTrue;
             });
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(err.code).assertEqual(-1);
         }
-        console.log('systemTime_getRealTime_401_test1 end');
+        console.log('systemTime_getRealTime_-1_test1 end');
         done();
     })
 })

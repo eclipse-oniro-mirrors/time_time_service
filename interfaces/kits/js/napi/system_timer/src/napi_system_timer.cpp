@@ -221,140 +221,127 @@ void NapiSystemTimer::GetTimerOptions(const napi_env &env, std::shared_ptr<Conte
 
 napi_value NapiSystemTimer::CreateTimer(napi_env env, napi_callback_info info)
 {
-    struct ConcreteContext : public ContextBase {
+    struct CreateTimerContext : public ContextBase {
         uint64_t timerId;
         std::shared_ptr<ITimerInfoInstance> iTimerInfoInstance = std::make_shared<ITimerInfoInstance>();
     };
-    auto context = std::make_shared<ConcreteContext>();
-
-    auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc >= ARGC_ONE, "invalid arguments",
+    auto createTimerContext = std::make_shared<CreateTimerContext>();
+    auto inputParser = [env, createTimerContext](size_t argc, napi_value *argv) {
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, createTimerContext, argc >= ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
-        GetTimerOptions(env, context, argv[ARGV_FIRST], context->iTimerInfoInstance);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid timer parameter",
-            JsErrorCode::PARAMETER_ERROR);
-        context->status = napi_ok;
+        GetTimerOptions(env, createTimerContext, argv[ARGV_FIRST], createTimerContext->iTimerInfoInstance);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, createTimerContext, createTimerContext->status == napi_ok,
+            "invalid timer parameter", JsErrorCode::PARAMETER_ERROR);
+        createTimerContext->status = napi_ok;
     };
-    context->GetCbInfo(env, info, inputParser);
-
-    auto executor = [context]() {
-        auto innerCode = TimeServiceClient::GetInstance()->CreateTimerV9(context->iTimerInfoInstance, context->timerId);
+    createTimerContext->GetCbInfo(env, info, inputParser);
+    auto executor = [createTimerContext]() {
+        auto innerCode = TimeServiceClient::GetInstance()->CreateTimerV9(createTimerContext->iTimerInfoInstance,
+            createTimerContext->timerId);
         if (innerCode != JsErrorCode::ERROR_OK) {
-            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
-            context->status = napi_generic_failure;
+            createTimerContext->errCode = innerCode;
+            createTimerContext->status = napi_generic_failure;
         }
     };
-
-    auto complete = [context](napi_value &output) {
-        uint64_t timerId = static_cast<uint64_t>(context->timerId);
-        context->status = napi_create_int64(context->env, timerId, &output);
-        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, "convert native object to javascript object failed",
-            ERROR);
+    auto complete = [createTimerContext](napi_value &output) {
+        uint64_t timerId = static_cast<uint64_t>(createTimerContext->timerId);
+        createTimerContext->status = napi_create_int64(createTimerContext->env, timerId, &output);
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, createTimerContext,
+            "convert native object to javascript object failed", ERROR);
     };
-
-    return NapiAsyncWork::Enqueue(env, context, "SetTime", executor, complete);
+    return NapiAsyncWork::Enqueue(env, createTimerContext, "SetTime", executor, complete);
 }
 
 napi_value NapiSystemTimer::StartTimer(napi_env env, napi_callback_info info)
 {
-    struct ConcreteContext : public ContextBase {
+    struct StartTimerContext : public ContextBase {
         uint64_t timerId;
         uint64_t triggerTime;
     };
-    auto context = std::make_shared<ConcreteContext>();
-
-    auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc >= ARGC_TWO, "invalid arguments",
+    auto startTimerContext = std::make_shared<StartTimerContext>();
+    auto inputParser = [env, startTimerContext](size_t argc, napi_value *argv) {
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, startTimerContext, argc >= ARGC_TWO, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
         int64_t timerId = 0;
-        context->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid timerId",
-            JsErrorCode::PARAMETER_ERROR);
-        context->timerId = static_cast<uint64_t>(timerId);
+        startTimerContext->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, startTimerContext, startTimerContext->status == napi_ok,
+            "invalid timerId", JsErrorCode::PARAMETER_ERROR);
+        startTimerContext->timerId = static_cast<uint64_t>(timerId);
         int64_t triggerTime = 0;
-        context->status = napi_get_value_int64(env, argv[ARGV_SECOND], &triggerTime);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid triggerTime",
-            JsErrorCode::PARAMETER_ERROR);
-        context->triggerTime = static_cast<uint64_t>(triggerTime);
-        context->status = napi_ok;
+        startTimerContext->status = napi_get_value_int64(env, argv[ARGV_SECOND], &triggerTime);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, startTimerContext, startTimerContext->status == napi_ok,
+            "invalid triggerTime", JsErrorCode::PARAMETER_ERROR);
+        startTimerContext->triggerTime = static_cast<uint64_t>(triggerTime);
+        startTimerContext->status = napi_ok;
     };
-    context->GetCbInfo(env, info, inputParser);
-
-    auto executor = [context]() {
-        auto innerCode = TimeServiceClient::GetInstance()->StartTimerV9(context->timerId, context->triggerTime);
+    startTimerContext->GetCbInfo(env, info, inputParser);
+    auto executor = [startTimerContext]() {
+        auto innerCode =
+            TimeServiceClient::GetInstance()->StartTimerV9(startTimerContext->timerId, startTimerContext->triggerTime);
         if (innerCode != JsErrorCode::ERROR_OK) {
-            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
-            context->status = napi_generic_failure;
+            startTimerContext->errCode = innerCode;
+            startTimerContext->status = napi_generic_failure;
         }
     };
-
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
-
-    return NapiAsyncWork::Enqueue(env, context, "StartTimer", executor, complete);
+    return NapiAsyncWork::Enqueue(env, startTimerContext, "StartTimer", executor, complete);
 }
 
 napi_value NapiSystemTimer::StopTimer(napi_env env, napi_callback_info info)
 {
-    struct ConcreteContext : public ContextBase {
+    struct StopTimerContext : public ContextBase {
         uint64_t timerId;
     };
-    auto context = std::make_shared<ConcreteContext>();
-
-    auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc >= ARGC_ONE, "invalid arguments",
+    auto stopTimerContext = std::make_shared<StopTimerContext>();
+    auto inputParser = [env, stopTimerContext](size_t argc, napi_value *argv) {
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, stopTimerContext, argc >= ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
         int64_t timerId = 0;
-        context->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
-        context->timerId = static_cast<uint64_t>(timerId);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid timerId",
-            JsErrorCode::PARAMETER_ERROR);
-        context->status = napi_ok;
+        stopTimerContext->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
+        stopTimerContext->timerId = static_cast<uint64_t>(timerId);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, stopTimerContext, stopTimerContext->status == napi_ok,
+            "invalid timerId", JsErrorCode::PARAMETER_ERROR);
+        stopTimerContext->status = napi_ok;
     };
-    context->GetCbInfo(env, info, inputParser);
-
-    auto executor = [context]() {
-        auto innerCode = TimeServiceClient::GetInstance()->StopTimerV9(context->timerId);
+    stopTimerContext->GetCbInfo(env, info, inputParser);
+    auto executor = [stopTimerContext]() {
+        auto innerCode = TimeServiceClient::GetInstance()->StopTimerV9(stopTimerContext->timerId);
         if (innerCode != JsErrorCode::ERROR_OK) {
-            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
-            context->status = napi_generic_failure;
+            stopTimerContext->errCode = NapiUtils::ConvertErrorCode(innerCode);
+            stopTimerContext->status = napi_generic_failure;
         }
     };
-
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
-
-    return NapiAsyncWork::Enqueue(env, context, "StopTimer", executor, complete);
+    return NapiAsyncWork::Enqueue(env, stopTimerContext, "StopTimer", executor, complete);
 }
 
 napi_value NapiSystemTimer::DestroyTimer(napi_env env, napi_callback_info info)
 {
-    struct ConcreteContext : public ContextBase {
+    struct DestroyTimerContext : public ContextBase {
         uint64_t timerId;
     };
-    auto context = std::make_shared<ConcreteContext>();
-
-    auto inputParser = [env, context](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc == ARGC_ONE, "invalid arguments",
+    auto destroyTimerContext = std::make_shared<DestroyTimerContext>();
+    auto inputParser = [env, destroyTimerContext](size_t argc, napi_value *argv) {
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, destroyTimerContext, argc == ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
         int64_t timerId = 0;
-        context->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
-        context->timerId = static_cast<uint64_t>(timerId);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok, "invalid timerId",
-            JsErrorCode::PARAMETER_ERROR);
-        context->status = napi_ok;
+        destroyTimerContext->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
+        destroyTimerContext->timerId = static_cast<uint64_t>(timerId);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, destroyTimerContext, destroyTimerContext->status == napi_ok,
+            "invalid timerId", JsErrorCode::PARAMETER_ERROR);
+        destroyTimerContext->status = napi_ok;
     };
-    context->GetCbInfo(env, info, inputParser);
-
-    auto executor = [context]() {
-        auto innerCode = TimeServiceClient::GetInstance()->DestroyTimerV9(context->timerId);
+    destroyTimerContext->GetCbInfo(env, info, inputParser);
+    auto executor = [destroyTimerContext]() {
+        auto innerCode = TimeServiceClient::GetInstance()->DestroyTimerV9(destroyTimerContext->timerId);
         if (innerCode != ERROR_OK) {
-            context->errCode = NapiUtils::ConvertErrorCode(innerCode);
-            context->status = napi_generic_failure;
+            destroyTimerContext->errCode = innerCode;
+            destroyTimerContext->status = napi_generic_failure;
         }
     };
-
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
 
-    return NapiAsyncWork::Enqueue(env, context, "DestroyTimer", executor, complete);
+    return NapiAsyncWork::Enqueue(env, destroyTimerContext, "DestroyTimer", executor, complete);
 }
 } // namespace Time
 } // namespace MiscServices

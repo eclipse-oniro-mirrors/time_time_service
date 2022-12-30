@@ -76,7 +76,7 @@ public:
      * @return int64_t, milliseconds in wall time, ret < 0 on failed.
      */
     int64_t GetWallTimeMs();
-    int32_t GetWallTimeMs(int64_t &times);
+    int32_t GetWallTimeMs(int64_t &time);
 
     /**
      * GetWallTimeNs
@@ -84,49 +84,49 @@ public:
      * @return int64_t, nanoseconds in wall time, ret < 0 on failed.
      */
     int64_t GetWallTimeNs();
-    int32_t GetWallTimeNs(int64_t &times);
+    int32_t GetWallTimeNs(int64_t &time);
     /**
      * GetBootTimeMs
      * @description get the time since boot(include time spent in sleep) in milliseconds.
      * @return int64_t, milliseconds in boot time, ret < 0 on failed.
      */
     int64_t GetBootTimeMs();
-    int32_t GetBootTimeMs(int64_t &times);
+    int32_t GetBootTimeMs(int64_t &time);
     /**
      * GetBootTimeNs
      * @description // get the time since boot(include time spent in sleep) in nanoseconds.
      * @return int64_t, nanoseconds in boot time, ret < 0 on failed.
      */
     int64_t GetBootTimeNs();
-    int32_t GetBootTimeNs(int64_t &times);
+    int32_t GetBootTimeNs(int64_t &time);
     /**
      * GetMonotonicTimeMs
      * @description get the time since boot(exclude time spent in sleep) in milliseconds.
      * @return int64_t, milliseconds in Monotonic time, ret < 0 on failed.
      */
     int64_t GetMonotonicTimeMs();
-    int32_t GetMonotonicTimeMs(int64_t &times);
+    int32_t GetMonotonicTimeMs(int64_t &time);
     /**
      * GetMonotonicTimeNs
      * @description get the time since boot(exclude time spent in sleep) in nanoseconds.
      * @return int64_t, nanoseconds in Monotonic time, ret < 0 on failed.
      */
     int64_t GetMonotonicTimeNs();
-    int32_t GetMonotonicTimeNs(int64_t &times);
+    int32_t GetMonotonicTimeNs(int64_t &time);
     /**
      * GetThreadTimeMs
      * @description get the Thread-specific CPU-time in milliseconds.
      * @return int64_t, milliseconds in Thread-specific CPU-time, ret < 0 on failed.
      */
     int64_t GetThreadTimeMs();
-    int32_t GetThreadTimeMs(int64_t &times);
+    int32_t GetThreadTimeMs(int64_t &time);
     /**
      * GetThreadTimeNs
      * @description get the Thread-specific CPU-time in nanoseconds.
      * @return int64_t, nanoseconds in Thread-specific CPU-time, ret < 0 on failed.
      */
     int64_t GetThreadTimeNs();
-    int32_t GetThreadTimeNs(int64_t &times);
+    int32_t GetThreadTimeNs(int64_t &time);
     /**
      * CreateTimer
      * @param TimerInfo  timer info
@@ -138,7 +138,7 @@ public:
     /**
     * StartTimer
     * @param timerId indicate timerId
-    * @param triggerTime  trigger times
+    * @param triggerTime  trigger time
     * @return bool true on success, false on failure.
     */
     bool StartTimer(uint64_t timerId, uint64_t triggerTime);

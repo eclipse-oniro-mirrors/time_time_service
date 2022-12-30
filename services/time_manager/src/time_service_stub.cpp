@@ -80,13 +80,11 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
 int32_t TimeServiceStub::OnSetTime(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
-    int64_t time = data.ReadInt64();
-
-    if (!DelayedSingleton<TimePermission>::GetInstance()->CheckCallingPermission(setTimePermName_)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTime failed");
-        return E_TIME_NO_PERMISSION;
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
     }
-
+    int64_t time = data.ReadInt64();
     int32_t ret = SetTime(time);
     TIME_HILOGI(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
     return ret;
@@ -95,13 +93,11 @@ int32_t TimeServiceStub::OnSetTime(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnSetTimeZone(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
-    std::string timeZoneId = data.ReadString();
-
-    if (!DelayedSingleton<TimePermission>::GetInstance()->CheckCallingPermission(setTimezonePermName_)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTimezone failed");
-        return E_TIME_NO_PERMISSION;
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
     }
-
+    std::string timeZoneId = data.ReadString();
     int32_t ret = SetTimeZone(timeZoneId);
     TIME_HILOGI(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
     return ret;
@@ -244,7 +240,7 @@ int32_t TimeServiceStub::OnGetThreadTimeNs(MessageParcel &data, MessageParcel &r
 int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
-    if (!TimePermission::CheckSystemUidCallingPermission()) {
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
         return E_TIME_NOT_SYSTEM_APP;
     }
@@ -292,7 +288,7 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
 int32_t TimeServiceStub::OnStartTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
-    if (!TimePermission::CheckSystemUidCallingPermission()) {
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
         return E_TIME_NOT_SYSTEM_APP;
     }
@@ -309,7 +305,7 @@ int32_t TimeServiceStub::OnStartTimer(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnStopTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
-    if (!TimePermission::CheckSystemUidCallingPermission()) {
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
         return E_TIME_NOT_SYSTEM_APP;
     }
@@ -325,7 +321,7 @@ int32_t TimeServiceStub::OnStopTimer(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnDestroyTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
-    if (!TimePermission::CheckSystemUidCallingPermission()) {
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
         return E_TIME_NOT_SYSTEM_APP;
     }

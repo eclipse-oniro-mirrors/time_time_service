@@ -21,6 +21,8 @@
 
 namespace OHOS {
 namespace MiscServices {
+const std::string TimePermission::setTimePermName = "ohos.permission.SET_TIME";
+const std::string TimePermission::setTimezonePermName = "ohos.permission.SET_TIME_ZONE";
 bool TimePermission::CheckCallingPermission(const std::string &permissionName)
 {
     if (permissionName.empty()) {
@@ -57,9 +59,9 @@ bool TimePermission::CheckProxyCallingPermission()
             tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL);
 }
 
-bool TimePermission::CheckSystemUidCallingPermission()
+bool TimePermission::CheckSystemUidCallingPermission(uint64_t tokenId)
 {
-    return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID());
+    return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId);
 }
 } // namespace MiscServices
 } // namespace OHOS

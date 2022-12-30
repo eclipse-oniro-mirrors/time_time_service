@@ -18,7 +18,7 @@
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
-#include "napi_system_time.h"
+#include "napi_system_date_time.h"
 
 namespace OHOS {
 namespace MiscServices {

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "time_init.h"
+#include "date_time_init.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -27,7 +27,7 @@ static napi_value Init(napi_env env, napi_value exports)
     /*
      * Propertise define
      */
-    NapiSystemTime::SystemTimeInit(env, exports);
+    NapiSystemDateTime::SystemDateTimeInit(env, exports);
     return exports;
 }
 EXTERN_C_END
@@ -39,7 +39,7 @@ static napi_module _module = { .nm_version = 1,
     .nm_flags = 0,
     .nm_filename = nullptr,
     .nm_register_func = Init,
-    .nm_modname = "systemTime",
+    .nm_modname = "systemDateTime",
     .nm_priv = ((void *)0),
     .reserved = { 0 } };
 
