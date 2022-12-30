@@ -14,14 +14,14 @@
  */
 
 #include "nitz_subscriber.h"
-#include "time_common.h"
+
 #include "ntp_update_time.h"
+#include "time_common.h"
 namespace OHOS {
 namespace MiscServices {
 using namespace OHOS::EventFwk;
 using namespace OHOS::AAFwk;
-NITZSubscriber::NITZSubscriber(
-    const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo)
+NITZSubscriber::NITZSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo)
     : CommonEventSubscriber(subscriberInfo)
 {
     memberFuncMap_[UNKNOWN_BROADCAST_EVENT] = &NITZSubscriber::UnknownBroadcast;
@@ -66,5 +66,5 @@ void NITZSubscriber::NITZTimezoneChangeBroadcast(const CommonEventData &data)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "NITZ Time changed broadcast code:%{public}d", data.GetCode());
 }
-} // MiscServices
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS

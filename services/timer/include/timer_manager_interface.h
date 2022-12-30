@@ -18,6 +18,7 @@
 
 #include <memory>
 #include "want_agent_helper.h"
+#include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -49,14 +50,14 @@ public:
         ELAPSED_REALTIME = 3
     };
 
-    virtual uint64_t CreateTimer(int type, uint64_t windowLength,  uint64_t interval, int flag,
-                                    std::function<void(const uint64_t)> callback,
-                                    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-                                    int uid) = 0;
+    virtual int32_t CreateTimer(TimerPara &paras,
+                                std::function<void (const uint64_t)> callback,
+                                std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+                                int uid, uint64_t &timerId) = 0;
 
-    virtual bool StartTimer(uint64_t timerNumber, uint64_t triggerTime) = 0;
-    virtual bool StopTimer(uint64_t timerNumber) = 0;
-    virtual bool DestroyTimer(uint64_t timerNumber) = 0;
+    virtual int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) = 0;
+    virtual int32_t StopTimer(uint64_t timerId) = 0;
+    virtual int32_t DestroyTimer(uint64_t timerId) = 0;
     virtual ~ITimerManager() = default;
     virtual bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) = 0;
     virtual bool ResetAllProxy() = 0;

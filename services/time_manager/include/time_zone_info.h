@@ -15,17 +15,17 @@
 #ifndef SERVICES_INCLUDE_TIME_ZONE_INFO_H
 #define SERVICES_INCLUDE_TIME_ZONE_INFO_H
 
-#include <singleton.h>
+#include <fstream>
 #include <map>
 #include <mutex>
+#include <singleton.h>
 #include <sys/time.h>
 #include <vector>
-#include <fstream>
 
+#include "parameter.h"
 #include "refbase.h"
 #include "time.h"
 #include "time_common.h"
-#include "parameter.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -42,11 +42,12 @@ public:
     bool SetTimezone(std::string timezoneId);
     bool SetTimezoneToKernel(std::string timezoneId);
     void Init();
+
 private:
     std::string curTimezoneId_;
     std::map<std::string, struct zoneInfoEntry> timezoneInfoMap_;
 };
-} // MiscServices
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS
 
 #endif // SERVICES_INCLUDE_TIME_ZONE_INFO_H

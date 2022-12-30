@@ -21,15 +21,15 @@
 
 namespace OHOS {
 namespace MiscServices {
-class NetConnCallbackObserver :  public NetManagerStandard::NetConnCallbackStub {
+class NetConnCallbackObserver : public NetManagerStandard::NetConnCallbackStub {
 public:
     int32_t NetAvailable(sptr<NetManagerStandard::NetHandle> &netHandle) override;
 
     int32_t NetCapabilitiesChange(sptr<NetManagerStandard::NetHandle> &netHandle,
-	    const sptr<NetManagerStandard::NetAllCapabilities> &netAllCap) override;
+        const sptr<NetManagerStandard::NetAllCapabilities> &netAllCap) override;
 
     int32_t NetConnectionPropertiesChange(sptr<NetManagerStandard::NetHandle> &netHandle,
-	    const sptr<NetManagerStandard::NetLinkInfo> &info) override;
+        const sptr<NetManagerStandard::NetLinkInfo> &info) override;
 
     int32_t NetLost(sptr<NetManagerStandard::NetHandle> &netHandle) override;
 
@@ -37,6 +37,6 @@ public:
 
     int32_t NetBlockStatusChange(sptr<NetManagerStandard::NetHandle> &netHandle, bool blocked) override;
 };
-}   // namespace MiscServices
-}   // namespace OHOS
+} // namespace MiscServices
+} // namespace OHOS
 #endif /* NETMANAGER_BASE_NET_CONN_CALLBACK_OBSERVER_H */

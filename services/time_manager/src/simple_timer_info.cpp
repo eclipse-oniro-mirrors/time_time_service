@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,32 +13,35 @@
  * limitations under the License.
  */
 
-#ifndef TIME_TICK_NOTIFY_H
-#define TIME_TICK_NOTIFY_H
-
-#include <singleton.h>
-
-#include "timer.h"
+#include "simple_timer_info.h"
 
 namespace OHOS {
 namespace MiscServices {
-class TimeTickNotify : public DelayedSingleton<TimeTickNotify> {
-public:
-    TimeTickNotify();
-    ~TimeTickNotify();
-    DISALLOW_COPY_AND_MOVE(TimeTickNotify);
-    void Init();
-    void Callback();
-    void Stop();
+SimpleTimerInfo::SimpleTimerInfo()
+{
+}
+SimpleTimerInfo::~SimpleTimerInfo()
+{
+}
+void SimpleTimerInfo::SetType(const int &_type)
+{
+    type = _type;
+}
 
-private:
-    void StartTimer();
-    void RefreshNextTriggerTime();
-    uint64_t GetMillisecondsFromUTC(uint64_t UTCtimeNano);
-    Utils::Timer timer_;
-    uint32_t timerId_;
-    uint64_t nextTriggerTime_;
-};
+void SimpleTimerInfo::SetRepeat(bool _repeat)
+{
+    repeat = _repeat;
+}
+void SimpleTimerInfo::SetInterval(const uint64_t &_interval)
+{
+    interval = _interval;
+}
+void SimpleTimerInfo::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent)
+{
+    wantAgent = _wantAgent;
+}
+void SimpleTimerInfo::OnTrigger()
+{
+}
 } // namespace MiscServices
 } // namespace OHOS
-#endif

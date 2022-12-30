@@ -15,14 +15,14 @@
 
 #include "time_file_utils.h"
 
+#include <climits>
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <climits>
 
-#include "time_common.h"
 #include "securec.h"
+#include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -167,5 +167,5 @@ std::string TimeFileUtils::GetPathDir(const std::string &path)
     }
     return path.substr(0, pos + 1);
 }
-}
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS

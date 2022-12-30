@@ -17,14 +17,12 @@
 
 namespace OHOS {
 namespace MiscServices {
-ITimerInfo::ITimerInfo()
-    : type {0}, repeat {false}, interval {0}
+ITimerInfo::ITimerInfo() : type{ 0 }, repeat{ false }, interval{ 0 }
 {
 }
 
 ITimerInfo::~ITimerInfo()
 {
 }
-} // MiscServices
-} // OHOS
-
+} // namespace MiscServices
+} // namespace OHOS

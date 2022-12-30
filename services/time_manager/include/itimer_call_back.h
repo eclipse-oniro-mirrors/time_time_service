@@ -33,11 +33,9 @@ public:
      */
     virtual void NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback) = 0;
 
-    enum Message {
-        NOTIFY_TIMER = 1
-    };
+    enum Message { NOTIFY_TIMER = 1 };
 };
-}  // namespace MiscServices
-}  // namespace OHOS
+} // namespace MiscServices
+} // namespace OHOS
 
-#endif  // I_TIMER_CALL_BACK_H
+#endif // I_TIMER_CALL_BACK_H

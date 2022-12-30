@@ -17,8 +17,7 @@
 
 namespace OHOS {
 namespace MiscServices {
-int TimerCallbackStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply,
-    MessageOption &option)
+int TimerCallbackStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "cmd = %{public}d, flags= %{public}d", code, option.GetFlags());
     std::u16string descripter = GetDescriptor();
@@ -38,7 +37,7 @@ int TimerCallbackStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Messa
     return ERR_OK;
 }
 
-int TimerCallbackStub::OnTriggerStub(MessageParcel& data)
+int TimerCallbackStub::OnTriggerStub(MessageParcel &data)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     auto timerId = data.ReadUint64();

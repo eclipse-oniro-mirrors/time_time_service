@@ -17,15 +17,16 @@
 #ifndef SNTP_CLIENT_NTP_TRUSTED_TIME_H
 #define SNTP_CLIENT_NTP_TRUSTED_TIME_H
 
-#include <singleton.h>
-#include <string>
 #include <fstream>
 #include <mutex>
+#include <singleton.h>
+#include <string>
 #include <sys/time.h>
+
+#include "json/json.h"
 #include "refbase.h"
 #include "time.h"
 #include "time_common.h"
-#include "json/json.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -49,6 +50,7 @@ public:
         int64_t CurrentTimeMillis();
         int64_t GetAgeMillis();
         void Clear();
+
     private:
         int64_t mTimeMillis;
         int64_t mElapsedRealtimeMillis;
@@ -58,7 +60,7 @@ public:
 private:
     std::shared_ptr<TimeResult> mTimeResult;
 };
-} // MiscServices
-} // OHOS
+} // namespace MiscServices
+} // namespace OHOS
 
 #endif // SNTP_CLIENT_NTP_TRUSTED_TIME_H

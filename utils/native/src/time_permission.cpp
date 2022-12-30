@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
-#include "ipc_skeleton.h"
-#include "accesstoken_kit.h"
 #include "time_permission.h"
+
+#include "accesstoken_kit.h"
+#include "ipc_skeleton.h"
+#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -36,12 +38,12 @@ bool TimePermission::CheckCallingPermission(const std::string &permissionName)
         result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
     } else {
         TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, callerToken:%{public}u,tokenType:%{public}d",
-                    callerToken, tokenType);
+            callerToken, tokenType);
     }
 
     if (result != Security::AccessToken::PERMISSION_GRANTED) {
         TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, permission:%{public}s, callerToken:%{public}u",
-                    permissionName.c_str(), callerToken);
+            permissionName.c_str(), callerToken);
         return false;
     }
     return true;
@@ -53,6 +55,11 @@ bool TimePermission::CheckProxyCallingPermission()
     auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
     return (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE ||
             tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL);
+}
+
+bool TimePermission::CheckSystemUidCallingPermission()
+{
+    return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID());
 }
 } // namespace MiscServices
 } // namespace OHOS

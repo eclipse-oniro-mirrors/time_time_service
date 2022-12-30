@@ -1,6 +1,6 @@
 /*
- * Copyright (c); 2021 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");;
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -13,18 +13,18 @@
  * limitations under the License.
  */
 
-#ifndef SYSTEM_TIMER_H
-#define SYSTEM_TIMER_H
+#ifndef NAPI_SYSTEM_TIMER_H
+#define NAPI_SYSTEM_TIMER_H
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include "napi_async_work.h"
 #include "time_service_client.h"
 
 namespace OHOS {
-namespace MiscServicesNapi {
-using namespace OHOS::MiscServices;
-
-class ITimerInfoInstance : public ITimerInfo {
+namespace MiscServices {
+namespace Time {
+class ITimerInfoInstance : public OHOS::MiscServices::ITimerInfo {
 public:
     ITimerInfoInstance();
     virtual ~ITimerInfoInstance();
@@ -44,11 +44,18 @@ private:
     CallbackInfo callbackInfo_;
 };
 
-napi_value SystemtimerInit(napi_env env, napi_value exports);
-napi_value CreateTimer(napi_env env, napi_callback_info info);
-napi_value StartTimer(napi_env env, napi_callback_info info);
-napi_value StopTimer(napi_env env, napi_callback_info info);
-napi_value DestroyTimer(napi_env env, napi_callback_info info);
-}  // namespace MiscServicesNapi
-}  // namespace OHOS
-#endif  // SYSTEM_TIMER_H
+class NapiSystemTimer {
+public:
+    static napi_value SystemTimerInit(napi_env env, napi_value exports);
+    static void GetTimerOptions(const napi_env &env, std::shared_ptr<ContextBase> context, const napi_value &value,
+                                std::shared_ptr<ITimerInfoInstance> &iTimerInfoInstance);
+    static napi_value CreateTimer(napi_env env, napi_callback_info info);
+    static napi_value StartTimer(napi_env env, napi_callback_info info);
+    static napi_value StopTimer(napi_env env, napi_callback_info info);
+    static napi_value DestroyTimer(napi_env env, napi_callback_info info);
+};
+
+}
+}
+}
+#endif // NAPI_SYSTEM_TIMER_H
