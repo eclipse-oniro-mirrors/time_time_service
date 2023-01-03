@@ -61,6 +61,11 @@ bool TimePermission::CheckProxyCallingPermission()
 
 bool TimePermission::CheckSystemUidCallingPermission(uint64_t tokenId)
 {
+    auto callerToken = IPCSkeleton::GetCallingTokenID();
+    auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
+    if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {
+        return true;
+    }
     return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId);
 }
 } // namespace MiscServices
