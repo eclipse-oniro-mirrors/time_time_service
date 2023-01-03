@@ -77,7 +77,6 @@ napi_value NapiAsyncWork::Enqueue(napi_env env, std::shared_ptr<ContextBase> ctx
     NapiAsyncExecute execute, NapiAsyncComplete complete)
 {
     if (ctxt->status != napi_ok) {
-        TIME_HILOGI(TIME_MODULE_JS_NAPI, "exist error");
         NapiUtils::ThrowError(env, CODE_TO_MESSAGE.find(ctxt->errCode)->second.c_str(), ctxt->errCode);
         return NapiUtils::GetUndefinedValue(env);
     }
@@ -90,7 +89,6 @@ napi_value NapiAsyncWork::Enqueue(napi_env env, std::shared_ptr<ContextBase> ctx
     } else {
         napi_get_undefined(ctxt->env, &promise);
     }
-
     napi_value resource = nullptr;
     napi_create_string_utf8(ctxt->env, name.c_str(), NAPI_AUTO_LENGTH, &resource);
     napi_create_async_work(
@@ -134,11 +132,12 @@ void NapiAsyncWork::GenerateOutput(ContextBase *ctxt)
     } else {
         napi_value message = nullptr;
         napi_value code = nullptr;
-        napi_create_string_utf8(ctxt->env, CODE_TO_MESSAGE.find(ctxt->errCode)->second.c_str(), NAPI_AUTO_LENGTH,
+        int32_t jsErrorCode = NapiUtils::ConvertErrorCode(ctxt->errCode);
+        napi_create_string_utf8(ctxt->env, CODE_TO_MESSAGE.find(jsErrorCode)->second.c_str(), NAPI_AUTO_LENGTH,
             &message);
         napi_create_error(ctxt->env, nullptr, message, &result[RESULT_ERROR]);
-        if (ctxt->errCode != JsErrorCode::ERROR) {
-            napi_create_int32(ctxt->env, ctxt->errCode, &code);
+        if (jsErrorCode != JsErrorCode::ERROR) {
+            napi_create_int32(ctxt->env, jsErrorCode, &code);
             napi_set_named_property(ctxt->env, result[RESULT_ERROR], "code", code);
         }
         napi_get_undefined(ctxt->env, &result[RESULT_DATA]);

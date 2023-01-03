@@ -36,9 +36,8 @@ int32_t NapiUtils::ConvertErrorCode(int32_t timeErrorCode)
         case MiscServices::E_TIME_PARAMETERS_INVALID:
             return static_cast<int32_t>(JsErrorCode::PARAMETER_ERROR);
         default:
-            break;
+            return JsErrorCode::ERROR;
     }
-    return JsErrorCode::ERROR;
 }
 
 napi_value NapiUtils::CreateNapiNumber(napi_env env, int32_t objName)
@@ -60,13 +59,11 @@ napi_status NapiUtils::GetValue(napi_env env, napi_value in, std::string &out)
     napi_valuetype type = napi_undefined;
     napi_status status = napi_typeof(env, in, &type);
     CHECK_RETURN(TIME_MODULE_JS_NAPI, (status == napi_ok) && (type == napi_string), "invalid type", napi_invalid_arg);
-
     size_t maxLen = STR_MAX_LENGTH;
     status = napi_get_value_string_utf8(env, in, nullptr, 0, &maxLen);
     if (maxLen <= 0 || maxLen >= STR_MAX_LENGTH) {
         return napi_invalid_arg;
     }
-
     char buf[STR_MAX_LENGTH + STR_TAIL_LENGTH]{};
     size_t len = 0;
     status = napi_get_value_string_utf8(env, in, buf, maxLen + STR_TAIL_LENGTH, &len);

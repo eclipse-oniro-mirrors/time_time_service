@@ -120,22 +120,20 @@ void TimeService::OnStart()
         TIME_HILOGE(TIME_MODULE_SERVICE, " TimeService is already running.");
         return;
     }
-
     InitServiceHandler();
     InitTimerHandler();
     InitNotifyHandler();
     DelayedSingleton<TimeTickNotify>::GetInstance()->Init();
     DelayedSingleton<TimeZoneInfo>::GetInstance()->Init();
     DelayedSingleton<NtpUpdateTime>::GetInstance()->Init();
+    AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
+    InitDumpCmd();
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeService success.");
     if (Init() != ERR_OK) {
         auto callback = [=]() { Init(); };
         serviceHandler_->PostTask(callback, INIT_INTERVAL);
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init failed. Try again 10s later.");
-        return;
     }
-    AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
-    InitDumpCmd();
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeService success.");
     return;
 }
 

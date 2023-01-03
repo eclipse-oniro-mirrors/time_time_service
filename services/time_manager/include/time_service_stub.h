@@ -55,8 +55,6 @@ private:
     int32_t OnTimerProxy(MessageParcel &data, MessageParcel &reply);
     int32_t OnAllProxyReset(MessageParcel &data, MessageParcel &reply);
     std::map<uint32_t, TimeServiceFunc> memberFuncMap_;
-    const std::string setTimePermName_ = "ohos.permission.SET_TIME";
-    const std::string setTimezonePermName_ = "ohos.permission.SET_TIME_ZONE";
 };
 } // namespace MiscServices
 } // namespace OHOS
