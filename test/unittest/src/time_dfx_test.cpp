@@ -1,23 +1,29 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-#include <gtest/gtest.h>
-#include <sys/time.h>
-#include <unistd.h>
+* Copyright (C) 2021 Huawei Device Co., Ltd.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+#define private public
+#define protected public
+#include "time_service.h"
+#undef private
+#undef protected
 
 #include <cstdint>
+#include <gtest/gtest.h>
 #include <string>
+#include <sys/time.h>
+#include <unistd.h>
 
 #include "securec.h"
 #include "time_service_test.h"
@@ -30,12 +36,7 @@ using namespace OHOS;
 using namespace OHOS::MiscServices;
 
 constexpr const uint16_t EACH_LINE_LENGTH = 100;
-constexpr const uint16_t TOTAL_LENGTH = 1000;
-constexpr const char *CMD1 = "hidumper -s 3702 -a -time";
-constexpr const char *CMD2 = "hidumper -s 3702 -a \"-timer -a\"";
-constexpr const char *CMD3 = "hidumper -s 3702 -a \"-timer -i\"";
-constexpr const char *CMD4 = "hidumper -s 3702 -a \"-timer -s\"";
-constexpr const char *CMD5 = "hidumper -s 3702 -a -h";
+constexpr const char *CMD = "hidumper -s 3702 -a";
 
 class TimeDfxTest : public testing::Test {
 public:
@@ -65,22 +66,16 @@ void TimeDfxTest::TearDown(void)
 bool TimeDfxTest::ExecuteCmd(const std::string &cmd, std::string &result)
 {
     char buff[EACH_LINE_LENGTH] = { 0x00 };
-    char output[TOTAL_LENGTH] = { 0x00 };
     FILE *ptr = popen(cmd.c_str(), "r");
     if (ptr != nullptr) {
         while (fgets(buff, sizeof(buff), ptr) != nullptr) {
-            if (strcat_s(output, sizeof(output), buff) != 0) {
-                pclose(ptr);
-                ptr = nullptr;
-                return false;
-            }
+            result.append(std::string(buff));
         }
         pclose(ptr);
         ptr = nullptr;
     } else {
         return false;
     }
-    result = std::string(output);
     return true;
 }
 
@@ -92,7 +87,7 @@ bool TimeDfxTest::ExecuteCmd(const std::string &cmd, std::string &result)
 HWTEST_F(TimeDfxTest, DumpAllTimeInfo001, TestSize.Level0)
 {
     std::string result;
-    auto ret = TimeDfxTest::ExecuteCmd(CMD1, result);
+    auto ret = TimeDfxTest::ExecuteCmd(std::string(CMD).append(" -time").c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("dump all time info"), std::string::npos);
     EXPECT_NE(result.find("dump the time Zone"), std::string::npos);
@@ -106,7 +101,8 @@ HWTEST_F(TimeDfxTest, DumpAllTimeInfo001, TestSize.Level0)
 HWTEST_F(TimeDfxTest, DumpTimerInfo001, TestSize.Level0)
 {
     std::string result;
-    auto ret = TimeDfxTest::ExecuteCmd(CMD2, result);
+    TimeService::GetInstance()->timerManagerHandler_ = nullptr;
+    auto ret = TimeDfxTest::ExecuteCmd(std::string(CMD).append(" \"-timer -a\"").c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("dump all timer info"), std::string::npos);
 }
@@ -127,7 +123,9 @@ HWTEST_F(TimeDfxTest, DumpTimerInfoById001, TestSize.Level0)
     auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
     EXPECT_TRUE(timerId1 > 0);
     std::string result;
-    auto ret = TimeDfxTest::ExecuteCmd(CMD3, result);
+    TimeService::GetInstance()->timerManagerHandler_ = nullptr;
+    auto CMD1 = std::string(CMD).append(" \"-timer -i ").append(std::to_string(timerId1)).append(" \"");
+    auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("timer id"), std::string::npos);
     EXPECT_NE(result.find("timer type"), std::string::npos);
@@ -151,10 +149,12 @@ HWTEST_F(TimeDfxTest, DumpTimerTriggerById001, TestSize.Level0)
     auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
     EXPECT_TRUE(timerId1 > 0);
     std::string result;
-    auto ret = TimeDfxTest::ExecuteCmd(CMD4, result);
+    TimeService::GetInstance()->timerManagerHandler_ = nullptr;
+    auto CMD1 = std::string(CMD).append(" \"-timer -s ").append(std::to_string(timerId1)).append(" \"");
+    auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("timer id"), std::string::npos);
-    EXPECT_NE(result.find("timer type"), std::string::npos);
+    EXPECT_NE(result.find("timer trigger"), std::string::npos);
     ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
     EXPECT_TRUE(ret);
 }
@@ -167,7 +167,7 @@ HWTEST_F(TimeDfxTest, DumpTimerTriggerById001, TestSize.Level0)
 HWTEST_F(TimeDfxTest, DumpShowHelp001, TestSize.Level0)
 {
     std::string result;
-    auto ret = TimeDfxTest::ExecuteCmd(CMD5, result);
+    auto ret = TimeDfxTest::ExecuteCmd(std::string(CMD).append(" -h"), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("dump current time info,include localtime,timezone info"), std::string::npos);
     EXPECT_NE(result.find("dump all timer info"), std::string::npos);
