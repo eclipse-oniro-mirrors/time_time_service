@@ -75,6 +75,9 @@ public:
 void TimeServiceTest::SetUpTestCase(void)
 {
     g_selfTokenId = GetSelfTokenID();
+    AccessTokenIDEx tokenIdEx = { 0 };
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_systemInfoParams, g_policyA);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
 }
 
 void TimeServiceTest::TearDownTestCase(void)
@@ -375,10 +378,6 @@ HWTEST_F(TimeServiceTest, CreateTimer001, TestSize.Level1)
 */
 HWTEST_F(TimeServiceTest, CreateTimer002, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = { 0 };
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_systemInfoParams, g_policyA);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
-
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(1);
     timerInfo->SetRepeat(false);
