@@ -104,25 +104,21 @@ bool TimeServiceClient::SetTime(const int64_t time)
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
+        return false;
     }
     return proxy->SetTime(time) == ERR_OK;
 }
 
 bool TimeServiceClient::SetTime(const int64_t milliseconds, int32_t &code)
 {
-    if (!TimePermission::CheckCallingPermission(TimePermission::setTimePermName)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTime failed");
-        return E_TIME_NO_PERMISSION;
-    }
-
     if (!ConnectService()) {
         code = E_TIME_SA_DIED;
         return false;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
+        code = E_TIME_NULLPTR;
+        return false;
     }
     code = proxy->SetTime(milliseconds);
     return code == ERR_OK;
@@ -137,7 +133,7 @@ int32_t TimeServiceClient::SetTimeV9(const int64_t &time)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    return proxy->SetTime(time);
+    return proxy->SetTime(time, ITimeService::API_VERSION_9);
 }
 
 bool TimeServiceClient::SetTimeZone(const std::string timezoneId)
@@ -147,24 +143,21 @@ bool TimeServiceClient::SetTimeZone(const std::string timezoneId)
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
+        return false;
     }
     return proxy->SetTimeZone(timezoneId) == ERR_OK;
 }
 
 bool TimeServiceClient::SetTimeZone(const std::string timezoneId, int32_t &code)
 {
-    if (!TimePermission::CheckCallingPermission(TimePermission::setTimezonePermName)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Permission check setTime failed");
-        return E_TIME_NO_PERMISSION;
-    }
     if (!ConnectService()) {
         code = E_TIME_SA_DIED;
         return false;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
+        code =  E_TIME_NULLPTR;
+        return false;
     }
     code = proxy->SetTimeZone(timezoneId);
     TIME_HILOGI(TIME_MODULE_CLIENT, "settimezone end");
@@ -180,7 +173,7 @@ int32_t TimeServiceClient::SetTimeZoneV9(const std::string timezoneId)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    return proxy->SetTimeZone(timezoneId);
+    return proxy->SetTimeZone(timezoneId, ITimeService::API_VERSION_9);
 }
 
 uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> TimerOptions)

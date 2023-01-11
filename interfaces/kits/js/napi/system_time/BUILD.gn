@@ -30,7 +30,7 @@ ohos_shared_library("systemtime") {
   ]
 
   sources = [
-    "../common/src/common.cpp",
+    "../common/src/napi_utils.cpp",
     "src/js_systemtime.cpp",
   ]
 

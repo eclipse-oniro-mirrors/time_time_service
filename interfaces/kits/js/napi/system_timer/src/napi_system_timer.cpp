@@ -76,7 +76,7 @@ void ITimerInfoInstance::OnTrigger()
                 return;
             }
 
-            NapiUtils::SetCallback(dataWorkerData->env, dataWorkerData->ref, ERROR_OK, "",
+            NapiUtils::SetTimerCallback(dataWorkerData->env, dataWorkerData->ref, ERROR_OK, "",
                 NapiUtils::GetUndefinedValue(dataWorkerData->env));
             delete dataWorkerData;
             dataWorkerData = nullptr;

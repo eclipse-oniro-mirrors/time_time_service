@@ -21,15 +21,14 @@
 
 namespace OHOS {
 namespace MiscServices {
-const std::string TimePermission::setTimePermName = "ohos.permission.SET_TIME";
-const std::string TimePermission::setTimezonePermName = "ohos.permission.SET_TIME_ZONE";
+const std::string TimePermission::SET_TIME = "ohos.permission.SET_TIME";
+const std::string TimePermission::SET_TIME_ZONE = "ohos.permission.SET_TIME_ZONE";
 bool TimePermission::CheckCallingPermission(const std::string &permissionName)
 {
     if (permissionName.empty()) {
         TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, permission name is empty.");
         return false;
     }
-
     auto callerToken = IPCSkeleton::GetCallingTokenID();
     auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
     int result = Security::AccessToken::PERMISSION_DENIED;

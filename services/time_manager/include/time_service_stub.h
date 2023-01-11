@@ -21,8 +21,8 @@
 #include "ipc_skeleton.h"
 #include "iremote_stub.h"
 #include "itimer_call_back.h"
-#include "time_permission.h"
 #include "time_service_interface.h"
+#include "time_permission.h"
 
 namespace OHOS {
 namespace MiscServices {

@@ -27,17 +27,19 @@ TimeServiceProxy::TimeServiceProxy(const sptr<IRemoteObject> &object) : IRemoteP
 {
 }
 
-int32_t TimeServiceProxy::SetTime(const int64_t time)
+int32_t TimeServiceProxy::SetTime(const int64_t time, APIVersion apiVersion)
 {
     MessageParcel data, reply;
     MessageOption option;
-
     if (!data.WriteInterfaceToken(GetDescriptor())) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-
     if (!data.WriteInt64(time)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    if (!data.WriteInt8(apiVersion)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
@@ -155,17 +157,19 @@ int32_t TimeServiceProxy::DestroyTimer(uint64_t timerId)
     return Remote()->SendRequest(DESTROY_TIMER, data, reply, option);
 }
 
-int32_t TimeServiceProxy::SetTimeZone(const std::string timezoneId)
+int32_t TimeServiceProxy::SetTimeZone(const std::string &timezoneId, APIVersion apiVersion)
 {
     MessageParcel data, reply;
     MessageOption option;
-
     if (!data.WriteInterfaceToken(GetDescriptor())) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-
     if (!data.WriteString(timezoneId)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    if (!data.WriteInt8(apiVersion)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }

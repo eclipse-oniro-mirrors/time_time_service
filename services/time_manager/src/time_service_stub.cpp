@@ -80,11 +80,19 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
 int32_t TimeServiceStub::OnSetTime(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
-    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
-        return E_TIME_NOT_SYSTEM_APP;
-    }
     int64_t time = data.ReadInt64();
+    auto apiVersion = data.ReadInt8();
+    if (apiVersion == APIVersion::API_VERSION_7) {
+        if (!TimePermission::CheckCallingPermission(TimePermission::SET_TIME)) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
+            return E_TIME_NO_PERMISSION;
+        }
+    } else {
+        if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+            return E_TIME_NOT_SYSTEM_APP;
+        }
+    }
     int32_t ret = SetTime(time);
     TIME_HILOGI(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
     return ret;
@@ -93,11 +101,19 @@ int32_t TimeServiceStub::OnSetTime(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnSetTimeZone(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
-    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
-        return E_TIME_NOT_SYSTEM_APP;
-    }
     std::string timeZoneId = data.ReadString();
+    auto apiVersion = data.ReadInt8();
+    if (apiVersion == APIVersion::API_VERSION_7) {
+        if (!TimePermission::CheckCallingPermission(TimePermission::SET_TIME_ZONE)) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
+            return E_TIME_NO_PERMISSION;
+        }
+    } else {
+        if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+            return E_TIME_NOT_SYSTEM_APP;
+        }
+    }
     int32_t ret = SetTimeZone(timeZoneId);
     TIME_HILOGI(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
     return ret;

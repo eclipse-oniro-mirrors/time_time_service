@@ -17,7 +17,6 @@
 #include <ctime>
 #include <chrono>
 #include <fstream>
-#include "ipc_skeleton.h"
 #include "json/json.h"
 #include <gtest/gtest.h>
 #include "time_common.h"
