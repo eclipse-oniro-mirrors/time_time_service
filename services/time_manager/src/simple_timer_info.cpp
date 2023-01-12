@@ -12,29 +12,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef TIME_PERMISSION_H
-#define TIME_PERMISSION_H
 
-#include <cstdint>
-#include <mutex>
-#include <singleton.h>
-#include <string>
-
-#include "bundle_mgr_proxy.h"
-#include "iservice_registry.h"
-#include "system_ability_definition.h"
-#include "time_common.h"
+#include "simple_timer_info.h"
 
 namespace OHOS {
 namespace MiscServices {
-class TimePermission {
-public:
-    static const std::string SET_TIME;
-    static const std::string SET_TIME_ZONE;
+SimpleTimerInfo::SimpleTimerInfo()
+{
+}
+SimpleTimerInfo::~SimpleTimerInfo()
+{
+}
+void SimpleTimerInfo::SetType(const int &_type)
+{
+    type = _type;
+}
 
-    static bool CheckCallingPermission(const std::string &permissionName);
-    static bool CheckProxyCallingPermission();
-};
+void SimpleTimerInfo::SetRepeat(bool _repeat)
+{
+    repeat = _repeat;
+}
+void SimpleTimerInfo::SetInterval(const uint64_t &_interval)
+{
+    interval = _interval;
+}
+void SimpleTimerInfo::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent)
+{
+    wantAgent = _wantAgent;
+}
+void SimpleTimerInfo::OnTrigger()
+{
+}
 } // namespace MiscServices
 } // namespace OHOS
-#endif // TIME_PERMISSION_H

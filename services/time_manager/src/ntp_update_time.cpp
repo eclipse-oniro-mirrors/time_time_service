@@ -12,25 +12,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ntp_update_time.h"
+
 #include <chrono>
-#include <thread>
 #include <cinttypes>
 #include <ctime>
-#include <string>
 #include <fstream>
 #include <mutex>
+#include <string>
+#include <thread>
 #include <unistd.h>
 
-#include "ntp_trusted_time.h"
-#include "time_common.h"
 #include "json/json.h"
-#include "time_service.h"
-#include "nitz_subscriber.h"
-#include "time_zone_info.h"
 #include "net_conn_callback_observer.h"
-#include "net_specifier.h"
 #include "net_conn_client.h"
-#include "ntp_update_time.h"
+#include "net_specifier.h"
+#include "nitz_subscriber.h"
+#include "ntp_trusted_time.h"
+#include "simple_timer_info.h"
+#include "time_common.h"
+#include "time_service.h"
+#include "time_zone_info.h"
 
 using namespace std::chrono;
 using namespace OHOS::NetManagerStandard;
@@ -83,10 +85,15 @@ void NtpUpdateTime::Init()
     th.detach();
 
     int32_t timerType = ITimerManager::TimerType::ELAPSED_REALTIME;
-    auto callback = [this](uint64_t id) {
-        this->RefreshNetworkTimeByTimer(id);
-    };
-    timerId_ = TimeService::GetInstance()->CreateTimer(timerType, 0, DAY_TO_MILLISECOND, 0, callback);
+    auto callback = [this](uint64_t id) { this->RefreshNetworkTimeByTimer(id); };
+
+    TimerPara timerPara;
+    timerPara.timerType = timerType;
+    timerPara.windowLength = 0;
+    timerPara.interval = DAY_TO_MILLISECOND;
+    timerPara.flag = 0;
+
+    TimeService::GetInstance()->CreateTimer(timerPara, callback, timerId_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update timerId: %{public}" PRId64 "", timerId_);
     RefreshNextTriggerTime();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update triggertime: %{public}" PRId64 "", nextTriggerTime_);

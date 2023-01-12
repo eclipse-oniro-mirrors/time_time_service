@@ -11,15 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//base/time/time_service/time.gni")
+import("../../../../../time.gni")
 
 ohos_shared_library("systemtime") {
   include_dirs = [
-    "//base/time/time_service/interfaces/innerkits/include",
+    "../../../interfaces/innerkits/include",
     "include",
     "../common/include",
     "//third_party/node/src",
-    "//foundation/arkui/napi/interfaces/kits",
+    "../../../../../../../../foundation/arkui/napi/interfaces/kits",
   ]
 
   configs = [ "${time_utils_path}:utils_config" ]
@@ -29,12 +29,14 @@ ohos_shared_library("systemtime") {
     "-g3",
   ]
 
-  sources = [ "src/js_systemtime.cpp" ]
+  sources = [
+    "../common/src/napi_utils.cpp",
+    "src/js_systemtime.cpp",
+  ]
 
   deps = [
     "${ability_runtime_path}/frameworks/native/ability/native:abilitykit_native",
-    "//base/time/time_service/services:time_service",
-    "//foundation/arkui/napi/:ace_napi",
+    "../../../../../services:time_service",
   ]
 
   external_deps = [
@@ -44,6 +46,7 @@ ohos_shared_library("systemtime") {
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
+    "napi:ace_napi",
   ]
 
   relative_install_dir = "module"

@@ -16,14 +16,14 @@
 #ifndef TIME_SERVICE_TEST_H
 #define TIME_SERVICE_TEST_H
 
-std::atomic<int> g_data1(0);
+int g_data1 = 0;
 
 void TimeOutCallback1(void)
 {
     g_data1 += 1;
 }
 
-std::atomic<int> g_data2(0);
+int g_data2 = 0;
 void TimeOutCallback2(void)
 {
     g_data2 += 1;

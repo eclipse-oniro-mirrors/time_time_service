@@ -13,19 +13,21 @@
  * limitations under the License.
  */
 
+#include "time_permission.h"
+
 #include "ipc_skeleton.h"
 #include "accesstoken_kit.h"
-#include "time_permission.h"
 
 namespace OHOS {
 namespace MiscServices {
+const std::string TimePermission::SET_TIME = "ohos.permission.SET_TIME";
+const std::string TimePermission::SET_TIME_ZONE = "ohos.permission.SET_TIME_ZONE";
 bool TimePermission::CheckCallingPermission(const std::string &permissionName)
 {
     if (permissionName.empty()) {
         TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, permission name is empty.");
         return false;
     }
-
     auto callerToken = IPCSkeleton::GetCallingTokenID();
     auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
     int result = Security::AccessToken::PERMISSION_DENIED;
@@ -36,12 +38,12 @@ bool TimePermission::CheckCallingPermission(const std::string &permissionName)
         result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
     } else {
         TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, callerToken:%{public}u,tokenType:%{public}d",
-                    callerToken, tokenType);
+            callerToken, tokenType);
     }
 
     if (result != Security::AccessToken::PERMISSION_GRANTED) {
         TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, permission:%{public}s, callerToken:%{public}u",
-                    permissionName.c_str(), callerToken);
+            permissionName.c_str(), callerToken);
         return false;
     }
     return true;

@@ -45,9 +45,9 @@ public:
     TimeService();
     ~TimeService();
     static sptr<TimeService> GetInstance();
-    int32_t SetTime(const int64_t time) override;
-    bool SetRealTime(const int64_t time);
-    int32_t SetTimeZone(const std::string timezoneId) override;
+    int32_t SetTime(int64_t time, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
+    bool SetRealTime(int64_t time);
+    int32_t SetTimeZone(const std::string &timezoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
     int32_t GetTimeZone(std::string &timezoneId) override;
     int32_t GetWallTimeMs(int64_t &times) override;
     int32_t GetWallTimeNs(int64_t &times) override;
@@ -58,14 +58,12 @@ public:
     int32_t GetThreadTimeMs(int64_t &times) override;
     int32_t GetThreadTimeNs(int64_t &times) override;
 
-    uint64_t CreateTimer(int32_t type, bool repeat, uint64_t interval,
-        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-        sptr<IRemoteObject> &timerCallback) override;
-    uint64_t CreateTimer(int32_t type, uint64_t windowLength, uint64_t interval, int flag,
-        std::function<void (const uint64_t)> Callback);
-    bool StartTimer(uint64_t timerId, uint64_t triggerTime) override;
-    bool StopTimer(uint64_t  timerId) override;
-    bool DestroyTimer(uint64_t  timerId) override;
+    int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
+        uint64_t &timerId) override;
+    int32_t CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> Callback, uint64_t &timerId);
+    int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
+    int32_t StopTimer(uint64_t timerId) override;
+    int32_t DestroyTimer(uint64_t timerId) override;
     void NetworkTimeStatusOff() override;
     void NetworkTimeStatusOn() override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
@@ -84,18 +82,12 @@ protected:
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override;
 
 private:
-    struct TimerPara {
-        int timerType;
-        int64_t windowLength;
-        uint64_t interval;
-        int flag;
-    };
     int32_t Init();
     void InitServiceHandler();
     void InitNotifyHandler();
     void InitTimeZone();
     void InitTimerHandler();
-    void PaserTimerPara(int32_t type, bool repeat, uint64_t interval, TimerPara &paras);
+    void ParseTimerPara(std::shared_ptr<ITimerInfo> timerOptions, TimerPara &paras);
     bool GetTimeByClockid(clockid_t clockID, struct timespec &tv);
     int set_rtc_time(time_t sec);
 

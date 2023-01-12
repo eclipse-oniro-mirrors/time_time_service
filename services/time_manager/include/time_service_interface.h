@@ -17,6 +17,7 @@
 #define SERVICES_INCLUDE_TIME_SERVICE_INTERFACE_H
 
 #include "iremote_broker.h"
+#include "itimer_info.h"
 #include "want_agent_helper.h"
 
 namespace OHOS {
@@ -39,28 +40,32 @@ public:
         CREATE_TIMER = 11,
         START_TIMER = 12,
         STOP_TIMER = 13,
-        DESTORY_TIMER = 14,
+        DESTROY_TIMER = 14,
         NETWORK_TIME_ON = 15,
         NETWORK_TIME_OFF = 16,
         PROXY_TIMER = 17,
         RESET_ALL_PROXY = 18
     };
-      /**
-     * SetTime
-     *
-     * @param time int64_t set milliseconds
-     * @return int32_t ERR_OK on success, other on failure.
-     */
-    virtual int32_t SetTime(const int64_t time) = 0;
 
+    enum APIVersion : int8_t {
+        API_VERSION_7 = 0,
+        API_VERSION_9 = 1,
+    };
+    /**
+   * SetTime
+   *
+   * @param time int64_t set milliseconds
+   * @return int32_t ERR_OK on success, other on failure.
+   */
+    virtual int32_t SetTime(int64_t time, APIVersion apiVersion = APIVersion::API_VERSION_7) = 0;
     /**
      * SetTimeZone
      *
      * @param timezoneId std::string &timezoneId string
      * @return int32_t ERR_OK on success, other on failure.
      */
-    virtual int32_t SetTimeZone(const std::string timezoneId) = 0;
-    
+    virtual int32_t SetTimeZone(const std::string &timezoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) = 0;
+
     /**
      * GetTimeZone
      *
@@ -141,34 +146,33 @@ public:
      * @param timerCallback remoteobject
      * @return uint64_t > 0 on success, == 0 failure.
      */
-    virtual uint64_t CreateTimer(int32_t type, bool repeat, uint64_t interval,
-                                 std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-                                 sptr <IRemoteObject> &timerCallback) = 0;
+    virtual int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &timerCallback,
+        uint64_t &timerId) = 0;
 
-     /**
-     * StartTimer
-     *
-     * @param timerId indicate timerId
-     * @param treggerTime  trigger times
-     * @return bool true on success, false on failure.
-     */
-    virtual bool StartTimer(uint64_t timerId, uint64_t treggerTime) = 0;
+    /**
+    * StartTimer
+    *
+    * @param timerId indicate timerId
+    * @param treggerTime  trigger times
+    * @return bool true on success, false on failure.
+    */
+    virtual int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) = 0;
 
-     /**
-     * StopTimer
-     *
-     * @param timerId indicate timerId
-     * @return bool true on success, false on failure.
-     */
-    virtual bool StopTimer(uint64_t  timerId) = 0;
+    /**
+    * StopTimer
+    *
+    * @param timerId indicate timerId
+    * @return bool true on success, false on failure.
+    */
+    virtual int32_t StopTimer(uint64_t timerId) = 0;
 
-     /**
-     * DestroyTimer
-     *
-     * @param timerId indicate timerId
-     * @return bool true on success, false on failure.
-     */
-    virtual bool DestroyTimer(uint64_t  timerId) = 0;
+    /**
+    * DestroyTimer
+    *
+    * @param timerId indicate timerId
+    * @return bool true on success, false on failure.
+    */
+    virtual int32_t DestroyTimer(uint64_t timerId) = 0;
 
      /**
      * NetworkTimeStatusOff

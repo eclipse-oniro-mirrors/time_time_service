@@ -48,6 +48,7 @@ ohos_shared_library("time_service") {
     "time_manager/src/nitz_subscriber.cpp",
     "time_manager/src/ntp_trusted_time.cpp",
     "time_manager/src/ntp_update_time.cpp",
+    "time_manager/src/simple_timer_info.cpp",
     "time_manager/src/sntp_client.cpp",
     "time_manager/src/time_service.cpp",
     "time_manager/src/time_service_client.cpp",
@@ -70,13 +71,14 @@ ohos_shared_library("time_service") {
 
   deps = [
     "${ability_runtime_path}/frameworks/native/ability/native:abilitykit_native",
-    "${time_utils_path}:time_utils",
     "//foundation/communication/netmanager_base/interfaces/innerkits/netconnclient:net_conn_manager_if",
+    "${time_utils_path}:time_utils",
     "//third_party/jsoncpp:jsoncpp",
   ]
   external_deps = [
     "ability_base:want",
     "ability_runtime:wantagent_innerkits",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
     "eventhandler:libeventhandler",

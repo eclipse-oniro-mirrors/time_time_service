@@ -27,8 +27,8 @@ public:
     ~TimeServiceProxy() = default;
     DISALLOW_COPY_AND_MOVE(TimeServiceProxy);
 
-    int32_t SetTime(const int64_t time) override;
-    int32_t SetTimeZone(const std::string timeZoneId) override;
+    int32_t SetTime(int64_t time, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
+    int32_t SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
     int32_t GetTimeZone(std::string &timeZoneId) override;
     int32_t GetWallTimeMs(int64_t &times) override;
     int32_t GetWallTimeNs(int64_t &times) override;
@@ -38,12 +38,11 @@ public:
     int32_t GetMonotonicTimeNs(int64_t &times) override;
     int32_t GetThreadTimeMs(int64_t &times) override;
     int32_t GetThreadTimeNs(int64_t &times) override;
-    uint64_t CreateTimer(int32_t type, bool repeat, uint64_t interval,
-        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-        sptr<IRemoteObject> &timerCallback) override;
-    bool StartTimer(uint64_t timerId, uint64_t treggerTime) override;
-    bool StopTimer(uint64_t  timerId) override;
-    bool DestroyTimer(uint64_t  timerId) override;
+    int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &timerCallback,
+        uint64_t &timerId) override;
+    int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
+    int32_t StopTimer(uint64_t timerId) override;
+    int32_t DestroyTimer(uint64_t timerId) override;
     void NetworkTimeStatusOff() override;
     void NetworkTimeStatusOn() override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;

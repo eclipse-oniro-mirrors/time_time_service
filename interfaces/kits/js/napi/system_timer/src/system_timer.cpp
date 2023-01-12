@@ -298,6 +298,8 @@ napi_value CreateTimer(napi_env env, napi_callback_info info)
                 TimeServiceClient::GetInstance()->CreateTimer(asynccallbackinfo->iTimerInfoInstance);
             if (asynccallbackinfo->timerId > 0) {
                 asyncCallbackInfoCreateInfo.emplace_back(asynccallbackinfo);
+            } else {
+                asynccallbackinfo->errorCode = ERROR;
             }
         },
         [](napi_env env, napi_status status, void *data) {
@@ -311,6 +313,8 @@ napi_value CreateTimer(napi_env env, napi_callback_info info)
             napi_create_int64(env, asynccallbackinfo->timerId, &result);
             ReturnCallbackPromise(env, info, result);
             napi_delete_async_work(env, asynccallbackinfo->asyncWork);
+            delete asynccallbackinfo;
+            asynccallbackinfo = nullptr;
         },
         (void *)asynccallbackinfo,
         &asynccallbackinfo->asyncWork);
@@ -418,7 +422,6 @@ napi_value StartTimer(napi_env env, napi_callback_info info)
             info.callback = asynccallbackinfo->callback;
             info.deferred = asynccallbackinfo->deferred;
             info.errorCode = asynccallbackinfo->errorCode;
-
             // result: void
             napi_value result = 0;
             napi_get_null(env, &result);
@@ -524,7 +527,6 @@ napi_value StopTimer(napi_env env, napi_callback_info info)
             info.callback = asynccallbackinfo->callback;
             info.deferred = asynccallbackinfo->deferred;
             info.errorCode = asynccallbackinfo->errorCode;
-
             // result: void
             napi_value result = 0;
             napi_get_null(env, &result);
@@ -638,7 +640,6 @@ napi_value DestroyTimer(napi_env env, napi_callback_info info)
             info.callback = asynccallbackinfo->callback;
             info.deferred = asynccallbackinfo->deferred;
             info.errorCode = asynccallbackinfo->errorCode;
-
             // result: void
             napi_value result = 0;
             napi_get_null(env, &result);
