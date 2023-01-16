@@ -1,5 +1,5 @@
 /*
- * Copyright (c); 2021 Huawei Device Co., Ltd.
+ * Copyright (c); 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,18 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef TIMER_INIT_H
-#define TIMER_INIT_H
 
-#include "napi_system_timer.h"
+#ifndef TIME_INIT_H
+#define TIME_INIT_H
+
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include "napi_system_date_time.h"
 
 namespace OHOS {
 namespace MiscServices {
 namespace Time {
 
-} // Time
-} // MiscServices
-} // OHOS
-#endif // TIMER_INIT_H
+} // namespace Time
+} // namespace MiscServices
+} // namespace OHOS
+
+#endif // TIME_INIT_H

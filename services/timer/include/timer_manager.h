@@ -33,16 +33,14 @@ namespace MiscServices {
 class TimerManager : public ITimerManager {
 public:
     static std::shared_ptr<TimerManager> Create();
-    uint64_t CreateTimer(int type,
-        uint64_t windowLength,
-        uint64_t interval,
-        int flag,
-        std::function<void (const uint64_t)> callback,
-        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-        int uid) override;
-    bool StartTimer(uint64_t timerNumber, uint64_t triggerTime) override;
-    bool StopTimer(uint64_t timerNumber) override;
-    bool DestroyTimer(uint64_t timerNumber) override;
+    int32_t CreateTimer(TimerPara &paras,
+                        std::function<void (const uint64_t)> callback,
+                        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+                        int uid,
+                        uint64_t &timerId) override;
+    int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
+    int32_t StopTimer(uint64_t timerId) override;
+    int32_t DestroyTimer(uint64_t timerId) override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
     bool ResetAllProxy() override;
     bool ShowtimerEntryMap(int fd);
@@ -77,7 +75,6 @@ private:
         uint64_t callingUid);
     void RemoveHandler(uint64_t id);
     void RemoveLocked(uint64_t id);
-    bool IsSystemUid(int uid);
     void ReBatchAllTimers();
     void ReBatchAllTimersLocked(bool doValidate);
     void ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,

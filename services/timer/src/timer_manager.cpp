@@ -20,7 +20,6 @@
 #include <ctime>
 #include <iostream>
 #include <sys/time.h>
-#include "bundle_mgr_interface.h"
 #include "if_system_ability_manager.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
@@ -34,9 +33,7 @@ static int TIME_CHANGED_BITS = 16;
 static uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
 const int ONE_THOUSAND = 1000;
 const float_t BATCH_WINDOW_COE = 0.75;
-const auto MIN_FUTURITY = seconds(5);
 const auto ZERO_FUTURITY = seconds(0);
-const auto MIN_INTERVAL_FIVE_SECONDS = seconds(5);
 const auto MIN_INTERVAL_ONE_SECONDS = seconds(1);
 const auto MAX_INTERVAL = hours(24 * 365);
 const auto INTERVAL_HOUR = hours(1);
@@ -72,48 +69,45 @@ TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
     alarmThread_.reset(new std::thread(&TimerManager::TimerLooper, this));
 }
 
-uint64_t TimerManager::CreateTimer(int type,
-                                   uint64_t windowLength,
-                                   uint64_t interval,
-                                   int flag,
-                                   std::function<void (const uint64_t)> callback,
-                                   std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-                                   int uid)
+int32_t TimerManager::CreateTimer(TimerPara &paras,
+                                  std::function<void (const uint64_t)> callback,
+                                  std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+                                  int uid,
+                                  uint64_t &timerId)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE,
-        "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}d",
-        type,
-        windowLength,
-        interval,
-        flag);
-    uint64_t timerNumber = 0;
-    while (timerNumber == 0) {
-        timerNumber = random_();
+                "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}d",
+        paras.timerType,
+        paras.windowLength,
+        paras.interval,
+        paras.flag);
+    while (timerId == 0) {
+        timerId = random_();
     }
     auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
-        timerNumber,
-        type,
-        windowLength,
-        interval,
-        flag,
+        timerId,
+        paras.timerType,
+        static_cast<uint64_t>(paras.windowLength),
+        paras.interval,
+        paras.flag,
         std::move(callback),
         wantAgent,
         uid
-        });
+    });
     std::lock_guard<std::mutex> lock(entryMapMutex_);
-    timerEntryMap_.insert(std::make_pair(timerNumber, timerInfo));
-    return timerNumber;
+    timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
+    return E_TIME_OK;
 }
 
-bool TimerManager::StartTimer(uint64_t timerNumber, uint64_t triggerTime)
+int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
 {
     std::lock_guard<std::mutex> lock(entryMapMutex_);
-    auto it = timerEntryMap_.find(timerNumber);
+    auto it = timerEntryMap_.find(timerId);
     if (it == timerEntryMap_.end()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerNumber);
-        return false;
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
+        return E_TIME_NOT_FOUND;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer : %{public}" PRId64 "", timerNumber);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer : %{public}" PRId64 "", timerId);
     TIME_HILOGI(TIME_MODULE_SERVICE, "TriggerTime : %{public}" PRId64 "", triggerTime);
     auto timerInfo = it->second;
     SetHandler(timerInfo->id,
@@ -125,17 +119,17 @@ bool TimerManager::StartTimer(uint64_t timerNumber, uint64_t triggerTime)
                timerInfo->callback,
                timerInfo->wantAgent,
                timerInfo->uid);
-    return true;
+    return E_TIME_OK;
 }
 
-bool TimerManager::StopTimer(uint64_t timerNumber)
+int32_t TimerManager::StopTimer(uint64_t timerId)
 {
-    return StopTimerInner(timerNumber, false);
+    return StopTimerInner(timerId, false) ? E_TIME_OK : E_TIME_DEAL_FAILED;
 }
 
-bool TimerManager::DestroyTimer(uint64_t timerNumber)
+int32_t TimerManager::DestroyTimer(uint64_t timerId)
 {
-    return StopTimerInner(timerNumber, true);
+    return StopTimerInner(timerId, true) ? E_TIME_OK : E_TIME_DEAL_FAILED;
 }
 
 bool TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
@@ -179,21 +173,6 @@ void TimerManager::RemoveProxy(uint64_t timerNumber, int32_t uid)
     }
 }
 
-bool TimerManager::IsSystemUid(int uid)
-{
-    auto systemAbilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (systemAbilityManager == nullptr) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "GetSystemAbilityManager is null.");
-        return false;
-    }
-    auto bundleMgrSa = systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-    if (bundleMgrSa == nullptr) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "GetSystemAbility is null.");
-        return false;
-    }
-    return iface_cast<IBundleMgr>(bundleMgrSa)->CheckIsSystemAppByUid(uid);
-}
-
 void TimerManager::SetHandler(uint64_t id,
                               int type,
                               uint64_t triggerAtTime,
@@ -212,7 +191,7 @@ void TimerManager::SetHandler(uint64_t id,
     if (windowLengthDuration > INTERVAL_HALF_DAY) {
         windowLengthDuration = INTERVAL_HOUR;
     }
-    auto minInterval = (IsSystemUid(uid)) ? MIN_INTERVAL_ONE_SECONDS : MIN_INTERVAL_FIVE_SECONDS;
+    auto minInterval = MIN_INTERVAL_ONE_SECONDS;
     auto intervalDuration = milliseconds(interval);
     if (intervalDuration > milliseconds::zero() && intervalDuration < minInterval) {
         intervalDuration = minInterval;
@@ -226,7 +205,7 @@ void TimerManager::SetHandler(uint64_t id,
         TIME_HILOGI(TIME_MODULE_SERVICE, "invalid trigger time end.");
         return;
     }
-    auto minTrigger =  (IsSystemUid(uid)) ? (nowElapsed + ZERO_FUTURITY) : (nowElapsed + MIN_FUTURITY);
+    auto minTrigger = nowElapsed + ZERO_FUTURITY;
     auto triggerElapsed = (nominalTrigger > minTrigger) ? nominalTrigger : minTrigger;
 
     steady_clock::time_point maxElapsed;
@@ -355,8 +334,9 @@ void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
     if (timer->windowLength == milliseconds::zero()) {
         maxElapsed = whenElapsed;
     } else {
-        maxElapsed = (timer->windowLength > milliseconds::zero()) ? (whenElapsed + timer->windowLength)
-            : MaxTriggerTime(nowElapsed, whenElapsed, timer->repeatInterval);
+        maxElapsed = (timer->windowLength > milliseconds::zero()) ?
+                     (whenElapsed + timer->windowLength) :
+                     MaxTriggerTime(nowElapsed, whenElapsed, timer->repeatInterval);
     }
     timer->whenElapsed = whenElapsed;
     timer->maxWhenElapsed = maxElapsed;
@@ -402,7 +382,8 @@ void TimerManager::TimerLooper()
             system_clock::time_point expectedClockTime;
             std::lock_guard<std::mutex> lock(mutex_);
             lastTimeChangeClockTime = lastTimeChangeClockTime_;
-            expectedClockTime = lastTimeChangeClockTime + (duration_cast<milliseconds>(nowElapsed.time_since_epoch()) -
+            expectedClockTime = lastTimeChangeClockTime +
+                (duration_cast<milliseconds>(nowElapsed.time_since_epoch()) -
                 duration_cast<milliseconds>(lastTimeChangeRealtime_.time_since_epoch()));
             if (lastTimeChangeClockTime == system_clock::time_point::min()
                 || nowRtc < (expectedClockTime - milliseconds(ONE_THOUSAND))

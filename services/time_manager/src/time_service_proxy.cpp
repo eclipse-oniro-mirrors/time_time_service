@@ -14,6 +14,7 @@
  */
 
 #include "time_service_proxy.h"
+
 #include "iremote_broker.h"
 #include "time_common.h"
 #include "time_service_interface.h"
@@ -26,17 +27,19 @@ TimeServiceProxy::TimeServiceProxy(const sptr<IRemoteObject> &object) : IRemoteP
 {
 }
 
-int32_t TimeServiceProxy::SetTime(const int64_t time)
+int32_t TimeServiceProxy::SetTime(const int64_t time, APIVersion apiVersion)
 {
     MessageParcel data, reply;
     MessageOption option;
-
     if (!data.WriteInterfaceToken(GetDescriptor())) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-
     if (!data.WriteInt64(time)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    if (!data.WriteInt8(apiVersion)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
@@ -48,136 +51,79 @@ int32_t TimeServiceProxy::SetTime(const int64_t time)
     return result;
 }
 
-uint64_t TimeServiceProxy::CreateTimer(int32_t type, bool repeat, uint64_t interval,
-    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-    sptr<IRemoteObject> &timerCallback)
+int32_t TimeServiceProxy::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions,
+    sptr<IRemoteObject> &timerCallback, uint64_t &timerId)
 {
     MessageParcel data, reply;
     MessageOption option;
-    auto hasWantagent = false;
+
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return 0;
-    }
-    
-    if (!data.WriteInt32(type)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return 0;
-    }
-    
-    if (!data.WriteBool(repeat)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return 0;
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
+        return E_TIME_WRITE_PARCEL_ERROR;
     }
 
-    if (!data.WriteUint64(interval)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return 0;
+    if (!data.WriteInt32(timerOptions->type)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write type");
+        return E_TIME_WRITE_PARCEL_ERROR;
     }
-    if (wantAgent != nullptr) {
-        hasWantagent = true;
-        if (!data.WriteBool(hasWantagent)) {
-            TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-            return 0;
-        }
-        if (!data.WriteParcelable(&(*wantAgent))) {
-            TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-            return 0;
-        }
-    } else {
-        if (!data.WriteBool(hasWantagent)) {
-            TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-            return 0;
+
+    if (!data.WriteBool(timerOptions->repeat)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write repeat");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+
+    if (!data.WriteUint64(timerOptions->interval)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write interval");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+
+    if (!data.WriteBool(timerOptions->wantAgent != nullptr)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write wantAgent status");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    if (timerOptions->wantAgent != nullptr) {
+        if (!data.WriteParcelable(&(*timerOptions->wantAgent))) {
+            TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write wantAgent");
+            return E_TIME_WRITE_PARCEL_ERROR;
         }
     }
-    
+
     if (!data.WriteRemoteObject(timerCallback)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return 0;
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write timerCallback");
+        return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(CREATE_TIMER, data, reply, option);
-    if (result != ERR_NONE) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "CreateTimer failed, error code is: %{public}d", result);
-        return 0;
-    }
-    auto TimerId = reply.ReadUint64();
 
-    return TimerId;
+    auto ret = Remote()->SendRequest(CREATE_TIMER, data, reply, option);
+    if (ret == E_TIME_OK) {
+        timerId = reply.ReadUint64();
+        return E_TIME_OK;
+    }
+    return ret;
 }
 
-bool TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTimes)
+int32_t TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTimes)
 {
     MessageParcel data, reply;
     MessageOption option;
-    
+
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return false;
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
+        return E_TIME_WRITE_PARCEL_ERROR;
     }
 
     if (!data.WriteUint64(timerId)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return false;
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write timerId");
+        return E_TIME_WRITE_PARCEL_ERROR;
     }
 
     if (!data.WriteUint64(triggerTimes)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return false;
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write triggerTimes");
+        return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(START_TIMER, data, reply, option);
-    if (result != ERR_NONE) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Start failed, error code is: %{public}d", result);
-        return false;
-    }
-    return true;
+    return Remote()->SendRequest(START_TIMER, data, reply, option);
 }
 
-bool TimeServiceProxy::StopTimer(uint64_t  timerId)
-{
-    MessageParcel data, reply;
-    MessageOption option;
-
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return false;
-    }
-
-    if (!data.WriteUint64(timerId)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return false;
-    }
-    int32_t result = Remote()->SendRequest(STOP_TIMER, data, reply, option);
-    if (result != ERR_NONE) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Stop failed, error code is: %{public}d", result);
-        return false;
-    }
-    
-    return true;
-}
-bool TimeServiceProxy::DestroyTimer(uint64_t  timerId)
-{
-    MessageParcel data, reply;
-    MessageOption option;
-    
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return false;
-    }
-
-    if (!data.WriteUint64(timerId)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
-        return false;
-    }
-    int32_t result = Remote()->SendRequest(DESTORY_TIMER, data, reply, option);
-    if (result != ERR_NONE) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "failed, error code is: %{public}d", result);
-        return false;
-    }
-    
-    return true;
-}
-
-int32_t TimeServiceProxy::SetTimeZone(const std::string timezoneId)
+int32_t TimeServiceProxy::StopTimer(uint64_t timerId)
 {
     MessageParcel data, reply;
     MessageOption option;
@@ -187,11 +133,46 @@ int32_t TimeServiceProxy::SetTimeZone(const std::string timezoneId)
         return E_TIME_WRITE_PARCEL_ERROR;
     }
 
+    if (!data.WriteUint64(timerId)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    return Remote()->SendRequest(STOP_TIMER, data, reply, option);
+}
+
+int32_t TimeServiceProxy::DestroyTimer(uint64_t timerId)
+{
+    MessageParcel data, reply;
+    MessageOption option;
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+
+    if (!data.WriteUint64(timerId)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    return Remote()->SendRequest(DESTROY_TIMER, data, reply, option);
+}
+
+int32_t TimeServiceProxy::SetTimeZone(const std::string &timezoneId, APIVersion apiVersion)
+{
+    MessageParcel data, reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
     if (!data.WriteString(timezoneId)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-
+    if (!data.WriteInt8(apiVersion)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
     int32_t result = Remote()->SendRequest(SET_TIME_ZONE, data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "SetTimeZone failed, error code is: %{public}d", result);

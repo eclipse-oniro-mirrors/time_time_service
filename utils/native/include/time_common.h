@@ -16,12 +16,21 @@
 #ifndef SERVICES_INCLUDE_TIME_COMMON_H
 #define SERVICES_INCLUDE_TIME_COMMON_H
 
+#include <stdint.h>
+
 #include "errors.h"
 #include "time_hilog_wreapper.h"
 
 namespace OHOS {
 namespace MiscServices {
 #define TIME_SERVICE_NAME "TimeService"
+
+struct TimerPara {
+    int timerType;
+    int64_t windowLength;
+    uint64_t interval;
+    int flag;
+};
 
 enum TimeModule {
     TIME_MODULE_SERVICE_ID = 0x04,
@@ -40,7 +49,9 @@ enum TimeError {
     E_TIME_PARAMETERS_INVALID,
     E_TIME_SET_RTC_FAILED,
     E_TIME_NOT_FOUND,
-    E_TIME_NO_PERMISSION = 201,
+    E_TIME_NULLPTR,
+    E_TIME_NO_PERMISSION,
+    E_TIME_NOT_SYSTEM_APP,
 };
 } // namespace MiscServices
 } // namespace OHOS

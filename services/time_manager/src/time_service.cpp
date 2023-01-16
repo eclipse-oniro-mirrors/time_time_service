@@ -12,33 +12,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <ctime>
-#include <cstdio>
-#include <string>
-#include <unistd.h>
-#include <sys/time.h>
+#include "time_service.h"
+
 #include <cerrno>
 #include <chrono>
-#include <mutex>
-#include <dirent.h>
+#include <cstdio>
 #include <cstring>
+#include <ctime>
+#include <dirent.h>
 #include <fcntl.h>
 #include <fstream>
-#include <sstream>
-#include <singleton.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
 #include <linux/rtc.h>
-#include "pthread.h"
+#include <mutex>
+#include <singleton.h>
+#include <sstream>
+#include <string>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <climits>
+
+#include "iservice_registry.h"
 #include "ntp_update_time.h"
-#include "time_zone_info.h"
-#include "time_common.h"
-#include "time_tick_notify.h"
+#include "pthread.h"
 #include "system_ability.h"
 #include "system_ability_definition.h"
-#include "iservice_registry.h"
-#include "time_service.h"
+#include "time_common.h"
+#include "time_tick_notify.h"
+#include "time_zone_info.h"
+
 using namespace std::chrono;
 
 namespace OHOS {
@@ -52,7 +56,6 @@ static const std::int32_t INIT_INTERVAL = 10000L;
 static const uint32_t TIMER_TYPE_REALTIME_MASK = 1 << 0;
 static const uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
 static const uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
-constexpr int INVALID_TIMER_ID = 0;
 constexpr int MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int ONE_MILLI = 1000;
@@ -216,23 +219,13 @@ void TimeService::InitTimerHandler()
     timerManagerHandler_ = TimerManager::Create();
 }
 
-void TimeService::PaserTimerPara(int32_t type, bool repeat, uint64_t interval, TimerPara &paras)
+void TimeService::ParseTimerPara(std::shared_ptr<ITimerInfo> timerOptions, TimerPara &paras)
 {
-    bool isRealtime = false;
-    bool isWakeup = false;
-    auto uIntType = static_cast<uint32_t>(type);
+    auto uIntType = static_cast<uint32_t>(timerOptions->type);
+    bool isRealtime = (uIntType & TIMER_TYPE_REALTIME_MASK) > 0 ? true : false;
+    bool isWakeup = (uIntType & TIMER_TYPE_REALTIME_WAKEUP_MASK) > 0 ? true : false;
+    paras.windowLength = (uIntType & TIMER_TYPE_EXACT_MASK) > 0 ? 0 : -1;
     paras.flag = 0;
-    if ((uIntType & TIMER_TYPE_REALTIME_MASK) > 0) {
-        isRealtime = true;
-    }
-    if ((uIntType & TIMER_TYPE_REALTIME_WAKEUP_MASK) > 0) {
-        isWakeup = true;
-    }
-    if ((uIntType & TIMER_TYPE_EXACT_MASK) > 0) {
-        paras.windowLength = 0;
-    } else {
-        paras.windowLength = -1;
-    }
 
     if (isRealtime && isWakeup) {
         paras.timerType = ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP;
@@ -243,29 +236,24 @@ void TimeService::PaserTimerPara(int32_t type, bool repeat, uint64_t interval, T
     } else {
         paras.timerType = ITimerManager::TimerType::RTC;
     }
-    if (repeat) {
-        paras.interval = interval;
-    } else {
-        paras.interval = 0;
-    }
+    paras.interval = timerOptions->repeat ? timerOptions->interval : 0;
     return;
 }
 
-uint64_t TimeService::CreateTimer(int32_t type, bool repeat, uint64_t interval,
-    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-    sptr<IRemoteObject> &obj)
+int32_t TimeService::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
+    uint64_t &timerId)
 {
     int uid = IPCSkeleton::GetCallingUid();
     if (obj == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Input nullptr.");
-        return INVALID_TIMER_ID;
+        return E_TIME_NULLPTR;
     }
     struct TimerPara paras {};
-    PaserTimerPara(type, repeat, interval, paras);
+    ParseTimerPara(timerOptions, paras);
     sptr<ITimerCallback> timerCallback = iface_cast<ITimerCallback>(obj);
     if (timerCallback == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ITimerCallback nullptr.");
-        return INVALID_TIMER_ID;
+        return E_TIME_NULLPTR;
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start create timer.");
     auto callbackFunc = [timerCallback](uint64_t id) {
@@ -273,39 +261,32 @@ uint64_t TimeService::CreateTimer(int32_t type, bool repeat, uint64_t interval,
     };
     int64_t triggerTime = 0;
     GetWallTimeMs(triggerTime);
-    StatisticReporter(IPCSkeleton::GetCallingPid(), uid, type, triggerTime, interval);
+    StatisticReporter(IPCSkeleton::GetCallingPid(), uid, timerOptions->type, triggerTime, timerOptions->interval);
     if (timerManagerHandler_ == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
         timerManagerHandler_ = TimerManager::Create();
         if (timerManagerHandler_ == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return INVALID_TIMER_ID;
+            return E_TIME_NULLPTR;
         }
     }
-    return timerManagerHandler_->CreateTimer(paras.timerType,
-                                             paras.windowLength,
-                                             paras.interval,
-                                             paras.flag,
-                                             callbackFunc,
-                                             wantAgent,
-                                             uid);
+    return timerManagerHandler_->CreateTimer(paras, callbackFunc, timerOptions->wantAgent, uid, timerId);
 }
 
-uint64_t TimeService::CreateTimer(int32_t type, uint64_t windowLength, uint64_t interval, int flag,
-    std::function<void (const uint64_t)> Callback)
+int32_t TimeService::CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> Callback, uint64_t &timerId)
 {
     if (timerManagerHandler_ == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
         timerManagerHandler_ = TimerManager::Create();
         if (timerManagerHandler_ == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return INVALID_TIMER_ID;
+            return E_TIME_NULLPTR;
         }
     }
-    return timerManagerHandler_->CreateTimer(type, windowLength, interval, flag, Callback, nullptr, 0);
+    return timerManagerHandler_->CreateTimer(paras, Callback, nullptr, 0, timerId);
 }
 
-bool TimeService::StartTimer(uint64_t timerId, uint64_t triggerTimes)
+int32_t TimeService::StartTimer(uint64_t timerId, uint64_t triggerTimes)
 {
     if (timerManagerHandler_ == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
@@ -316,13 +297,13 @@ bool TimeService::StartTimer(uint64_t timerId, uint64_t triggerTimes)
         }
     }
     auto ret = timerManagerHandler_->StartTimer(timerId, triggerTimes);
-    if (!ret) {
+    if (ret != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "TimerId Not found.");
     }
     return ret;
 }
 
-bool TimeService::StopTimer(uint64_t  timerId)
+int32_t TimeService::StopTimer(uint64_t timerId)
 {
     if (timerManagerHandler_ == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
@@ -333,13 +314,13 @@ bool TimeService::StopTimer(uint64_t  timerId)
         }
     }
     auto ret = timerManagerHandler_->StopTimer(timerId);
-    if (!ret) {
+    if (ret != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "TimerId Not found.");
     }
     return ret;
 }
 
-bool TimeService::DestroyTimer(uint64_t  timerId)
+int32_t TimeService::DestroyTimer(uint64_t timerId)
 {
     if (timerManagerHandler_ == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
@@ -350,16 +331,16 @@ bool TimeService::DestroyTimer(uint64_t  timerId)
         }
     }
     auto ret = timerManagerHandler_->DestroyTimer(timerId);
-    if (!ret) {
+    if (ret != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "TimerId Not found.");
     }
     return ret;
 }
 
-bool TimeService::SetRealTime(const int64_t time)
+bool TimeService::SetRealTime(int64_t time)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Setting time of day to milliseconds: %{public}" PRId64 "", time);
-    if (time < 0 || time / 1000LL >= LONG_MAX) {
+    if (time < 0 || time / 1000LL >= LLONG_MAX) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "input param error");
         return false;
     }
@@ -389,7 +370,7 @@ bool TimeService::SetRealTime(const int64_t time)
     return true;
 }
 
-int32_t TimeService::SetTime(const int64_t time)
+int32_t TimeService::SetTime(int64_t time, APIVersion apiVersion)
 {
     if (!SetRealTime(time)) {
         return E_TIME_DEAL_FAILED;
@@ -580,7 +561,7 @@ int TimeService::get_wall_clock_rtc_id()
     return -1;
 }
 
-int32_t TimeService::SetTimeZone(const std::string timeZoneId)
+int32_t TimeService::SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion)
 {
     if (!DelayedSingleton<TimeZoneInfo>::GetInstance()->SetTimezone(timeZoneId)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone failed :%{public}s", timeZoneId.c_str());
