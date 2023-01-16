@@ -42,6 +42,7 @@
 #include "time_common.h"
 #include "time_tick_notify.h"
 #include "time_zone_info.h"
+
 using namespace std::chrono;
 
 namespace OHOS {
@@ -332,7 +333,7 @@ int32_t TimeService::DestroyTimer(uint64_t timerId)
     return ret;
 }
 
-bool TimeService::SetRealTime(const int64_t time)
+bool TimeService::SetRealTime(int64_t time)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Setting time of day to milliseconds: %{public}" PRId64 "", time);
     if (time < 0 || time / 1000LL >= LLONG_MAX) {
@@ -364,7 +365,7 @@ bool TimeService::SetRealTime(const int64_t time)
     return true;
 }
 
-int32_t TimeService::SetTime(const int64_t time)
+int32_t TimeService::SetTime(int64_t time, APIVersion apiVersion)
 {
     if (!SetRealTime(time)) {
         return E_TIME_DEAL_FAILED;
@@ -554,7 +555,7 @@ int TimeService::get_wall_clock_rtc_id()
     return -1;
 }
 
-int32_t TimeService::SetTimeZone(const std::string timeZoneId)
+int32_t TimeService::SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion)
 {
     if (!DelayedSingleton<TimeZoneInfo>::GetInstance()->SetTimezone(timeZoneId)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone failed :%{public}s", timeZoneId.c_str());

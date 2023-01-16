@@ -38,7 +38,48 @@ using namespace OHOS::Security::AccessToken;
 
 uint64_t g_selfTokenId = 0;
 
-static HapPolicyParams g_policyA = { .apl = APL_SYSTEM_CORE, .domain = "test.domain" };
+static HapPolicyParams g_policyA = {
+    .apl = APL_SYSTEM_CORE,
+    .domain = "test.domain",
+    .permList = {
+        {
+            .permissionName = "ohos.permission.SET_TIME",
+            .bundleName = "ohos.permission_test.demoB",
+            .grantMode = 1,
+            .availableLevel = APL_NORMAL,
+            .label = "label",
+            .labelId = 1,
+            .description = "test",
+            .descriptionId = 1
+        },
+        {
+            .permissionName = "ohos.permission.SET_TIME_ZONE",
+            .bundleName = "ohos.permission_test.demoB",
+            .grantMode = 1,
+            .availableLevel = APL_NORMAL,
+            .label = "label",
+            .labelId = 1,
+            .description = "test",
+            .descriptionId = 1
+        }
+    },
+    .permStateList = {
+        {
+            .permissionName = "ohos.permission.SET_TIME",
+            .isGeneral = true,
+            .resDeviceID = { "local" },
+            .grantStatus = { PermissionState::PERMISSION_GRANTED },
+            .grantFlags = { 1 }
+        },
+        {
+            .permissionName = "ohos.permission.SET_TIME_ZONE",
+            .isGeneral = true,
+            .resDeviceID = { "local" },
+            .grantStatus = { PermissionState::PERMISSION_GRANTED },
+            .grantFlags = { 1 }
+        }
+    }
+};
 
 HapInfoParams g_systemInfoParams = { .userID = 1,
     .bundleName = "timer",

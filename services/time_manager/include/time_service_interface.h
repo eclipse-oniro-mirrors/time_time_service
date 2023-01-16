@@ -44,7 +44,12 @@ public:
         NETWORK_TIME_ON = 15,
         NETWORK_TIME_OFF = 16,
         PROXY_TIMER = 17,
-        RESET_ALL_PROXY = 18
+        RESET_ALL_PROXY = 18,
+    };
+
+    enum APIVersion : int8_t {
+        API_VERSION_7 = 0,
+        API_VERSION_9 = 1,
     };
     /**
    * SetTime
@@ -52,15 +57,14 @@ public:
    * @param time int64_t set milliseconds
    * @return int32_t ERR_OK on success, other on failure.
    */
-    virtual int32_t SetTime(const int64_t time) = 0;
-
+    virtual int32_t SetTime(int64_t time, APIVersion apiVersion = APIVersion::API_VERSION_7) = 0;
     /**
      * SetTimeZone
      *
      * @param timezoneId std::string &timezoneId string
      * @return int32_t ERR_OK on success, other on failure.
      */
-    virtual int32_t SetTimeZone(const std::string timezoneId) = 0;
+    virtual int32_t SetTimeZone(const std::string &timezoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) = 0;
 
     /**
      * GetTimeZone
