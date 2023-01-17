@@ -45,63 +45,51 @@ const std::string NTP_CN_SERVER = "ntp.aliyun.com";
 const int64_t INVALID_TIMES = -1;
 uint64_t g_selfTokenId = 0;
 
-static HapPolicyParams g_policyA = {
-        .apl = APL_SYSTEM_CORE,
-        .domain = "test.domain",
-        .permList = {
-                {
-                        .permissionName = "ohos.permission.SET_TIME",
-                        .bundleName = "ohos.permission_test.demoB",
-                        .grantMode = 1,
-                        .availableLevel = APL_NORMAL,
-                        .label = "label",
-                        .labelId = 1,
-                        .description = "test",
-                        .descriptionId = 1
-                },
-                {
-                        .permissionName = "ohos.permission.SET_TIME_ZONE",
-                        .bundleName = "ohos.permission_test.demoB",
-                        .grantMode = 1,
-                        .availableLevel = APL_NORMAL,
-                        .label = "label",
-                        .labelId = 1,
-                        .description = "test",
-                        .descriptionId = 1
-                }
-        },
-        .permStateList = {
-                {
-                        .permissionName = "ohos.permission.SET_TIME",
-                        .isGeneral = true,
-                        .resDeviceID = { "local" },
-                        .grantStatus = { PermissionState::PERMISSION_GRANTED },
-                        .grantFlags = { 1 }
-                },
-                {
-                        .permissionName = "ohos.permission.SET_TIME_ZONE",
-                        .isGeneral = true,
-                        .resDeviceID = { "local" },
-                        .grantStatus = { PermissionState::PERMISSION_GRANTED },
-                        .grantFlags = { 1 }
-                }
-        }
-};
+static HapPolicyParams g_policyA = { .apl = APL_SYSTEM_CORE,
+    .domain = "test.domain",
+    .permList = { { .permissionName = "ohos.permission.SET_TIME",
+                      .bundleName = "ohos.permission_test.demoB",
+                      .grantMode = 1,
+                      .availableLevel = APL_NORMAL,
+                      .label = "label",
+                      .labelId = 1,
+                      .description = "test",
+                      .descriptionId = 1 },
+        { .permissionName = "ohos.permission.SET_TIME_ZONE",
+            .bundleName = "ohos.permission_test.demoB",
+            .grantMode = 1,
+            .availableLevel = APL_NORMAL,
+            .label = "label",
+            .labelId = 1,
+            .description = "test",
+            .descriptionId = 1 } },
+    .permStateList = { { .permissionName = "ohos.permission.SET_TIME",
+                           .isGeneral = true,
+                           .resDeviceID = { "local" },
+                           .grantStatus = { PermissionState::PERMISSION_GRANTED },
+                           .grantFlags = { 1 } },
+        { .permissionName = "ohos.permission.SET_TIME_ZONE",
+            .isGeneral = true,
+            .resDeviceID = { "local" },
+            .grantStatus = { PermissionState::PERMISSION_GRANTED },
+            .grantFlags = { 1 } } } };
 
-HapInfoParams g_systemInfoParams = { .userID = 1,
-        .bundleName = "timer",
-        .instIndex = 0,
-        .appIDDesc = "test",
-        .apiVersion = 8,};
+HapInfoParams g_systemInfoParams = {
+    .userID = 1,
+    .bundleName = "timer",
+    .instIndex = 0,
+    .appIDDesc = "test",
+    .apiVersion = 8,
+};
 
 static HapPolicyParams g_policyB = { .apl = APL_NORMAL, .domain = "test.domain" };
 
 HapInfoParams g_notSystemInfoParams = {
-        .userID = 1,
-        .bundleName = "timer",
-        .instIndex = 0,
-        .appIDDesc = "test",
-        .apiVersion = 8,
+    .userID = 1,
+    .bundleName = "timer",
+    .instIndex = 0,
+    .appIDDesc = "test",
+    .apiVersion = 8,
 };
 
 class TimeServiceTest : public testing::Test {
@@ -195,8 +183,7 @@ HWTEST_F(TimeServiceTest, NetworkTimeStatusOff001, TestSize.Level1)
 */
 HWTEST_F(TimeServiceTest, SetTime001, TestSize.Level1)
 {
-    struct timeval currentTime {
-    };
+    struct timeval currentTime {};
     gettimeofday(&currentTime, NULL);
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
     ASSERT_TRUE(time > 0);
@@ -234,8 +221,7 @@ HWTEST_F(TimeServiceTest, SetTime003, TestSize.Level1)
 */
 HWTEST_F(TimeServiceTest, SetTime004, TestSize.Level1)
 {
-    struct timeval currentTime {
-    };
+    struct timeval currentTime {};
     gettimeofday(&currentTime, NULL);
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
     ASSERT_TRUE(time > 0);
@@ -492,9 +478,7 @@ HWTEST_F(TimeServiceTest, CreateTimer005, TestSize.Level1)
     timerInfo->SetInterval(0);
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
-
-    struct timeval timeOfDay {
-    };
+    struct timeval timeOfDay {};
     gettimeofday(&timeOfDay, NULL);
     int64_t currentTime = (timeOfDay.tv_sec + 100) * 1000 + timeOfDay.tv_usec / 1000;
     if (currentTime < 0) {

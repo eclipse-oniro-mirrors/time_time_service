@@ -266,9 +266,6 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
     }
 
     auto timerOptions = std::make_shared<SimpleTimerInfo>();
-    if (timerOptions == nullptr) {
-        return E_TIME_NULLPTR;
-    }
     timerOptions->type = type;
     timerOptions->repeat = repeat;
     timerOptions->interval = interval;

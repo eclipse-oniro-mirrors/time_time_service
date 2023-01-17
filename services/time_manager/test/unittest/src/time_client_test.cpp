@@ -12,8 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "time_service_test.h"
-
 #include <chrono>
 #include <climits>
 #include <cstdlib>
@@ -25,6 +23,7 @@
 #include "json/json.h"
 #include "nativetoken_kit.h"
 #include "time_common.h"
+#include "time_service_test.h"
 #include "timer_info_test.h"
 #include "token_setproc.h"
 #include "want_agent.h"
@@ -38,50 +37,37 @@ using namespace OHOS::Security::AccessToken;
 
 uint64_t g_selfTokenId = 0;
 
-static HapPolicyParams g_policyA = {
-    .apl = APL_SYSTEM_CORE,
+static HapPolicyParams g_policyA = { .apl = APL_SYSTEM_CORE,
     .domain = "test.domain",
-    .permList = {
-        {
-            .permissionName = "ohos.permission.SET_TIME",
+    .permList = { { .permissionName = "ohos.permission.SET_TIME",
+                      .bundleName = "ohos.permission_test.demoB",
+                      .grantMode = 1,
+                      .availableLevel = APL_NORMAL,
+                      .label = "label",
+                      .labelId = 1,
+                      .description = "test",
+                      .descriptionId = 1 },
+        { .permissionName = "ohos.permission.SET_TIME_ZONE",
             .bundleName = "ohos.permission_test.demoB",
             .grantMode = 1,
             .availableLevel = APL_NORMAL,
             .label = "label",
             .labelId = 1,
             .description = "test",
-            .descriptionId = 1
-        },
-        {
-            .permissionName = "ohos.permission.SET_TIME_ZONE",
-            .bundleName = "ohos.permission_test.demoB",
-            .grantMode = 1,
-            .availableLevel = APL_NORMAL,
-            .label = "label",
-            .labelId = 1,
-            .description = "test",
-            .descriptionId = 1
-        }
-    },
-    .permStateList = {
-        {
-            .permissionName = "ohos.permission.SET_TIME",
+            .descriptionId = 1 } },
+    .permStateList = { { .permissionName = "ohos.permission.SET_TIME",
+                           .isGeneral = true,
+                           .resDeviceID = { "local" },
+                           .grantStatus = { PermissionState::PERMISSION_GRANTED },
+                           .grantFlags = { 1 } },
+        { .permissionName = "ohos.permission.SET_TIME_ZONE",
             .isGeneral = true,
             .resDeviceID = { "local" },
             .grantStatus = { PermissionState::PERMISSION_GRANTED },
-            .grantFlags = { 1 }
-        },
-        {
-            .permissionName = "ohos.permission.SET_TIME_ZONE",
-            .isGeneral = true,
-            .resDeviceID = { "local" },
-            .grantStatus = { PermissionState::PERMISSION_GRANTED },
-            .grantFlags = { 1 }
-        }
-    }
-};
+            .grantFlags = { 1 } } } };
 
-HapInfoParams g_systemInfoParams = { .userID = 1,
+HapInfoParams g_systemInfoParams = {
+    .userID = 1,
     .bundleName = "timer",
     .instIndex = 0,
     .appIDDesc = "test",
@@ -361,7 +347,7 @@ HWTEST_F(TimeClientTest, CreateTimer004, TestSize.Level1)
     auto bootTimeNano = system_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILESECOND;
     errCode = TimeServiceClient::GetInstance()->StartTimerV9(timerId, bootTimeMilli + 2000);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);;
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
     errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
     EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
     EXPECT_TRUE(g_data1 == 0);
