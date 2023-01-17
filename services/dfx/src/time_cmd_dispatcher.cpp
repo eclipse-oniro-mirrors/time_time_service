@@ -17,7 +17,7 @@
 
 #include <cstdio>
 #include <iostream>
-#include "time_hilog_wreapper.h"
+#include "time_hilog.h"
 
 namespace OHOS {
 namespace MiscServices {

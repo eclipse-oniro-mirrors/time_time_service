@@ -16,7 +16,7 @@
 #include "time_sysevent.h"
 
 #include "hisysevent.h"
-#include "time_hilog_wreapper.h"
+#include "time_hilog.h"
 
 namespace OHOS {
 namespace MiscServices {

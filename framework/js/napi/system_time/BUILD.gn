@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Huawei Device Co., Ltd.
+# Copyright (C) 2021 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,29 +11,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("../time.gni")
+import("//base/time/time_service/time.gni")
 
-config("utils_config") {
+ohos_shared_library("systemtime") {
   include_dirs = [
-    "native/include",
-    "${time_service_path}",
+    "../../../interfaces/inner_api/include",
+    "include",
+    "../common/include",
+
   ]
-}
 
-ohos_source_set("time_utils") {
-  configs = [ ":utils_config" ]
+  configs = [ "${time_utils_path}:utils_config" ]
 
-  sources = [ "${time_service_path}/time_permission.cpp" ]
+  cflags = [
+    "-fPIC",
+    "-g3",
+  ]
 
-  deps = []
+  sources = [
+    "../common/src/napi_utils.cpp",
+    "src/js_systemtime.cpp",
+  ]
+
+  deps = [
+    "${api_path}:time_client",
+  ]
 
   external_deps = [
-    "access_token:libaccesstoken_sdk",
-    "access_token:libtokenid_sdk",
+    "ability_base:want",
+    "ability_runtime:runtime",
+    "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
+    "napi:ace_napi",
+    "ability_runtime:abilitykit_native",
   ]
 
+  relative_install_dir = "module"
+
+  subsystem_name = "time"
   part_name = "time_service"
 }

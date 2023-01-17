@@ -22,7 +22,7 @@
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
-#include "time_service.h"
+#include "time_system_ability.h"
 #include "message_parcel.h"
 
 using namespace OHOS::MiscServices;
@@ -64,8 +64,8 @@ bool FuzzTimeService(const uint8_t* rawData, size_t size)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    
-    sptr<TimeService> mTimess = new TimeService();
+
+    sptr<TimeSystemAbility> mTimess = new TimeSystemAbility();
     mTimess->OnRemoteRequest(code, data, reply, option);
 
     return true;
@@ -77,7 +77,7 @@ bool FuzzTimeDump(const uint8_t *rawData, size_t size)
     std::string str(reinterpret_cast<const char *>(rawData), size);
     args.push_back(Str8ToStr16(str));
     int fd = 0;
-    TimeService::GetInstance()->Dump(fd, args);
+    TimeSystemAbility::GetInstance()->Dump(fd, args);
     return true;
 }
 }
@@ -92,4 +92,3 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     OHOS::FuzzTimeDump(data, size);
     return 0;
 }
-
