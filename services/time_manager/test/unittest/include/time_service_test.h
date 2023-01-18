@@ -23,10 +23,4 @@ void TimeOutCallback1(void)
     g_data1 += 1;
 }
 
-int g_data2 = 0;
-void TimeOutCallback2(void)
-{
-    g_data2 += 1;
-}
-
 #endif // TIME_SERVICE_TEST_H
