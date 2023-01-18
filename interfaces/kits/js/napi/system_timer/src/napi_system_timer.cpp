@@ -75,9 +75,14 @@ void ITimerInfoInstance::OnTrigger()
             if (dataWorkerData == nullptr) {
                 return;
             }
-
+            napi_handle_scope scope = nullptr;
+            napi_open_handle_scope(dataWorkerData->env, &scope);
+            if (scope == nullptr) {
+                return;
+            }
             NapiUtils::SetTimerCallback(dataWorkerData->env, dataWorkerData->ref, ERROR_OK, "",
                 NapiUtils::GetUndefinedValue(dataWorkerData->env));
+            napi_close_handle_scope(dataWorkerData->env, scope);
             delete dataWorkerData;
             dataWorkerData = nullptr;
             delete work;
@@ -307,7 +312,7 @@ napi_value NapiSystemTimer::StopTimer(napi_env env, napi_callback_info info)
     auto executor = [stopTimerContext]() {
         auto innerCode = TimeServiceClient::GetInstance()->StopTimerV9(stopTimerContext->timerId);
         if (innerCode != JsErrorCode::ERROR_OK) {
-            stopTimerContext->errCode = NapiUtils::ConvertErrorCode(innerCode);
+            stopTimerContext->errCode = innerCode;
             stopTimerContext->status = napi_generic_failure;
         }
     };
