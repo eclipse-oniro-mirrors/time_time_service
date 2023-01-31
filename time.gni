@@ -20,12 +20,8 @@ ability_runtime_kits_path = "${ability_runtime_path}/frameworks/kits"
 
 time_root_path = "//base/time/time_service"
 
-kits_path = "${time_root_path}/interfaces/kits"
-
-innerkits_path = "${time_root_path}/interfaces/innerkits"
+api_path = "${time_root_path}/interfaces/inner_api"
 
 time_service_path = "${time_root_path}/services"
 
 time_utils_path = "${time_root_path}/utils"
-
-adapter_path = "${time_root_path}/adapter"

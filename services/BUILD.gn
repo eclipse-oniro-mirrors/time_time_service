@@ -12,21 +12,19 @@
 # limitations under the License.
 
 import("//base/time/time_service/time.gni")
-import("//foundation/distributeddatamgr/relational_store/relational_store.gni")
 
 config("time_service_config") {
   visibility = [ ":*" ]
   include_dirs = [
-    "//base/time/time_service/interfaces/innerkits/include",
+    "${api_path}/include",
     "../utils/native/include",
-    "time_manager/include",
+    "time/include",
     "timer/include",
     "dfx/include",
-    "//utils/system/safwk/native/include",
-    "//third_party/json/include",
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-    "${relational_store_innerapi_path}/rdb/include/",
-    "${relational_store_innerapi_path}/appdatafwk/include/",
+    "ipc/base",
+    "ipc/proxy",
+    "ipc/stub",
+    "${time_service_path}",
   ]
 }
 
@@ -34,35 +32,27 @@ ohos_shared_library("time_service") {
   configs = [ "${time_utils_path}:utils_config" ]
 
   public_configs = [
-    "//commonlibrary/c_utils/base:utils_config",
-    "//third_party/jsoncpp:jsoncpp_public_config",
     ":time_service_config",
   ]
 
   sources = [
+    "./time_permission.cpp",
+    "./time_system_ability.cpp",
     "dfx/src/time_cmd_dispatcher.cpp",
     "dfx/src/time_cmd_parse.cpp",
     "dfx/src/time_sysevent.cpp",
-    "time_manager/src/itimer_info.cpp",
-    "time_manager/src/net_conn_callback_observer.cpp",
-    "time_manager/src/nitz_subscriber.cpp",
-    "time_manager/src/ntp_trusted_time.cpp",
-    "time_manager/src/ntp_update_time.cpp",
-    "time_manager/src/simple_timer_info.cpp",
-    "time_manager/src/sntp_client.cpp",
-    "time_manager/src/time_service.cpp",
-    "time_manager/src/time_service_client.cpp",
-    "time_manager/src/time_service_notify.cpp",
-    "time_manager/src/time_service_proxy.cpp",
-    "time_manager/src/time_service_stub.cpp",
-    "time_manager/src/time_tick_notify.cpp",
-    "time_manager/src/time_zone_info.cpp",
-    "time_manager/src/timer_call_back.cpp",
-    "time_manager/src/timer_call_back_proxy.cpp",
-    "time_manager/src/timer_call_back_stub.cpp",
-    "time_manager/src/timer_notify_call_back.cpp",
-    "time_manager/src/timer_notify_call_back_proxy.cpp",
-    "time_manager/src/timer_notify_call_back_stub.cpp",
+    "ipc/proxy/timer_call_back_proxy.cpp",
+    "ipc/stub/time_service_stub.cpp",
+    "time/src/itimer_info.cpp",
+    "time/src/net_conn_callback_observer.cpp",
+    "time/src/nitz_subscriber.cpp",
+    "time/src/ntp_trusted_time.cpp",
+    "time/src/ntp_update_time.cpp",
+    "time/src/simple_timer_info.cpp",
+    "time/src/sntp_client.cpp",
+    "time/src/time_service_notify.cpp",
+    "time/src/time_tick_notify.cpp",
+    "time/src/time_zone_info.cpp",
     "timer/src/batch.cpp",
     "timer/src/timer_handler.cpp",
     "timer/src/timer_info.cpp",
@@ -70,14 +60,13 @@ ohos_shared_library("time_service") {
   ]
 
   deps = [
-    "${ability_runtime_path}/frameworks/native/ability/native:abilitykit_native",
-    "//foundation/communication/netmanager_base/interfaces/innerkits/netconnclient:net_conn_manager_if",
-    "${time_utils_path}:time_utils",
     "//third_party/jsoncpp:jsoncpp",
   ]
   external_deps = [
     "ability_base:want",
+    "ability_runtime:abilitykit_native",
     "ability_runtime:wantagent_innerkits",
+    "access_token:libaccesstoken_sdk",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
@@ -85,6 +74,7 @@ ohos_shared_library("time_service") {
     "hisysevent_native:libhisysevent",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
+    "netmanager_base:net_conn_manager_if",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]

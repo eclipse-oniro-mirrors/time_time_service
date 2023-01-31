@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//base/time/time_service/time.gni")
 import("//build/test.gni")
 
 config("module_private_config") {
@@ -19,25 +18,23 @@ config("module_private_config") {
 
   include_dirs = [
     "//base/time/time_service/interfaces/innerkits/include",
+    "unittest/include",
     "//foundation/arkui/napi/interfaces/kits/napi",
     "//third_party/json/include",
-    "//base/time/time_service/utils/native/include",
-    "${time_service_path}",
   ]
 }
 
-module_output_path = "time_utils/time_native"
+module_output_path = "time_service/time_native"
 
-ohos_unittest("TimePermissionTest") {
+ohos_unittest("TimeServiceTest") {
   module_out_path = module_output_path
 
-  sources = [ "unittest/time_permission_test.cpp" ]
+  sources = [ "unittest/src/time_service_test.cpp" ]
 
   configs = [ ":module_private_config" ]
 
   deps = [
     "//base/time/time_service/interfaces/inner_api:time_client",
-    "//base/time/time_service/utils:time_utils",
     "//foundation/systemabilitymgr/safwk/interfaces/innerkits/safwk:system_ability_fwk",
     "//foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy:samgr_proxy",
     "//third_party/googletest:gtest_main",
@@ -48,6 +45,39 @@ ohos_unittest("TimePermissionTest") {
     "ability_base:want",
     "ability_runtime:runtime",
     "ability_runtime:wantagent_innerkits",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libtoken_setproc",
+    "c_utils:utils",
+    "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+}
+
+ohos_unittest("TimeClientTest") {
+  module_out_path = module_output_path
+
+  sources = [ "unittest/src/time_client_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//base/time/time_service/interfaces/inner_api:time_client",
+    "//foundation/systemabilitymgr/safwk/interfaces/innerkits/safwk:system_ability_fwk",
+    "//foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy:samgr_proxy",
+    "//third_party/googletest:gtest_main",
+    "//third_party/jsoncpp:jsoncpp",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "ability_runtime:runtime",
+    "ability_runtime:wantagent_innerkits",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libtoken_setproc",
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
@@ -59,7 +89,10 @@ ohos_unittest("TimePermissionTest") {
 group("unittest") {
   testonly = true
 
-  deps = [
-    ":TimePermissionTest",
+  deps = []
+
+  deps += [
+    ":TimeClientTest",
+    ":TimeServiceTest",
   ]
 }
