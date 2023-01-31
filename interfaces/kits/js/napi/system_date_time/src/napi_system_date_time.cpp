@@ -52,7 +52,7 @@ napi_value NapiSystemDateTime::SetTime(napi_env env, napi_callback_info info)
     struct SetTimeContext : public ContextBase {
         int64_t time;
     };
-    auto setTimeContext = std::make_shared<SetTimeContext>();
+    SetTimeContext *setTimeContext = new SetTimeContext();
     auto inputParser = [env, setTimeContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimeContext, argc >= ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
@@ -78,7 +78,7 @@ napi_value NapiSystemDateTime::SetDate(napi_env env, napi_callback_info info)
     struct SetDateContext : public ContextBase {
         int64_t time;
     };
-    auto setDateContext = std::make_shared<SetDateContext>();
+    SetDateContext *setDateContext = new SetDateContext();
     auto inputParser = [env, setDateContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, argc >= ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
@@ -125,7 +125,7 @@ napi_value NapiSystemDateTime::GetRealActiveTime(napi_env env, napi_callback_inf
         int64_t time;
         bool isNano = true;
     };
-    auto getRealActiveTimeContext = std::make_shared<GetRealActiveTimeContext>();
+    GetRealActiveTimeContext *getRealActiveTimeContext = new GetRealActiveTimeContext();
     auto inputParser = [env, getRealActiveTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
             getRealActiveTimeContext->status =
@@ -162,7 +162,7 @@ napi_value NapiSystemDateTime::GetCurrentTime(napi_env env, napi_callback_info i
         int64_t time;
         bool isNano = true;
     };
-    auto getCurrentTimeContext = std::make_shared<GetCurrentTimeContext>();
+    GetCurrentTimeContext *getCurrentTimeContext = new GetCurrentTimeContext();
     auto inputParser = [env, getCurrentTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
             getCurrentTimeContext->status = napi_get_value_bool(env, argv[ARGV_FIRST], &getCurrentTimeContext->isNano);
@@ -198,7 +198,7 @@ napi_value NapiSystemDateTime::GetRealTime(napi_env env, napi_callback_info info
         int64_t time;
         bool isNano = true;
     };
-    auto getRealTimeContext = std::make_shared<GetRealTimeContext>();
+    GetRealTimeContext *getRealTimeContext = new GetRealTimeContext();
     auto inputParser = [env, getRealTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
             getRealTimeContext->status = napi_get_value_bool(env, argv[ARGV_FIRST], &getRealTimeContext->isNano);
@@ -233,7 +233,7 @@ napi_value NapiSystemDateTime::GetDate(napi_env env, napi_callback_info info)
     struct GetDateContext : public ContextBase {
         int64_t time;
     };
-    auto getDateContext = std::make_shared<GetDateContext>();
+    GetDateContext *getDateContext = new GetDateContext();
     auto inputParser = [env, getDateContext](size_t argc, napi_value *argv) { getDateContext->status = napi_ok; };
     getDateContext->GetCbInfo(env, info, inputParser);
     auto executor = [getDateContext]() {
@@ -257,7 +257,7 @@ napi_value NapiSystemDateTime::SetTimezone(napi_env env, napi_callback_info info
     struct SetTimezoneContext : public ContextBase {
         std::string timezone;
     };
-    auto setTimezoneContext = std::make_shared<SetTimezoneContext>();
+    SetTimezoneContext *setTimezoneContext = new SetTimezoneContext();
     auto inputParser = [env, setTimezoneContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimezoneContext, argc >= ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
@@ -283,7 +283,7 @@ napi_value NapiSystemDateTime::GetTimezone(napi_env env, napi_callback_info info
     struct GetTimezoneContext : public ContextBase {
         std::string timezone;
     };
-    auto getTimezoneContext = std::make_shared<GetTimezoneContext>();
+    GetTimezoneContext *getTimezoneContext = new GetTimezoneContext();
     auto inputParser = [env, getTimezoneContext](size_t argc, napi_value *argv) {
         getTimezoneContext->status = napi_ok;
     };

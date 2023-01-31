@@ -43,7 +43,6 @@ struct ContextBase {
     std::string errMessage;
     int32_t errCode;
     napi_value self = nullptr;
-    void *native = nullptr;
 
 private:
     napi_deferred deferred = nullptr;
@@ -53,7 +52,6 @@ private:
 
     NapiAsyncExecute execute = nullptr;
     NapiAsyncComplete complete = nullptr;
-    std::shared_ptr<ContextBase> hold; /* cross thread data */
 
     static constexpr size_t ARGC_MAX = 3;
 
@@ -62,7 +60,7 @@ private:
 
 class NapiAsyncWork {
 public:
-    static napi_value Enqueue(napi_env env, std::shared_ptr<ContextBase> ctxt, const std::string &name,
+    static napi_value Enqueue(napi_env env, ContextBase *ctxt, const std::string &name,
         NapiAsyncExecute execute = NapiAsyncExecute(), NapiAsyncComplete complete = NapiAsyncComplete());
 
 private:

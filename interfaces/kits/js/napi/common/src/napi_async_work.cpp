@@ -47,8 +47,6 @@ void ContextBase::GetCbInfo(napi_env envi, napi_callback_info info, NapiCbInfoPa
     CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, self != nullptr, "no JavaScript this argument!",
         JsErrorCode::PARAMETER_ERROR);
     napi_create_reference(env, self, 1, &selfRef);
-    status = napi_unwrap(env, self, &native);
-    CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, this, "self unwrap failed!", JsErrorCode::PARAMETER_ERROR);
 
     if (!sync && (argc > 0)) {
         // get the last arguments :: <callback>
@@ -73,7 +71,7 @@ void ContextBase::GetCbInfo(napi_env envi, napi_callback_info info, NapiCbInfoPa
     }
 }
 
-napi_value NapiAsyncWork::Enqueue(napi_env env, std::shared_ptr<ContextBase> ctxt, const std::string &name,
+napi_value NapiAsyncWork::Enqueue(napi_env env, ContextBase *ctxt, const std::string &name,
     NapiAsyncExecute execute, NapiAsyncComplete complete)
 {
     if (ctxt->status != napi_ok) {
@@ -113,10 +111,10 @@ napi_value NapiAsyncWork::Enqueue(napi_env env, std::shared_ptr<ContextBase> ctx
                 ctxt->complete(ctxt->output);
             }
             GenerateOutput(ctxt);
+            delete ctxt;
         },
-        reinterpret_cast<void *>(ctxt.get()), &ctxt->work);
+        reinterpret_cast<void *>(ctxt), &ctxt->work);
     napi_queue_async_work(ctxt->env, ctxt->work);
-    ctxt->hold = ctxt; // save crossing-thread ctxt.
     return promise;
 }
 
@@ -157,7 +155,6 @@ void NapiAsyncWork::GenerateOutput(ContextBase *ctxt)
         TIME_HILOGD(TIME_MODULE_JS_NAPI, "call callback function");
         napi_call_function(ctxt->env, nullptr, callback, RESULT_ALL, result, &callbackResult);
     }
-    ctxt->hold.reset(); // release ctxt.
 }
 } // namespace Time
 } // namespace MiscServices
