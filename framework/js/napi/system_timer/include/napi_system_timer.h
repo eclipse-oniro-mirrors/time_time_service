@@ -47,7 +47,7 @@ private:
 class NapiSystemTimer {
 public:
     static napi_value SystemTimerInit(napi_env env, napi_value exports);
-    static void GetTimerOptions(const napi_env &env, std::shared_ptr<ContextBase> context, const napi_value &value,
+    static void GetTimerOptions(const napi_env &env, ContextBase *context, const napi_value &value,
                                 std::shared_ptr<ITimerInfoInstance> &iTimerInfoInstance);
     static napi_value CreateTimer(napi_env env, napi_callback_info info);
     static napi_value StartTimer(napi_env env, napi_callback_info info);

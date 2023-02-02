@@ -144,7 +144,7 @@ std::map<std::string, napi_valuetype> TYPE_STRING_MAP = {
     { "callback", napi_function },
 };
 
-void ParseTimerOptions(napi_env env, std::shared_ptr<ContextBase> context, std::string paraType,
+void ParseTimerOptions(napi_env env, ContextBase *context, std::string paraType,
     const napi_value &value, std::shared_ptr<ITimerInfoInstance> &iTimerInfoInstance)
 {
     napi_value result = nullptr;
@@ -182,7 +182,7 @@ void ParseTimerOptions(napi_env env, std::shared_ptr<ContextBase> context, std::
     }
 }
 
-void NapiSystemTimer::GetTimerOptions(const napi_env &env, std::shared_ptr<ContextBase> context,
+void NapiSystemTimer::GetTimerOptions(const napi_env &env, ContextBase *context,
     const napi_value &value, std::shared_ptr<ITimerInfoInstance> &iTimerInfoInstance)
 {
     bool hasProperty = false;
@@ -230,7 +230,7 @@ napi_value NapiSystemTimer::CreateTimer(napi_env env, napi_callback_info info)
         uint64_t timerId;
         std::shared_ptr<ITimerInfoInstance> iTimerInfoInstance = std::make_shared<ITimerInfoInstance>();
     };
-    auto createTimerContext = std::make_shared<CreateTimerContext>();
+    CreateTimerContext *createTimerContext = new CreateTimerContext();
     auto inputParser = [env, createTimerContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, createTimerContext, argc >= ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
@@ -263,7 +263,7 @@ napi_value NapiSystemTimer::StartTimer(napi_env env, napi_callback_info info)
         uint64_t timerId;
         uint64_t triggerTime;
     };
-    auto startTimerContext = std::make_shared<StartTimerContext>();
+    StartTimerContext *startTimerContext = new StartTimerContext();
     auto inputParser = [env, startTimerContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, startTimerContext, argc >= ARGC_TWO, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
@@ -297,7 +297,7 @@ napi_value NapiSystemTimer::StopTimer(napi_env env, napi_callback_info info)
     struct StopTimerContext : public ContextBase {
         uint64_t timerId;
     };
-    auto stopTimerContext = std::make_shared<StopTimerContext>();
+    StopTimerContext *stopTimerContext = new StopTimerContext();
     auto inputParser = [env, stopTimerContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, stopTimerContext, argc >= ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
@@ -325,7 +325,7 @@ napi_value NapiSystemTimer::DestroyTimer(napi_env env, napi_callback_info info)
     struct DestroyTimerContext : public ContextBase {
         uint64_t timerId;
     };
-    auto destroyTimerContext = std::make_shared<DestroyTimerContext>();
+    DestroyTimerContext *destroyTimerContext = new DestroyTimerContext();
     auto inputParser = [env, destroyTimerContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, destroyTimerContext, argc == ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
