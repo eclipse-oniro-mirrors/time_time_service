@@ -22,12 +22,11 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 using HiSysEventNameSpace = OHOS::HiviewDFX::HiSysEvent;
-const std::string DOMAIN_STR = std::string(HiSysEventNameSpace::Domain::TIME);
 } // namespace
 
 void StatisticReporter(int32_t callerPid, int32_t callerUid, int32_t type, int64_t triggerTime, uint64_t interval)
 {
-    int ret = HiSysEventNameSpace::Write(DOMAIN_STR, "MISC_TIME_STATISTIC_REPORT",
+    int ret = HiSysEventWrite(HiSysEventNameSpace::Domain::TIME, "MISC_TIME_STATISTIC_REPORT",
         HiSysEventNameSpace::EventType::STATISTIC, "CALLER_PID", callerPid, "CALLER_UID", callerUid, "TIMER_TYPE",
         type, "TRIGGER_TIME", triggerTime, "INTERVAL", interval);
     if (ret != 0) {
