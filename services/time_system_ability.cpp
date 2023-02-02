@@ -70,12 +70,12 @@ std::shared_ptr<TimerManager> TimeSystemAbility::timerManagerHandler_ = nullptr;
 
 TimeSystemAbility::TimeSystemAbility(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), state_(ServiceRunningState::STATE_NOT_START),
-      rtc_id(get_wall_clock_rtc_id())
+      rtcId(GetWallClockRtcId())
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " TimeSystemAbility Start.");
 }
 
-TimeSystemAbility::TimeSystemAbility() : state_(ServiceRunningState::STATE_NOT_START), rtc_id(get_wall_clock_rtc_id())
+TimeSystemAbility::TimeSystemAbility() : state_(ServiceRunningState::STATE_NOT_START), rtcId(GetWallClockRtcId())
 {
 }
 
@@ -131,7 +131,7 @@ void TimeSystemAbility::OnStart()
     InitDumpCmd();
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
     if (Init() != ERR_OK) {
-        auto callback = [=]() { Init(); };
+        auto callback = [this]() { Init(); };
         serviceHandler_->PostTask(callback, INIT_INTERVAL);
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init failed. Try again 10s later.");
     }
@@ -354,7 +354,7 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
         TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday time fail: %{public}d.", result);
         return false;
     }
-    auto ret = set_rtc_time(tv.tv_sec);
+    auto ret = SetRtcTime(tv.tv_sec);
     if (ret < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "set rtc fail: %{public}d.", ret);
         return false;
@@ -457,19 +457,19 @@ void TimeSystemAbility::DumpTimerTriggerById(int fd, const std::vector<std::stri
     timerManagerHandler_->ShowTimerTriggerById(fd, std::atoi(input.at(paramNumPos).c_str()));
 }
 
-int TimeSystemAbility::set_rtc_time(time_t sec)
+int TimeSystemAbility::SetRtcTime(time_t sec)
 {
     struct rtc_time rtc {};
     struct tm tm {};
     struct tm *gmtime_res = nullptr;
     int fd = 0;
     int res;
-    if (rtc_id < 0) {
+    if (rtcId < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "invalid rtc id: %{public}s:", strerror(ENODEV));
         return -1;
     }
     std::stringstream strs;
-    strs << "/dev/rtc" << rtc_id;
+    strs << "/dev/rtc" << rtcId;
     auto rtc_dev = strs.str();
     TIME_HILOGI(TIME_MODULE_SERVICE, "rtc_dev : %{public}s:", rtc_dev.data());
     auto rtc_data = rtc_dev.data();
@@ -502,10 +502,10 @@ int TimeSystemAbility::set_rtc_time(time_t sec)
     return res;
 }
 
-bool TimeSystemAbility::check_rtc(std::string rtc_path, uint64_t rtc_id_t)
+bool TimeSystemAbility::CheckRtc(std::string rtcPath, uint64_t rtcIdT)
 {
     std::stringstream strs;
-    strs << rtc_path << "/rtc" << rtc_id_t << "/hctosys";
+    strs << rtcPath << "/rtc" << rtcIdT << "/hctosys";
     auto hctosys_path = strs.str();
 
     uint32_t hctosys;
@@ -519,13 +519,13 @@ bool TimeSystemAbility::check_rtc(std::string rtc_path, uint64_t rtc_id_t)
     return true;
 }
 
-int TimeSystemAbility::get_wall_clock_rtc_id()
+int TimeSystemAbility::GetWallClockRtcId()
 {
-    std::string rtc_path = "/sys/class/rtc";
+    std::string rtcPath = "/sys/class/rtc";
 
-    std::unique_ptr<DIR, int (*)(DIR *)> dir(opendir(rtc_path.c_str()), closedir);
+    std::unique_ptr<DIR, int (*)(DIR *)> dir(opendir(rtcPath.c_str()), closedir);
     if (!dir.get()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to open %{public}s: %{public}s", rtc_path.c_str(), strerror(errno));
+        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to open %{public}s: %{public}s", rtcPath.c_str(), strerror(errno));
         return -1;
     }
 
@@ -533,18 +533,18 @@ int TimeSystemAbility::get_wall_clock_rtc_id()
     std::string s = "rtc";
     while (errno = 0, dirent = readdir(dir.get())) {
         std::string name(dirent->d_name);
-        unsigned long rtc_id_t = 0;
+        unsigned long rtcIdT = 0;
         auto index = name.find(s);
         if (index == std::string::npos) {
             continue;
         } else {
-            auto rtc_id_str = name.substr(index + s.length());
-            rtc_id_t = std::stoul(rtc_id_str);
+            auto rtcIdStr = name.substr(index + s.length());
+            rtcIdT = std::stoul(rtcIdStr);
         }
 
-        if (check_rtc(rtc_path, rtc_id_t)) {
-            TIME_HILOGD(TIME_MODULE_SERVICE, "found wall clock rtc %{public}ld", rtc_id_t);
-            return rtc_id_t;
+        if (CheckRtc(rtcPath, rtcIdT)) {
+            TIME_HILOGD(TIME_MODULE_SERVICE, "found wall clock rtc %{public}ld", rtcIdT);
+            return rtcIdT;
         }
     }
 

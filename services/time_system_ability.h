@@ -87,15 +87,15 @@ private:
     void InitTimerHandler();
     void ParseTimerPara(std::shared_ptr<ITimerInfo> timerOptions, TimerPara &paras);
     bool GetTimeByClockid(clockid_t clockID, struct timespec &tv);
-    int set_rtc_time(time_t sec);
+    int SetRtcTime(time_t sec);
 
-    bool check_rtc(std::string rtc_path, uint64_t rtc_id);
-    int get_wall_clock_rtc_id();
+    bool CheckRtc(std::string rtcPath, uint64_t rtcId);
+    int GetWallClockRtcId();
 
     ServiceRunningState state_;
     static std::mutex instanceLock_;
     static sptr<TimeSystemAbility> instance_;
-    const int rtc_id;
+    const int rtcId;
     static std::shared_ptr<AppExecFwk::EventHandler> serviceHandler_;
     static std::shared_ptr<TimerManager> timerManagerHandler_;
 };
