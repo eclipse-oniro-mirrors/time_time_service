@@ -40,8 +40,8 @@ struct ContextBase {
     napi_env env = nullptr;
     napi_value output = nullptr;
     napi_status status = napi_invalid_arg;
-    std::string errMessage;
-    int32_t errCode;
+    std::string errMessage = "";
+    int32_t errCode = 0;
     napi_value self = nullptr;
 
 private:

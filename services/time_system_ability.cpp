@@ -502,10 +502,10 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
     return res;
 }
 
-bool TimeSystemAbility::CheckRtc(std::string rtcPath, uint64_t rtcIdT)
+bool TimeSystemAbility::CheckRtc(std::string rtcPath, uint64_t rtcId)
 {
     std::stringstream strs;
-    strs << rtcPath << "/rtc" << rtcIdT << "/hctosys";
+    strs << rtcPath << "/rtc" << rtcId << "/hctosys";
     auto hctosys_path = strs.str();
 
     uint32_t hctosys;
@@ -533,18 +533,18 @@ int TimeSystemAbility::GetWallClockRtcId()
     std::string s = "rtc";
     while (errno = 0, dirent = readdir(dir.get())) {
         std::string name(dirent->d_name);
-        unsigned long rtcIdT = 0;
+        unsigned long rtcId = 0;
         auto index = name.find(s);
         if (index == std::string::npos) {
             continue;
         } else {
             auto rtcIdStr = name.substr(index + s.length());
-            rtcIdT = std::stoul(rtcIdStr);
+            rtcId = std::stoul(rtcIdStr);
         }
 
-        if (CheckRtc(rtcPath, rtcIdT)) {
-            TIME_HILOGD(TIME_MODULE_SERVICE, "found wall clock rtc %{public}ld", rtcIdT);
-            return rtcIdT;
+        if (CheckRtc(rtcPath, rtcId)) {
+            TIME_HILOGD(TIME_MODULE_SERVICE, "found wall clock rtc %{public}ld", rtcId);
+            return rtcId;
         }
     }
 
@@ -678,14 +678,15 @@ int32_t TimeSystemAbility::GetThreadTimeNs(int64_t &times)
     return E_TIME_DEAL_FAILED;
 }
 
-bool TimeSystemAbility::GetTimeByClockid(clockid_t clk_id, struct timespec &tv)
+bool TimeSystemAbility::GetTimeByClockid(clockid_t clockId, struct timespec &tv)
 {
-    if (clock_gettime(clk_id, &tv) < 0) {
+    if (clock_gettime(clockId, &tv) < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Failed clock_gettime.");
         return false;
     }
     return true;
 }
+
 void TimeSystemAbility::NetworkTimeStatusOff()
 {
     DelayedSingleton<NtpUpdateTime>::GetInstance()->UpdateStatusOff();
