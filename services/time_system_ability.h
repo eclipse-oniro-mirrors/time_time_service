@@ -16,19 +16,19 @@
 #ifndef SERVICES_INCLUDE_TIME_SERVICES_H
 #define SERVICES_INCLUDE_TIME_SERVICES_H
 
+#include <cinttypes>
 #include <mutex>
-#include <inttypes.h>
 
-#include "time_service_stub.h"
-#include "time_service_notify.h"
-#include "timer_manager.h"
-#include "system_ability.h"
+#include "ctime"
 #include "event_handler.h"
-#include "time.h"
 #include "securec.h"
+#include "system_ability.h"
 #include "time_cmd_dispatcher.h"
 #include "time_cmd_parse.h"
+#include "time_service_notify.h"
+#include "time_service_stub.h"
 #include "time_sysevent.h"
+#include "timer_manager.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -47,8 +47,8 @@ public:
     static sptr<TimeSystemAbility> GetInstance();
     int32_t SetTime(int64_t time, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
     bool SetRealTime(int64_t time);
-    int32_t SetTimeZone(const std::string &timezoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
-    int32_t GetTimeZone(std::string &timezoneId) override;
+    int32_t SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
+    int32_t GetTimeZone(std::string &timeZoneId) override;
     int32_t GetWallTimeMs(int64_t &times) override;
     int32_t GetWallTimeNs(int64_t &times) override;
     int32_t GetBootTimeMs(int64_t &times) override;
@@ -61,7 +61,7 @@ public:
     int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
         uint64_t &timerId) override;
     int32_t CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> Callback, uint64_t &timerId);
-    int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
+    int32_t StartTimer(uint64_t timerId, uint64_t triggerTimes) override;
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;
     void NetworkTimeStatusOff() override;
@@ -88,16 +88,16 @@ private:
     void InitTimeZone();
     void InitTimerHandler();
     void ParseTimerPara(std::shared_ptr<ITimerInfo> timerOptions, TimerPara &paras);
-    bool GetTimeByClockid(clockid_t clockID, struct timespec &tv);
-    int set_rtc_time(time_t sec);
+    bool GetTimeByClockid(clockid_t clockId, struct timespec &tv);
+    int SetRtcTime(time_t sec);
 
-    bool check_rtc(std::string rtc_path, uint64_t rtc_id);
-    int get_wall_clock_rtc_id();
+    bool CheckRtc(std::string rtcPath, uint64_t rtcId);
+    int GetWallClockRtcId();
 
     ServiceRunningState state_;
     static std::mutex instanceLock_;
     static sptr<TimeSystemAbility> instance_;
-    const int rtc_id;
+    const int rtcId;
     static std::shared_ptr<AppExecFwk::EventHandler> serviceHandler_;
     static std::shared_ptr<TimerManager> timerManagerHandler_;
 };

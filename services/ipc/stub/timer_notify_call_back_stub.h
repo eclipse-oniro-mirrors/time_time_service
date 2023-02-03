@@ -16,7 +16,7 @@
 #ifndef TIMER_NOTIFY_CALL_BACK_STUB_H
 #define TIMER_NOTIFY_CALL_BACK_STUB_H
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <iremote_stub.h>
 #include <nocopyable.h>
 

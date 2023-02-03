@@ -16,7 +16,7 @@
 #ifndef TIMER_NOTIFY_CALL_BACK_PROXY_H
 #define TIMER_NOTIFY_CALL_BACK_PROXY_H
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <iremote_proxy.h>
 #include <nocopyable.h>
 
@@ -27,12 +27,12 @@ namespace OHOS {
 namespace MiscServices {
 class TimerNotifyCallbackProxy : public IRemoteProxy<ITimerNotifyCallback> {
 public:
-    explicit TimerNotifyCallbackProxy(const sptr<IRemoteObject>& impl);
+    explicit TimerNotifyCallbackProxy(const sptr<IRemoteObject>& object);
 	
     ~TimerNotifyCallbackProxy();
     DISALLOW_COPY_AND_MOVE(TimerNotifyCallbackProxy);
 	
-    virtual void Finish(const uint64_t timerId) override;
+    void Finish(const uint64_t timerId) override;
 private:
     static inline BrokerDelegator<TimerNotifyCallbackProxy> delegator_;
 };
