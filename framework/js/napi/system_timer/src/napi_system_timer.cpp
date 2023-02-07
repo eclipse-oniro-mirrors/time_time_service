@@ -227,7 +227,7 @@ void NapiSystemTimer::GetTimerOptions(const napi_env &env, ContextBase *context,
 napi_value NapiSystemTimer::CreateTimer(napi_env env, napi_callback_info info)
 {
     struct CreateTimerContext : public ContextBase {
-        uint64_t timerId;
+        uint64_t timerId = 0;
         std::shared_ptr<ITimerInfoInstance> iTimerInfoInstance = std::make_shared<ITimerInfoInstance>();
     };
     CreateTimerContext *createTimerContext = new CreateTimerContext();
@@ -260,8 +260,8 @@ napi_value NapiSystemTimer::CreateTimer(napi_env env, napi_callback_info info)
 napi_value NapiSystemTimer::StartTimer(napi_env env, napi_callback_info info)
 {
     struct StartTimerContext : public ContextBase {
-        uint64_t timerId;
-        uint64_t triggerTime;
+        uint64_t timerId = 0;
+        uint64_t triggerTime = 0;
     };
     StartTimerContext *startTimerContext = new StartTimerContext();
     auto inputParser = [env, startTimerContext](size_t argc, napi_value *argv) {
@@ -295,7 +295,7 @@ napi_value NapiSystemTimer::StartTimer(napi_env env, napi_callback_info info)
 napi_value NapiSystemTimer::StopTimer(napi_env env, napi_callback_info info)
 {
     struct StopTimerContext : public ContextBase {
-        uint64_t timerId;
+        uint64_t timerId = 0;
     };
     StopTimerContext *stopTimerContext = new StopTimerContext();
     auto inputParser = [env, stopTimerContext](size_t argc, napi_value *argv) {
@@ -323,7 +323,7 @@ napi_value NapiSystemTimer::StopTimer(napi_env env, napi_callback_info info)
 napi_value NapiSystemTimer::DestroyTimer(napi_env env, napi_callback_info info)
 {
     struct DestroyTimerContext : public ContextBase {
-        uint64_t timerId;
+        uint64_t timerId = 0;
     };
     DestroyTimerContext *destroyTimerContext = new DestroyTimerContext();
     auto inputParser = [env, destroyTimerContext](size_t argc, napi_value *argv) {

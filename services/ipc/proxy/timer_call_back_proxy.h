@@ -27,7 +27,7 @@ namespace OHOS {
 namespace MiscServices {
 class TimerCallbackProxy : public IRemoteProxy<ITimerCallback> {
 public:
-    explicit TimerCallbackProxy(const sptr<IRemoteObject> &impl);
+    explicit TimerCallbackProxy(const sptr<IRemoteObject> &object);
 
     ~TimerCallbackProxy();
     DISALLOW_COPY_AND_MOVE(TimerCallbackProxy);

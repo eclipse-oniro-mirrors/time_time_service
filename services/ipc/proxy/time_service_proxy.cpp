@@ -155,7 +155,7 @@ int32_t TimeServiceProxy::DestroyTimer(uint64_t timerId)
     return Remote()->SendRequest(DESTROY_TIMER, data, reply, option);
 }
 
-int32_t TimeServiceProxy::SetTimeZone(const std::string &timezoneId, APIVersion apiVersion)
+int32_t TimeServiceProxy::SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion)
 {
     MessageParcel data, reply;
     MessageOption option;
@@ -163,7 +163,7 @@ int32_t TimeServiceProxy::SetTimeZone(const std::string &timezoneId, APIVersion 
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    if (!data.WriteString(timezoneId)) {
+    if (!data.WriteString(timeZoneId)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
@@ -179,7 +179,7 @@ int32_t TimeServiceProxy::SetTimeZone(const std::string &timezoneId, APIVersion 
     return result;
 }
 
-int32_t TimeServiceProxy::GetTimeZone(std::string &timezoneId)
+int32_t TimeServiceProxy::GetTimeZone(std::string &timeZoneId)
 {
     MessageParcel data, reply;
     MessageOption option;
@@ -194,7 +194,7 @@ int32_t TimeServiceProxy::GetTimeZone(std::string &timezoneId)
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetTimeZone failed, error code is: %{public}d", result);
         return result;
     }
-    timezoneId = reply.ReadString();
+    timeZoneId = reply.ReadString();
     return result;
 }
 
