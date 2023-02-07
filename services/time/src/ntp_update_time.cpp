@@ -130,13 +130,10 @@ void NtpUpdateTime::SubscriberNITZTimeChangeCommonEvent()
     MatchingSkills matchingSkills;
     matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED);
     CommonEventSubscribeInfo subscriberInfo(matchingSkills);
-    std::shared_ptr<NITZSubscriber> subscriberPtr =
-        std::make_shared<NITZSubscriber>(subscriberInfo);
-    if (subscriberPtr != nullptr) {
-        bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
-        if (!subscribeResult) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent failed");
-        }
+    std::shared_ptr<NITZSubscriber> subscriberPtr = std::make_shared<NITZSubscriber>(subscriberInfo);
+    bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
+    if (!subscribeResult) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent failed");
     }
 }
 

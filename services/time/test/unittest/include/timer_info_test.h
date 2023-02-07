@@ -15,14 +15,14 @@
 #ifndef OHOS_GLOBAL_TIME_SERVICE_TEST_H
 #define OHOS_GLOBAL_TIME_SERVICE_TEST_H
 
-#include <string>
-#include <inttypes.h>
+#include <cinttypes>
+#include <cstdint>
 #include <functional>
 #include <gtest/gtest.h>
-#include <cstdint>
-#include <vector>
+#include <string>
 #include <sys/time.h>
 #include <thread>
+#include <vector>
 
 #include "time_common.h"
 #include "time_service_client.h"

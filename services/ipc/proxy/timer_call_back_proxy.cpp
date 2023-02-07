@@ -49,7 +49,7 @@ void TimerCallbackProxy::NotifyTimer(const uint64_t timerId, const sptr<IRemoteO
         TIME_HILOGE(TIME_MODULE_CLIENT, "write timerId failed!");
         return;
     }
-    if (!data.WriteRemoteObject(timerCallback)) {
+    if (timerCallback != nullptr && !data.WriteRemoteObject(timerCallback)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "write timerCallback failed!");
         return;
     }

@@ -77,7 +77,7 @@ bool FuzzTimeDump(const uint8_t *rawData, size_t size)
     std::string str(reinterpret_cast<const char *>(rawData), size);
     args.push_back(Str8ToStr16(str));
     int fd = 0;
-  TimeSystemAbility::GetInstance()->Dump(fd, args);
+    TimeSystemAbility::GetInstance()->Dump(fd, args);
     return true;
 }
 }
