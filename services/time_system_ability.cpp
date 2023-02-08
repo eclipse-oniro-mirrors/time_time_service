@@ -383,7 +383,7 @@ int TimeSystemAbility::Dump(int fd, const std::vector<std::u16string> &args)
     }
 
     std::vector<std::string> argsStr;
-    for (auto item : args) {
+    for (auto &item : args) {
         argsStr.emplace_back(Str16ToStr8(item));
     }
 
@@ -502,16 +502,15 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
     return res;
 }
 
-bool TimeSystemAbility::CheckRtc(std::string rtcPath, uint64_t rtcId)
+bool TimeSystemAbility::CheckRtc(const std::string &rtcPath, uint64_t rtcId)
 {
     std::stringstream strs;
     strs << rtcPath << "/rtc" << rtcId << "/hctosys";
     auto hctosys_path = strs.str();
 
-    uint32_t hctosys;
     std::fstream file(hctosys_path.data(), std::ios_base::in);
     if (file.is_open()) {
-        file >> hctosys;
+        return true;
     } else {
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to open %{public}s", hctosys_path.data());
         return false;

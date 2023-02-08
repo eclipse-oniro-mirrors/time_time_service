@@ -40,7 +40,7 @@ public:
     int32_t GetThreadTimeNs(int64_t &times) override;
     int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &timerCallback,
         uint64_t &timerId) override;
-    int32_t StartTimer(uint64_t timerId, uint64_t triggerTimes) override;
+    int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;
     void NetworkTimeStatusOff() override;
