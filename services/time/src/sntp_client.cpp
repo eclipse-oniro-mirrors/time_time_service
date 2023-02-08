@@ -195,7 +195,7 @@ int64_t SNTPClient::ConvertNtpToStamp(uint64_t _ntpTs)
         return 0;
     }
     return ((second - SECONDS_SINCE_FIRST_EPOCH) * MILLISECOND_TO_SECOND) +
-        ((fraction * MILLISECOND_TO_SECOND) / FRACTION_TO_SECOND);
+           ((fraction * MILLISECOND_TO_SECOND) / FRACTION_TO_SECOND);
 }
 
 void SNTPClient::CreateMessage(char* buffer)

@@ -101,7 +101,7 @@ int32_t TimeServiceProxy::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOp
     return ret;
 }
 
-int32_t TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTimes)
+int32_t TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTime)
 {
     MessageParcel data, reply;
     MessageOption option;
@@ -116,8 +116,8 @@ int32_t TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTimes)
         return E_TIME_WRITE_PARCEL_ERROR;
     }
 
-    if (!data.WriteUint64(triggerTimes)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write triggerTimes");
+    if (!data.WriteUint64(triggerTime)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write triggerTime");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
     return Remote()->SendRequest(START_TIMER, data, reply, option);

@@ -86,7 +86,6 @@ void ITimerInfoInstance::OnTrigger()
             delete dataWorkerData;
             dataWorkerData = nullptr;
             delete work;
-            work = nullptr;
         });
 }
 

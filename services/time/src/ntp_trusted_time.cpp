@@ -28,6 +28,7 @@ namespace MiscServices {
 namespace {
 constexpr int64_t INVALID_MILLIS = -1;
 constexpr int64_t HALF = 2;
+constexpr int32_t RETRY_TIMES = 2;
 }
 
 NtpTrustedTime::NtpTrustedTime() {}
@@ -37,30 +38,20 @@ bool NtpTrustedTime::ForceRefresh(std::string ntpServer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     SNTPClient client;
-    if (client.RequestTime(ntpServer)) {
-        if (mTimeResult != nullptr) {
-            mTimeResult->Clear();
-        }
-        int64_t ntpCertainty = client.getRoundTripTime() / HALF;
-        mTimeResult = std::make_shared<TimeResult>(client.getNtpTIme(), client.getNtpTimeReference(), ntpCertainty);
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Get Ntp time result");
-        TIME_HILOGD(TIME_MODULE_SERVICE, "true end.");
-        return true;
-    } else {
+    for (int i = 0; i < RETRY_TIMES; i++) {
         if (client.RequestTime(ntpServer)) {
             if (mTimeResult != nullptr) {
                 mTimeResult->Clear();
             }
-            int64_t ntpCertnR = client.getRoundTripTime() / HALF;
-            mTimeResult = std::make_shared<TimeResult>(client.getNtpTIme(), client.getNtpTimeReference(), ntpCertnR);
-            TIME_HILOGD(TIME_MODULE_SERVICE, "Re Get Ntp time result");
-            TIME_HILOGD(TIME_MODULE_SERVICE, "Re true end.");
+            int64_t ntpCertainty = client.getRoundTripTime() / HALF;
+            mTimeResult = std::make_shared<TimeResult>(client.getNtpTIme(), client.getNtpTimeReference(), ntpCertainty);
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Get Ntp time result");
+            TIME_HILOGD(TIME_MODULE_SERVICE, "true end.");
             return true;
-        } else {
-            TIME_HILOGD(TIME_MODULE_SERVICE, "false end.");
-            return false;
         }
     }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "false end.");
+    return false;
 }
 
 int64_t NtpTrustedTime::CurrentTimeMillis()
