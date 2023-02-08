@@ -30,7 +30,7 @@ namespace MiscServices {
 namespace {
 constexpr int64_t INVALID_MILLIS = -1;
 constexpr int64_t HALF = 2;
-constexpr int LOOP = 2;
+constexpr int32_t RETRY_TIMES = 2;
 } // namespace
 
 NtpTrustedTime::NtpTrustedTime()
@@ -44,7 +44,7 @@ bool NtpTrustedTime::ForceRefresh(std::string ntpServer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     SNTPClient client;
-    for (int i = 0; i < LOOP; i++) {
+    for (int i = 0; i < RETRY_TIMES; i++) {
         if (client.RequestTime(ntpServer)) {
             if (mTimeResult != nullptr) {
                 mTimeResult->Clear();
