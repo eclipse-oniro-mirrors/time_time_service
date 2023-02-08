@@ -91,7 +91,7 @@ private:
     bool GetTimeByClockid(clockid_t clockId, struct timespec &tv);
     int SetRtcTime(time_t sec);
 
-    bool CheckRtc(std::string rtcPath, uint64_t rtcId);
+    bool CheckRtc(const std::string &rtcPath, uint64_t rtcId);
     int GetWallClockRtcId();
 
     ServiceRunningState state_;
