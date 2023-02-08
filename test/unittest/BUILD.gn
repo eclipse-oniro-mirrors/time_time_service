@@ -19,11 +19,14 @@ config("module_private_config") {
 
   include_dirs = [
     "${api_path}/include",
-    "//foundation/arkui/napi/interfaces/kits/napi",
-    "//third_party/json/include",
     "${time_service_path}/time/test/unittest/include",
     "${time_utils_path}/native/include",
     "${time_service_path}/time/include",
+    "${time_service_path}",
+    "${time_service_path}/dfx/include",
+    "${time_service_path}/ipc/stub",
+    "${time_service_path}/ipc/base",
+    "${time_service_path}/timer/include",
   ]
 }
 
@@ -38,9 +41,8 @@ ohos_unittest("TimeDfxTest") {
 
   deps = [
     "../../interfaces/inner_api:time_client",
-    "../../services:time_service",
+    "../../services:time_service_static",
     "//third_party/googletest:gtest_main",
-    "//third_party/jsoncpp:jsoncpp",
   ]
 
   external_deps = [
@@ -53,7 +55,7 @@ ohos_unittest("TimeDfxTest") {
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
+    "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "timer_notify_call_back_stub.h"
+#include "timer_notify_callback_stub.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -27,7 +27,7 @@ int TimerNotifyCallbackStub::OnRemoteRequest(uint32_t code, MessageParcel &data,
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed,descripter is not matched!");
         return E_TIME_READ_PARCEL_ERROR;
     }
-	
+
     switch (code) {
         case static_cast<int>(ITimerNotifyCallback::Message::FINISH): {
             return OnFinishStub(data);

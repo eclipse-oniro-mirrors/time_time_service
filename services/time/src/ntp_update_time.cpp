@@ -22,6 +22,7 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
+#include <sys/prctl.h>
 
 #include "json/json.h"
 #include "net_conn_callback_observer.h"
@@ -71,6 +72,7 @@ void NtpUpdateTime::Init()
     }
 
     std::thread th = std::thread([this]() {
+        pthread_setname_np(pthread_self(), "time_monitor_network");
         constexpr int RETRY_MAX_TIMES = 100;
         int retryCount = 0;
         constexpr int RETRY_TIME_INTERVAL_MILLISECOND = 1 * 1000 * 1000; // retry after 2 second

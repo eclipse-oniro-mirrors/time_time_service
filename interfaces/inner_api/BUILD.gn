@@ -16,40 +16,37 @@ import("//build/ohos.gni")
 config("time_client_config") {
   visibility = [ ":*" ]
   include_dirs = [
-    "${time_service_path}/ipc/proxy",
-    "${time_service_path}/ipc/stub",
+    "${time_service_path}/ipc/proxy/inner_api_include",
+    "${time_service_path}/ipc/stub/inner_api_include",
     "${time_service_path}/ipc/base",
     "include",
     "${time_utils_path}/native/include",
-    "${time_service_path}/time/include",
+    "${time_service_path}/time/include/inner_api_include",
   ]
 }
 
 ohos_shared_library("time_client") {
   sources = [
-    "${time_service_path}/time/src/itimer_info.cpp",
     "${api_path}/src/time_service_client.cpp",
     "${time_service_path}/ipc/proxy/time_service_proxy.cpp",
-    "${time_service_path}/time/src/timer_call_back.cpp",
     "${time_service_path}/ipc/stub/timer_call_back_stub.cpp",
-    "${time_service_path}/time/src/timer_notify_call_back.cpp",
-    "${time_service_path}/ipc/proxy/timer_notify_call_back_proxy.cpp",
-    "${time_service_path}/ipc/stub/timer_notify_call_back_stub.cpp",
+    "${time_service_path}/ipc/stub/timer_notify_callback_stub.cpp",
+    "${time_service_path}/time/src/itimer_info.cpp",
+    "${time_service_path}/time/src/timer_call_back.cpp",
+    "${time_service_path}/time/src/timer_notify_callback.cpp",
   ]
-
+  version_script = "libtime_client.versionscript"
   configs = [ ":time_client_config" ]
   public_configs = [ ":time_client_config" ]
-  deps = [
-    "${time_utils_path}:time_utils",
-    "//third_party/jsoncpp:jsoncpp",
-  ]
+  innerapi_tags = [ "platformsdk" ]
+  deps = [ "${time_utils_path}:time_utils" ]
   external_deps = [
+    "ability_runtime:abilitykit_native",
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
+    "ipc:ipc_single",
     "samgr:samgr_proxy",
-    "ability_runtime:abilitykit_native",
   ]
   subsystem_name = "time"
   part_name = "time_service"

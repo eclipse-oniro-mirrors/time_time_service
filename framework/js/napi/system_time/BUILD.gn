@@ -18,11 +18,9 @@ ohos_shared_library("systemtime") {
     "../../../interfaces/inner_api/include",
     "include",
     "../common/include",
-
   ]
 
   configs = [ "${time_utils_path}:utils_config" ]
-
   cflags = [
     "-fPIC",
     "-g3",
@@ -33,19 +31,14 @@ ohos_shared_library("systemtime") {
     "src/js_systemtime.cpp",
   ]
 
-  deps = [
-    "${api_path}:time_client",
-  ]
+  deps = [ "${api_path}:time_client" ]
 
   external_deps = [
-    "ability_base:want",
-    "ability_runtime:runtime",
+    "ability_runtime:abilitykit_native",
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
     "napi:ace_napi",
-    "ability_runtime:abilitykit_native",
   ]
 
   relative_install_dir = "module"

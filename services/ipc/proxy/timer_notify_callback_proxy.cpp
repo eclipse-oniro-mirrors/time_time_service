@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "timer_notify_call_back_proxy.h"
+#include "timer_notify_callback_proxy.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -37,12 +37,12 @@ void TimerNotifyCallbackProxy::Finish(const uint64_t timerId)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-	
+
     if (!data.WriteInterfaceToken(GetDescriptor())) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "write descriptor failed!");
         return;
     }
-	
+
     if (!data.WriteUint64(timerId)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "write timerId failed!");
         return;

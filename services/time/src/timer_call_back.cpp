@@ -14,7 +14,8 @@
  */
 
 #include "timer_call_back.h"
-#include "timer_notify_call_back.h"
+
+#include "timer_notify_callback.h"
 
 namespace OHOS {
 namespace MiscServices {

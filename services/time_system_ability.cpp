@@ -132,7 +132,7 @@ void TimeSystemAbility::OnStart()
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
     if (Init() != ERR_OK) {
         auto callback = [this]() { Init(); };
-        serviceHandler_->PostTask(callback, INIT_INTERVAL);
+        serviceHandler_->PostTask(callback, "time_service_init_retry", INIT_INTERVAL);
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init failed. Try again 10s later.");
     }
     return;

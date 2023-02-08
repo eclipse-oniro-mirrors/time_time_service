@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build/test.gni")
 import("//base/time/time_service/time.gni")
+import("//build/test.gni")
 
 config("module_private_config") {
   visibility = [ ":*" ]
@@ -20,8 +20,6 @@ config("module_private_config") {
   include_dirs = [
     "${api_path}/include",
     "unittest/include",
-    "//foundation/arkui/napi/interfaces/kits/napi",
-    "//third_party/json/include",
   ]
 }
 
@@ -36,8 +34,6 @@ ohos_unittest("TimeServiceTest") {
 
   deps = [
     "${api_path}:time_client",
-    "//foundation/systemabilitymgr/safwk/interfaces/innerkits/safwk:system_ability_fwk",
-    "//foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy:samgr_proxy",
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
   ]
@@ -66,8 +62,6 @@ ohos_unittest("TimeClientTest") {
 
   deps = [
     "${api_path}:time_client",
-    "//foundation/systemabilitymgr/safwk/interfaces/innerkits/safwk:system_ability_fwk",
-    "//foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy:samgr_proxy",
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
   ]
@@ -81,7 +75,7 @@ ohos_unittest("TimeClientTest") {
     "access_token:libtoken_setproc",
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
+    "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]

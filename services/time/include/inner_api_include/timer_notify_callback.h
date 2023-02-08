@@ -17,7 +17,7 @@
 #define TIMER_NOTIFY_CALL_BACK_H
 
 #include <mutex>
-#include "timer_notify_call_back_stub.h"
+#include "timer_notify_callback_stub.h"
 
 namespace OHOS {
 namespace MiscServices {

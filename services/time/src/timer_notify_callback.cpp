@@ -13,29 +13,20 @@
  * limitations under the License.
  */
 
-#ifndef TIMER_NOTIFY_CALL_BACK_STUB_H
-#define TIMER_NOTIFY_CALL_BACK_STUB_H
-
-#include <cinttypes>
-#include <iremote_stub.h>
-#include <nocopyable.h>
-
-#include "itimer_notify_call_back.h"
-#include "time_common.h"
+#include "timer_notify_callback.h"
 
 namespace OHOS {
 namespace MiscServices {
-class TimerNotifyCallbackStub : public IRemoteStub<ITimerNotifyCallback> {
-public:
-    DISALLOW_COPY_AND_MOVE(TimerNotifyCallbackStub);
-    TimerNotifyCallbackStub() = default;
-    virtual ~TimerNotifyCallbackStub() = default;
-    int OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
+TimerNotifyCallback::TimerNotifyCallback()
+{
+}
 
-private:
-    int OnFinishStub(MessageParcel& data);
-};
+TimerNotifyCallback::~TimerNotifyCallback()
+{
+}
+
+void TimerNotifyCallback::Finish(const uint64_t timerId)
+{
+}
 } // namespace MiscServices
 } // namespace OHOS
-
-#endif // TIMER_NOTIFY_CALL_BACK_STUB_H
