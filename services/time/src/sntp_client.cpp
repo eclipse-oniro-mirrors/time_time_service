@@ -200,9 +200,8 @@ int64_t SNTPClient::ConvertNtpToStamp(uint64_t _ntpTs)
     if (second == 0 && fraction == 0) {
         return 0;
     }
-    int64_t ret = static_cast<int64_t>(((second - SECONDS_SINCE_FIRST_EPOCH) * MILLISECOND_TO_SECOND) +
-                                       ((fraction * MILLISECOND_TO_SECOND) / FRACTION_TO_SECOND));
-    return ret;
+    return ((second - SECONDS_SINCE_FIRST_EPOCH) * MILLISECOND_TO_SECOND) +
+           ((fraction * MILLISECOND_TO_SECOND) / FRACTION_TO_SECOND);
 }
 
 void SNTPClient::CreateMessage(char *buffer)

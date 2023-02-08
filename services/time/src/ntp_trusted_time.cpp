@@ -30,7 +30,7 @@ namespace MiscServices {
 namespace {
 constexpr int64_t INVALID_MILLIS = -1;
 constexpr int64_t HALF = 2;
-constexpr int64_t LOOP = 2;
+constexpr int LOOP = 2;
 } // namespace
 
 NtpTrustedTime::NtpTrustedTime()

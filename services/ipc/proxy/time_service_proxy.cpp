@@ -99,7 +99,7 @@ int32_t TimeServiceProxy::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOp
     return ret;
 }
 
-int32_t TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTimes)
+int32_t TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTime)
 {
     MessageParcel data, reply;
     MessageOption option;

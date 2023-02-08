@@ -14,7 +14,6 @@
  */
 #include "time_system_ability.h"
 
-#include <algorithm>
 #include <cerrno>
 #include <chrono>
 #include <cstdio>
@@ -384,7 +383,9 @@ int TimeSystemAbility::Dump(int fd, const std::vector<std::u16string> &args)
     }
 
     std::vector<std::string> argsStr;
-    std::transform(args.begin(), args.end(), back_inserter(argsStr), [](auto item) -> { return Str16ToStr8(item); });
+    for (auto &item : args) {
+        argsStr.emplace_back(Str16ToStr8(item));
+    }
 
     TimeCmdDispatcher::GetInstance().Dispatch(fd, argsStr);
     return ERR_OK;
