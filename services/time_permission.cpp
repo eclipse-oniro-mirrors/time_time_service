@@ -17,6 +17,9 @@
 
 #include "ipc_skeleton.h"
 #include "accesstoken_kit.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
+#include "bundle_mgr_proxy.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -55,6 +58,27 @@ bool TimePermission::CheckProxyCallingPermission()
     auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
     return (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE ||
             tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL);
+}
+
+bool TimePermission::CheckSystemUidCallingPermission(int32_t uid)
+{
+    auto callerToken = IPCSkeleton::GetCallingTokenID();
+    auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
+    if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE ||
+        tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL) {
+        return true;
+    }
+    auto systemAbilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (systemAbilityManager == nullptr) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "GetSystemAbilityManager is null.");
+        return false;
+    }
+    auto bundleMgrSa = systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    if (bundleMgrSa == nullptr) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "GetSystemAbility is null.");
+        return false;
+    }
+    return iface_cast<AppExecFwk::IBundleMgr>(bundleMgrSa)->CheckIsSystemAppByUid(uid);
 }
 } // namespace MiscServices
 } // namespace OHOS

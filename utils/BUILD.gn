@@ -17,6 +17,7 @@ config("utils_config") {
   include_dirs = [
     "native/include",
     "${time_service_path}",
+    "//third_party/json/include",
   ]
 }
 
