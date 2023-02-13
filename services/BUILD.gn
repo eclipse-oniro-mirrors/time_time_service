@@ -25,6 +25,7 @@ config("time_service_config") {
     "ipc/proxy",
     "ipc/stub",
     "${time_service_path}",
+    "//third_party/json/include",
   ]
 }
 

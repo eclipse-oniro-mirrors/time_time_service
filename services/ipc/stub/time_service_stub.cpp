@@ -87,6 +87,11 @@ int32_t TimeServiceStub::OnSetTime(MessageParcel &data, MessageParcel &reply)
             TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
             return E_TIME_NO_PERMISSION;
         }
+    } else {
+        if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingUid())) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+            return E_TIME_NOT_SYSTEM_APP;
+        }
     }
     int32_t ret = SetTime(time);
     TIME_HILOGI(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
@@ -102,6 +107,11 @@ int32_t TimeServiceStub::OnSetTimeZone(MessageParcel &data, MessageParcel &reply
         if (!TimePermission::CheckCallingPermission(TimePermission::SET_TIME_ZONE)) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
             return E_TIME_NO_PERMISSION;
+        }
+    } else {
+        if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingUid())) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+            return E_TIME_NOT_SYSTEM_APP;
         }
     }
     int32_t ret = SetTimeZone(timeZoneId);
@@ -246,6 +256,10 @@ int32_t TimeServiceStub::OnGetThreadTimeNs(MessageParcel &data, MessageParcel &r
 int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingUid())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent{ nullptr };
     auto type = data.ReadInt32();
     auto repeat = data.ReadBool();
@@ -258,7 +272,7 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
             return E_TIME_NULLPTR;
         }
     }
-    
+
     sptr<IRemoteObject> obj = data.ReadRemoteObject();
     if (obj == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Input nullptr");
@@ -287,6 +301,10 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
 int32_t TimeServiceStub::OnStartTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingUid())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto timerId = data.ReadUint64();
     auto triggerTime = data.ReadUint64();
     if (StartTimer(timerId, triggerTime) != E_TIME_OK) {
@@ -300,6 +318,10 @@ int32_t TimeServiceStub::OnStartTimer(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnStopTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingUid())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto timerId = data.ReadUint64();
     if (StopTimer(timerId) != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to stop timer");
@@ -312,6 +334,10 @@ int32_t TimeServiceStub::OnStopTimer(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnDestroyTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start.");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingUid())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto timerId = data.ReadUint64();
     if (DestroyTimer(timerId) != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to destory timer");

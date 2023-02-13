@@ -31,6 +31,7 @@ public:
 
     static bool CheckCallingPermission(const std::string &permissionName);
     static bool CheckProxyCallingPermission();
+    static bool CheckSystemUidCallingPermission(int32_t uid);
 };
 } // namespace MiscServices
 } // namespace OHOS
