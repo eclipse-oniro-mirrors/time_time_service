@@ -13,20 +13,30 @@
  * limitations under the License.
  */
 
-#include "timer_notify_call_back.h"
+#ifndef TIMER_NOTIFY_CALL_BACK_PROXY_H
+#define TIMER_NOTIFY_CALL_BACK_PROXY_H
+
+#include <cinttypes>
+#include <iremote_proxy.h>
+#include <nocopyable.h>
+
+#include "itimer_notify_callback.h"
+#include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {
-TimerNotifyCallback::TimerNotifyCallback()
-{
-}
+class TimerNotifyCallbackProxy : public IRemoteProxy<ITimerNotifyCallback> {
+public:
+    explicit TimerNotifyCallbackProxy(const sptr<IRemoteObject>& object);
 
-TimerNotifyCallback::~TimerNotifyCallback()
-{
-}
+    ~TimerNotifyCallbackProxy();
+    DISALLOW_COPY_AND_MOVE(TimerNotifyCallbackProxy);
 
-void TimerNotifyCallback::Finish(const uint64_t timerId)
-{
-}
+    void Finish(const uint64_t timerId) override;
+private:
+    static inline BrokerDelegator<TimerNotifyCallbackProxy> delegator_;
+};
 } // namespace MiscServices
 } // namespace OHOS
+
+#endif // TIMER_NOTIFY_CALL_BACK_PROXY_H

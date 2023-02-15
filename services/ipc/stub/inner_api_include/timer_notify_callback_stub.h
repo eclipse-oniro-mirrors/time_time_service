@@ -20,7 +20,7 @@
 #include <iremote_stub.h>
 #include <nocopyable.h>
 
-#include "itimer_notify_call_back.h"
+#include "itimer_notify_callback.h"
 #include "time_common.h"
 
 namespace OHOS {

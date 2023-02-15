@@ -34,19 +34,14 @@ ohos_shared_library("systemdatetime") {
     "src/napi_system_date_time.cpp",
   ]
 
-  deps = [
-    "${api_path}:time_client",
-  ]
+  deps = [ "${api_path}:time_client" ]
 
   external_deps = [
-    "ability_base:want",
-    "ability_runtime:runtime",
+    "ability_runtime:abilitykit_native",
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
     "napi:ace_napi",
-    "ability_runtime:abilitykit_native",
   ]
 
   relative_install_dir = "module"

@@ -27,8 +27,6 @@
     "ram":"1024KB",
     "deps": {
       "components": [
-        "relational_store",
-        "jsoncpp",
         "napi",
         "samgr",
         "common_event_service",
@@ -42,10 +40,12 @@
         "libuv",
         "safwk",
         "c_utils",
-        "access_token"
+        "access_token",
+        "hisysevent_native"
       ],
       "third_party": [
-        "jsoncpp"
+        "jsoncpp",
+        "libuv"
       ]
     },
     "build": {
@@ -65,7 +65,7 @@
           "//base/time/time_service/services/etc:time.para.dac"
         ]
       },
-      "inner_kits": [
+      "inner_api": [
         {
           "name": "//base/time/time_service/interfaces/inner_api:time_client",
           "header": {

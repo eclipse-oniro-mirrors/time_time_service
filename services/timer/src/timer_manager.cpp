@@ -20,6 +20,7 @@
 #include <ctime>
 #include <iostream>
 #include <sys/time.h>
+#include <sys/prctl.h>
 #include "if_system_ability_manager.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
@@ -366,6 +367,7 @@ std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono
 void TimerManager::TimerLooper()
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer wait loop");
+    pthread_setname_np(pthread_self(), "timer_loop");
     std::vector<std::shared_ptr<TimerInfo>> triggerList;
     while (runFlag_) {
         uint32_t result = 0;
