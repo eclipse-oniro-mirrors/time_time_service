@@ -16,14 +16,15 @@
 #define I_TIMER_INFO_H
 
 #include <mutex>
+#include "time_common.h"
 #include "want_agent_helper.h"
 
 namespace OHOS {
 namespace MiscServices {
 class ITimerInfo {
 public:
-    ITimerInfo();
-    ~ITimerInfo();
+    TIME_API ITimerInfo();
+    TIME_API ~ITimerInfo();
 
     int type;
     bool repeat;

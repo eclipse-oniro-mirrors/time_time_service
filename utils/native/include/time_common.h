@@ -24,6 +24,7 @@
 namespace OHOS {
 namespace MiscServices {
 #define TIME_SERVICE_NAME "TimeService"
+#define TIME_API __attribute__((visibility("default")))
 
 struct TimerPara {
     int timerType;

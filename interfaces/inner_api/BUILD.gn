@@ -14,7 +14,6 @@ import("//base/time/time_service/time.gni")
 import("//build/ohos.gni")
 
 config("time_client_config") {
-  visibility = [ ":*" ]
   include_dirs = [
     "${time_service_path}/ipc/proxy/inner_api_include",
     "${time_service_path}/ipc/stub/inner_api_include",
@@ -35,11 +34,10 @@ ohos_shared_library("time_client") {
     "${time_service_path}/time/src/timer_call_back.cpp",
     "${time_service_path}/time/src/timer_notify_callback.cpp",
   ]
-  version_script = "libtime_client.versionscript"
   configs = [ ":time_client_config" ]
+  configs += [ "//build/config/gcc:symbol_visibility_hidden" ]
   public_configs = [ ":time_client_config" ]
   innerapi_tags = [ "platformsdk" ]
-  deps = [ "${time_utils_path}:time_utils" ]
   external_deps = [
     "ability_runtime:abilitykit_native",
     "ability_runtime:wantagent_innerkits",
