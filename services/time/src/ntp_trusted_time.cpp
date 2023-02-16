@@ -144,7 +144,9 @@ NtpTrustedTime::TimeResult::TimeResult(int64_t mTimeMillis, int64_t mElapsedReal
 void NtpTrustedTime::TimeResult::Clear()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    (void)memset_s(this, sizeof(*this), 0, sizeof(*this));
+    mTimeMillis = 0;
+    mElapsedRealtimeMillis = 0;
+    mCertaintyMillis = 0;
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 } // namespace MiscServices

@@ -28,21 +28,16 @@ class TimeServiceNotify : public DelayedSingleton<TimeServiceNotify> {
 
 public:
     DISALLOW_COPY_AND_MOVE(TimeServiceNotify);
-    void RegisterPublishEvents();
-    void PublishTimeChanageEvents(int64_t eventTime);
-    void PublishTimeZoneChangeEvents(int64_t eventTime);
-    void PublishTimeTickEvents(int64_t eventTime);
+    bool PublishTimeChangeEvents(int64_t eventTime);
+    bool PublishTimeZoneChangeEvents(int64_t eventTime);
+    bool PublishTimeTickEvents(int64_t eventTime);
     bool RepublishEvents();
 
 private:
     using IntentWant = OHOS::AAFwk::Want;
+    using PublishInfo = OHOS::EventFwk::CommonEventPublishInfo;
 
-    bool PublishEvents(int64_t eventTime, sptr<IntentWant> intent);
-
-    sptr<IntentWant> timeChangeWant_;
-    sptr<IntentWant> timeZoneChangeWant_;
-    sptr<IntentWant> timeTickWant_;
-    sptr<OHOS::EventFwk::CommonEventPublishInfo> publishInfo_;
+    bool PublishEvents(int64_t eventTime, const IntentWant &want, const PublishInfo &publishInfo);
 };
 } // namespace MiscServices
 } // namespace OHOS

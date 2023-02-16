@@ -145,7 +145,6 @@ void NtpUpdateTime::RefreshNetworkTimeByTimer(const uint64_t timerId)
         TIME_HILOGD(TIME_MODULE_SERVICE, "Network time status off.");
         return;
     }
-
     SetSystemTime();
     SaveAutoTimeInfoToFile(autoTimeInfo_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update triggertime: %{public}" PRId64 "", nextTriggerTime_);
@@ -188,9 +187,9 @@ void NtpUpdateTime::SetSystemTime()
 
 void NtpUpdateTime::RefreshNextTriggerTime()
 {
-    auto BootTimeNano = steady_clock::now().time_since_epoch().count();
-    auto BootTimeMilli = BootTimeNano / NANO_TO_MILLISECOND;
-    nextTriggerTime_ = BootTimeMilli + DAY_TO_MILLISECOND;
+    auto bootTimeNano = steady_clock::now().time_since_epoch().count();
+    auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
+    nextTriggerTime_ = bootTimeMilli + DAY_TO_MILLISECOND;
 }
 
 void NtpUpdateTime::UpdateStatusOff()

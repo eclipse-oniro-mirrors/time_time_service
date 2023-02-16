@@ -26,65 +26,47 @@ namespace OHOS {
 namespace MiscServices {
 TimeServiceNotify::TimeServiceNotify(){};
 TimeServiceNotify::~TimeServiceNotify(){};
-void TimeServiceNotify::RegisterPublishEvents()
-{
-    if (publishInfo_ != nullptr) {
-        return;
-    }
-    publishInfo_ = new (std::nothrow) CommonEventPublishInfo();
-    publishInfo_->SetOrdered(false);
-    timeChangeWant_ = new (std::nothrow) IntentWant();
-    timeChangeWant_->SetAction(CommonEventSupport::COMMON_EVENT_TIME_CHANGED);
-    timeZoneChangeWant_ = new (std::nothrow) IntentWant();
-    timeZoneChangeWant_->SetAction(CommonEventSupport::COMMON_EVENT_TIMEZONE_CHANGED);
-    timeTickWant_ = new (std::nothrow) IntentWant();
-    timeTickWant_->SetAction(CommonEventSupport::COMMON_EVENT_TIME_TICK);
-}
 
 bool TimeServiceNotify::RepublishEvents()
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start to Republish events");
-    RegisterPublishEvents();
     auto currentTime = std::chrono::steady_clock::now().time_since_epoch().count();
-    if (PublishEvents(currentTime, timeChangeWant_) && PublishEvents(currentTime, timeZoneChangeWant_) &&
-        PublishEvents(currentTime, timeTickWant_)) {
-        return true;
-    }
-    return false;
+    return PublishTimeChangeEvents(currentTime) && PublishTimeZoneChangeEvents(currentTime) &&
+        PublishTimeTickEvents(currentTime);
 }
 
-bool TimeServiceNotify::PublishEvents(int64_t eventTime, sptr<IntentWant> want)
+bool TimeServiceNotify::PublishEvents(int64_t eventTime, const IntentWant &want, const PublishInfo &publishInfo)
 {
-    if ((want == nullptr) || (publishInfo_ == nullptr)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid parameter");
-        return false;
-    }
-
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start to publish event %{public}s at %{public}lld", want->GetAction().c_str(),
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Start to publish event %{public}s at %{public}lld", want.GetAction().c_str(),
         static_cast<long long>(eventTime));
-    CommonEventData event(*want);
-    bool publishResult = CommonEventManager::PublishCommonEvent(event, *publishInfo_, nullptr);
-    if (!publishResult) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to Publish event %{public}s", want->GetAction().c_str());
+    CommonEventData event(want);
+    if (!CommonEventManager::PublishCommonEvent(event, publishInfo, nullptr)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to Publish event %{public}s", want.GetAction().c_str());
         return false;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Publish event %{public}s done", want->GetAction().c_str());
-    return publishResult;
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Publish event %{public}s done", want.GetAction().c_str());
+    return true;
 }
 
-void TimeServiceNotify::PublishTimeChanageEvents(int64_t eventTime)
+bool TimeServiceNotify::PublishTimeChangeEvents(int64_t eventTime)
 {
-    PublishEvents(eventTime, timeChangeWant_);
+    IntentWant timeChangeWant;
+    timeChangeWant.SetAction(CommonEventSupport::COMMON_EVENT_TIME_CHANGED);
+    return PublishEvents(eventTime, timeChangeWant, CommonEventPublishInfo());
 }
 
-void TimeServiceNotify::PublishTimeZoneChangeEvents(int64_t eventTime)
+bool TimeServiceNotify::PublishTimeZoneChangeEvents(int64_t eventTime)
 {
-    PublishEvents(eventTime, timeZoneChangeWant_);
+    IntentWant timeZoneChangeWant;
+    timeZoneChangeWant.SetAction(CommonEventSupport::COMMON_EVENT_TIMEZONE_CHANGED);
+    return PublishEvents(eventTime, timeZoneChangeWant, CommonEventPublishInfo());
 }
 
-void TimeServiceNotify::PublishTimeTickEvents(int64_t eventTime)
+bool TimeServiceNotify::PublishTimeTickEvents(int64_t eventTime)
 {
-    PublishEvents(eventTime, timeTickWant_);
+    IntentWant timeTickWant;
+    timeTickWant.SetAction(CommonEventSupport::COMMON_EVENT_TIME_TICK);
+    return PublishEvents(eventTime, timeTickWant, CommonEventPublishInfo());
 }
 } // namespace MiscServices
 } // namespace OHOS

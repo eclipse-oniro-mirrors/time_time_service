@@ -40,28 +40,28 @@ constexpr uint64_t FRACTION_TO_SECOND = 0x100000000;
 constexpr uint64_t UINT32_MASK = 0xFFFFFFFF;
 const int VERSION_MASK = 0x38;
 const int MODE_MASK = 0x7;
-constexpr int INVALID_RETURN = -1;
-constexpr int INDEX_ZERO = 0;
-constexpr int INDEX_ONE = 1;
-constexpr int INDEX_TWO = 2;
-constexpr int INDEX_THREE = 3;
-constexpr int INDEX_FOUR = 4;
-constexpr int TIME_OUT = 5;
+constexpr int32_t INVALID_RETURN = -1;
+constexpr int32_t INDEX_ZERO = 0;
+constexpr int32_t INDEX_ONE = 1;
+constexpr int32_t INDEX_TWO = 2;
+constexpr int32_t INDEX_THREE = 3;
+constexpr int32_t INDEX_FOUR = 4;
+constexpr int32_t TIME_OUT = 5;
 constexpr unsigned char MODE_THREE = 3;
 constexpr unsigned char VERSION_THREE = 3;
 constexpr double TEN_TO_MINUS_SIX_POWER = 1.0e-6;
 constexpr double TEN_TO_SIX_POWER = 1.0e6;
 char const *NTP_PORT = "123";
-constexpr int NTP_MSG_OFFSET_ROOT_DELAY = 4;
-constexpr int NTP_MSG_OFFSET_ROOT_DISPERSION = 8;
-constexpr int NTP_MSG_OFFSET_REFERENCE_IDENTIFIER = 12;
-constexpr int REFERENCE_TIMESTAMP_OFFSET = 16;
-constexpr int ORIGINATE_TIMESTAMP_OFFSET = 24;
-constexpr int RECEIVE_TIMESTAMP_OFFSET = 32;
-constexpr int TRANSMIT_TIMESTAMP_OFFSET = 40;
-constexpr int NTP_PACKAGE_SIZE = 48;
-constexpr int SNTP_MSG_OFFSET_SIX = 6;
-constexpr int SNTP_MSG_OFFSET_THREE = 3;
+constexpr int32_t NTP_MSG_OFFSET_ROOT_DELAY = 4;
+constexpr int32_t NTP_MSG_OFFSET_ROOT_DISPERSION = 8;
+constexpr int32_t NTP_MSG_OFFSET_REFERENCE_IDENTIFIER = 12;
+constexpr int32_t REFERENCE_TIMESTAMP_OFFSET = 16;
+constexpr int32_t ORIGINATE_TIMESTAMP_OFFSET = 24;
+constexpr int32_t RECEIVE_TIMESTAMP_OFFSET = 32;
+constexpr int32_t TRANSMIT_TIMESTAMP_OFFSET = 40;
+constexpr int32_t NTP_PACKAGE_SIZE = 48;
+constexpr int32_t SNTP_MSG_OFFSET_SIX = 6;
+constexpr int32_t SNTP_MSG_OFFSET_THREE = 3;
 } // namespace
 SNTPClient::SNTPClient()
 {
@@ -73,7 +73,7 @@ SNTPClient::~SNTPClient()
 bool SNTPClient::RequestTime(std::string host)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    int BufLen = NTP_PACKAGE_SIZE;
+    int bufLen = NTP_PACKAGE_SIZE;
 
     struct addrinfo hints = { 0 }, *addrs;
     hints.ai_family = AF_INET;
@@ -88,42 +88,42 @@ bool SNTPClient::RequestTime(std::string host)
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime2.");
     // Create a socket for sending data
-    int SendSocket = socket(addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
-    if (SendSocket == 0) {
+    int sendSocket = socket(addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
+    if (sendSocket == 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "create socket failed");
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime3.");
     // Set send and recv function timeout
     struct timeval timeout = { TIME_OUT, 0 };
-    setsockopt(SendSocket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(struct timeval));
-    setsockopt(SendSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
+    setsockopt(sendSocket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(struct timeval));
+    setsockopt(sendSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 
-    if (connect(SendSocket, addrs->ai_addr, addrs->ai_addrlen) < 0) {
+    if (connect(sendSocket, addrs->ai_addr, addrs->ai_addrlen) < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "socket connect failed");
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime4.");
     // Create the NTP tx timestamp and fill the fields in the msg to be tx
-    char SendBuf[NTP_PACKAGE_SIZE] = { 0 };
-    CreateMessage(SendBuf);
-    if (send(SendSocket, SendBuf, BufLen, 0) == INVALID_RETURN) {
+    char sendBuf[NTP_PACKAGE_SIZE] = { 0 };
+    CreateMessage(sendBuf);
+    if (send(sendSocket, sendBuf, bufLen, 0) == INVALID_RETURN) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Send socket message failed. Host: %{public}s", host.c_str());
-        close(SendSocket);
+        close(sendSocket);
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime5.");
     char bufferRx[NTP_PACKAGE_SIZE] = { 0 };
     // Receive until the peer closes the connection
-    if (recv(SendSocket, bufferRx, NTP_PACKAGE_SIZE, 0) == INVALID_RETURN) {
+    if (recv(sendSocket, bufferRx, NTP_PACKAGE_SIZE, 0) == INVALID_RETURN) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Receive socket message failed. Host: %{public}s", host.c_str());
-        close(SendSocket);
+        close(sendSocket);
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime6.");
     ReceivedMessage(bufferRx);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-    close(SendSocket);
+    close(sendSocket);
     return true;
 }
 
@@ -155,11 +155,11 @@ uint64_t SNTPClient::GetNtpTimestamp64(int offset, char *buffer)
 
     uint64_t milliseconds;
     ret = memcpy_s(&milliseconds, sizeof(uint64_t), valueRx, sizeof(uint64_t));
+    milliseconds = le64toh(milliseconds);
     if (ret != EOK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
         return false;
     }
-
     return milliseconds;
 }
 
@@ -233,8 +233,8 @@ void SNTPClient::CreateMessage(char *buffer)
         return;
     }
     int numOfBit = sizeof(uint64_t) - 1;
-    int ofssetEnd = ORIGINATE_TIMESTAMP_OFFSET + sizeof(uint64_t);
-    for (int loop = ORIGINATE_TIMESTAMP_OFFSET; loop < ofssetEnd; loop++) {
+    int offsetEnd = ORIGINATE_TIMESTAMP_OFFSET + sizeof(uint64_t);
+    for (int loop = ORIGINATE_TIMESTAMP_OFFSET; loop < offsetEnd; loop++) {
         buffer[loop] = value[numOfBit];
         numOfBit--;
     }
@@ -265,8 +265,8 @@ void SNTPClient::WriteTimeStamp(char *buffer, ntp_timestamp *ntp)
         return;
     }
     int numOfBit = sizeof(uint64_t) - 1;
-    int ofssetEnd = ORIGINATE_TIMESTAMP_OFFSET + sizeof(uint64_t);
-    for (int loop = ORIGINATE_TIMESTAMP_OFFSET; loop < ofssetEnd; loop++) {
+    int offsetEnd = ORIGINATE_TIMESTAMP_OFFSET + sizeof(uint64_t);
+    for (int loop = ORIGINATE_TIMESTAMP_OFFSET; loop < offsetEnd; loop++) {
         buffer[loop] = value[numOfBit];
         numOfBit--;
     }
