@@ -316,7 +316,6 @@ int64_t TimeServiceClient::GetWallTimeMs()
     if (!ConnectService()) {
         return -1;
     }
-    TIME_HILOGW(TIME_MODULE_CLIENT, "timeServiceProxy_: %{public}p", timeServiceProxy_.GetRefPtr());
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
@@ -334,7 +333,6 @@ int32_t TimeServiceClient::GetWallTimeMs(int64_t &time)
     if (!ConnectService()) {
         return E_TIME_SA_DIED;
     }
-    TIME_HILOGW(TIME_MODULE_CLIENT, "timeServiceProxy_: %{public}p", timeServiceProxy_.GetRefPtr());
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
@@ -370,7 +368,6 @@ int32_t TimeServiceClient::GetWallTimeNs(int64_t &time)
     if (!ConnectService()) {
         return E_TIME_SA_DIED;
     }
-    TIME_HILOGW(TIME_MODULE_CLIENT, "timeServiceProxy_: %{public}p", timeServiceProxy_.GetRefPtr());
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
