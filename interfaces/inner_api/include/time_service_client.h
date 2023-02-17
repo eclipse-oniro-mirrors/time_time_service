@@ -20,6 +20,7 @@
 
 #include "refbase.h"
 #include "time_service_interface.h"
+#include "time_common.h"
 #include "timer_call_back.h"
 
 namespace OHOS {
@@ -27,7 +28,7 @@ namespace MiscServices {
 class TimeServiceClient : public RefBase {
 public:
     DISALLOW_COPY_AND_MOVE(TimeServiceClient);
-    static sptr<TimeServiceClient> GetInstance();
+    TIME_API static sptr<TimeServiceClient> GetInstance();
 
     /**
      * @brief Set time
@@ -37,7 +38,7 @@ public:
      * @param UTC time in milliseconds.
      * @return true on success, false on failure.
      */
-    bool SetTime(const int64_t milliseconds);
+    TIME_API bool SetTime(const int64_t milliseconds);
 
     /**
      * @brief Set system time
@@ -48,7 +49,7 @@ public:
      * @param error code.
      * @return true on success, false on failure.
      */
-    bool SetTime(const int64_t milliseconds, int32_t &code);
+    TIME_API bool SetTime(const int64_t milliseconds, int32_t &code);
 
     /**
      * @brief Set system time
@@ -58,7 +59,7 @@ public:
      * @param UTC time in milliseconds.
      * @return error code.
      */
-    int32_t SetTimeV9(const int64_t &time);
+    TIME_API int32_t SetTimeV9(const int64_t &time);
 
     /**
      * @brief Set Timezone
@@ -68,7 +69,7 @@ public:
      * @param const std::string time zone. example: "Beijing, China".
      * @return true on success, false on failure.
      */
-    bool SetTimeZone(const std::string timeZoneId);
+    TIME_API bool SetTimeZone(const std::string timeZoneId);
 
     /**
      * @brief Set Timezone
@@ -79,7 +80,7 @@ public:
      * @param error code.
      * @return true on success, false on failure.
      */
-    bool SetTimeZone(const std::string timezoneId, int32_t &code);
+    TIME_API bool SetTimeZone(const std::string timezoneId, int32_t &code);
 
     /**
      * @brief Set Timezone
@@ -89,7 +90,7 @@ public:
      * @param const std::string time zone. example: "Beijing, China".
      * @return error code.
      */
-    int32_t SetTimeZoneV9(const std::string timezoneId);
+    TIME_API int32_t SetTimeZoneV9(const std::string timezoneId);
 
     /**
      * @brief Get Timezone
@@ -98,7 +99,7 @@ public:
      *
      * @return time zone example: "Beijing, China", if result length == 0 on failed.
      */
-    std::string GetTimeZone();
+    TIME_API std::string GetTimeZone();
 
     /**
      * @brief Get Timezone
@@ -108,7 +109,7 @@ public:
      * @param The current system time zone, example: "Beijing, China", if failed the value is nullptr.
      * @return error code.
      */
-    int32_t GetTimeZone(std::string &timezoneId);
+    TIME_API int32_t GetTimeZone(std::string &timezoneId);
 
     /**
      * @brief GetWallTimeMs
@@ -117,7 +118,7 @@ public:
      *
      * @return milliseconds in wall time, ret < 0 on failed.
      */
-    int64_t GetWallTimeMs();
+    TIME_API int64_t GetWallTimeMs();
 
     /**
      * @brief GetWallTimeMs
@@ -127,7 +128,7 @@ public:
      * @param milliseconds in wall time.
      * @return error code.
      */
-    int32_t GetWallTimeMs(int64_t &time);
+    TIME_API int32_t GetWallTimeMs(int64_t &time);
 
     /**
      * @brief GetWallTimeNs
@@ -136,7 +137,7 @@ public:
      *
      * @return nanoseconds in wall time, ret < 0 on failed.
      */
-    int64_t GetWallTimeNs();
+    TIME_API int64_t GetWallTimeNs();
 
     /**
      * @brief GetWallTimeNs
@@ -146,7 +147,7 @@ public:
      * @param nanoseconds in wall time.
      * @return error code.
      */
-    int32_t GetWallTimeNs(int64_t &time);
+    TIME_API int32_t GetWallTimeNs(int64_t &time);
 
     /**
      * @brief GetBootTimeMs
@@ -155,7 +156,7 @@ public:
      *
      * @return milliseconds in boot time, ret < 0 on failed.
      */
-    int64_t GetBootTimeMs();
+    TIME_API int64_t GetBootTimeMs();
 
     /**
      * @brief GetBootTimeMs
@@ -165,7 +166,7 @@ public:
      * @param milliseconds in boot time.
      * @param error code.
      */
-    int32_t GetBootTimeMs(int64_t &time);
+    TIME_API int32_t GetBootTimeMs(int64_t &time);
 
     /**
      * @brief GetBootTimeNs
@@ -174,7 +175,7 @@ public:
      *
      * @return nanoseconds in boot time, ret < 0 on failed.
      */
-    int64_t GetBootTimeNs();
+    TIME_API int64_t GetBootTimeNs();
 
     /**
      * @brief GetBootTimeNs
@@ -184,7 +185,7 @@ public:
      * @param nanoseconds in boot time.
      * @return error code.
      */
-    int32_t GetBootTimeNs(int64_t &time);
+    TIME_API int32_t GetBootTimeNs(int64_t &time);
 
     /**
      * @brief GetMonotonicTimeMs
@@ -193,7 +194,7 @@ public:
      *
      * @return milliseconds in Monotonic time, ret < 0 on failed.
      */
-    int64_t GetMonotonicTimeMs();
+    TIME_API int64_t GetMonotonicTimeMs();
 
     /**
      * @brief GetMonotonicTimeMs
@@ -203,7 +204,7 @@ public:
      * @param milliseconds in Monotonic time.
      * @return error code.
      */
-    int32_t GetMonotonicTimeMs(int64_t &time);
+    TIME_API int32_t GetMonotonicTimeMs(int64_t &time);
 
     /**
      * @brief GetMonotonicTimeNs
@@ -212,7 +213,7 @@ public:
      *
      * @return nanoseconds in Monotonic time, ret < 0 on failed.
      */
-    int64_t GetMonotonicTimeNs();
+    TIME_API int64_t GetMonotonicTimeNs();
 
     /**
      * @brief GetMonotonicTimeNs
@@ -222,7 +223,7 @@ public:
      * @param nanoseconds in Monotonic time.
      * @return error code.
      */
-    int32_t GetMonotonicTimeNs(int64_t &time);
+    TIME_API int32_t GetMonotonicTimeNs(int64_t &time);
 
     /**
      * @brief GetThreadTimeMs
@@ -231,7 +232,7 @@ public:
      *
      * @return milliseconds in Thread-specific CPU-time, ret < 0 on failed.
      */
-    int64_t GetThreadTimeMs();
+    TIME_API int64_t GetThreadTimeMs();
 
     /**
      * @brief GetThreadTimeMs
@@ -241,7 +242,7 @@ public:
      * @param the Thread-specific CPU-time in milliseconds.
      * @return error code.
      */
-    int32_t GetThreadTimeMs(int64_t &time);
+    TIME_API int32_t GetThreadTimeMs(int64_t &time);
 
     /**
      * @brief GetThreadTimeNs
@@ -250,7 +251,7 @@ public:
      *
      * @return nanoseconds in Thread-specific CPU-time, ret < 0 on failed.
      */
-    int64_t GetThreadTimeNs();
+    TIME_API int64_t GetThreadTimeNs();
 
     /**
      * @brief GetThreadTimeNs
@@ -260,7 +261,7 @@ public:
      * @param get the Thread-specific CPU-time in nanoseconds.
      * @return error code.
      */
-    int32_t GetThreadTimeNs(int64_t &time);
+    TIME_API int32_t GetThreadTimeNs(int64_t &time);
 
     /**
      * @brief CreateTimer
@@ -270,7 +271,7 @@ public:
      * @param indicates the timer options.
      * @return timer id.
      */
-    uint64_t CreateTimer(std::shared_ptr<ITimerInfo> TimerInfo);
+    TIME_API uint64_t CreateTimer(std::shared_ptr<ITimerInfo> TimerInfo);
 
     /**
      * @brief Create Timer
@@ -281,7 +282,7 @@ public:
      * @param timer id.
      * @return error code.
      */
-    int32_t CreateTimerV9(std::shared_ptr<ITimerInfo> timerOptions, uint64_t &timerId);
+    TIME_API int32_t CreateTimerV9(std::shared_ptr<ITimerInfo> timerOptions, uint64_t &timerId);
 
     /**
      * @brief StartTimer
@@ -292,7 +293,7 @@ public:
      * @param trigger time
      * @return true on success, false on failure.
      */
-    bool StartTimer(uint64_t timerId, uint64_t triggerTime);
+    TIME_API bool StartTimer(uint64_t timerId, uint64_t triggerTime);
 
     /**
      * @brief Start Timer
@@ -303,7 +304,7 @@ public:
      * @param trigger time.
      * @return true on success, false on failure.
      */
-    int32_t StartTimerV9(uint64_t timerId, uint64_t triggerTime);
+    TIME_API int32_t StartTimerV9(uint64_t timerId, uint64_t triggerTime);
 
     /**
      * @brief Stop Timer
@@ -313,7 +314,7 @@ public:
      * @param indicate timerId.
      * @return true on success, false on failure.
      */
-    bool StopTimer(uint64_t timerId);
+    TIME_API bool StopTimer(uint64_t timerId);
 
     /**
      * @brief StopTimer
@@ -323,7 +324,7 @@ public:
      * @param indicate timerId.
      * @return error code.
      */
-    int32_t StopTimerV9(uint64_t timerId);
+    TIME_API int32_t StopTimerV9(uint64_t timerId);
 
     /**
      * @brief DestroyTimer
@@ -333,7 +334,7 @@ public:
      * @param indicate timerId.
      * @return true on success, false on failure.
      */
-    bool DestroyTimer(uint64_t timerId);
+    TIME_API bool DestroyTimer(uint64_t timerId);
 
     /**
      * @brief DestroyTimer
@@ -343,7 +344,7 @@ public:
      * @param indicate timerId.
      * @return error code.
      */
-    int32_t DestroyTimerV9(uint64_t timerId);
+    TIME_API int32_t DestroyTimerV9(uint64_t timerId);
 
     /**
      * @brief NetworkTimeStatusOff
@@ -351,7 +352,7 @@ public:
      * Turn on network time synchronization.
      *
      */
-    void NetworkTimeStatusOff();
+    TIME_API void NetworkTimeStatusOff();
 
     /**
      * @brief NetworkTimeStatusOn
@@ -359,7 +360,7 @@ public:
      * Turn off network time synchronization.
      *
      */
-    void NetworkTimeStatusOn();
+    TIME_API  void NetworkTimeStatusOn();
 
     /**
      * @brief ProxyTimer
@@ -371,7 +372,7 @@ public:
      * @param true if need retrigger, false if not.
      * @return true on success, false on failure.
      */
-    bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger);
+    TIME_API bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger);
 
     /**
      * @brief ResetAllProxy
@@ -380,7 +381,7 @@ public:
      *
      * @return bool true on success, false on failure.
      */
-    bool ResetAllProxy();
+    TIME_API bool ResetAllProxy();
 
     bool ConnectService();
 private:
