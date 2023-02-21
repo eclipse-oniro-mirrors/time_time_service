@@ -75,7 +75,7 @@ void NtpUpdateTime::Init()
     int retryCount = 0;
     constexpr int RETRY_TIME_INTERVAL_MILLISECOND = 1 * 1000 * 1000; // retry after 2 second
     do {
-        if (this->MonitorNetwork() == NET_CONN_SUCCESS) {
+        if (this->MonitorNetwork() == NETMANAGER_SUCCESS) {
             break;
         }
         retryCount++;
