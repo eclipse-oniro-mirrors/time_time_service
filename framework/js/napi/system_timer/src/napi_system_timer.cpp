@@ -67,11 +67,11 @@ void ITimerInfoInstance::OnTrigger()
         delete work;
         return;
     }
-    work->data = (void *)dataWorker;
+    work->data = reinterpret_cast<void *>(dataWorker);
     uv_queue_work(
         loop, work, [](uv_work_t *work) {},
         [](uv_work_t *work, int status) {
-            ReceiveDataWorker *dataWorkerData = (ReceiveDataWorker *)work->data;
+            ReceiveDataWorker *dataWorkerData = reinterpret_cast<ReceiveDataWorker *>(work->data);
             if (dataWorkerData == nullptr) {
                 return;
             }
