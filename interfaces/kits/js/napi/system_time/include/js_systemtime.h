@@ -39,6 +39,12 @@ const int ARGS_TWO = 2;
 }
 
 typedef struct AsyncContext {
+    ~AsyncContext()
+    {
+        if (callbackRef != nullptr) {
+            napi_delete_reference(env, callbackRef);
+        }
+    }
     napi_env env = nullptr;
     napi_async_work work = nullptr;
     int64_t time = INVALID_TIME;
