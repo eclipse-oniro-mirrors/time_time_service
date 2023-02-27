@@ -30,7 +30,7 @@
 >
 > - 从API Version 9 开始，模块接口[@ohos.systemTime](https://gitee.com/openharmony/docs/blob/master/zh-cn/application-dev/reference/apis/js-apis-system-time.md)不再维护，推荐使用新模块接口[@ohos.systemDateTime](https://gitee.com/openharmony/docs/blob/master/zh-cn/application-dev/reference/apis/js-apis-system-date-time.md)
 
-**表 1**  js组件systemDataTime开放的主要方法
+**表 1**  js组件systemDateTime开放的主要方法
 
 | 接口名                                                       | 描述                                                 |
 | ------------------------------------------------------------ | ---------------------------------------------------- |
@@ -79,7 +79,7 @@
 
 ### js接口使用说明
 
-systemDataTime模块使用示例：
+systemDateTime模块使用示例：
 
 ```javascript
 // 导入模块
