@@ -28,7 +28,6 @@ TimeServiceStub::TimeServiceStub()
     memberFuncMap_[GET_TIME_ZONE] = &TimeServiceStub::OnGetTimeZone;
     memberFuncMap_[GET_WALL_TIME_MILLI] = &TimeServiceStub::OnGetWallTimeMs;
     memberFuncMap_[GET_WALL_TIME_NANO] = &TimeServiceStub::OnGetWallTimeNs;
-
     memberFuncMap_[GET_BOOT_TIME_MILLI] = &TimeServiceStub::OnGetBootTimeMs;
     memberFuncMap_[GET_BOOT_TIME_NANO] = &TimeServiceStub::OnGetBootTimeNs;
     memberFuncMap_[GET_MONO_TIME_MILLI] = &TimeServiceStub::OnGetMonotonicTimeMs;
@@ -122,7 +121,6 @@ int32_t TimeServiceStub::OnGetTimeZone(MessageParcel &data, MessageParcel &reply
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     std::string timeZoneId;
-
     int32_t ret = GetTimeZone(timeZoneId);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
@@ -137,7 +135,6 @@ int32_t TimeServiceStub::OnGetWallTimeMs(MessageParcel &data, MessageParcel &rep
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     int64_t times;
-
     int32_t ret = GetWallTimeMs(times);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
@@ -152,7 +149,6 @@ int32_t TimeServiceStub::OnGetWallTimeNs(MessageParcel &data, MessageParcel &rep
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     int64_t times;
-
     int32_t ret = GetWallTimeNs(times);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
@@ -167,7 +163,6 @@ int32_t TimeServiceStub::OnGetBootTimeMs(MessageParcel &data, MessageParcel &rep
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     int64_t times;
-
     int32_t ret = GetBootTimeMs(times);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
@@ -182,7 +177,6 @@ int32_t TimeServiceStub::OnGetBootTimeNs(MessageParcel &data, MessageParcel &rep
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     int64_t times;
-
     int32_t ret = GetBootTimeNs(times);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
@@ -197,7 +191,6 @@ int32_t TimeServiceStub::OnGetMonotonicTimeMs(MessageParcel &data, MessageParcel
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     int64_t times;
-
     int32_t ret = GetMonotonicTimeMs(times);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
@@ -212,7 +205,6 @@ int32_t TimeServiceStub::OnGetMonotonicTimeNs(MessageParcel &data, MessageParcel
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     int64_t times;
-
     int32_t ret = GetMonotonicTimeNs(times);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
@@ -227,7 +219,6 @@ int32_t TimeServiceStub::OnGetThreadTimeMs(MessageParcel &data, MessageParcel &r
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, " start.");
     int64_t times;
-
     int32_t ret = GetThreadTimeMs(times);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
@@ -271,13 +262,11 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
             return E_TIME_NULLPTR;
         }
     }
-
     sptr<IRemoteObject> obj = data.ReadRemoteObject();
     if (obj == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Input nullptr");
         return E_TIME_NULLPTR;
     }
-
     auto timerOptions = std::make_shared<SimpleTimerInfo>();
     timerOptions->type = type;
     timerOptions->repeat = repeat;

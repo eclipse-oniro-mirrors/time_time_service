@@ -82,8 +82,6 @@ protected:
 private:
     int32_t Init();
     void InitServiceHandler();
-    void InitNotifyHandler();
-    void InitTimeZone();
     void InitTimerHandler();
     void ParseTimerPara(std::shared_ptr<ITimerInfo> timerOptions, TimerPara &paras);
     bool GetTimeByClockid(clockid_t clockId, struct timespec &tv);

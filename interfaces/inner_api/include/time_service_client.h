@@ -384,6 +384,7 @@ public:
     TIME_API bool ResetAllProxy();
 
     bool ConnectService();
+    void ClearProxy();
 private:
     TimeServiceClient();
     ~TimeServiceClient();

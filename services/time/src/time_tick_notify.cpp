@@ -21,8 +21,8 @@
 
 #include "common_timer_errors.h"
 #include "time_common.h"
-#include "time_system_ability.h"
 #include "time_service_notify.h"
+#include "time_system_ability.h"
 #include "timer_manager_interface.h"
 
 using namespace std::chrono;
@@ -40,7 +40,6 @@ TimeTickNotify::~TimeTickNotify(){};
 void TimeTickNotify::Init()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify start.");
-
     uint32_t ret = timer_.Setup();
     if (ret != Utils::TIMER_ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer Setup failed: %{public}d", ret);
@@ -67,7 +66,7 @@ void TimeTickNotify::Callback()
 
 void TimeTickNotify::RefreshNextTriggerTime()
 {
-    time_t t = time(NULL);
+    time_t t = time(nullptr);
     struct tm *tblock = localtime(&t);
     TIME_HILOGI(TIME_MODULE_SERVICE, "Time now: %{public}s", asctime(tblock));
     auto UTCTimeMicro = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
@@ -80,6 +79,7 @@ void TimeTickNotify::Stop()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     timer_.Shutdown();
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
 uint64_t TimeTickNotify::GetMillisecondsFromUTC(uint64_t UTCtimeMicro)
