@@ -49,6 +49,12 @@ struct ReceiveDataWorker {
 };
 
 struct AsyncCallbackInfoCreate {
+    ~AsyncCallbackInfoCreate()
+    {
+        if (callback != nullptr) {
+            napi_delete_reference(env, callback);
+        }
+    }
     napi_env env = nullptr;
     napi_async_work asyncWork = nullptr;
     napi_ref callback = nullptr;
@@ -60,6 +66,12 @@ struct AsyncCallbackInfoCreate {
 };
 
 struct AsyncCallbackInfoStart {
+    ~AsyncCallbackInfoStart()
+    {
+        if (callback != nullptr) {
+            napi_delete_reference(env, callback);
+        }
+    }
     napi_env env = nullptr;
     napi_async_work asyncWork = nullptr;
     napi_ref callback = nullptr;
@@ -72,6 +84,12 @@ struct AsyncCallbackInfoStart {
 };
 
 struct AsyncCallbackInfoStop {
+    ~AsyncCallbackInfoStop()
+    {
+        if (callback != nullptr) {
+            napi_delete_reference(env, callback);
+        }
+    }
     napi_env env = nullptr;
     napi_async_work asyncWork = nullptr;
     napi_ref callback = nullptr;
@@ -83,6 +101,12 @@ struct AsyncCallbackInfoStop {
 };
 
 struct AsyncCallbackInfoDestroy {
+    ~AsyncCallbackInfoDestroy()
+    {
+        if (callback != nullptr) {
+            napi_delete_reference(env, callback);
+        }
+    }
     napi_env env = nullptr;
     napi_async_work asyncWork = nullptr;
     napi_ref callback = nullptr;
@@ -201,11 +225,16 @@ void ITimerInfoInstance::OnTrigger()
             if (dataWorkerData == nullptr) {
                 return;
             }
-
+            napi_handle_scope scope = nullptr;
+            napi_open_handle_scope(dataWorkerData->env, &scope);
+            if (scope == nullptr) {
+                return;
+            }
             SetCallback(dataWorkerData->env,
                         dataWorkerData->ref,
                         NO_ERROR,
                         NapiGetNull(dataWorkerData->env));
+            napi_close_handle_scope(dataWorkerData->env, scope);
             delete dataWorkerData;
             dataWorkerData = nullptr;
             delete work;
@@ -387,6 +416,10 @@ napi_value CreateTimer(napi_env env, napi_callback_info info)
             napi_create_int64(env, asynccallbackinfo->timerId, &result);
             ReturnCallbackPromise(env, info, result);
             napi_delete_async_work(env, asynccallbackinfo->asyncWork);
+            if (asynccallbackinfo) {
+                delete asynccallbackinfo;
+                asynccallbackinfo = nullptr;
+            }
         },
         (void *)asynccallbackinfo,
         &asynccallbackinfo->asyncWork);
