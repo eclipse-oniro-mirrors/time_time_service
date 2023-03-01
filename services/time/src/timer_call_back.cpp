@@ -21,7 +21,7 @@ namespace MiscServices {
 std::mutex TimerCallback::instanceLock_;
 sptr<TimerCallback> TimerCallback::instance_;
 
-std::map<uint64_t, std::shared_ptr<ITimerInfo>> TimerCallback::TimerInfoMap_;
+std::map<uint64_t, std::shared_ptr<ITimerInfo>> TimerCallback::timerInfoMap_;
 std::mutex TimerCallback::timerInfoMutex_;
 
 TimerCallback::TimerCallback()
@@ -30,7 +30,7 @@ TimerCallback::TimerCallback()
 
 TimerCallback::~TimerCallback()
 {
-    TimerInfoMap_.clear();
+    timerInfoMap_.clear();
 }
 
 sptr<TimerCallback> TimerCallback::GetInstance()
@@ -43,9 +43,8 @@ sptr<TimerCallback> TimerCallback::GetInstance()
     }
     return instance_;
 }
-    
-bool TimerCallback::InsertTimerCallbackInfo(const uint64_t timerId,
-                                            const std::shared_ptr<ITimerInfo> &timerInfo)
+
+bool TimerCallback::InsertTimerCallbackInfo(const uint64_t timerId, const std::shared_ptr<ITimerInfo> &timerInfo)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     if (timerInfo == nullptr) {
@@ -53,12 +52,12 @@ bool TimerCallback::InsertTimerCallbackInfo(const uint64_t timerId,
     }
 
     std::lock_guard<std::mutex> lock(timerInfoMutex_);
-    auto info = TimerInfoMap_.find(timerId);
-    if (info != TimerInfoMap_.end()) {
+    auto info = timerInfoMap_.find(timerId);
+    if (info != timerInfoMap_.end()) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "timer info already insert.");
         return false;
     } else {
-        TimerInfoMap_[timerId] = timerInfo;
+        timerInfoMap_[timerId] = timerInfo;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
@@ -68,9 +67,9 @@ bool TimerCallback::RemoveTimerCallbackInfo(const uint64_t timerId)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::lock_guard<std::mutex> lock(timerInfoMutex_);
-    auto info = TimerInfoMap_.find(timerId);
-    if (info != TimerInfoMap_.end()) {
-        TimerInfoMap_.erase(info);
+    auto info = timerInfoMap_.find(timerId);
+    if (info != timerInfoMap_.end()) {
+        timerInfoMap_.erase(info);
         TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
         return true;
     }
@@ -81,11 +80,17 @@ bool TimerCallback::RemoveTimerCallbackInfo(const uint64_t timerId)
 void TimerCallback::NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::lock_guard<std::mutex> lock(timerInfoMutex_);
-    auto it = TimerInfoMap_.find(timerId);
-    if (it != TimerInfoMap_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "ontrigger.");
-        it->second->OnTrigger();
+    std::shared_ptr<ITimerInfo> timerInfo;
+    {
+        std::lock_guard<std::mutex> lock(timerInfoMutex_);
+        auto it = timerInfoMap_.find(timerId);
+        if (it != timerInfoMap_.end()) {
+            TIME_HILOGD(TIME_MODULE_SERVICE, "ontrigger.");
+            timerInfo = it->second;
+        }
+    }
+    if (timerInfo != nullptr) {
+        timerInfo->OnTrigger();
     }
     if (timerCallback == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "timerCallback nullptr timerId:%{public}" PRId64 "", timerId);

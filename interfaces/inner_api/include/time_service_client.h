@@ -201,6 +201,7 @@ public:
      */
     bool ResetAllProxy();
     bool ConnectService();
+    void ClearProxy();
 
 private:
     TimeServiceClient();

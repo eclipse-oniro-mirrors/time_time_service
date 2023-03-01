@@ -56,9 +56,9 @@ static const std::int32_t INIT_INTERVAL = 10000L;
 static const uint32_t TIMER_TYPE_REALTIME_MASK = 1 << 0;
 static const uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
 static const uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
-constexpr int MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
-constexpr int NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
-constexpr int ONE_MILLI = 1000;
+constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
+constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
+constexpr int32_t ONE_MILLI = 1000;
 }
 
 REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
@@ -126,20 +126,18 @@ void TimeSystemAbility::OnStart()
 
     InitServiceHandler();
     InitTimerHandler();
-    InitNotifyHandler();
     DelayedSingleton<TimeTickNotify>::GetInstance()->Init();
     DelayedSingleton<TimeZoneInfo>::GetInstance()->Init();
     DelayedSingleton<NtpUpdateTime>::GetInstance()->Init();
+    AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
+    InitDumpCmd();
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeService success.");
     if (Init() != ERR_OK) {
         auto callback = [this]() { Init(); };
         serviceHandler_->PostTask(callback, INIT_INTERVAL);
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init failed. Try again 10s later.");
         return;
     }
-    AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
-    InitDumpCmd();
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeService success.");
-    return;
 }
 
 void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
@@ -160,7 +158,7 @@ void TimeSystemAbility::RegisterSubscriber()
     if (!subRes) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to RegisterSubscriber");
         auto callback = [this]() { DelayedSingleton<TimeServiceNotify>::GetInstance()->RepublishEvents(); };
-        serviceHandler_->PostTask(callback, INIT_INTERVAL);
+        serviceHandler_->PostTask(callback, "time_service_subscriber_retry", INIT_INTERVAL);
     } else {
         TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterSubscriber success.");
     }
@@ -190,12 +188,6 @@ void TimeSystemAbility::OnStop()
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End.");
 }
 
-void TimeSystemAbility::InitNotifyHandler()
-{
-    TIME_HILOGI(TIME_MODULE_SERVICE, "InitNotify started.");
-    DelayedSingleton<TimeServiceNotify>::GetInstance()->RegisterPublishEvents();
-}
-
 void TimeSystemAbility::InitServiceHandler()
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "InitServiceHandler started.");
@@ -205,7 +197,6 @@ void TimeSystemAbility::InitServiceHandler()
     }
     std::shared_ptr<AppExecFwk::EventRunner> runner = AppExecFwk::EventRunner::Create(TIME_SERVICE_NAME);
     serviceHandler_ = std::make_shared<AppExecFwk::EventHandler>(runner);
-
     TIME_HILOGI(TIME_MODULE_SERVICE, "InitServiceHandler Succeeded.");
 }
 
@@ -226,7 +217,6 @@ void TimeSystemAbility::ParseTimerPara(std::shared_ptr<ITimerInfo> timerOptions,
     bool isWakeup = (uIntType & TIMER_TYPE_REALTIME_WAKEUP_MASK) > 0 ? true : false;
     paras.windowLength = (uIntType & TIMER_TYPE_EXACT_MASK) > 0 ? 0 : -1;
     paras.flag = 0;
-
     if (isRealtime && isWakeup) {
         paras.timerType = ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP;
     } else if (isRealtime) {
@@ -360,13 +350,13 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
         return false;
     }
     auto ret = SetRtcTime(tv.tv_sec);
-    if (ret < 0) {
+    if (ret == E_TIME_SET_RTC_FAILED) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "set rtc fail: %{public}d.", ret);
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "getting currentTime to milliseconds: %{public}" PRId64 "", currentTime);
     if (currentTime < (time - ONE_MILLI) || currentTime > (time + ONE_MILLI)) {
-        DelayedSingleton<TimeServiceNotify>::GetInstance()->PublishTimeChanageEvents(currentTime);
+        DelayedSingleton<TimeServiceNotify>::GetInstance()->PublishTimeChangeEvents(currentTime);
     }
     return true;
 }
@@ -467,21 +457,21 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
     struct rtc_time rtc {};
     struct tm tm {};
     struct tm *gmtime_res = nullptr;
-    int fd = 0;
+    int fd = -1;
     int res;
     if (rtcId < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "invalid rtc id: %{public}s:", strerror(ENODEV));
-        return -1;
+        return E_TIME_SET_RTC_FAILED;
     }
     std::stringstream strs;
     strs << "/dev/rtc" << rtcId;
-    auto rtc_dev = strs.str();
-    TIME_HILOGI(TIME_MODULE_SERVICE, "rtc_dev : %{public}s:", rtc_dev.data());
-    auto rtc_data = rtc_dev.data();
-    fd = open(rtc_data, O_RDWR);
+    auto rtcDev = strs.str();
+    TIME_HILOGI(TIME_MODULE_SERVICE, "rtc_dev : %{public}s:", rtcDev.data());
+    auto rtcData = rtcDev.data();
+    fd = open(rtcData, O_RDWR);
     if (fd < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "open failed %{public}s: %{public}s", rtc_dev.data(), strerror(errno));
-        return -1;
+        TIME_HILOGE(TIME_MODULE_SERVICE, "open failed %{public}s: %{public}s", rtcDev.data(), strerror(errno));
+        return E_TIME_SET_RTC_FAILED;
     }
 
     gmtime_res = gmtime_r(&sec, &tm);
@@ -501,7 +491,7 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
         }
     } else {
         TIME_HILOGE(TIME_MODULE_SERVICE, "convert rtc time failed: %{public}s", strerror(errno));
-        res = -1;
+        res = E_TIME_SET_RTC_FAILED;
     }
     close(fd);
     return res;
@@ -545,7 +535,6 @@ int TimeSystemAbility::GetWallClockRtcId()
             auto rtcIdStr = name.substr(index + s.length());
             rtcId = std::stoul(rtcIdStr);
         }
-
         if (CheckRtc(rtcPath, rtcId)) {
             TIME_HILOGD(TIME_MODULE_SERVICE, "found wall clock rtc %{public}ld", rtcId);
             return rtcId;
@@ -585,7 +574,6 @@ int32_t TimeSystemAbility::GetTimeZone(std::string &timeZoneId)
 int32_t TimeSystemAbility::GetWallTimeMs(int64_t &times)
 {
     struct timespec tv {};
-
     if (GetTimeByClockid(CLOCK_REALTIME, tv)) {
         times = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
         return ERR_OK;
@@ -596,7 +584,6 @@ int32_t TimeSystemAbility::GetWallTimeMs(int64_t &times)
 int32_t TimeSystemAbility::GetWallTimeNs(int64_t &times)
 {
     struct timespec tv {};
-
     if (GetTimeByClockid(CLOCK_REALTIME, tv)) {
         times = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
         return ERR_OK;
@@ -607,7 +594,6 @@ int32_t TimeSystemAbility::GetWallTimeNs(int64_t &times)
 int32_t TimeSystemAbility::GetBootTimeMs(int64_t &times)
 {
     struct timespec tv {};
-
     if (GetTimeByClockid(CLOCK_BOOTTIME, tv)) {
         times = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
         return ERR_OK;
@@ -618,7 +604,6 @@ int32_t TimeSystemAbility::GetBootTimeMs(int64_t &times)
 int32_t TimeSystemAbility::GetBootTimeNs(int64_t &times)
 {
     struct timespec tv {};
-
     if (GetTimeByClockid(CLOCK_BOOTTIME, tv)) {
         times = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
         return ERR_OK;
@@ -629,7 +614,6 @@ int32_t TimeSystemAbility::GetBootTimeNs(int64_t &times)
 int32_t TimeSystemAbility::GetMonotonicTimeMs(int64_t &times)
 {
     struct timespec tv {};
-
     if (GetTimeByClockid(CLOCK_MONOTONIC, tv)) {
         times = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
         return ERR_OK;
@@ -640,7 +624,6 @@ int32_t TimeSystemAbility::GetMonotonicTimeMs(int64_t &times)
 int32_t TimeSystemAbility::GetMonotonicTimeNs(int64_t &times)
 {
     struct timespec tv {};
-
     if (GetTimeByClockid(CLOCK_MONOTONIC, tv)) {
         times = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
         return ERR_OK;

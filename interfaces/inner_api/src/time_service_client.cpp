@@ -632,6 +632,7 @@ TimeSaDeathRecipient::TimeSaDeathRecipient()
 void TimeSaDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &object)
 {
     TIME_HILOGE(TIME_MODULE_CLIENT, "TimeSaDeathRecipient on remote systemAbility died.");
+    TimeServiceClient::GetInstance()->ClearProxy();
     TimeServiceClient::GetInstance()->OnRemoteSaDied(object);
 }
 
@@ -676,6 +677,12 @@ void TimeServiceClient::SetProxy(sptr<ITimeService> proxy)
 {
     std::lock_guard<std::mutex> autoLock(proxyLock_);
     timeServiceProxy_ = proxy;
+}
+
+void TimeServiceClient::ClearProxy()
+{
+    std::lock_guard<std::mutex> autoLock(proxyLock_);
+    timeServiceProxy_ = nullptr;
 }
 } // namespace MiscServices
 } // namespace OHOS
