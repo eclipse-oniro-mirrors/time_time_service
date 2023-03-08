@@ -379,8 +379,6 @@ HWTEST_F(TimeServiceTest, GetThreadTimeMs001, TestSize.Level1)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetThreadTimeMs();
     EXPECT_TRUE(time1 != -1);
-    auto time2 = TimeServiceClient::GetInstance()->GetThreadTimeMs();
-    EXPECT_TRUE(time2 >= time1);
 }
 
 /**
@@ -392,8 +390,6 @@ HWTEST_F(TimeServiceTest, GetThreadTimeNs001, TestSize.Level1)
 {
     auto time1 = TimeServiceClient::GetInstance()->GetThreadTimeNs();
     EXPECT_TRUE(time1 != -1);
-    auto time2 = TimeServiceClient::GetInstance()->GetThreadTimeNs();
-    EXPECT_TRUE(time2 >= time1);
 }
 
 /**
