@@ -77,6 +77,7 @@ namespace Time {
         }                                                                  \
     } while (0)
 
+constexpr size_t ARGC_ZERO = 0;
 constexpr size_t ARGC_ONE = 1;
 constexpr size_t ARGC_TWO = 2;
 constexpr size_t ARGC_THREE = 3;
@@ -141,8 +142,6 @@ public:
     static napi_value CreateNapiNumber(napi_env env, int32_t objName);
     static napi_value GetUndefinedValue(napi_env env);
     static napi_status GetValue(napi_env env, napi_value in, std::string &out);
-    static void SetTimerCallback(const napi_env &env, const napi_ref &callbackIn, const int &errorCode,
-        const char *message, const napi_value &result);
     static napi_status ThrowError(napi_env env, const char *napiMessage, int32_t napiCode);
     static std::string GetErrorMessage(int32_t errCode);
 };

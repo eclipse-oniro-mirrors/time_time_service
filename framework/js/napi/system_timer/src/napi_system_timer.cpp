@@ -15,10 +15,8 @@
 
 #include "napi_system_timer.h"
 
-#include <uv.h>
-
-#include "napi_utils.h"
 #include "securec.h"
+#include "napi_utils.h"
 #include "time_hilog.h"
 #include "timer_type.h"
 
@@ -27,12 +25,9 @@ using namespace OHOS::MiscServices;
 namespace OHOS {
 namespace MiscServices {
 namespace Time {
-struct ReceiveDataWorker {
-    napi_env env = nullptr;
-    napi_ref ref = 0;
-};
 ITimerInfoInstance::ITimerInfoInstance() : callbackInfo_{}
 {
+    handler_ = std::make_shared<EventHandler>(EventRunner::GetMainEventRunner());
 }
 
 ITimerInfoInstance::~ITimerInfoInstance()
@@ -44,49 +39,20 @@ void ITimerInfoInstance::OnTrigger()
     if (callbackInfo_.ref == nullptr) {
         return;
     }
-
-    uv_loop_s *loop = nullptr;
-#if NAPI_VERSION >= 2
-    napi_get_uv_event_loop(callbackInfo_.env, &loop);
-#endif // NAPI_VERSION >= 2
-
-    ReceiveDataWorker *dataWorker = new (std::nothrow) ReceiveDataWorker();
-    if (!dataWorker) {
+    auto callbackInfo = callbackInfo_;
+    auto callback = [callbackInfo]() {
+        TIME_HILOGD(TIME_MODULE_JS_NAPI, "timerCallback success");
+        napi_value undefined = nullptr;
+        napi_get_undefined(callbackInfo.env, &undefined);
+        napi_value callback = nullptr;
+        napi_get_reference_value(callbackInfo.env, callbackInfo.ref, &callback);
+        napi_call_function(callbackInfo.env, undefined, callback, ARGC_ZERO, &undefined, &undefined);
+    };
+    if (handler_ == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "handler is nullptr");
         return;
     }
-    dataWorker->env = callbackInfo_.env;
-    dataWorker->ref = callbackInfo_.ref;
-
-    uv_work_t *work = new (std::nothrow) uv_work_t;
-    if (!work) {
-        delete dataWorker;
-        return;
-    }
-    if (!loop) {
-        delete dataWorker;
-        delete work;
-        return;
-    }
-    work->data = reinterpret_cast<void *>(dataWorker);
-    uv_queue_work(
-        loop, work, [](uv_work_t *work) {},
-        [](uv_work_t *work, int status) {
-            ReceiveDataWorker *dataWorkerData = reinterpret_cast<ReceiveDataWorker *>(work->data);
-            if (dataWorkerData == nullptr) {
-                return;
-            }
-            napi_handle_scope scope = nullptr;
-            napi_open_handle_scope(dataWorkerData->env, &scope);
-            if (scope == nullptr) {
-                return;
-            }
-            NapiUtils::SetTimerCallback(dataWorkerData->env, dataWorkerData->ref, ERROR_OK, "",
-                NapiUtils::GetUndefinedValue(dataWorkerData->env));
-            napi_close_handle_scope(dataWorkerData->env, scope);
-            delete dataWorkerData;
-            dataWorkerData = nullptr;
-            delete work;
-        });
+    handler_->PostImmediateTask(callback, "TimerCallbackHandler");
 }
 
 void ITimerInfoInstance::SetCallbackInfo(const napi_env &env, const napi_ref &ref)

@@ -48,17 +48,15 @@ ohos_shared_library("systemtimer") {
     "src/timer_type.cpp",
   ]
 
-  deps = [
-    "${api_path}:time_client",
-    "//third_party/libuv:uv",
-  ]
+  deps = [ "${api_path}:time_client" ]
 
   external_deps = [
+    "ability_runtime:abilitykit_native",
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
+    "eventhandler:libeventhandler",
     "hiviewdfx_hilog_native:libhilog",
-    "ability_runtime:abilitykit_native",
-    "napi:ace_napi"
+    "napi:ace_napi",
   ]
 
   relative_install_dir = "module"

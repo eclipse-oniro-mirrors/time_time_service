@@ -72,29 +72,6 @@ napi_status NapiUtils::GetValue(napi_env env, napi_value in, std::string &out)
     return status;
 }
 
-void NapiUtils::SetTimerCallback(const napi_env &env, const napi_ref &callbackIn, const int32_t &errorCode,
-    const char *message, const napi_value &result)
-{
-    napi_value undefined = nullptr;
-    napi_get_undefined(env, &undefined);
-
-    napi_value callback = nullptr;
-    napi_value resultOut = nullptr;
-    napi_get_reference_value(env, callbackIn, &callback);
-    napi_value results[2] = { 0 };
-
-    auto innerCode = ConvertErrorCode(errorCode);
-    napi_value eCode = nullptr;
-    napi_create_int32(env, innerCode, &eCode);
-    napi_set_named_property(env, result, "code", eCode);
-
-    napi_value str;
-    napi_create_string_utf8(env, CODE_TO_MESSAGE.find(innerCode)->second.c_str(), NAPI_AUTO_LENGTH, &str);
-    napi_set_named_property(env, results[0], "message", str);
-    results[1] = result;
-    NAPI_CALL_RETURN_VOID(env, napi_call_function(env, undefined, callback, ARGC_TWO, &results[0], &resultOut));
-}
-
 napi_status NapiUtils::ThrowError(napi_env env, const char *napiMessage, int32_t napiCode)
 {
     napi_value message = nullptr;

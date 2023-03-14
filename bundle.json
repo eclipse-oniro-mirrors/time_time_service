@@ -44,8 +44,7 @@
         "hisysevent_native"
       ],
       "third_party": [
-        "jsoncpp",
-        "libuv"
+        "jsoncpp"
       ]
     },
     "build": {

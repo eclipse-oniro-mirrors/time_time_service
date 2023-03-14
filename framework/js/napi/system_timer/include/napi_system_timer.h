@@ -16,6 +16,9 @@
 #ifndef NAPI_SYSTEM_TIMER_H
 #define NAPI_SYSTEM_TIMER_H
 
+#include <functional>
+
+#include "event_handler.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi_async_work.h"
@@ -24,6 +27,7 @@
 namespace OHOS {
 namespace MiscServices {
 namespace Time {
+using namespace OHOS::AppExecFwk;
 class ITimerInfoInstance : public OHOS::MiscServices::ITimerInfo {
 public:
     ITimerInfoInstance();
@@ -42,6 +46,7 @@ private:
     };
 
     CallbackInfo callbackInfo_;
+    std::shared_ptr<EventHandler> handler_;
 };
 
 class NapiSystemTimer {
