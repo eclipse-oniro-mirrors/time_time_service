@@ -123,7 +123,7 @@ napi_value NapiSystemDateTime::GetRealActiveTime(napi_env env, napi_callback_inf
 {
     struct GetRealActiveTimeContext : public ContextBase {
         int64_t time = 0;
-        bool isNano = true;
+        bool isNano = false;
     };
     GetRealActiveTimeContext *getRealActiveTimeContext = new GetRealActiveTimeContext();
     auto inputParser = [env, getRealActiveTimeContext](size_t argc, napi_value *argv) {
@@ -160,7 +160,7 @@ napi_value NapiSystemDateTime::GetCurrentTime(napi_env env, napi_callback_info i
 {
     struct GetCurrentTimeContext : public ContextBase {
         int64_t time = 0;
-        bool isNano = true;
+        bool isNano = false;
     };
     GetCurrentTimeContext *getCurrentTimeContext = new GetCurrentTimeContext();
     auto inputParser = [env, getCurrentTimeContext](size_t argc, napi_value *argv) {
@@ -196,7 +196,7 @@ napi_value NapiSystemDateTime::GetRealTime(napi_env env, napi_callback_info info
 {
     struct GetRealTimeContext : public ContextBase {
         int64_t time = 0;
-        bool isNano = true;
+        bool isNano = false;
     };
     GetRealTimeContext *getRealTimeContext = new GetRealTimeContext();
     auto inputParser = [env, getRealTimeContext](size_t argc, napi_value *argv) {
