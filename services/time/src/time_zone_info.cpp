@@ -39,7 +39,7 @@ TimeZoneInfo::TimeZoneInfo()
         { "Europe/Kiev", "UA", 3 }, { "Pacific/Wake", "UM", 12 }, { "America/New_York", "US", -4 },
         { "Asia/Tashkent", "UZ", 5 } };
 
-    for (auto &tz : timezoneList) {
+    for (const auto &tz : timezoneList) {
         timezoneInfoMap_[tz.ID] = tz;
     }
 }
