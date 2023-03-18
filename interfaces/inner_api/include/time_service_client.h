@@ -382,12 +382,26 @@ public:
      * @return bool true on success, false on failure.
      */
     TIME_API bool ResetAllProxy();
-
-    bool ConnectService();
-    void ClearProxy();
 private:
+    class TimeSaDeathRecipient : public IRemoteObject::DeathRecipient {
+    public:
+        explicit TimeSaDeathRecipient(){};
+        ~TimeSaDeathRecipient() = default;
+        void OnRemoteDied(const wptr<IRemoteObject> &object) override
+        {
+            TIME_HILOGE(TIME_MODULE_CLIENT, "TimeSaDeathRecipient on remote systemAbility died.");
+            TimeServiceClient::GetInstance()->ClearProxy();
+            TimeServiceClient::GetInstance()->ConnectService();
+        };
+
+    private:
+        DISALLOW_COPY_AND_MOVE(TimeSaDeathRecipient);
+    };
+
     TimeServiceClient();
     ~TimeServiceClient();
+    bool ConnectService();
+    void ClearProxy();
     sptr<ITimeService> GetProxy();
     void SetProxy(sptr<ITimeService> proxy);
 
@@ -395,6 +409,7 @@ private:
     static sptr<TimeServiceClient> instance_;
     std::mutex proxyLock_;
     sptr<ITimeService> timeServiceProxy_;
+    sptr<TimeSaDeathRecipient> deathRecipient_ {};
 };
 } // MiscServices
 } // OHOS
