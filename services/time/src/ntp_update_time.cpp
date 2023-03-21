@@ -189,7 +189,7 @@ void NtpUpdateTime::RefreshNextTriggerTime()
 {
     auto bootTimeNano = steady_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
-    nextTriggerTime_ = bootTimeMilli + DAY_TO_MILLISECOND;
+    nextTriggerTime_ = static_cast<uint64_t>(bootTimeMilli + DAY_TO_MILLISECOND);
 }
 
 void NtpUpdateTime::UpdateStatusOff()
@@ -231,7 +231,7 @@ bool NtpUpdateTime::IsNITZTimeInvalid()
     }
     auto BootTimeNano = steady_clock::now().time_since_epoch().count();
     auto BootTimeMilli = BootTimeNano / NANO_TO_MILLISECOND;
-    return (BootTimeMilli - nitzUpdateTimeMili_) < DAY_TO_MILLISECOND;
+    return (BootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMili_)) < DAY_TO_MILLISECOND;
 }
 
 void NtpUpdateTime::StartTimer()
