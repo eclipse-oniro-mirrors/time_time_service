@@ -25,24 +25,8 @@
 
 namespace OHOS {
 namespace MiscServices {
-class TimeSaDeathRecipient : public IRemoteObject::DeathRecipient {
-public:
-    explicit TimeSaDeathRecipient(){};
-    ~TimeSaDeathRecipient() = default;
-    void OnRemoteDied(const wptr<IRemoteObject> &object) override
-    {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "TimeSaDeathRecipient on remote systemAbility died.");
-        TimeServiceClient::GetInstance()->ClearProxy();
-        TimeServiceClient::GetInstance()->ConnectService();
-    };
-
-private:
-    DISALLOW_COPY_AND_MOVE(TimeSaDeathRecipient);
-};
-
 std::mutex TimeServiceClient::instanceLock_;
 sptr<TimeServiceClient> TimeServiceClient::instance_;
-sptr<TimeSaDeathRecipient> deathRecipient_;
 TimeServiceClient::TimeServiceClient()
 {
 }

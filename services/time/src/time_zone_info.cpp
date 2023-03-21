@@ -71,14 +71,14 @@ bool TimeZoneInfo::SetTimezone(std::string timezoneId)
         return true;
     }
 
-    auto errNo = SetParameter(TIMEZONE_KEY, timezoneId.c_str());
-    if (errNo > TIMEZONE_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone timezoneId: %{public}d: %{public}s", errNo, timezoneId.c_str());
+    if (!SetTimezoneToKernel(timezoneId)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone Set kernel failed.");
         return false;
     }
 
-    if (!SetTimezoneToKernel(timezoneId)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone Set kernel failed.");
+    auto errNo = SetParameter(TIMEZONE_KEY, timezoneId.c_str());
+    if (errNo > TIMEZONE_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone timezoneId: %{public}d: %{public}s", errNo, timezoneId.c_str());
         return false;
     }
     curTimezoneId_ = timezoneId;
