@@ -37,7 +37,7 @@ bool TimeServiceNotify::RepublishEvents()
 
 bool TimeServiceNotify::PublishEvents(int64_t eventTime, const IntentWant &want, const PublishInfo &publishInfo)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start to publish event %{public}s at %{public}lld", want.GetAction().c_str(),
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Start to publish event %{public}s at %{public}lld", want.GetAction().c_str(),
         static_cast<long long>(eventTime));
     CommonEventData event(want);
     if (!CommonEventManager::PublishCommonEvent(event, publishInfo, nullptr)) {
