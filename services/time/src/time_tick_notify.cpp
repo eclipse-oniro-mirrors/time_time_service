@@ -19,7 +19,11 @@
 #include <ctime>
 #include <thread>
 
+#include "common_event_manager.h"
+#include "common_event_support.h"
 #include "common_timer_errors.h"
+#include "matching_skills.h"
+#include "power_subscriber.h"
 #include "time_common.h"
 #include "time_service_notify.h"
 #include "time_system_ability.h"
@@ -29,6 +33,7 @@ using namespace std::chrono;
 
 namespace OHOS {
 namespace MiscServices {
+using namespace OHOS::EventFwk;
 namespace {
 constexpr uint64_t MINUTE_TO_MILLISECOND = 60000;
 constexpr uint64_t MICRO_TO_MILESECOND = 1000;
@@ -40,6 +45,14 @@ TimeTickNotify::~TimeTickNotify(){};
 void TimeTickNotify::Init()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify start.");
+    MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_SCREEN_ON);
+    CommonEventSubscribeInfo subscriberInfo(matchingSkills);
+    std::shared_ptr<PowerSubscriber> subscriberPtr = std::make_shared<PowerSubscriber>(subscriberInfo);
+    bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
+    if (!subscribeResult) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent failed");
+    }
     uint32_t ret = timer_.Setup();
     if (ret != Utils::TIMER_ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer Setup failed: %{public}d", ret);
@@ -64,6 +77,15 @@ void TimeTickNotify::Callback()
     TIME_HILOGD(TIME_MODULE_SERVICE, "Tick timer ID: %{public}d", timerId_);
 }
 
+void TimeTickNotify::PowerCallback()
+{
+    timer_.Unregister(timerId_);
+    RefreshNextTriggerTime();
+    auto callback = [this]() { this->Callback(); };
+    timerId_ = timer_.Register(callback, nextTriggerTime_);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify triggertime: %{public}" PRId64 "", nextTriggerTime_);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick timer ID: %{public}d", timerId_);
+}
 void TimeTickNotify::RefreshNextTriggerTime()
 {
     time_t t = time(nullptr);
