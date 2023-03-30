@@ -52,7 +52,7 @@ TimeServiceStub::~TimeServiceStub()
 int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply,
     MessageOption &option)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, " start##code = %{public}u", code);
+    TIME_HILOGD(TIME_MODULE_SERVICE, " start##code = %{public}u", code);
     std::u16string descriptor = TimeServiceStub::GetDescriptor();
     std::u16string remoteDescriptor = data.ReadInterfaceToken();
     if (descriptor != remoteDescriptor) {
@@ -61,6 +61,8 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
     }
     pid_t p = IPCSkeleton::GetCallingPid();
     pid_t p1 = IPCSkeleton::GetCallingUid();
+    TIME_HILOGD(TIME_MODULE_SERVICE, "CallingPid = %{public}d, CallingUid = %{public}d, code = %{public}u", p, p1,
+                code);
     auto itFunc = memberFuncMap_.find(code);
     if (itFunc != memberFuncMap_.end()) {
         auto memberFunc = itFunc->second;
@@ -69,7 +71,7 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
         }
     }
     int ret = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
-    TIME_HILOGI(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
+    TIME_HILOGD(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
     return ret;
 }
 
