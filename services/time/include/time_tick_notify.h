@@ -29,6 +29,7 @@ public:
     void Init();
     void Callback();
     void Stop();
+    void PowerCallback();
 private:
     void StartTimer();
     void RefreshNextTriggerTime();

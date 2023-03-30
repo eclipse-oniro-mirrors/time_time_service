@@ -58,6 +58,7 @@ ohos_shared_library("time_service") {
     "timer/src/timer_handler.cpp",
     "timer/src/timer_info.cpp",
     "timer/src/timer_manager.cpp",
+    "time/src/power_subscriber.cpp",
   ]
 
   deps = [
