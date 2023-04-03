@@ -14,6 +14,7 @@
 */
 
 #include "power_subscriber.h"
+
 #include "time_common.h"
 #include "time_tick_notify.h"
 
@@ -22,32 +23,32 @@ namespace MiscServices {
 using namespace OHOS::EventFwk;
 using namespace OHOS::AAFwk;
 PowerSubscriber::PowerSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo)
-   : CommonEventSubscriber(subscriberInfo)
+    : CommonEventSubscriber(subscriberInfo)
 {
-   memberFuncMap_[POWER_BROADCAST_EVENT] = &PowerSubscriber::PowerBroadcast;
+    memberFuncMap_[POWER_BROADCAST_EVENT] = &PowerSubscriber::PowerBroadcast;
 }
 
 void PowerSubscriber::OnReceiveEvent(const CommonEventData &data)
 {
-   uint32_t code = UNKNOWN_BROADCAST_EVENT;
-   OHOS::EventFwk::Want want = data.GetWant();
-   std::string action = data.GetWant().GetAction();
-   TIME_HILOGD(TIME_MODULE_SERVICE, "receive one broadcast:%{public}s", action.c_str());
-   if (action == CommonEventSupport::COMMON_EVENT_SCREEN_ON) {
-       code = POWER_BROADCAST_EVENT;
-   }
-   auto itFunc = memberFuncMap_.find(code);
-   if (itFunc != memberFuncMap_.end()) {
-       auto memberFunc = itFunc->second;
-       if (memberFunc != nullptr) {
-           return (this->*memberFunc)(data);
-       }
-   }
+    uint32_t code = UNKNOWN_BROADCAST_EVENT;
+    OHOS::EventFwk::Want want = data.GetWant();
+    std::string action = data.GetWant().GetAction();
+    TIME_HILOGD(TIME_MODULE_SERVICE, "receive one broadcast:%{public}s", action.c_str());
+    if (action == CommonEventSupport::COMMON_EVENT_SCREEN_ON) {
+        code = POWER_BROADCAST_EVENT;
+    }
+    auto itFunc = memberFuncMap_.find(code);
+    if (itFunc != memberFuncMap_.end()) {
+        auto memberFunc = itFunc->second;
+        if (memberFunc != nullptr) {
+            return (this->*memberFunc)(data);
+        }
+    }
 }
 
 void PowerSubscriber::PowerBroadcast(const CommonEventData &data)
 {
-   DelayedSingleton<TimeTickNotify>::GetInstance()->PowerCallback();
+    DelayedSingleton<TimeTickNotify>::GetInstance()->PowerCallback();
 }
 } // namespace MiscServices
 } // namespace OHOS

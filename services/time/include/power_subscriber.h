@@ -31,21 +31,21 @@ namespace MiscServices {
 using namespace OHOS::EventFwk;
 class PowerSubscriber : public CommonEventSubscriber {
 public:
-   explicit PowerSubscriber(const CommonEventSubscribeInfo &subscriberInfo);
-   ~PowerSubscriber() = default;
-   virtual void OnReceiveEvent(const CommonEventData &data);
+    explicit PowerSubscriber(const CommonEventSubscribeInfo &subscriberInfo);
+    ~PowerSubscriber() = default;
+    virtual void OnReceiveEvent(const CommonEventData &data);
 
 private:
-   enum PowerBroadcastEventType {
-       UNKNOWN_BROADCAST_EVENT = 0,
-       POWER_BROADCAST_EVENT,
-   };
-   using broadcastSubscriberFunc = void (PowerSubscriber::*)(const CommonEventData &data);
+    enum PowerBroadcastEventType {
+        UNKNOWN_BROADCAST_EVENT = 0,
+        POWER_BROADCAST_EVENT,
+    };
+    using broadcastSubscriberFunc = void (PowerSubscriber::*)(const CommonEventData &data);
 
-   void UnknownBroadcast(const CommonEventData &data);
-   void PowerBroadcast(const CommonEventData &data);
-   std::map<uint32_t, broadcastSubscriberFunc> memberFuncMap_;
+    void UnknownBroadcast(const CommonEventData &data);
+    void PowerBroadcast(const CommonEventData &data);
+    std::map<uint32_t, broadcastSubscriberFunc> memberFuncMap_;
 };
 } // namespace MiscServices
 } // namespace OHOS
-#endif // POWER_SUBSCRIBER_
+#endif // POWER_SUBSCRIBER_H
