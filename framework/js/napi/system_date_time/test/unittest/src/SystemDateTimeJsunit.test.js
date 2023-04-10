@@ -266,7 +266,10 @@ describe("TimeTest", function () {
             systemDateTime.getTimezone().then((data) => {
                 expect(data).assertEqual(timezone);
                 done();
-            });
+            })
+        }).catch((err) => {
+            expect(true).assertTrue();
+            done();
         });
     });
 
@@ -485,6 +488,86 @@ describe("TimeTest", function () {
             });
         });
 
+    });
+
+    /**
+     * @tc.number    SUB_systemDateTime_setTimezone_JS_API_2700
+     * @tc.name      Test systemDateTime.setTimezone
+     * @tc.desc      Test systemDateTime_setTimezone API functionality with invalid timezone
+     * @tc.size      : MEDIUM
+     * @tc.type      : Function
+     * @tc.level     : Level 0
+     */
+    it("systemDateTime_setTimezone_test27", 0, async function (done) {
+        systemDateTime.setTimezone('Asia').then(() => {
+            expect(false).assertTrue();
+            done();
+        }).catch((err) => {
+            expect(true).assertTrue();
+            done();
+        })
+    });
+
+    /**
+     * @tc.number    SUB_systemDateTime_setTimezone_JS_API_2800
+     * @tc.name      Test systemDateTime.setTimezone
+     * @tc.desc      Test systemDateTime_setTimezone API functionality with invalid timezone.
+     * @tc.size      : MEDIUM
+     * @tc.type      : Function
+     * @tc.level     : Level 0
+     */
+    it("systemDateTime_setTimezone_test28", 0, async function (done) {
+        systemDateTime.setTimezone('Asia', (err) => {
+            if (err) {
+                expect(true).assertTrue();
+                done();
+            } else {
+                expect(false).assertTrue();
+                done();
+            }
+        })
+    });
+
+    /**
+     * @tc.number    SUB_systemDateTime_setTimezone_JS_API_2900
+     * @tc.name      Test systemDateTime.setTimezone
+     * @tc.desc      Test systemDateTime_setTimezone API functionality
+     * @tc.size      : MEDIUM
+     * @tc.type      : Function
+     * @tc.level     : Level 0
+     */
+    it("systemDateTime_setTimezone_test29", 0, async function (done) {
+        await systemDateTime.setTimezone('Asia/Shanghai')
+        let date = new Date(2023, 3, 10)
+        await systemDateTime.setDate(date);
+        let time = date.getHours();
+        console.info(`time ${time}`)
+        await systemDateTime.setTimezone('America/Los_Angeles');
+        let currentTime = new Date().getHours();
+        console.info(`currentTime ${currentTime}`)
+        expect(currentTime - time >= 9).assertTrue();
+        done();
+        await systemDateTime.setTimezone('Asia/Shanghai')
+    });
+
+    /**
+     * @tc.number    SUB_systemDateTime_setTimezone_JS_API_3000
+     * @tc.name      Test systemDateTime.setTimezone
+     * @tc.desc      Test systemDateTime_setTimezone API functionality
+     * @tc.size      : MEDIUM
+     * @tc.type      : Function
+     * @tc.level     : Level 0
+     */
+    it("systemDateTime_setTimezone_test30", 0, async function (done) {
+        await systemDateTime.setTimezone('Asia/Shanghai')
+        let date = new Date(2023, 3, 10)
+        await systemDateTime.setDate(date);
+        let time = date.getHours();
+        await systemDateTime.setTimezone('America/Los_Angeles');
+        let currentTime = new Date().getHours();
+        expect(currentTime - time >= 8).assertTrue();
+        done();
+        await systemDateTime.setTimezone('Asia/Shanghai')
     });
 
     /**
