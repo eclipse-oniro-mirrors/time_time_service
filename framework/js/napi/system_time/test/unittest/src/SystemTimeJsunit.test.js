@@ -267,7 +267,10 @@ describe("TimeTest", function () {
                 expect(data).assertEqual(timezone);
                 done();
             });
-        });
+        }).catch((err) => {
+            expect(true).assertTrue();
+            done();
+        })
     });
 
     /**

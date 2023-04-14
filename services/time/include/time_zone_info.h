@@ -16,7 +16,6 @@
 #define SERVICES_INCLUDE_TIME_ZONE_INFO_H
 
 #include <fstream>
-#include <map>
 #include <mutex>
 #include <singleton.h>
 #include <sys/time.h>
@@ -29,23 +28,16 @@
 
 namespace OHOS {
 namespace MiscServices {
-struct zoneInfoEntry {
-    std::string ID;
-    std::string alias;
-    int utcOffsetHours;
-};
-
 class TimeZoneInfo : public std::enable_shared_from_this<TimeZoneInfo> {
     DECLARE_DELAYED_SINGLETON(TimeZoneInfo)
 public:
     bool GetTimezone(std::string &timezoneId);
-    bool SetTimezone(std::string timezoneId);
-    bool SetTimezoneToKernel(std::string timezoneId);
+    bool SetTimezone(const std::string& timezoneId);
+    bool SetTimezoneToKernel();
     void Init();
 
 private:
     std::string curTimezoneId_;
-    std::map<std::string, struct zoneInfoEntry> timezoneInfoMap_;
 };
 } // namespace MiscServices
 } // namespace OHOS

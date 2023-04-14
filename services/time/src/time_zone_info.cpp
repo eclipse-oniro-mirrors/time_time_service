@@ -1,52 +1,38 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2021 Huawei Device Co., Ltd.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #include "time_zone_info.h"
+
+#include "time_file_utils.h"
 
 namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
+constexpr const char *TIMEZONE_PATH = "/system/etc/zoneinfo/";
 const int TIMEZONE_OK = 0;
 const int CONFIG_LEN = 35;
-const int HOUR_TO_MILLI = 60;
+const int HOUR_TO_MIN = 60;
 } // namespace
 
 TimeZoneInfo::TimeZoneInfo()
 {
-    std::vector<struct zoneInfoEntry> timezoneList = { { "Antarctica/McMurdo", "AQ", 12 },
-        { "America/Argentina/Buenos_Aires", "AR", -3 }, { "Australia/Sydney", "AU", 10 },
-        { "America/Noronha", "BR", -2 }, { "America/St_Johns", "CA", -3 }, { "Africa/Kinshasa", "CD", 1 },
-        { "America/Santiago", "CL", -3 }, { "Asia/Shanghai", "CN", 8 }, { "Asia/Nicosia", "CY", 3 },
-        { "Europe/Berlin", "DE", 2 }, { "America/Guayaquil", "CEST", -5 }, { "Europe/Madrid", "ES", 2 },
-        { "Pacific/Pohnpei", "FM", 11 }, { "America/Godthab", "GL", -2 }, { "Asia/Jakarta", "ID", 7 },
-        { "Pacific/Tarawa", "KI", 12 }, { "Asia/Almaty", "KZ", 6 }, { "Pacific/Majuro", "MH", 12 },
-        { "Asia/Ulaanbaatar", "MN", 8 }, { "America/Mexico_City", "MX", -5 }, { "Asia/Kuala_Lumpur", "MY", 8 },
-        { "Pacific/Auckland", "NZ", 12 }, { "Pacific/Tahiti", "PF", -10 }, { "Pacific/Port_Moresby", "PG", 10 },
-        { "Asia/Gaza", "PS", 3 }, { "Europe/Lisbon", "PT", 1 }, { "Europe/Moscow", "RU", 3 },
-        { "Europe/Kiev", "UA", 3 }, { "Pacific/Wake", "UM", 12 }, { "America/New_York", "US", -4 },
-        { "Asia/Tashkent", "UZ", 5 } };
-
-    for (const auto &tz : timezoneList) {
-        timezoneInfoMap_[tz.ID] = tz;
-    }
 }
 
 TimeZoneInfo::~TimeZoneInfo()
 {
-    timezoneInfoMap_.clear();
 }
 
 void TimeZoneInfo::Init()
@@ -56,26 +42,30 @@ void TimeZoneInfo::Init()
     if (GetParameter(TIMEZONE_KEY, "", value, CONFIG_LEN) < TIMEZONE_OK) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found timezone from system parameter.");
     }
-
-    if (!SetTimezoneToKernel(value)) {
+    if (!SetTimezone(value)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init Set kernel failed.");
     }
     curTimezoneId_ = value;
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Timezone value: %{public}s", value);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Timezone value: %{public}s", value);
 }
 
-bool TimeZoneInfo::SetTimezone(std::string timezoneId)
+bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
 {
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Set timezone");
     if (curTimezoneId_ == timezoneId) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Same Timezone has been set.");
         return true;
     }
-
-    if (!SetTimezoneToKernel(timezoneId)) {
+    if (!TimeFileUtils::IsExistFile(std::string(TIMEZONE_PATH).append(timezoneId))) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid timezone");
+        return false;
+    }
+    setenv("TZ", timezoneId.c_str(), 1);
+    tzset();
+    if (!SetTimezoneToKernel()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone Set kernel failed.");
         return false;
     }
-
     auto errNo = SetParameter(TIMEZONE_KEY, timezoneId.c_str());
     if (errNo > TIMEZONE_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone timezoneId: %{public}d: %{public}s", errNo, timezoneId.c_str());
@@ -91,25 +81,20 @@ bool TimeZoneInfo::GetTimezone(std::string &timezoneId)
     return true;
 }
 
-bool TimeZoneInfo::SetTimezoneToKernel(std::string timezoneId)
+bool TimeZoneInfo::SetTimezoneToKernel()
 {
-    auto itEntry = timezoneInfoMap_.find(timezoneId);
-    if (itEntry != timezoneInfoMap_.end()) {
-        auto offset = itEntry->second.utcOffsetHours;
-        struct timezone tz;
-        tz.tz_minuteswest = offset * HOUR_TO_MILLI;
-        tz.tz_dsttime = 0;
-
-        int result = settimeofday(NULL, &tz);
-        if (result < 0) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "Settimeofday timezone fail: %{public}d.", result);
-            return false;
-        } else {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "Timezone offset: %{public}d", offset);
-            return true;
-        }
+    time_t t = time(nullptr);
+    struct tm *localTime = localtime(&t);
+    struct timezone tz {};
+    tz.tz_minuteswest = localTime->tm_gmtoff / HOUR_TO_MIN;
+    tz.tz_dsttime = 0;
+    int result = settimeofday(nullptr, &tz);
+    if (result < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Settimeofday timezone fail: %{public}d.", result);
+        return false;
     }
-    return false;
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Settimeofday timezone success ");
+    return true;
 }
 } // namespace MiscServices
 } // namespace OHOS
