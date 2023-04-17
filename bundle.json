@@ -77,14 +77,9 @@
         }
       ],
       "test": [
-        "//base/time/time_service/framework/js/napi/system_time/test:unittest",
-        "//base/time/time_service/framework/js/napi/system_timer/test:unittest",
-        "//base/time/time_service/framework/js/napi/system_date_time/test:unittest",
-        "//base/time/time_service/services/time/test:TimeServiceTest",
-        "//base/time/time_service/services/time/test:TimeClientTest",
         "//base/time/time_service/test/fuzztest:fuzztest",
-        "//base/time/time_service/utils/native/test:TimePermissionTest",
-        "//base/time/time_service/test/unittest:TimeDfxTest"
+        "//base/time/time_service/test/unittest/service_test:unittest",
+        "//base/time/time_service/test/unittest/js_test:unittest"
       ]
     }
   }

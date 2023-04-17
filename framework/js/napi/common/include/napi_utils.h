@@ -30,13 +30,13 @@ namespace Time {
 #define NAPI_ASSERTS_BASE(env, assertion, code, message, retVal) \
     do {                                                         \
         if (!(assertion)) {                                      \
-            napi_throw_error((env), code, message);              \
+            NapiUtils::ThrowError(env, message, code);           \
             return retVal;                                       \
         }                                                        \
     } while (0)
 
 #define NAPI_ASSERTP(env, assertion, message) \
-    NAPI_ASSERTS_BASE(env, assertion, std::to_string(ERROR).c_str(), message, nullptr)
+    NAPI_ASSERTS_BASE(env, assertion, ERROR, message, nullptr)
 
 /* check condition related to argc/argv, return and logging. */
 #define CHECK_ARGS_RETURN_VOID(module, context, condition, message, code)  \
