@@ -90,9 +90,8 @@ void TimeTickNotify::RefreshNextTriggerTime()
 {
     time_t t = time(nullptr);
     struct tm *tblock = localtime(&t);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Time now: %{public}s", asctime(tblock));
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Time now: %{public}s", asctime(tblock));
     auto UTCTimeMicro = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Time Now Mirc");
     auto timeMilliseconds = GetMillisecondsFromUTC(UTCTimeMicro);
     nextTriggerTime_ = MINUTE_TO_MILLISECOND - timeMilliseconds;
 }
@@ -107,9 +106,9 @@ void TimeTickNotify::Stop()
 uint64_t TimeTickNotify::GetMillisecondsFromUTC(uint64_t UTCtimeMicro)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Time micro: %{public}" PRId64 "", UTCtimeMicro);
-    auto miliseconds = (UTCtimeMicro / MICRO_TO_MILESECOND) % MINUTE_TO_MILLISECOND;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Time mili: %{public}" PRId64 "", miliseconds);
-    return miliseconds;
+    auto milliseconds = (UTCtimeMicro / MICRO_TO_MILESECOND) % MINUTE_TO_MILLISECOND;
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Time milli: %{public}" PRId64 "", milliseconds);
+    return milliseconds;
 }
 } // namespace MiscServices
 } // namespace OHOS

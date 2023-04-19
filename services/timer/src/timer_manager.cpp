@@ -184,7 +184,6 @@ void TimerManager::SetHandler(uint64_t id,
                               std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                               int uid)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", id);
     TIME_HILOGI(TIME_MODULE_SERVICE,
                 "start type:%{public}d windowLength:%{public}" PRId64"interval:%{public}" PRId64"flag:%{public}d",
         type, windowLength, interval, flag);
@@ -218,9 +217,9 @@ void TimerManager::SetHandler(uint64_t id,
     } else {
         maxElapsed = triggerElapsed + windowLengthDuration;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Try get lock");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Try get lock");
     std::lock_guard<std::mutex> lockGuard(mutex_);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Lock guard");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Lock guard");
     SetHandlerLocked(id,
                      type,
                      milliseconds(triggerAtTime),
@@ -247,11 +246,11 @@ void TimerManager::SetHandlerLocked(uint64_t id, int type,
                                     bool doValidate,
                                     uint64_t callingUid)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", id);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", id);
     auto alarm = std::make_shared<TimerInfo>(id, type, when, whenElapsed, windowLength, maxWhen,
                                              interval, std::move(callback), wantAgent, flags, callingUid);
     SetHandlerLocked(alarm, false, doValidate);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 void TimerManager::RemoveHandler(uint64_t id)
@@ -289,24 +288,24 @@ void TimerManager::RemoveLocked(uint64_t id)
 
 void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool doValidate)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start rebatching= %{public}d, doValidate= %{public}d", rebatching, doValidate);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d, doValidate= %{public}d", rebatching, doValidate);
     InsertAndBatchTimerLocked(std::move(alarm));
     if (!rebatching) {
         RescheduleKernelTimerLocked();
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 void TimerManager::ReBatchAllTimers()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     ReBatchAllTimersLocked(true);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 void TimerManager::ReBatchAllTimersLocked(bool doValidate)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     auto oldSet = alarmBatches_;
     alarmBatches_.clear();
     auto nowElapsed = GetBootTimeNs();
@@ -317,18 +316,18 @@ void TimerManager::ReBatchAllTimersLocked(bool doValidate)
         }
     }
     RescheduleKernelTimerLocked();
-    TIME_HILOGI(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
                                     std::chrono::steady_clock::time_point nowElapsed,
                                     bool doValidate)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     timer->when = timer->origWhen;
     auto whenElapsed = ConvertToElapsed(timer->when, timer->type);
     if (whenElapsed < nowElapsed) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "invalid timer end.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid timer end.");
         return;
     }
     steady_clock::time_point maxElapsed;
@@ -342,13 +341,13 @@ void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
     timer->whenElapsed = whenElapsed;
     timer->maxWhenElapsed = maxElapsed;
     SetHandlerLocked(timer, true, doValidate);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono::milliseconds when, int type)
 {
     auto bootTimePoint = GetBootTimeNs();
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     if (type == RTC || type == RTC_WAKEUP) {
         auto systemTimeNow = system_clock::now().time_since_epoch();
         auto offset = when - systemTimeNow;
@@ -360,13 +359,13 @@ std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono
     auto offset = when - bootTimeNow;
     TIME_HILOGI(TIME_MODULE_SERVICE, "bootTimeNow : %{public}lld", bootTimeNow.count());
     TIME_HILOGI(TIME_MODULE_SERVICE, "offset : %{public}lld", offset.count());
-    TIME_HILOGI(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return bootTimePoint + offset;
 }
 
 void TimerManager::TimerLooper()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer wait loop");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Start timer wait loop");
     pthread_setname_np(pthread_self(), "timer_loop");
     std::vector<std::shared_ptr<TimerInfo>> triggerList;
     while (runFlag_) {
@@ -507,7 +506,6 @@ void TimerManager::SetLocked(int type, std::chrono::nanoseconds when)
 
 void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start");
     int64_t whichBatch = (alarm->flags & static_cast<uint32_t>(STANDALONE)) ?
                          -1 :
                          AttemptCoalesceLocked(alarm->whenElapsed, alarm->maxWhenElapsed);
@@ -521,7 +519,7 @@ void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
             AddBatchLocked(alarmBatches_, batch);
         }
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_point whenElapsed,
@@ -552,7 +550,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
 
 void TimerManager::NotifyWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "trigger wantagent.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "trigger wantAgent.");
     std::shared_ptr<AAFwk::Want> want =
         OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
@@ -645,7 +643,7 @@ bool TimerManager::ResetAllProxy()
 
 bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &newBatch)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     auto it = std::upper_bound(list.begin(),
                                list.end(),
                                newBatch,
@@ -653,7 +651,7 @@ bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared
                                    return first->GetStart() < second->GetStart();
                                });
     list.insert(it, newBatch);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return it == list.begin();
 }
 

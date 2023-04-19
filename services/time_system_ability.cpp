@@ -241,7 +241,6 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
         TIME_HILOGE(TIME_MODULE_SERVICE, "ITimerCallback nullptr.");
         return E_TIME_NULLPTR;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start create timer.");
     auto callbackFunc = [timerCallback](uint64_t id) {
         timerCallback->NotifyTimer(id, nullptr);
     };
