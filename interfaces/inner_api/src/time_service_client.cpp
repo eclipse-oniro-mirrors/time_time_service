@@ -58,6 +58,7 @@ bool TimeServiceClient::ConnectService()
     if (GetProxy() != nullptr) {
         return true;
     }
+
     sptr<ISystemAbilityManager> systemAbilityManager =
         SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (systemAbilityManager == nullptr) {
@@ -70,7 +71,12 @@ bool TimeServiceClient::ConnectService()
         TIME_HILOGE(TIME_MODULE_CLIENT, "Get SystemAbility failed.");
         return false;
     }
-    deathRecipient_ = new TimeSaDeathRecipient();
+
+    std::lock_guard<std::mutex> autoLock(deathLock_);
+    if (deathRecipient_ == nullptr) {
+        deathRecipient_ = new TimeSaDeathRecipient();
+    }
+
     systemAbility->AddDeathRecipient(deathRecipient_);
     sptr<ITimeService> proxy = iface_cast<ITimeService>(systemAbility);
     if (proxy == nullptr) {
