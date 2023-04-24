@@ -665,16 +665,6 @@ bool TimeSystemAbility::GetTimeByClockid(clockid_t clockId, struct timespec &tv)
     return true;
 }
 
-void TimeSystemAbility::NetworkTimeStatusOff()
-{
-    DelayedSingleton<NtpUpdateTime>::GetInstance()->UpdateStatusOff();
-}
-
-void TimeSystemAbility::NetworkTimeStatusOn()
-{
-    DelayedSingleton<NtpUpdateTime>::GetInstance()->UpdateStatusOn();
-}
-
 bool TimeSystemAbility::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
 {
     if (!DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {

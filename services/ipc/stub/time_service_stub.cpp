@@ -38,8 +38,6 @@ TimeServiceStub::TimeServiceStub()
     memberFuncMap_[START_TIMER] = &TimeServiceStub::OnStartTimer;
     memberFuncMap_[STOP_TIMER] = &TimeServiceStub::OnStopTimer;
     memberFuncMap_[DESTROY_TIMER] = &TimeServiceStub::OnDestroyTimer;
-    memberFuncMap_[NETWORK_TIME_ON] = &TimeServiceStub::OnNetworkTimeStatusOn;
-    memberFuncMap_[NETWORK_TIME_OFF] = &TimeServiceStub::OnNetworkTimeStatusOff;
     memberFuncMap_[PROXY_TIMER] = &TimeServiceStub::OnTimerProxy;
     memberFuncMap_[RESET_ALL_PROXY] = &TimeServiceStub::OnAllProxyReset;
 }
@@ -331,22 +329,6 @@ int32_t TimeServiceStub::OnDestroyTimer(MessageParcel &data, MessageParcel &repl
         TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to destory timer");
         return E_TIME_DEAL_FAILED;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-    return ERR_OK;
-}
-
-int32_t TimeServiceStub::OnNetworkTimeStatusOff(MessageParcel &data, MessageParcel &reply)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    NetworkTimeStatusOff();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-    return ERR_OK;
-}
-
-int32_t TimeServiceStub::OnNetworkTimeStatusOn(MessageParcel &data, MessageParcel &reply)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    NetworkTimeStatusOn();
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return ERR_OK;
 }

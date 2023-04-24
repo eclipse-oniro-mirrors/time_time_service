@@ -62,8 +62,6 @@ public:
     int32_t StartTimer(uint64_t timerId, uint64_t triggerTimes) override;
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;
-    void NetworkTimeStatusOff() override;
-    void NetworkTimeStatusOn() override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
     bool ResetAllProxy() override;
     int Dump(int fd, const std::vector<std::u16string> &args) override;

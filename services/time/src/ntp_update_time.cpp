@@ -192,33 +192,6 @@ void NtpUpdateTime::RefreshNextTriggerTime()
     nextTriggerTime_ = static_cast<uint64_t>(bootTimeMilli + DAY_TO_MILLISECOND);
 }
 
-void NtpUpdateTime::UpdateStatusOff()
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
-    autoTimeInfo_.lastUpdateTime = INVALID_TIMES;
-    autoTimeInfo_.NTP_SERVER = NTP_CN_SERVER;
-    autoTimeInfo_.status = NETWORK_TIME_STATUS_OFF;
-    if (!SaveAutoTimeInfoToFile(autoTimeInfo_)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, SaveAutoTimeInfoToFile failed.");
-    }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
-}
-
-void NtpUpdateTime::UpdateStatusOn()
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
-    if (CheckStatus()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "network update time status is already on.");
-        return;
-    }
-    SetSystemTime();
-    autoTimeInfo_.status = NETWORK_TIME_STATUS_ON;
-    if (!SaveAutoTimeInfoToFile(autoTimeInfo_)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, SaveAutoTimeInfoToFile failed.");
-    }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
-}
-
 bool NtpUpdateTime::CheckStatus()
 {
     return autoTimeInfo_.status == NETWORK_TIME_STATUS_ON;
