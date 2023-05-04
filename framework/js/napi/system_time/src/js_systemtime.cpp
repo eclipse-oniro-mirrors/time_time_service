@@ -65,7 +65,7 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
     int64_t times = INVALID_TIME;
     napi_ref callback = nullptr;
     if (NapiUtils::ParseParametersBySetTime(env, argv, argc, times, callback) == nullptr) {
-        return NapiUtils::JSParaError(env, callback);
+        return NapiUtils::GetUndefinedValue(env);
     }
     AsyncContext *asyncContext = new (std::nothrow) AsyncContext{ .env = env, .time = times };
     if (!asyncContext) {
@@ -122,7 +122,7 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
     std::string timezoneId;
     napi_ref callback = nullptr;
     if (NapiUtils::ParseParametersBySetTimezone(env, argv, argc, timezoneId, callback) == nullptr) {
-        return NapiUtils::JSParaError(env, callback);
+        return NapiUtils::GetUndefinedValue(env);
     }
     AsyncContext *asyncContext = new (std::nothrow) AsyncContext{ .env = env, .timeZone = timezoneId };
     if (!asyncContext) {
@@ -179,7 +179,7 @@ napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
     napi_ref callback = nullptr;
     bool isNano = false;
     if (NapiUtils::ParseParametersGetNA(env, argv, argc, callback, &isNano) == nullptr) {
-        return NapiUtils::JSParaError(env, callback);
+        return NapiUtils::GetUndefinedValue(env);
     }
     AsyncContext *asyncContext = new (std::nothrow) AsyncContext{ .env = env };
     if (!asyncContext) {
@@ -238,7 +238,7 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
     napi_ref callback = nullptr;
     bool isNano = false;
     if (NapiUtils::ParseParametersGetNA(env, argv, argc, callback, &isNano) == nullptr) {
-        return NapiUtils::JSParaError(env, callback);
+        return NapiUtils::GetUndefinedValue(env);
     }
     AsyncContext *asyncContext = new (std::nothrow) AsyncContext{ .env = env };
     if (!asyncContext) {
@@ -297,7 +297,7 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
     napi_ref callback = nullptr;
     bool isNano = false;
     if (NapiUtils::ParseParametersGetNA(env, argv, argc, callback, &isNano) == nullptr) {
-        return NapiUtils::JSParaError(env, callback);
+        return NapiUtils::GetUndefinedValue(env);
     }
     AsyncContext *asyncContext = new (std::nothrow) AsyncContext{ .env = env };
     if (!asyncContext) {
@@ -355,7 +355,7 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
     napi_ref callback = nullptr;
     if (NapiUtils::ParseParametersGet(env, argv, argc, callback) == nullptr) {
-        return NapiUtils::JSParaError(env, callback);
+        return NapiUtils::GetUndefinedValue(env);
     }
     AsyncContext *asyncContext = new (std::nothrow) AsyncContext{ .env = env };
     if (!asyncContext) {
@@ -408,7 +408,7 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
     napi_ref callback = nullptr;
     if (NapiUtils::ParseParametersGet(env, argv, argc, callback) == nullptr) {
-        return NapiUtils::JSParaError(env, callback);
+        return NapiUtils::GetUndefinedValue(env);
     }
     AsyncContext *asyncContext = new (std::nothrow) AsyncContext{ .env = env };
     if (!asyncContext) {
