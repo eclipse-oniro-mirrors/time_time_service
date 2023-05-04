@@ -1,5 +1,5 @@
 {
-  "name": "@ohos/time",
+  "name": "@ohos/time_service",
   "description": "Allowing apps to use OS time get/set functions",
   "version": "3.1",
   "license": "Apache License 2.0",
@@ -23,8 +23,8 @@
     "adapted_system_type": [
       "standard"
     ],
-    "rom":"300KB",
-    "ram":"1024KB",
+    "rom":"400KB",
+    "ram":"2845KB",
     "deps": {
       "components": [
         "napi",
@@ -37,7 +37,6 @@
         "ability_base",
         "ability_runtime",
         "hiviewdfx_hilog_native",
-        "libuv",
         "safwk",
         "c_utils",
         "access_token",

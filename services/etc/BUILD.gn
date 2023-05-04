@@ -12,15 +12,18 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../../time.gni")
 
 ohos_prebuilt_etc("time.para") {
-  source = "//base/time/time_service/services/etc/time.para"
+  source = "${time_service_path}/etc/time.para"
   part_name = "time_service"
+  subsystem_name = "time"
   module_install_dir = "etc/param"
 }
 
 ohos_prebuilt_etc("time.para.dac") {
-  source = "//base/time/time_service/services/etc/time.para.dac"
+  source = "${time_service_path}/etc/time.para.dac"
   part_name = "time_service"
+  subsystem_name = "time"
   module_install_dir = "etc/param"
 }

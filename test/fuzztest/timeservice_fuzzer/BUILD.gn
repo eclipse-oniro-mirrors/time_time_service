@@ -21,7 +21,7 @@ import("../../../time.gni")
 ohos_fuzztest("TimeServiceFuzzTest") {
   module_out_path = "time/time_service"
 
-  fuzz_config_file = "//base/time/time_service/test/fuzztest/timeservice_fuzzer"
+  fuzz_config_file = "${time_root_path}/test/fuzztest/timeservice_fuzzer"
 
   include_dirs = [
     "${time_service_path}",
