@@ -128,11 +128,15 @@ napi_value NapiSystemDateTime::GetRealActiveTime(napi_env env, napi_callback_inf
     GetRealActiveTimeContext *getRealActiveTimeContext = new GetRealActiveTimeContext();
     auto inputParser = [env, getRealActiveTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
-            getRealActiveTimeContext->status =
-                napi_get_value_bool(env, argv[ARGV_FIRST], &getRealActiveTimeContext->isNano);
+            napi_valuetype valueType = napi_undefined;
+            napi_typeof(env, argv[ARGV_FIRST], &valueType);
+            if (valueType == napi_boolean) {
+                getRealActiveTimeContext->status =
+                    napi_get_value_bool(env, argv[ARGV_FIRST], &getRealActiveTimeContext->isNano);
+                CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getRealActiveTimeContext,
+                    getRealActiveTimeContext->status == napi_ok, "invalid isNano", JsErrorCode::PARAMETER_ERROR);
+            }
         }
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getRealActiveTimeContext,
-            getRealActiveTimeContext->status == napi_ok, "invalid isNano", JsErrorCode::PARAMETER_ERROR);
         getRealActiveTimeContext->status = napi_ok;
     };
     getRealActiveTimeContext->GetCbInfo(env, info, inputParser);
@@ -165,10 +169,15 @@ napi_value NapiSystemDateTime::GetCurrentTime(napi_env env, napi_callback_info i
     GetCurrentTimeContext *getCurrentTimeContext = new GetCurrentTimeContext();
     auto inputParser = [env, getCurrentTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
-            getCurrentTimeContext->status = napi_get_value_bool(env, argv[ARGV_FIRST], &getCurrentTimeContext->isNano);
+            napi_valuetype valueType = napi_undefined;
+            napi_typeof(env, argv[ARGV_FIRST], &valueType);
+            if (valueType == napi_boolean) {
+                getCurrentTimeContext->status =
+                    napi_get_value_bool(env, argv[ARGV_FIRST], &getCurrentTimeContext->isNano);
+                CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getCurrentTimeContext,
+                    getCurrentTimeContext->status == napi_ok, "invalid isNano", JsErrorCode::PARAMETER_ERROR);
+            }
         }
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getCurrentTimeContext, getCurrentTimeContext->status == napi_ok,
-            "invalid isNano", JsErrorCode::PARAMETER_ERROR);
         getCurrentTimeContext->status = napi_ok;
     };
     getCurrentTimeContext->GetCbInfo(env, info, inputParser);
@@ -201,10 +210,14 @@ napi_value NapiSystemDateTime::GetRealTime(napi_env env, napi_callback_info info
     GetRealTimeContext *getRealTimeContext = new GetRealTimeContext();
     auto inputParser = [env, getRealTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
-            getRealTimeContext->status = napi_get_value_bool(env, argv[ARGV_FIRST], &getRealTimeContext->isNano);
+            napi_valuetype valueType = napi_undefined;
+            napi_typeof(env, argv[ARGV_FIRST], &valueType);
+            if (valueType == napi_boolean) {
+                getRealTimeContext->status = napi_get_value_bool(env, argv[ARGV_FIRST], &getRealTimeContext->isNano);
+                CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getRealTimeContext, getRealTimeContext->status == napi_ok,
+                    "invalid isNano", JsErrorCode::PARAMETER_ERROR);
+            }
         }
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getRealTimeContext, getRealTimeContext->status == napi_ok,
-            "invalid isNano", JsErrorCode::PARAMETER_ERROR);
         getRealTimeContext->status = napi_ok;
     };
     getRealTimeContext->GetCbInfo(env, info, inputParser);
