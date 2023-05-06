@@ -39,4 +39,5 @@ ohos_source_set("time_utils") {
   ]
 
   part_name = "time_service"
+  subsystem_name = "time"
 }
