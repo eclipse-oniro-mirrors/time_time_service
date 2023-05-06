@@ -408,6 +408,7 @@ private:
     static std::mutex instanceLock_;
     static sptr<TimeServiceClient> instance_;
     std::mutex proxyLock_;
+    std::mutex deathLock_;
     sptr<ITimeService> timeServiceProxy_;
     sptr<TimeSaDeathRecipient> deathRecipient_ {};
 };
