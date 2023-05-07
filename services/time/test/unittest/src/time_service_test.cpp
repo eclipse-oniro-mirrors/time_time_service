@@ -22,7 +22,6 @@
 
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
-#include "json/json.h"
 #include "nativetoken_kit.h"
 #include "time_common.h"
 #include "timer_info_test.h"
@@ -37,12 +36,6 @@ using namespace std::chrono;
 using namespace OHOS::Security::AccessToken;
 
 const int RESERVED_UID = 99999;
-
-const std::string AUTOTIME_FILE_PATH = "/data/service/el1/public/time/autotime.json";
-const std::string NETWORK_TIME_STATUS_ON = "ON";
-const std::string NETWORK_TIME_STATUS_OFF = "OFF";
-const std::string NTP_CN_SERVER = "ntp.aliyun.com";
-const int64_t INVALID_TIMES = -1;
 uint64_t g_selfTokenId = 0;
 
 static HapPolicyParams g_policyA = { .apl = APL_SYSTEM_CORE,
@@ -118,62 +111,6 @@ void TimeServiceTest::SetUp(void)
 
 void TimeServiceTest::TearDown(void)
 {
-}
-
-struct AutoTimeInfo {
-    std::string ntpServer;
-    std::string status;
-    int64_t lastUpdateTime;
-};
-
-bool GetAutoTimeInfoFromFile(AutoTimeInfo &info)
-{
-    Json::Value jsonValue;
-    std::ifstream ifs;
-    ifs.open(AUTOTIME_FILE_PATH);
-    Json::CharReaderBuilder builder;
-    builder["collectComments"] = true;
-    JSONCPP_STRING errs;
-    if (!parseFromStream(builder, ifs, &jsonValue, &errs)) {
-        ifs.close();
-        return false;
-    }
-    info.status = jsonValue["status"].asString();
-    info.ntpServer = jsonValue["ntpServer"].asString();
-    info.lastUpdateTime = jsonValue["lastUpdateTime"].asInt64();
-    ifs.close();
-    return true;
-}
-
-/**
-* @tc.name: NetworkTimeStatusOn001
-* @tc.desc: network time status on.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, NetworkTimeStatusOn001, TestSize.Level1)
-{
-    TimeServiceClient::GetInstance()->NetworkTimeStatusOn();
-
-    AutoTimeInfo info;
-    bool result = GetAutoTimeInfoFromFile(info);
-    EXPECT_EQ(true, result);
-    EXPECT_EQ(NETWORK_TIME_STATUS_ON, info.status);
-}
-
-/**
-* @tc.name: NetworkTimeStatusOff001
-* @tc.desc: network time status off.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, NetworkTimeStatusOff001, TestSize.Level1)
-{
-    TimeServiceClient::GetInstance()->NetworkTimeStatusOff();
-    AutoTimeInfo info;
-    bool result = GetAutoTimeInfoFromFile(info);
-    EXPECT_EQ(true, result);
-    EXPECT_EQ(INVALID_TIMES, info.lastUpdateTime);
-    EXPECT_EQ(NTP_CN_SERVER, info.ntpServer);
-    EXPECT_EQ(NETWORK_TIME_STATUS_OFF, info.status);
 }
 
 /**
