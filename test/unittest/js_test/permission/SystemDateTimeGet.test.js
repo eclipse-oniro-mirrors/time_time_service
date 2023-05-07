@@ -371,11 +371,11 @@ describe('SystemDateTimeGetTest', function () {
         console.log("testGetCurrentTimeInvalidParam001 start");
         try {
             systemDateTime.getCurrentTime("true").then((time) => {
-                expect(false).assertTrue();
+                expect(true).assertTrue();
                 done();
             });
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(false).assertTrue();
             done();
         }
         console.log('testGetCurrentTimeInvalidParam001 end');
@@ -392,14 +392,13 @@ describe('SystemDateTimeGetTest', function () {
         try {
             systemDateTime.getCurrentTime("true", function (err) {
                 if (err) {
-                    expect(true).assertTrue();
-                } else {
                     expect(false).assertTrue();
                 }
+                expect(true).assertTrue();
                 done();
             });
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(false).assertTrue();
             done();
         }
         console.log('testGetCurrentTimeInvalidParam001 end');
@@ -415,11 +414,11 @@ describe('SystemDateTimeGetTest', function () {
         console.log("testGetCurrentTimeInvalidParam002 start");
         try {
             systemDateTime.getRealActiveTime("true").then((time) => {
-                expect(false).assertTrue();
+                expect(true).assertTrue();
                 done();
             });
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(false).assertTrue();
             done();
         }
         console.log('testGetCurrentTimeInvalidParam002 end');
@@ -436,14 +435,13 @@ describe('SystemDateTimeGetTest', function () {
         try {
             systemDateTime.getRealActiveTime("true", function (err) {
                 if (err) {
-                    expect(true).assertTrue();
-                } else {
                     expect(false).assertTrue();
                 }
+                expect(true).assertTrue();
                 done();
             });
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(false).assertTrue();
             done();
         }
         console.log('testGetRealActiveTimeInvalidParam001 end');
@@ -459,11 +457,11 @@ describe('SystemDateTimeGetTest', function () {
         console.log("testGetRealTimeInvalidParam001 start");
         try {
             systemDateTime.getRealTime("true").then((time) => {
-                expect(false).assertTrue();
+                expect(true).assertTrue();
                 done();
             });
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(false).assertTrue();
             done();
         }
         console.log('testGetRealTimeInvalidParam001 end');
@@ -480,14 +478,13 @@ describe('SystemDateTimeGetTest', function () {
         try {
             systemDateTime.getRealTime("true", function (err) {
                 if (err) {
-                    expect(true).assertTrue();
-                } else {
                     expect(false).assertTrue();
                 }
+                expect(true).assertTrue();
                 done();
             });
         } catch (err) {
-            expect(err.code).assertEqual(401);
+            expect(false).assertTrue();
             done();
         }
         console.log('testGetRealTimeInvalidParam002 end');
