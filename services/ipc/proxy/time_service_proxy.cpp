@@ -320,39 +320,6 @@ int32_t TimeServiceProxy::GetThreadTimeNs(int64_t &times)
     return result;
 }
 
-void TimeServiceProxy::NetworkTimeStatusOn()
-{
-    MessageParcel data, reply;
-    MessageOption option;
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
-        return;
-    }
-    int32_t result = Remote()->SendRequest(NETWORK_TIME_ON, data, reply, option);
-    if (result != ERR_NONE) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "NetworkTimeStatusOn failed, error code is: %{public}d", result);
-        return;
-    }
-    return;
-}
-
-void TimeServiceProxy::NetworkTimeStatusOff()
-{
-    MessageParcel data, reply;
-    MessageOption option;
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
-        return;
-    }
-    int32_t result = Remote()->SendRequest(NETWORK_TIME_OFF, data, reply, option);
-    if (result != ERR_NONE) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "NetworkTimeStatusOff failed, error code is: %{public}d", result);
-        return;
-    }
-
-    return;
-}
-
 bool TimeServiceProxy::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
 {
     MessageParcel data, reply;

@@ -590,36 +590,6 @@ int32_t TimeServiceClient::GetThreadTimeNs(int64_t &time)
     return E_TIME_OK;
 }
 
-void TimeServiceClient::NetworkTimeStatusOff()
-{
-    TIME_HILOGW(TIME_MODULE_CLIENT, "start");
-    if (!ConnectService()) {
-        return;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return;
-    }
-    proxy->NetworkTimeStatusOff();
-    TIME_HILOGW(TIME_MODULE_CLIENT, "end");
-    return;
-}
-
-void TimeServiceClient::NetworkTimeStatusOn()
-{
-    TIME_HILOGW(TIME_MODULE_CLIENT, "start");
-    if (!ConnectService()) {
-        return;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return;
-    }
-    proxy->NetworkTimeStatusOn();
-    TIME_HILOGW(TIME_MODULE_CLIENT, "end");
-    return;
-}
-
 void TimeServiceClient::OnRemoteSaDied(const wptr<IRemoteObject> &remote)
 {
     ConnectService();

@@ -41,10 +41,8 @@ public:
         START_TIMER = 12,
         STOP_TIMER = 13,
         DESTROY_TIMER = 14,
-        NETWORK_TIME_ON = 15,
-        NETWORK_TIME_OFF = 16,
-        PROXY_TIMER = 17,
-        RESET_ALL_PROXY = 18
+        PROXY_TIMER = 15,
+        RESET_ALL_PROXY = 16
     };
 
     enum APIVersion : int8_t {
@@ -73,7 +71,7 @@ public:
      * @return int32_t ERR_OK on success, other on failure.
      */
     virtual int32_t GetTimeZone(std::string &timezoneId) = 0;
-    
+
      /**
      * GetWallTimeMs
      *
@@ -137,7 +135,7 @@ public:
      * @return int32_t ERR_OK on success, other on failure.
      */
     virtual int32_t GetThreadTimeNs(int64_t &times) = 0;
-    
+
     /**
      * CreateTimer
      *
@@ -174,18 +172,6 @@ public:
     */
     virtual int32_t DestroyTimer(uint64_t timerId) = 0;
 
-     /**
-     * NetworkTimeStatusOff
-     * @return void.
-     */
-    virtual void NetworkTimeStatusOff() = 0;
-
-     /**
-     * NetworkTimeStatusOn
-     * @return void.
-     */
-    virtual void NetworkTimeStatusOn() = 0;
-    
     /**
      * ProxyTimer
      * @param uid the uid

@@ -31,8 +31,6 @@ class NtpUpdateTime : public DelayedSingleton<NtpUpdateTime> {
 public:
     DISALLOW_COPY_AND_MOVE(NtpUpdateTime);
     void RefreshNetworkTimeByTimer(const uint64_t timerid);
-    void UpdateStatusOff();
-    void UpdateStatusOn();
     void UpdateNITZSetTime();
     void SetSystemTime();
     void Stop();
