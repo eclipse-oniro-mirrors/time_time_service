@@ -55,8 +55,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel TIME_MODULE_LABEL[TIME_MODULE_BUTT]
     { LOG_CORE, TIME_JS_NAPI, "TimeJSNAPI" },
 };
 
-#define R_FILENAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
-#define R_FORMATED(fmt, ...) "[%{public}s] %{public}s# " fmt, R_FILENAME__, __FUNCTION__, ##__VA_ARGS__
+#define R_FILENAME_ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
+#define R_FORMATED(fmt, ...) "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__
 
 // In order to improve performance, do not check the module range.
 // Besides, make sure module is less than TIME_MODULE_BUTT.
