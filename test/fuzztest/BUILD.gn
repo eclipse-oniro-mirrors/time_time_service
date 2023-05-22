@@ -16,5 +16,10 @@ import("../../time.gni")
 group("fuzztest") {
   testonly = true
 
-  deps = [ "timeservice_fuzzer:fuzztest" ]
+  deps = [
+    "timeproxytimer_fuzzer:fuzztest",
+    "timeservice_fuzzer:fuzztest",
+    "timesettimezone_fuzzer:fuzztest",
+    "timetesttimer_fuzzer:fuzztest",
+  ]
 }
