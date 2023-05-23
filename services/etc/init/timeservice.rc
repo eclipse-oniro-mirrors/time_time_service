@@ -13,7 +13,7 @@
 
 on boot
     start time_service
-service time_service /system/bin/sa_main /system/profile/time_service.xml
+service time_service /system/bin/sa_main /system/profile/time_service.json
     class z_core
     user system
     group system shell
