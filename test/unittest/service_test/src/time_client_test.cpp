@@ -29,6 +29,9 @@
 #include "token_setproc.h"
 #include "want_agent.h"
 
+#define private public
+#include "time_system_ability.h"
+
 namespace {
 using namespace testing::ext;
 using namespace OHOS;
@@ -353,6 +356,7 @@ HWTEST_F(TimeClientTest, CreateTimer001, TestSize.Level1)
 {
     AddPermission();
     uint64_t timerId = 0;
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     auto ret = TimeServiceClient::GetInstance()->StartTimerV9(timerId, 5);
     EXPECT_TRUE(ret != TimeError::E_TIME_OK);
     ret = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
@@ -381,6 +385,7 @@ HWTEST_F(TimeClientTest, CreateTimer002, TestSize.Level1)
     EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
     auto ret = TimeServiceClient::GetInstance()->StartTimerV9(timerId, 2000);
     EXPECT_TRUE(ret == TimeError::E_TIME_OK);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     ret = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
     EXPECT_TRUE(ret == TimeError::E_TIME_OK);
     ret = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
@@ -403,6 +408,7 @@ HWTEST_F(TimeClientTest, CreateTimer003, TestSize.Level1)
     timerInfo->SetWantAgent(ability);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     uint64_t timerId;
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
 }
@@ -428,7 +434,8 @@ HWTEST_F(TimeClientTest, CreateTimer004, TestSize.Level1)
     auto bootTimeNano = system_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILESECOND;
     errCode = TimeServiceClient::GetInstance()->StartTimerV9(timerId, bootTimeMilli + 2000);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);;
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
     EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
     EXPECT_TRUE(g_data1 == 0);
@@ -640,6 +647,7 @@ HWTEST_F(TimeClientTest, StartTimer005, TestSize.Level1)
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 2000);
     pid_t uid = IPCSkeleton::GetCallingUid();
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ProxyTimer(uid, true, true);
     sleep(2);
     TimeServiceClient::GetInstance()->ProxyTimer(uid, false, true);
@@ -669,6 +677,7 @@ HWTEST_F(TimeClientTest, StartTimer006, TestSize.Level1)
     pid_t uid = IPCSkeleton::GetCallingUid();
     TimeServiceClient::GetInstance()->ProxyTimer(uid, true, true);
     sleep(2);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
     EXPECT_GT(g_data1, 0);
 }

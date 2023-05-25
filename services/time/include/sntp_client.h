@@ -69,7 +69,7 @@ private:
         void clear();
     };
 
-    unsigned int GetNtpField32(int offset, char *buffer);
+    unsigned int GetNtpField32(int offset, const char *buffer);
     /**
      * This function returns an array based on the Reference ID
      * (converted from NTP message), given the offset provided.
@@ -137,7 +137,7 @@ private:
      *
      * Returns the ntp timestamp
      */
-    uint64_t GetNtpTimestamp64(int offset, char *buffer);
+    uint64_t GetNtpTimestamp64(int offset, const char *buffer);
 
     /**
      * This function converts the NTP time to timestamp
