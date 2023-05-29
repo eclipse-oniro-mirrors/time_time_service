@@ -41,6 +41,7 @@ ohos_unittest("TimeServiceTest") {
 
   deps = [
     "${api_path}:time_client",
+    "${time_service_path}:time_service_static",
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
   ]
@@ -69,6 +70,7 @@ ohos_unittest("TimeClientTest") {
 
   deps = [
     "${api_path}:time_client",
+    "${time_service_path}:time_service_static",
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
   ]
@@ -146,9 +148,9 @@ group("unittest") {
   testonly = true
 
   deps = [
-    ":TimeDfxTest",
     ":TimeClientTest",
-    ":TimeServiceTest",
+    ":TimeDfxTest",
     ":TimePermissionTest",
+    ":TimeServiceTest",
   ]
 }

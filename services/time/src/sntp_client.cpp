@@ -137,7 +137,7 @@ int SNTPClient::GetClockOffset(void)
     return m_clockOffset;
 }
 
-uint64_t SNTPClient::GetNtpTimestamp64(int offset, char *buffer)
+uint64_t SNTPClient::GetNtpTimestamp64(int offset, const char *buffer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     const int _len = sizeof(uint64_t);
@@ -329,7 +329,7 @@ void SNTPClient::ReceivedMessage(char *buffer)
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
-unsigned int SNTPClient::GetNtpField32(int offset, char *buffer)
+unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     const int _len = sizeof(int);

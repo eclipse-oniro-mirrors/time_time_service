@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
+#include <sys/stat.h>
 
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
@@ -27,6 +28,15 @@
 #include "timer_info_test.h"
 #include "token_setproc.h"
 #include "want_agent.h"
+#include "timer_call_back.h"
+#include "time_common.h"
+
+#define private public
+#define protected public
+#include "sntp_client.h"
+#include "ntp_update_time.h"
+#include "time_system_ability.h"
+#include "ntp_trusted_time.h"
 
 namespace {
 using namespace testing::ext;
@@ -37,6 +47,10 @@ using namespace OHOS::Security::AccessToken;
 
 const int RESERVED_UID = 99999;
 uint64_t g_selfTokenId = 0;
+const std::string NTP_CN_SERVER = "ntp.aliyun.com";
+const std::string AUTOTIME_FILE_PATH = "/data/service/el1/public/time/autotime.json";
+const std::string NETWORK_TIME_STATUS_OFF = "OFF";
+const std::string NETWORK_TIME_STATUS_ON = "ON";
 
 static HapPolicyParams g_policyA = {
     .apl = APL_SYSTEM_CORE,
@@ -519,5 +533,76 @@ HWTEST_F(TimeServiceTest, ProxyTimer004, TestSize.Level0)
     EXPECT_TRUE(ret);
     ret = TimeServiceClient::GetInstance()->ProxyTimer(uid, false, false);
     EXPECT_TRUE(ret);
+}
+
+/**
+* @tc.name: SntpClient001.
+* @tc.desc: test SntpClient.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, SntpClient001, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+    auto ret = ntpClient->RequestTime(NTP_CN_SERVER);
+    EXPECT_FALSE(ret);
+
+    auto buffer = std::string("31234114451");
+    auto millisecond = ntpClient->GetNtpTimestamp64(0, buffer.c_str());
+    EXPECT_GT(millisecond, 0);
+    millisecond = 0;
+    millisecond = ntpClient->GetNtpField32(0, buffer.c_str());
+    EXPECT_GT(millisecond, 0);
+
+    auto timeStamp = ntpClient->ConvertNtpToStamp(0);
+    EXPECT_EQ(timeStamp, 0);
+    timeStamp = ntpClient->ConvertNtpToStamp(100);
+    EXPECT_NE(timeStamp, 0);
+    timeStamp = ntpClient->ConvertNtpToStamp(2147483648);
+    EXPECT_NE(timeStamp, 0);
+    timeStamp = ntpClient->ConvertNtpToStamp(31234114451);
+    EXPECT_GT(timeStamp, 0);
+}
+
+/**
+* @tc.name: NtpUpdateTime001.
+* @tc.desc: test NtpUpdateTime.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, NtpUpdateTime001, TestSize.Level0)
+{
+    auto ntpUpdateTime = std::make_shared<NtpUpdateTime>();
+    ntpUpdateTime->autoTimeInfo_.lastUpdateTime = 0;
+
+    ntpUpdateTime->autoTimeInfo_.status = NETWORK_TIME_STATUS_OFF;
+    ntpUpdateTime->RefreshNetworkTimeByTimer(123);
+    ntpUpdateTime->autoTimeInfo_.status = NETWORK_TIME_STATUS_ON;
+    ntpUpdateTime->RefreshNetworkTimeByTimer(123);
+    ntpUpdateTime->nitzUpdateTimeMili_ = steady_clock::now().time_since_epoch().count();
+    ntpUpdateTime->RefreshNetworkTimeByTimer(123);
+    EXPECT_EQ(ntpUpdateTime->autoTimeInfo_.lastUpdateTime, 0);
+}
+
+/**
+* @tc.name: NtpTrustedTime001.
+* @tc.desc: test NtpTrustedTime.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, NtpTrustedTime001, TestSize.Level0)
+{
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
+    ntpTrustedTime->mTimeResult = nullptr;
+    int64_t errCode = ntpTrustedTime->CurrentTimeMillis();
+    EXPECT_EQ(errCode, -1);
+    errCode = ntpTrustedTime->GetCacheAge();
+    EXPECT_EQ(errCode, INT_MAX);
+
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(0, 0, 0);
+    int64_t time = ntpTrustedTime->CurrentTimeMillis();
+    EXPECT_GT(time, 0);
+    int64_t cacheAge = ntpTrustedTime->GetCacheAge();
+    EXPECT_GT(cacheAge, 0);
 }
 } // namespace
