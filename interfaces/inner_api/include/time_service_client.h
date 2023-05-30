@@ -347,22 +347,6 @@ public:
     TIME_API int32_t DestroyTimerV9(uint64_t timerId);
 
     /**
-     * @brief NetworkTimeStatusOff
-     *
-     * Turn on network time synchronization.
-     *
-     */
-    TIME_API void NetworkTimeStatusOff();
-
-    /**
-     * @brief NetworkTimeStatusOn
-     *
-     * Turn off network time synchronization.
-     *
-     */
-    TIME_API  void NetworkTimeStatusOn();
-
-    /**
      * @brief ProxyTimer
      *
      * Wake up all timers for provided uid by proxy.

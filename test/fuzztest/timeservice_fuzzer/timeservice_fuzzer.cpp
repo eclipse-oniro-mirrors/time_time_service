@@ -24,11 +24,16 @@
 #include "token_setproc.h"
 #include "time_system_ability.h"
 #include "message_parcel.h"
+#include "sntp_client.h"
+#include <string>
 
 using namespace OHOS::MiscServices;
 
 namespace OHOS {
 constexpr size_t THRESHOLD = 10;
+constexpr int32_t SETTIME = 0;
+constexpr int32_t PROXY_TIMER = 15;
+constexpr int32_t RESET_TIMER = 16;
 const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscservices.time.ITimeService";
 
 using namespace OHOS::Security::AccessToken;
@@ -56,7 +61,7 @@ void GrantNativePermission()
 
 bool FuzzTimeService(const uint8_t* rawData, size_t size)
 {
-    uint32_t code = (*rawData) % 10 + 1;
+    uint32_t code = *rawData;
 
     MessageParcel data;
     data.WriteInterfaceToken(TIMESERVICE_INTERFACE_TOKEN);
@@ -64,10 +69,9 @@ bool FuzzTimeService(const uint8_t* rawData, size_t size)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-
-    sptr<TimeSystemAbility> mTimess = new TimeSystemAbility();
-    mTimess->OnRemoteRequest(code, data, reply, option);
-
+    if (code != SETTIME && code != PROXY_TIMER && code != RESET_TIMER) {
+        TimeSystemAbility::GetInstance()->OnRemoteRequest(code, data, reply, option);
+    }
     return true;
 }
 
@@ -80,6 +84,14 @@ bool FuzzTimeDump(const uint8_t *rawData, size_t size)
     TimeSystemAbility::GetInstance()->Dump(fd, args);
     return true;
 }
+
+void FuzzTimeRequestTime(const uint8_t *rawData, size_t size)
+{
+    std::string hostName(reinterpret_cast<const char *>(rawData));
+    SNTPClient client;
+    client.RequestTime(hostName);
+}
+
 }
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -90,5 +102,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     /* Run your code on data */
     OHOS::FuzzTimeService(data, size);
     OHOS::FuzzTimeDump(data, size);
+    OHOS::FuzzTimeRequestTime(data, size);
     return 0;
 }
