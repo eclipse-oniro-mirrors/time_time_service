@@ -195,9 +195,12 @@ void SNTPClient::ConvertNtpToUnix(struct ntp_timestamp *ntpTs, struct timeval *u
   */
 int64_t SNTPClient::ConvertNtpToStamp(uint64_t _ntpTs)
 {
-    uint32_t second = (uint32_t)((_ntpTs >> RECEIVE_TIMESTAMP_OFFSET) & UINT32_MASK);
-    uint32_t fraction = (uint32_t)(_ntpTs & UINT32_MASK);
+    auto second = static_cast<uint32_t>((_ntpTs >> RECEIVE_TIMESTAMP_OFFSET) & UINT32_MASK);
+    auto fraction = static_cast<uint32_t>(_ntpTs & UINT32_MASK);
     if (second == 0 && fraction == 0) {
+        return 0;
+    }
+    if (second < SECONDS_SINCE_FIRST_EPOCH) {
         return 0;
     }
     return ((second - SECONDS_SINCE_FIRST_EPOCH) * MILLISECOND_TO_SECOND) +

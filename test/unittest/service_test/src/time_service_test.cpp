@@ -557,10 +557,13 @@ HWTEST_F(TimeServiceTest, SntpClient001, TestSize.Level0)
     auto timeStamp = ntpClient->ConvertNtpToStamp(0);
     EXPECT_EQ(timeStamp, 0);
     timeStamp = ntpClient->ConvertNtpToStamp(100);
-    EXPECT_NE(timeStamp, 0);
+    EXPECT_EQ(timeStamp, 0);
     timeStamp = ntpClient->ConvertNtpToStamp(2147483648);
-    EXPECT_NE(timeStamp, 0);
+    EXPECT_EQ(timeStamp, 0);
     timeStamp = ntpClient->ConvertNtpToStamp(31234114451);
+    EXPECT_EQ(timeStamp, 0);
+    uint64_t time = 999999999911;
+    timeStamp = ntpClient->ConvertNtpToStamp(time << 32);
     EXPECT_GT(timeStamp, 0);
 }
 
