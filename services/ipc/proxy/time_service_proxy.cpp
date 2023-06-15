@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
+#include "time_service_proxy.h"
+
 #include "iremote_broker.h"
 #include "time_common.h"
-#include "time_service_proxy.h"
+#include "time_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -41,7 +43,8 @@ int32_t TimeServiceProxy::SetTime(const int64_t time, APIVersion apiVersion)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write apiVersion");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(SET_TIME, data, reply, option);
+    int32_t result =
+        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIME), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "SetTime failed, error code is: %{public}d", result);
         return result;
@@ -84,7 +87,8 @@ int32_t TimeServiceProxy::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOp
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write timerCallback");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    auto ret = Remote()->SendRequest(CREATE_TIMER, data, reply, option);
+    auto ret =
+        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::CREATE_TIMER), data, reply, option);
     if (ret == E_TIME_OK) {
         timerId = reply.ReadUint64();
         return E_TIME_OK;
@@ -108,7 +112,7 @@ int32_t TimeServiceProxy::StartTimer(uint64_t timerId, uint64_t triggerTime)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write triggerTime");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    return Remote()->SendRequest(START_TIMER, data, reply, option);
+    return Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::START_TIMER), data, reply, option);
 }
 
 int32_t TimeServiceProxy::StopTimer(uint64_t timerId)
@@ -123,7 +127,7 @@ int32_t TimeServiceProxy::StopTimer(uint64_t timerId)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write timerId");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    return Remote()->SendRequest(STOP_TIMER, data, reply, option);
+    return Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::STOP_TIMER), data, reply, option);
 }
 
 int32_t TimeServiceProxy::DestroyTimer(uint64_t timerId)
@@ -138,7 +142,8 @@ int32_t TimeServiceProxy::DestroyTimer(uint64_t timerId)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write timerId");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    return Remote()->SendRequest(DESTROY_TIMER, data, reply, option);
+    return Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::DESTROY_TIMER), data, reply, option);
 }
 
 int32_t TimeServiceProxy::SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion)
@@ -157,7 +162,8 @@ int32_t TimeServiceProxy::SetTimeZone(const std::string &timeZoneId, APIVersion 
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write apiVersion");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(SET_TIME_ZONE, data, reply, option);
+    int32_t result =
+        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIME_ZONE), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "SetTimeZone failed, error code is: %{public}d", result);
         return result;
@@ -173,7 +179,8 @@ int32_t TimeServiceProxy::GetTimeZone(std::string &timeZoneId)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(GET_TIME_ZONE, data, reply, option);
+    int32_t result =
+        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_TIME_ZONE), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetTimeZone failed, error code is: %{public}d", result);
         return result;
@@ -190,7 +197,8 @@ int32_t TimeServiceProxy::GetWallTimeMs(int64_t &times)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(GET_WALL_TIME_MILLI, data, reply, option);
+    int32_t result = Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_WALL_TIME_MILLI), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetWallTimeMs failed, error code is: %{public}d", result);
         return result;
@@ -207,7 +215,8 @@ int32_t TimeServiceProxy::GetWallTimeNs(int64_t &times)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(GET_WALL_TIME_NANO, data, reply, option);
+    int32_t result = Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_WALL_TIME_NANO), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetWallTimeNs failed, error code is: %{public}d", result);
         return result;
@@ -224,7 +233,8 @@ int32_t TimeServiceProxy::GetBootTimeMs(int64_t &times)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(GET_BOOT_TIME_MILLI, data, reply, option);
+    int32_t result = Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_BOOT_TIME_MILLI), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetBootTimeMs failed, error code is: %{public}d", result);
         return result;
@@ -241,7 +251,8 @@ int32_t TimeServiceProxy::GetBootTimeNs(int64_t &times)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write parcelable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(GET_BOOT_TIME_NANO, data, reply, option);
+    int32_t result = Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_BOOT_TIME_NANO), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetBootTimeNs failed, error code is: %{public}d", result);
         return result;
@@ -258,7 +269,8 @@ int32_t TimeServiceProxy::GetMonotonicTimeMs(int64_t &times)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(GET_MONO_TIME_MILLI, data, reply, option);
+    int32_t result = Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_MONO_TIME_MILLI), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetMonotonicTimeMs failed, error code is: %{public}d", result);
         return result;
@@ -275,7 +287,8 @@ int32_t TimeServiceProxy::GetMonotonicTimeNs(int64_t &times)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(GET_MONO_TIME_NANO, data, reply, option);
+    int32_t result = Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_MONO_TIME_NANO), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetMonotonicTimeNs failed, error code is: %{public}d", result);
         return result;
@@ -292,7 +305,8 @@ int32_t TimeServiceProxy::GetThreadTimeMs(int64_t &times)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(GET_THREAD_TIME_MILLI, data, reply, option);
+    int32_t result = Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_THREAD_TIME_MILLI), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetThreadTimeMs failed, error code is: %{public}d", result);
         return result;
@@ -309,7 +323,8 @@ int32_t TimeServiceProxy::GetThreadTimeNs(int64_t &times)
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    int32_t result = Remote()->SendRequest(GET_THREAD_TIME_NANO, data, reply, option);
+    int32_t result = Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_THREAD_TIME_NANO), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "GetThreadTimeNs failed, error code is: %{public}d", result);
         return result;
@@ -339,7 +354,8 @@ bool TimeServiceProxy::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
         return false;
     }
 
-    int32_t result = Remote()->SendRequest(PROXY_TIMER, data, reply, option);
+    int32_t result =
+        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::PROXY_TIMER), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "ProxyTimer failed, error code is: %{public}d", result);
         return false;
@@ -355,7 +371,8 @@ bool TimeServiceProxy::ResetAllProxy()
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return false;
     }
-    int32_t result = Remote()->SendRequest(RESET_ALL_PROXY, data, reply, option);
+    int32_t result = Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::RESET_ALL_PROXY), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "ProxyTimer failed, error code is: %{public}d", result);
         return false;

@@ -24,26 +24,6 @@ namespace OHOS {
 namespace MiscServices {
 class ITimeService : public IRemoteBroker {
 public:
-    // remote method code
-    enum {
-        SET_TIME = 0,
-        SET_TIME_ZONE = 1,
-        GET_TIME_ZONE = 2,
-        GET_WALL_TIME_MILLI = 3,
-        GET_WALL_TIME_NANO = 4,
-        GET_BOOT_TIME_MILLI = 5,
-        GET_BOOT_TIME_NANO = 6,
-        GET_MONO_TIME_MILLI = 7,
-        GET_MONO_TIME_NANO = 8,
-        GET_THREAD_TIME_MILLI = 9,
-        GET_THREAD_TIME_NANO = 10,
-        CREATE_TIMER = 11,
-        START_TIMER = 12,
-        STOP_TIMER = 13,
-        DESTROY_TIMER = 14,
-        PROXY_TIMER = 15,
-        RESET_ALL_PROXY = 16,
-    };
 
     enum APIVersion : int8_t {
         API_VERSION_7 = 0,

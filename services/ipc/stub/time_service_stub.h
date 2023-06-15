@@ -23,6 +23,7 @@
 #include "itimer_call_back.h"
 #include "time_service_interface.h"
 #include "time_permission.h"
+#include "time_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -54,7 +55,7 @@ private:
     int32_t OnNetworkTimeStatusOn(MessageParcel &data, MessageParcel &reply);
     int32_t OnTimerProxy(MessageParcel &data, MessageParcel &reply);
     int32_t OnAllProxyReset(MessageParcel &data, MessageParcel &reply);
-    std::map<uint32_t, TimeServiceFunc> memberFuncMap_;
+    std::map<TimeServiceIpcInterfaceCode, TimeServiceFunc> memberFuncMap_;
 };
 } // namespace MiscServices
 } // namespace OHOS
