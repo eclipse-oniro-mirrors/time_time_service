@@ -23,23 +23,23 @@ using namespace OHOS::HiviewDFX;
 
 TimeServiceStub::TimeServiceStub()
 {
-    memberFuncMap_[SET_TIME] = &TimeServiceStub::OnSetTime;
-    memberFuncMap_[SET_TIME_ZONE] = &TimeServiceStub::OnSetTimeZone;
-    memberFuncMap_[GET_TIME_ZONE] = &TimeServiceStub::OnGetTimeZone;
-    memberFuncMap_[GET_WALL_TIME_MILLI] = &TimeServiceStub::OnGetWallTimeMs;
-    memberFuncMap_[GET_WALL_TIME_NANO] = &TimeServiceStub::OnGetWallTimeNs;
-    memberFuncMap_[GET_BOOT_TIME_MILLI] = &TimeServiceStub::OnGetBootTimeMs;
-    memberFuncMap_[GET_BOOT_TIME_NANO] = &TimeServiceStub::OnGetBootTimeNs;
-    memberFuncMap_[GET_MONO_TIME_MILLI] = &TimeServiceStub::OnGetMonotonicTimeMs;
-    memberFuncMap_[GET_MONO_TIME_NANO] = &TimeServiceStub::OnGetMonotonicTimeNs;
-    memberFuncMap_[GET_THREAD_TIME_MILLI] = &TimeServiceStub::OnGetThreadTimeMs;
-    memberFuncMap_[GET_THREAD_TIME_NANO] = &TimeServiceStub::OnGetThreadTimeNs;
-    memberFuncMap_[CREATE_TIMER] = &TimeServiceStub::OnCreateTimer;
-    memberFuncMap_[START_TIMER] = &TimeServiceStub::OnStartTimer;
-    memberFuncMap_[STOP_TIMER] = &TimeServiceStub::OnStopTimer;
-    memberFuncMap_[DESTROY_TIMER] = &TimeServiceStub::OnDestroyTimer;
-    memberFuncMap_[PROXY_TIMER] = &TimeServiceStub::OnTimerProxy;
-    memberFuncMap_[RESET_ALL_PROXY] = &TimeServiceStub::OnAllProxyReset;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::SET_TIME] = &TimeServiceStub::OnSetTime;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::SET_TIME_ZONE] = &TimeServiceStub::OnSetTimeZone;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_TIME_ZONE] = &TimeServiceStub::OnGetTimeZone;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_WALL_TIME_MILLI] = &TimeServiceStub::OnGetWallTimeMs;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_WALL_TIME_NANO] = &TimeServiceStub::OnGetWallTimeNs;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_BOOT_TIME_MILLI] = &TimeServiceStub::OnGetBootTimeMs;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_BOOT_TIME_NANO] = &TimeServiceStub::OnGetBootTimeNs;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_MONO_TIME_MILLI] = &TimeServiceStub::OnGetMonotonicTimeMs;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_MONO_TIME_NANO] = &TimeServiceStub::OnGetMonotonicTimeNs;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_THREAD_TIME_MILLI] = &TimeServiceStub::OnGetThreadTimeMs;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_THREAD_TIME_NANO] = &TimeServiceStub::OnGetThreadTimeNs;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::CREATE_TIMER] = &TimeServiceStub::OnCreateTimer;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::START_TIMER] = &TimeServiceStub::OnStartTimer;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::STOP_TIMER] = &TimeServiceStub::OnStopTimer;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::DESTROY_TIMER] = &TimeServiceStub::OnDestroyTimer;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::PROXY_TIMER] = &TimeServiceStub::OnTimerProxy;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::RESET_ALL_PROXY] = &TimeServiceStub::OnAllProxyReset;
 }
 
 TimeServiceStub::~TimeServiceStub()
@@ -61,11 +61,14 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
     pid_t p1 = IPCSkeleton::GetCallingUid();
     TIME_HILOGD(TIME_MODULE_SERVICE, "CallingPid = %{public}d, CallingUid = %{public}d, code = %{public}u", p, p1,
                 code);
-    auto itFunc = memberFuncMap_.find(code);
-    if (itFunc != memberFuncMap_.end()) {
-        auto memberFunc = itFunc->second;
-        if (memberFunc != nullptr) {
-            return (this->*memberFunc)(data, reply);
+    if (code >= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIME) &&
+        code <= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::RESET_ALL_PROXY)) {
+        auto itFunc = memberFuncMap_.find(static_cast<TimeServiceIpcInterfaceCode>(code));
+        if (itFunc != memberFuncMap_.end()) {
+            auto memberFunc = itFunc->second;
+            if (memberFunc != nullptr) {
+                return (this->*memberFunc)(data, reply);
+            }
         }
     }
     int ret = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
