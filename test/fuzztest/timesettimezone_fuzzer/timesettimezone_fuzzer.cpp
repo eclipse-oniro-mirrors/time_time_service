@@ -27,7 +27,7 @@ namespace OHOS {
 
 bool FuzzTimeSetTimezone(const uint8_t *rawData, size_t size)
 {
-    std::string timeZone(reinterpret_cast<const char *>(rawData));
+    std::string timeZone(reinterpret_cast<const char *>(rawData), size);
     TimeServiceClient::GetInstance()->SetTimeZone(timeZone);
     TimeServiceClient::GetInstance()->SetTimeZone(timeZone);
     TimeServiceClient::GetInstance()->SetTimeZoneV9(timeZone);
