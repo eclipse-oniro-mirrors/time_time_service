@@ -23,9 +23,12 @@
 #include "accesstoken_kit.h"
 #include "message_parcel.h"
 #include "nativetoken_kit.h"
-#include "sntp_client.h"
 #include "time_system_ability.h"
 #include "token_setproc.h"
+
+#define private public
+#define protected public
+#include "sntp_client.h"
 
 using namespace OHOS::MiscServices;
 
@@ -34,6 +37,7 @@ constexpr size_t THRESHOLD = 4;
 constexpr int32_t SETTIME = 0;
 constexpr int32_t PROXY_TIMER = 15;
 constexpr int32_t RESET_TIMER = 16;
+constexpr int32_t NTP_PACKAGE_SIZE = 48;
 const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscservices.time.ITimeService";
 
 using namespace OHOS::Security::AccessToken;
@@ -84,6 +88,17 @@ bool FuzzTimeDump(const uint8_t *rawData, size_t size)
     TimeSystemAbility::GetInstance()->Dump(fd, args);
     return true;
 }
+
+bool FuzzTimeReceivedMessage(const uint8_t *data, size_t size)
+{
+    char buffer[NTP_PACKAGE_SIZE] = { 0 };
+    if (memcpy_s(buffer, NTP_PACKAGE_SIZE, data, size) != EOK) {
+        return true;
+    }
+    auto client = std::make_shared<SNTPClient>();
+    client->ReceivedMessage(buffer);
+    return true;
+}
 } // namespace OHOS
 
 /* Fuzzer entry point */
@@ -95,5 +110,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     /* Run your code on data */
     OHOS::FuzzTimeService(data, size);
     OHOS::FuzzTimeDump(data, size);
+    OHOS::FuzzTimeReceivedMessage(data, size);
     return 0;
 }
