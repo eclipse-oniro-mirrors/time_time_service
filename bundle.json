@@ -36,11 +36,11 @@
         "bundle_framework",
         "ability_base",
         "ability_runtime",
-        "hiviewdfx_hilog_native",
+        "hilog",
         "safwk",
         "c_utils",
         "access_token",
-        "hisysevent_native"
+        "hisysevent"
       ],
       "third_party": [
         "jsoncpp"
