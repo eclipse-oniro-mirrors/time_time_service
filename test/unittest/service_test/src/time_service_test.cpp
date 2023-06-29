@@ -582,7 +582,7 @@ HWTEST_F(TimeServiceTest, NtpUpdateTime001, TestSize.Level0)
     ntpUpdateTime->RefreshNetworkTimeByTimer(123);
     ntpUpdateTime->autoTimeInfo_.status = NETWORK_TIME_STATUS_ON;
     ntpUpdateTime->RefreshNetworkTimeByTimer(123);
-    ntpUpdateTime->nitzUpdateTimeMili_ = steady_clock::now().time_since_epoch().count();
+    ntpUpdateTime->nitzUpdateTimeMilli_ = steady_clock::now().time_since_epoch().count();
     ntpUpdateTime->RefreshNetworkTimeByTimer(123);
     EXPECT_EQ(ntpUpdateTime->autoTimeInfo_.lastUpdateTime, 0);
 }

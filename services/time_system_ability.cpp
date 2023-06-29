@@ -116,16 +116,16 @@ void TimeSystemAbility::InitDumpCmd()
 
 void TimeSystemAbility::OnStart()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, " TimeSystemAbility OnStart.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "TimeSystemAbility OnStart.");
     if (state_ == ServiceRunningState::STATE_RUNNING) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, " TimeSystemAbility is already running.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "TimeSystemAbility is already running.");
         return;
     }
     InitServiceHandler();
     InitTimerHandler();
     DelayedSingleton<TimeTickNotify>::GetInstance()->Init();
     DelayedSingleton<TimeZoneInfo>::GetInstance()->Init();
-    DelayedSingleton<NtpUpdateTime>::GetInstance()->Init();
+    NtpUpdateTime::GetInstance().Init();
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     InitDumpCmd();
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");

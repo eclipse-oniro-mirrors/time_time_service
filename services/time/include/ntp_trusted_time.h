@@ -19,7 +19,6 @@
 
 #include <fstream>
 #include <mutex>
-#include <singleton.h>
 #include <string>
 #include <sys/time.h>
 
@@ -30,9 +29,9 @@
 
 namespace OHOS {
 namespace MiscServices {
-class NtpTrustedTime : public DelayedSingleton<NtpTrustedTime> {
-    DECLARE_DELAYED_SINGLETON(NtpTrustedTime)
+class NtpTrustedTime {
 public:
+    static NtpTrustedTime &GetInstance();
     bool ForceRefresh(std::string ntpServer);
     bool HasCache();
     int64_t GetCacheAge();
@@ -58,7 +57,7 @@ public:
     };
 
 private:
-    std::shared_ptr<TimeResult> mTimeResult;
+    std::shared_ptr<TimeResult> mTimeResult {};
 };
 } // namespace MiscServices
 } // namespace OHOS

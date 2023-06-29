@@ -40,7 +40,8 @@
         "safwk",
         "c_utils",
         "access_token",
-        "hisysevent"
+        "hisysevent",
+        "init"
       ],
       "third_party": [
         "jsoncpp"
