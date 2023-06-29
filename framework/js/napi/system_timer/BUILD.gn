@@ -55,7 +55,7 @@ ohos_shared_library("systemtimer") {
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "eventhandler:libeventhandler",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
     "napi:ace_napi",
   ]
 
