@@ -35,22 +35,22 @@ TimerInfo::TimerInfo() = default;
 
 TimerInfo::~TimerInfo() = default;
 
-void TimerInfo::SetType(const int &timerType)
+void TimerInfo::SetType(const int &type)
 {
-    type = timerType;
+    this->type = type;
 }
 
-void TimerInfo::SetRepeat(bool isRepeat)
+void TimerInfo::SetRepeat(bool repeat)
 {
-    repeat = isRepeat;
+    this->repeat = repeat;
 }
-void TimerInfo::SetInterval(const uint64_t &timerInterval)
+void TimerInfo::SetInterval(const uint64_t &interval)
 {
-    interval = timerInterval;
+    this->interval = interval;
 }
-void TimerInfo::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> timerWantAgent)
+void TimerInfo::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent)
 {
-    wantAgent = timerWantAgent;
+    this->wantAgent = wantAgent;
 }
 void TimerInfo::OnTrigger()
 {
