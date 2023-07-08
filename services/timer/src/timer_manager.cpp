@@ -708,7 +708,7 @@ bool TimerManager::ResetAllProxy()
 bool TimerManager::CheckAllowWhileIdle(const uint32_t flag)
 {
 #ifdef DEVICE_STANDBY_ENABLE
-    if (DelayedSingleton<TimePermission>::GetInstance()->CheckSystemAppPermission()) {
+    if (TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         std::string name = TimeFileUtils::GetBundleNameByUid(IPCSkeleton::GetCallingUid());
         std::vector<DevStandbyMgr::AllowInfo> restrictList;
         DevStandbyMgr::StandbyServiceClient::GetInstance().GetRestrictList(DevStandbyMgr::AllowType::TIMER,
@@ -721,7 +721,7 @@ bool TimerManager::CheckAllowWhileIdle(const uint32_t flag)
         return false;
     }
     }
-    if (DelayedSingleton<TimePermission>::GetInstance()->CheckNativeCallingPermission()) {
+    if (DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
         pid_t pid = IPCSkeleton::GetCallingPid();
         std::string procName = TimeFileUtils::GetNameByPid(pid);
         if (flag & static_cast<uint32_t>(INEXACT_REMINDER)) {
