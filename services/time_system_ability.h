@@ -69,6 +69,7 @@ public:
     void DumpTimerInfo(int fd, const std::vector<std::string> &input);
     void DumpTimerInfoById(int fd, const std::vector<std::string> &input);
     void DumpTimerTriggerById(int fd, const std::vector<std::string> &input);
+    void DumpIdleTimerInfo(int fd, const std::vector<std::string> &input);
     void InitDumpCmd();
     void RegisterSubscriber();
 

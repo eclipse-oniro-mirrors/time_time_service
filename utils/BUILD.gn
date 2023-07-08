@@ -36,6 +36,7 @@ ohos_source_set("time_utils") {
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "hilog:libhilog",
+    "samgr:samgr_proxy",
   ]
 
   part_name = "time_service"

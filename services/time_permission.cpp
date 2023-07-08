@@ -73,5 +73,12 @@ bool TimePermission::CheckSystemAppPermission()
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
     return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
 }
+
+bool TimePermission::CheckNativeCallingPermission()
+{
+    auto callerToken = IPCSkeleton::GetCallingTokenID();
+    auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
+    return (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE);
+}
 } // namespace MiscServices
 } // namespace OHOS

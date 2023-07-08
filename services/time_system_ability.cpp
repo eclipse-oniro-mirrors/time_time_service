@@ -42,6 +42,7 @@
 #include "time_common.h"
 #include "time_tick_notify.h"
 #include "time_zone_info.h"
+#include "timer_manager_interface.h"
 
 using namespace std::chrono;
 
@@ -56,6 +57,8 @@ static const std::int32_t INIT_INTERVAL = 10000L;
 static const uint32_t TIMER_TYPE_REALTIME_MASK = 1 << 0;
 static const uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
 static const uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
+static const uint32_t TIMER_TYPE_IDLE_MASK = 1 << 3;
+static const uint32_t TIMER_TYPE_INEXACT_REMINDER_MASK = 1 << 4;
 constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t ONE_MILLI = 1000;
@@ -112,6 +115,11 @@ void TimeSystemAbility::InitDumpCmd()
         "dump current time info,include localtime,timezone info",
         [this](int fd, const std::vector<std::string> &input) { DumpTimerTriggerById(fd, input); });
     TimeCmdDispatcher::GetInstance().RegisterCommand(cmdTimerTrigger);
+
+    auto cmdTimerIdle = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-idle", "-a" }),
+        "dump idle state and timer info, include pending delay timers and delayed info.",
+        [this](int fd, const std::vector<std::string> &input) { DumpIdleTimerInfo(fd, input); });
+    TimeCmdDispatcher::GetInstance().RegisterCommand(cmdTimerIdle);
 }
 
 void TimeSystemAbility::OnStart()
@@ -222,6 +230,12 @@ void TimeSystemAbility::ParseTimerPara(std::shared_ptr<ITimerInfo> timerOptions,
     } else {
         paras.timerType = ITimerManager::TimerType::RTC;
     }
+    if ((uIntType & TIMER_TYPE_IDLE_MASK) > 0) {
+        paras.flag += ITimerManager::TimerFlag::IDLE_UNTIL;
+    }
+    if ((uIntType & TIMER_TYPE_INEXACT_REMINDER_MASK) > 0) {
+        paras.flag += ITimerManager::TimerFlag::INEXACT_REMINDER;
+    }
     paras.interval = timerOptions->repeat ? timerOptions->interval : 0;
     return;
 }
@@ -255,6 +269,11 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
             return E_TIME_NULLPTR;
         }
     }
+    if ((paras.flag & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
+        !DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Idle timer operation permission denied.");
+        return E_TIME_NO_PERMISSION;
+    }
     return timerManagerHandler_->CreateTimer(paras, callbackFunc, timerOptions->wantAgent, uid, timerId);
 }
 
@@ -268,6 +287,11 @@ int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(cons
             TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
             return E_TIME_NULLPTR;
         }
+    }
+    if ((paras.flag & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
+        !DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Idle timer operation permission denied.");
+        return E_TIME_NO_PERMISSION;
     }
     return timerManagerHandler_->CreateTimer(paras, Callback, nullptr, 0, timerId);
 }
@@ -444,6 +468,20 @@ void TimeSystemAbility::DumpTimerTriggerById(int fd, const std::vector<std::stri
     }
     int paramNumPos = 2;
     timerManagerHandler_->ShowTimerTriggerById(fd, std::atoi(input.at(paramNumPos).c_str()));
+}
+
+void TimeSystemAbility::DumpIdleTimerInfo(int fd, const std::vector<std::string> &input)
+{
+    dprintf(fd, "\n - dump idle timer info :\n");
+    if (timerManagerHandler_ == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
+        timerManagerHandler_ = TimerManager::Create();
+        if (timerManagerHandler_ == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
+            return;
+        }
+    }
+    timerManagerHandler_->ShowIdleTimerInfo(fd);
 }
 
 int TimeSystemAbility::SetRtcTime(time_t sec)

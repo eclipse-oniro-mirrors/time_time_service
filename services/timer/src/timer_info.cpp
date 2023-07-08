@@ -14,6 +14,7 @@
  */
 
 #include "timer_info.h"
+#include "time_hilog.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -53,6 +54,18 @@ TimerInfo::TimerInfo(uint64_t _id, int _type,
       expectedMaxWhenElapsed {_maxWhen},
       repeatInterval {_interval}
 {
+}
+
+bool TimerInfo::UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed)
+{
+    auto oldWhenElapsed = whenElapsed;
+    whenElapsed = policyElapsed;
+    auto oldMaxWhenElapsed = maxWhenElapsed;
+    maxWhenElapsed = whenElapsed + windowLength;
+    expectedWhenElapsed = whenElapsed;
+    expectedMaxWhenElapsed = maxWhenElapsed;
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Update whenElapsed, id=%{public}" PRId64 "", id);
+    return (oldWhenElapsed != whenElapsed) || (oldMaxWhenElapsed != maxWhenElapsed);
 }
 } // MiscServices
 } // OHOS

@@ -33,6 +33,7 @@ public:
     static bool CheckProxyCallingPermission();
     static bool CheckSystemUidCallingPermission(uint64_t tokenId);
     static bool CheckSystemAppPermission();
+    static bool CheckNativeCallingPermission();
 };
 } // namespace MiscServices
 } // namespace OHOS
