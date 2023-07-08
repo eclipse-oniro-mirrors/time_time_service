@@ -67,5 +67,11 @@ bool TimePermission::CheckSystemUidCallingPermission(uint64_t tokenId)
     }
     return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId);
 }
+
+bool TimePermission::CheckSystemAppPermission()
+{
+    uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+    return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
+}
 } // namespace MiscServices
 } // namespace OHOS

@@ -52,6 +52,10 @@ public:
     const int TIMER_TYPE_IDLE = 1 << 3;
 
     /**
+    * Indicates whether the timer is from inexact reminder agent.
+    */
+    const int TIMER_TYPE_INEXACT_REMINDER = 1 << 4;
+    /**
      * SetType set timer type
      * @para: type: TIMER_TYPE_REALTIME | TIMER_TYPE_WAKEUP
      *

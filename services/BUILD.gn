@@ -76,6 +76,10 @@ ohos_shared_library("time_service") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+  if (device_standby) {
+    external_deps += ["device_standby:standby_innerkits"]
+    defines = ["DEVICE_STANDBY_ENABLE"]
+  }
   part_name = "time_service"
   subsystem_name = "time"
 }
@@ -128,6 +132,10 @@ ohos_static_library("time_service_static") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+  if (device_standby) {
+    external_deps += ["device_standby:standby_innerkits"]
+    defines = ["DEVICE_STANDBY_ENABLE"]
+  }
   part_name = "time_service"
   subsystem_name = "time"
 }
