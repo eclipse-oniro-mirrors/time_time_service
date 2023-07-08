@@ -16,39 +16,41 @@
 #ifndef NTP_UPDATE_TIME_H
 #define NTP_UPDATE_TIME_H
 
-#include <singleton.h>
+#include <string>
 
 namespace OHOS {
 namespace MiscServices {
-struct autoTimeInfo {
+struct AutoTimeInfo {
     std::string NTP_SERVER;
     std::string status;
     int64_t lastUpdateTime;
 };
 
-class NtpUpdateTime : public DelayedSingleton<NtpUpdateTime> {
-    DECLARE_DELAYED_SINGLETON(NtpUpdateTime);
-
+class NtpUpdateTime {
 public:
-    DISALLOW_COPY_AND_MOVE(NtpUpdateTime);
-    void RefreshNetworkTimeByTimer(const uint64_t timerid);
+    static NtpUpdateTime &GetInstance();
+    static void SetSystemTime();
+    void RefreshNetworkTimeByTimer(uint64_t timerId);
     void UpdateNITZSetTime();
-    void SetSystemTime();
     void Stop();
     void Init();
     int32_t MonitorNetwork();
+    bool IsValidNITZTime();
 
 private:
-    bool GetAutoTimeInfoFromFile(autoTimeInfo &info);
-    bool SaveAutoTimeInfoToFile(autoTimeInfo &info);
+    NtpUpdateTime();
+    static void ChangeNtpServerCallback(const char *key, const char *value, void *context);
+    static bool GetAutoTimeInfoFromFile(AutoTimeInfo &info);
+    static bool SaveAutoTimeInfoToFile(const AutoTimeInfo &info);
     void SubscriberNITZTimeChangeCommonEvent();
     void StartTimer();
     void RefreshNextTriggerTime();
     bool CheckStatus();
-    bool IsNITZTimeInvalid();
-    autoTimeInfo autoTimeInfo_;
+    void RegisterNtpServerListener();
+
+    static AutoTimeInfo autoTimeInfo_;
     uint64_t timerId_;
-    uint64_t nitzUpdateTimeMili_;
+    uint64_t nitzUpdateTimeMilli_;
     uint64_t nextTriggerTime_;
 };
 } // namespace MiscServices
