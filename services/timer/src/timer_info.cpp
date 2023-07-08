@@ -15,6 +15,7 @@
 
 #include "timer_info.h"
 #include "time_hilog.h"
+#include <stdint.h>
 
 namespace OHOS {
 namespace MiscServices {

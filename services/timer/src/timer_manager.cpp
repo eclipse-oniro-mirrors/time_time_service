@@ -327,13 +327,13 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
     TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d, doValidate= %{public}d", rebatching, doValidate);
     if (mPendingIdleUntil_ != nullptr && CheckAllowWhileIdle(alarm->flags)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Pending not-allowed alarm in idle state, id=%{public}" PRId64 "",
-            delayTimer_->id);
+            alarm->id);
         pendingDelayTimers_.push_back(alarm);
         return;
     }
     bool isAdjust = false;
     if (alarm->flags & static_cast<uint32_t>(IDLE_UNTIL)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Set idle timer, id=%{public}" PRId64 "", delayTimer_->id);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Set idle timer, id=%{public}" PRId64 "", alarm->id);
         mPendingIdleUntil_ = alarm;
         isAdjust = AdjustTimersBasedOnDeviceIdle();
     }
