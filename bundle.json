@@ -41,7 +41,8 @@
         "c_utils",
         "access_token",
         "hisysevent",
-        "device_standby"
+        "device_standby",
+        "init"
       ],
       "third_party": [
         "jsoncpp"

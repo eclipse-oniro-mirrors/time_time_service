@@ -33,11 +33,10 @@ constexpr int64_t HALF = 2;
 constexpr int32_t RETRY_TIMES = 2;
 } // namespace
 
-NtpTrustedTime::NtpTrustedTime()
+NtpTrustedTime &NtpTrustedTime::GetInstance()
 {
-}
-NtpTrustedTime::~NtpTrustedTime()
-{
+    static NtpTrustedTime instance;
+    return instance;
 }
 
 bool NtpTrustedTime::ForceRefresh(std::string ntpServer)

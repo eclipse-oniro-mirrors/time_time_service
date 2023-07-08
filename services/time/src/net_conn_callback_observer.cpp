@@ -32,8 +32,11 @@ int32_t NetConnCallbackObserver::NetCapabilitiesChange(sptr<NetHandle> &netHandl
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Observe net capabilities change. start");
     if (netAllCap->netCaps_.count(NetCap::NET_CAPABILITY_INTERNET)) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Net Capability Internet");
-        DelayedSingleton<NtpUpdateTime>::GetInstance()->SetSystemTime();
+        if (NtpUpdateTime::GetInstance().IsValidNITZTime()) {
+            TIME_HILOGD(TIME_MODULE_SERVICE, "NITZ Time is valid.");
+            return E_TIME_DEAL_FAILED;
+        }
+        NtpUpdateTime::SetSystemTime();
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "Observe net capabilities change. end");
     return 0;
