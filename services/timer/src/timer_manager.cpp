@@ -714,31 +714,6 @@ bool TimerManager::CheckAllowWhiteIdle(const uint32_t flag)
         std::string name = TimeFileUtils::GetBundleNameByUid(IPCSkeleton::GetCallingUid());
         std::vector<DevStandbyMgr::AllowInfo> restrictList;
         DevStandbyMgr::StandbyServiceClient::GetInstance().GetRestrictList(DevStandbyMgr::AllowType::TIMER,
-            restrictList, DevStandbyMgr::ReasonCodeEnum::REASON_APP_API);
-        auto it = std::find_if(restrictList.begin(), restrictList.end(),
-            [name] (const DevStandbyMgr::AllowInfo &allowInfo) {
-                return allowInfo.GetName() == name;
-            });
-        if (it != restrictList.end()) {
-            return false;
-        }
-#endif
-        return true;
-    }
-    if (DelayedSingleton<TimePermission>::GetInstance()->CheckNativeCallingPermission()) {
-        pid_t pid = IPCSkeleton::GetCallingPid();
-        std::string procName = TimeFileUtils::GetNameByPid(pid);
-
-    }
-}
-
-bool TimerManager::CheckAllowWhiteIdle(const uint32_t flag)
-{
-    if (DelayedSingleton<TimePermission>::GetInstance()->CheckSystemAppPermission()) {
-#ifdef DEVICE_STANDBY_ENABLE
-        std::string name = TimeFileUtils::GetBundleNameByUid(IPCSkeleton::GetCallingUid());
-        std::vector<DevStandbyMgr::AllowInfo> restrictList;
-        DevStandbyMgr::StandbyServiceClient::GetInstance().GetRestrictList(DevStandbyMgr::AllowType::TIMER,
             restrictList, REASON_APP_API);
         auto it = std::find_if(restrictList.begin(), restrictList.end(),
             [name] (const DevStandbyMgr::AllowInfo &allowInfo) {
@@ -776,9 +751,9 @@ bool TimerManager::CheckAllowWhiteIdle(const uint32_t flag)
 
 bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(std::shared_ptr<TimerInfo> alarm, bool normalExist)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start adjust timer, id=%{public}u, uid=%{public}d, normalExist=%{public}d ",
+    TIME_HILOGI(TIME_MODULE_SERVICE, "start adjust timer, id=%{public}lu, uid=%{public}d, normalExist=%{public}d.",
         alarm->id, alarm->uid, normalExist);
-    if((mPendingIdleUntil == nullptr && normalExist)) || mPendingIdleUntil == alarm) {
+    if ((mPendingIdleUntil == nullptr && normalExist) || mPendingIdleUntil == alarm) {
         return false;
     }
     if (mPendingIdleUntil == nullptr && !normalExist) {
@@ -792,10 +767,10 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(std::shared_ptr<TimerInfo
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer unrestricted, not adjust. id=%{public}lu.", alarm->id);
         return false;
     } else if (alarm->whenElapsed > mPendingIdleUntil->whenElapsed) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, not adjust. id=%{public}lu", alarm->id);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, not adjust. id=%{public}lu.", alarm->id);
         return false;
     } else {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, id=%{public}lu", alarm->id);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, id=%{public}lu.", alarm->id);
         DelayedTimers_[alarm->id] = alarm->whenElapsed;
         return alarm->UpdateWhenElapsed(mPendingIdleUntil->whenElapsed);
     }
@@ -808,7 +783,7 @@ bool TimerManager::AdjustAllTimersBasedOnDeviceIdle(bool normalExist)
     bool isAdjust = false;
     for (auto batch : alarmBatches_) {
         auto n = batch->Size();
-        TIME_HILOGD(TIME_MODULE_SERVICE, "adjust batch.size=%{public}u", n);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "adjust batch.size=%{public}lu", n);
         for (unsigned int i = 0; i < n; i++) {
             auto alarm = batch->Get(i);
             isAdjust = AdjustDeliveryTimeBasedOnDeviceIdle(alarm, normalExist) ? true : isAdjust;
