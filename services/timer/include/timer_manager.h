@@ -99,8 +99,8 @@ private:
     void RemoveProxy(uint64_t timerNumber, int32_t uid);
     void NotifyWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent);
     bool CheckAllowWhileIdle(const uint32_t flag);
-    bool AdjustDeliveryTimeBasedOnDeviceIdle(std::shared_ptr<TimerInfo> alarm, bool normalExit);
-    bool AdjustTimersBasedOnDeviceIdle(bool normalExit);
+    bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
+    bool AdjustTimersBasedOnDeviceIdle();
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     std::default_random_engine random_;
