@@ -309,9 +309,9 @@ void TimerManager::RemoveLocked(uint64_t id)
         mPendingIdleUntil_ = nullptr;
         isAdjust = AdjustTimersBasedOnDeviceIdle();
         delayedTimers_.clear();
-        for (const auto &delayTimer : pendingDelayTimers_) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", delayTimer->id);
-            SetHandlerLocked(delayTimer, true, true);
+        for (const auto &delayTimer_ : pendingDelayTimers_) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", delayTimer_->id);
+            SetHandlerLocked(delayTimer_, true, true);
         }
         pendingDelayTimers_.clear();
     }
@@ -327,14 +327,14 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
     TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d, doValidate= %{public}d", rebatching, doValidate);
     if (mPendingIdleUntil_ != nullptr && CheckAllowWhileIdle(alarm->flags)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Pending not-allowed alarm in idle state, id=%{public}" PRId64 "",
-            delayTimer->id);
+            delayTimer_->id);
         pendingDelayTimers_.push_back(alarm);
         return;
     }
     bool isAdjust = false;
     if (alarm->flags & static_cast<uint32_t>(IDLE_UNTIL)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Set idle timer, id=%{public}" PRId64 "", delayTimer->id);
-        pendingDelayTimers_ = alarm;
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Set idle timer, id=%{public}" PRId64 "", delayTimer_->id);
+        mPendingIdleUntil_ = alarm;
         isAdjust = AdjustTimersBasedOnDeviceIdle();
     }
     InsertAndBatchTimerLocked(std::move(alarm));
@@ -501,10 +501,10 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
                 TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers.");
                 mPendingIdleUntil_ = nullptr;
                 delayedTimers_.clear();
-                for (const auto &delayTimer : pendingDelayTimers_) {
+                for (const auto &delayTimer_ : pendingDelayTimers_) {
                     TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "",
-                        delayTimer->id);
-                    SetHandlerLocked(delayTimer, false, true);
+                        delayTimer_->id);
+                    SetHandlerLocked(delayTimer_, false, true);
                 }
                 pendingDelayTimers_.clear();
                 ReBatchAllTimers();
@@ -777,7 +777,7 @@ bool TimerManager::AdjustTimersBasedOnDeviceIdle()
     bool isAdjust = false;
     for (auto batch : alarmBatches_) {
         auto n = batch->Size();
-        TIME_HILOGD(TIME_MODULE_SERVICE, "adjust batch.size=%{public}lu", n);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "adjust batch.size=%{public}u", n);
         for (unsigned int i = 0; i < n; i++) {
             auto alarm = batch->Get(i);
             isAdjust = AdjustDeliveryTimeBasedOnDeviceIdle(alarm) ? true : isAdjust;
@@ -874,20 +874,20 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
     if (mPendingIdleUntil_ != nullptr) {
         dprintf(fd, " - dump idle timer id  = %lu\n", mPendingIdleUntil_->id);
         dprintf(fd, " * timer type          = %d\n", mPendingIdleUntil_->type);
-        dprintf(fd, " * timer flag          = %lu\n", mPendingIdleUntil_->flag);
+        dprintf(fd, " * timer flag          = %lu\n", mPendingIdleUntil_->flags);
         dprintf(fd, " * timer window Length = %lu\n", mPendingIdleUntil_->windowLength);
-        dprintf(fd, " * timer interval      = %lu\n", mPendingIdleUntil_>repeatInterval);
-        dprintf(fd, " * timer whenElapsed   = %lu\n", mPendingIdleUntil_>whenElapsed);
+        dprintf(fd, " * timer interval      = %lu\n", mPendingIdleUntil_->repeatInterval);
+        dprintf(fd, " * timer whenElapsed   = %lu\n", mPendingIdleUntil_->whenElapsed);
         dprintf(fd, " * timer uid           = %d\n\n", mPendingIdleUntil_->uid);
     }
-    for (auto delayTimer : pendingDelayTimers_) {
-        dprintf(fd, " - dump pending delay timer id  = %lu\n", delayTimer->id);
-        dprintf(fd, " * timer type          = %d\n", delayTimer->type);
-        dprintf(fd, " * timer flag          = %lu\n", delayTimer->flag);
-        dprintf(fd, " * timer window Length = %lu\n", delayTimer->windowLength);
-        dprintf(fd, " * timer interval      = %lu\n", delayTimer>repeatInterval);
-        dprintf(fd, " * timer whenElapsed   = %lu\n", delayTimer>whenElapsed);
-        dprintf(fd, " * timer uid           = %d\n\n", delayTimer->uid);
+    for (auto delayTimer_ : pendingDelayTimers_) {
+        dprintf(fd, " - dump pending delay timer id  = %lu\n", delayTimer_->id);
+        dprintf(fd, " * timer type          = %d\n", delayTimer_->type);
+        dprintf(fd, " * timer flag          = %lu\n", delayTimer_->flags);
+        dprintf(fd, " * timer window Length = %lu\n", delayTimer_->windowLength);
+        dprintf(fd, " * timer interval      = %lu\n", delayTimer_->repeatInterval);
+        dprintf(fd, " * timer whenElapsed   = %lu\n", delayTimer_->whenElapsed);
+        dprintf(fd, " * timer uid           = %d\n\n", delayTimer_->uid);
     }
     for (auto iter = delayedTimers_.begin(); iter != delayedTimers_.end(); iter++) {
         dprintf(fd, " - dump delayed timer id = %lu\n", iter->first);

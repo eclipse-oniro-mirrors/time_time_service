@@ -64,7 +64,7 @@ bool TimerInfo::UpdateWhenElapsed(std::chrono::steady_clock::time_point policyEl
     maxWhenElapsed = whenElapsed + windowLength;
     expectedWhenElapsed = whenElapsed;
     expectedMaxWhenElapsed = maxWhenElapsed;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Update whenElapsed, id=%{public}" PRId64 "", id);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Update whenElapsed, id=%{public}" PRId64 "", id);
     return (oldWhenElapsed != whenElapsed) || (oldMaxWhenElapsed != maxWhenElapsed);
 }
 } // MiscServices
