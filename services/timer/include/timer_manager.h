@@ -98,9 +98,9 @@ private:
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
     void RemoveProxy(uint64_t timerNumber, int32_t uid);
     void NotifyWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent);
-    bool CheckAllowWhiteIdle(const uint32_t flag);
-    bool AdjustDeliveryTimeBasedOnDeviceIdle(std::shared_ptr<TimerInfo> alarm, bool normalExist);
-    bool AdjustTimersBasedOnDeviceIdle(bool normalExist);
+    bool CheckAllowWhileIdle(const uint32_t flag);
+    bool AdjustDeliveryTimeBasedOnDeviceIdle(std::shared_ptr<TimerInfo> alarm, bool normalExit);
+    bool AdjustTimersBasedOnDeviceIdle(bool normalExit);
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     std::default_random_engine random_;
@@ -121,9 +121,9 @@ private:
 
     std::vector<std::shared_ptr<TimerInfo>> pendingDelayTimers_;
     // map<timerId, original trigger time> for delayed timers
-    std::map<uint64_t, std::chrono::steady_clock::time_point> DelayedTimers_;
+    std::map<uint64_t, std::chrono::steady_clock::time_point> delayedTimers_;
     // idle timer
-    std::shared_ptr<TimerInfo> mPendingIdleUtil_;
+    std::shared_ptr<TimerInfo> mPendingIdleUntil_;
 }; // timer_manager
 } // MiscServices
 } // OHOS
