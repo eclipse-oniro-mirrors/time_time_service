@@ -24,6 +24,13 @@
 #include "if_system_ability_manager.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
+#ifdef DEVICE_STANDBY_ENABLE
+#include "standby_service_client.h"
+#include "allow_type.h"
+#endif
+#include "time_permission.h"
+#include "time_file_utils.h"
+#include "ipc_skeleton.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -42,6 +49,10 @@ const auto INTERVAL_HALF_DAY = hours(12);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
 const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
+#ifdef DEVICE_STANDBY_ENABLE
+const int REASON_NATIVE_API = 0;
+const int REASON_APP_API = 1;
+#endif
 }
 
 extern bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &batch);
@@ -111,6 +122,11 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer : %{public}" PRId64 "", timerId);
     TIME_HILOGI(TIME_MODULE_SERVICE, "TriggerTime : %{public}" PRId64 "", triggerTime);
     auto timerInfo = it->second;
+    if ((timerInfo->flag & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
+        !DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Idle timer operation permission denied.");
+        return E_TIME_NO_PERMISSION;
+    }
     SetHandler(timerInfo->id,
                timerInfo->type,
                triggerTime,
@@ -125,15 +141,15 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
 
 int32_t TimerManager::StopTimer(uint64_t timerId)
 {
-    return StopTimerInner(timerId, false) ? E_TIME_OK : E_TIME_DEAL_FAILED;
+    return StopTimerInner(timerId, false);
 }
 
 int32_t TimerManager::DestroyTimer(uint64_t timerId)
 {
-    return StopTimerInner(timerId, true) ? E_TIME_OK : E_TIME_DEAL_FAILED;
+    return StopTimerInner(timerId, true);
 }
 
-bool TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
+int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 ", needDestroy: %{public}d",
         timerNumber, needDestroy);
@@ -141,7 +157,12 @@ bool TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
     auto it = timerEntryMap_.find(timerNumber);
     if (it == timerEntryMap_.end()) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-        return false;
+        return E_TIME_DEAL_FAILED;
+    }
+    if ((it->second->flag & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
+        !DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Idle timer operation permission denied.");
+        return E_TIME_NO_PERMISSION;
     }
     RemoveHandler(timerNumber);
     if (it->second) {
@@ -152,7 +173,7 @@ bool TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         timerEntryMap_.erase(it);
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-    return true;
+    return E_TIME_OK;
 }
 
 void TimerManager::RemoveProxy(uint64_t timerNumber, int32_t uid)
@@ -279,8 +300,25 @@ void TimerManager::RemoveLocked(uint64_t id)
             ++it;
         }
     }
+    pendingDelayTimers_.erase(remove_if(pendingDelayTimers_.begin(), pendingDelayTimers_.end(),
+        [id](std::shared_ptr<TimerInfo> timer) {
+            return timer->id == id;
+        }), pendingDelayTimers_.end());
+    delayedTimers_.erase(id);
+    bool isAdjust = false;
+    if (mPendingIdleUntil_ != nullptr && id == mPendingIdleUntil_->id) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm removed.");
+        mPendingIdleUntil_ = nullptr;
+        isAdjust = AdjustTimersBasedOnDeviceIdle();
+        delayedTimers_.clear();
+        for (const auto &delayTimer_ : pendingDelayTimers_) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", delayTimer_->id);
+            SetHandlerLocked(delayTimer_, true, true);
+        }
+        pendingDelayTimers_.clear();
+    }
 
-    if (didRemove) {
+    if (didRemove || isAdjust) {
         ReBatchAllTimersLocked(true);
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "end");
@@ -289,7 +327,23 @@ void TimerManager::RemoveLocked(uint64_t id)
 void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool doValidate)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d, doValidate= %{public}d", rebatching, doValidate);
+    if (mPendingIdleUntil_ != nullptr && !CheckAllowWhileIdle(alarm->flags)) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Pending not-allowed alarm in idle state, id=%{public}" PRId64 "",
+            alarm->id);
+        pendingDelayTimers_.push_back(alarm);
+        return;
+    }
+    bool isAdjust = false;
+    if (alarm->flags & static_cast<uint32_t>(IDLE_UNTIL)) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Set idle timer, id=%{public}" PRId64 "", alarm->id);
+        mPendingIdleUntil_ = alarm;
+        isAdjust = AdjustTimersBasedOnDeviceIdle();
+    }
     InsertAndBatchTimerLocked(std::move(alarm));
+    if (isAdjust) {
+        ReBatchAllTimers();
+        rebatching = true;
+    }
     if (!rebatching) {
         RescheduleKernelTimerLocked();
     }
@@ -445,6 +499,19 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             alarm->count = 1;
             triggerList.push_back(alarm);
             TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d", alarm->uid);
+            if (mPendingIdleUntil_ == alarm) {
+                TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers.");
+                mPendingIdleUntil_ = nullptr;
+                delayedTimers_.clear();
+                std::for_each(pendingDelayTimers_.begin(), pendingDelayTimers_.end(),
+                    [this] (const std::shared_ptr<TimerInfo> &pendingTimer) {
+                    TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "",
+                        pendingTimer->id);
+                    SetHandlerLocked(pendingTimer, false, true);
+                });
+                pendingDelayTimers_.clear();
+                ReBatchAllTimers();
+            }
             if (alarm->repeatInterval > milliseconds::zero()) {
                 alarm->count += duration_cast<milliseconds>(nowElapsed -
                                                             alarm->expectedWhenElapsed) / alarm->repeatInterval;
@@ -641,6 +708,86 @@ bool TimerManager::ResetAllProxy()
     return true;
 }
 
+bool TimerManager::CheckAllowWhileIdle(const uint32_t flag)
+{
+#ifdef DEVICE_STANDBY_ENABLE
+    if (TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        std::string name = TimeFileUtils::GetBundleNameByUid(IPCSkeleton::GetCallingUid());
+        std::vector<DevStandbyMgr::AllowInfo> restrictList;
+        DevStandbyMgr::StandbyServiceClient::GetInstance().GetRestrictList(DevStandbyMgr::AllowType::TIMER,
+            restrictList, REASON_APP_API);
+        auto it = std::find_if(restrictList.begin(), restrictList.end(),
+            [&name] (const DevStandbyMgr::AllowInfo &allowInfo) {
+                return allowInfo.GetName() == name;
+            });
+        if (it != restrictList.end()) {
+        return false;
+    }
+    }
+    if (DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
+        pid_t pid = IPCSkeleton::GetCallingPid();
+        std::string procName = TimeFileUtils::GetNameByPid(pid);
+        if (flag & static_cast<uint32_t>(INEXACT_REMINDER)) {
+            return false;
+        }
+        std::vector<DevStandbyMgr::AllowInfo> restrictList;
+        DevStandbyMgr::StandbyServiceClient::GetInstance().GetRestrictList(DevStandbyMgr::AllowType::TIMER,
+            restrictList, REASON_NATIVE_API);
+        auto it = std::find_if(restrictList.begin(),
+            restrictList.end(),
+            [procName](const DevStandbyMgr::AllowInfo &allowInfo) {
+                return allowInfo.GetName() == procName;
+            });
+        if (it != restrictList.end()) {
+            return false;
+        }
+    }
+#endif
+    return true;
+}
+
+bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm)
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "start adjust timer, uid=%{public}d, id=%{public}" PRId64 "",
+        alarm->uid, alarm->id);
+    if (mPendingIdleUntil_ == alarm) {
+        return false;
+    }
+    if (mPendingIdleUntil_ == nullptr) {
+        auto itMap = delayedTimers_.find(alarm->id);
+        if (itMap != delayedTimers_.end()) {
+            return alarm->UpdateWhenElapsed(itMap->second);
+        }
+        return false;
+    }
+    if (CheckAllowWhileIdle(alarm->flags)) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer unrestricted, not adjust. id=%{public}" PRId64 "", alarm->id);
+        return false;
+    } else if (alarm->whenElapsed > mPendingIdleUntil_->whenElapsed) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, not adjust. id=%{public}" PRId64 "", alarm->id);
+        return false;
+    } else {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, id=%{public}" PRId64 "", alarm->id);
+        delayedTimers_[alarm->id] = alarm->whenElapsed;
+        return alarm->UpdateWhenElapsed(mPendingIdleUntil_->whenElapsed);
+    }
+}
+
+bool TimerManager::AdjustTimersBasedOnDeviceIdle()
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start adjust alarmBatches_.size=%{public}d",
+        static_cast<int>(alarmBatches_.size()));
+    bool isAdjust = false;
+    for (auto batch : alarmBatches_) {
+        auto n = batch->Size();
+        for (unsigned int i = 0; i < n; i++) {
+            auto alarm = batch->Get(i);
+            isAdjust = AdjustDeliveryTimeBasedOnDeviceIdle(alarm) ? true : isAdjust;
+        }
+    }
+    return isAdjust;
+}
+
 bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &newBatch)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
@@ -676,6 +823,7 @@ bool TimerManager::ShowtimerEntryMap(int fd)
         dprintf(fd, " - dump timer number   = %lu\n", iter->first);
         dprintf(fd, " * timer id            = %lu\n", iter->second->id);
         dprintf(fd, " * timer type          = %d\n", iter->second->type);
+        dprintf(fd, " * timer flag          = %lu\n", iter->second->flag);
         dprintf(fd, " * timer window Length = %lu\n", iter->second->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
@@ -715,6 +863,37 @@ bool TimerManager::ShowTimerTriggerById(int fd, uint64_t timerId)
                 dprintf(fd, " * timer trigger   = %lld\n", alarmBatches_[i]->Get(j)->origWhen);
             }
         }
+    }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    return true;
+}
+
+bool TimerManager::ShowIdleTimerInfo(int fd)
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    std::lock_guard<std::mutex> lock(showTimerMutex_);
+    dprintf(fd, " - dump idle state         = %d\n", (mPendingIdleUntil_ != nullptr));
+    if (mPendingIdleUntil_ != nullptr) {
+        dprintf(fd, " - dump idle timer id  = %lu\n", mPendingIdleUntil_->id);
+        dprintf(fd, " * timer type          = %d\n", mPendingIdleUntil_->type);
+        dprintf(fd, " * timer flag          = %lu\n", mPendingIdleUntil_->flags);
+        dprintf(fd, " * timer window Length = %lu\n", mPendingIdleUntil_->windowLength);
+        dprintf(fd, " * timer interval      = %lu\n", mPendingIdleUntil_->repeatInterval);
+        dprintf(fd, " * timer whenElapsed   = %lu\n", mPendingIdleUntil_->whenElapsed);
+        dprintf(fd, " * timer uid           = %d\n\n", mPendingIdleUntil_->uid);
+    }
+    for (auto delayTimer_ : pendingDelayTimers_) {
+        dprintf(fd, " - dump pending delay timer id  = %lu\n", delayTimer_->id);
+        dprintf(fd, " * timer type          = %d\n", delayTimer_->type);
+        dprintf(fd, " * timer flag          = %lu\n", delayTimer_->flags);
+        dprintf(fd, " * timer window Length = %lu\n", delayTimer_->windowLength);
+        dprintf(fd, " * timer interval      = %lu\n", delayTimer_->repeatInterval);
+        dprintf(fd, " * timer whenElapsed   = %lu\n", delayTimer_->whenElapsed);
+        dprintf(fd, " * timer uid           = %d\n\n", delayTimer_->uid);
+    }
+    for (auto iter = delayedTimers_.begin(); iter != delayedTimers_.end(); iter++) {
+        dprintf(fd, " - dump delayed timer id = %lu\n", iter->first);
+        dprintf(fd, " * timer whenElapsed     = %lu\n", iter->second);
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;

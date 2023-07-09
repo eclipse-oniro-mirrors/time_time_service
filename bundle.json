@@ -41,6 +41,7 @@
         "c_utils",
         "access_token",
         "hisysevent",
+        "device_standby",
         "init"
       ],
       "third_party": [

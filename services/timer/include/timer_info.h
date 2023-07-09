@@ -55,6 +55,7 @@ public:
     virtual ~TimerInfo() = default;
     bool operator==(const TimerInfo &other) const;
     bool Matches(const std::string &packageName) const;
+    bool UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed);
 };
 } // MiscService
 } // OHOS

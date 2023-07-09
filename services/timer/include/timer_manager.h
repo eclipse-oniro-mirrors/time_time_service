@@ -46,6 +46,7 @@ public:
     bool ShowtimerEntryMap(int fd);
     bool ShowTimerEntryById(int fd, uint64_t timerId);
     bool ShowTimerTriggerById(int fd, uint64_t timerId);
+    bool ShowIdleTimerInfo(int fd);
     ~TimerManager() override;
 
 private:
@@ -94,9 +95,12 @@ private:
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
     std::chrono::steady_clock::time_point GetBootTimeNs();
     void CallbackAlarmIfNeed(std::shared_ptr<TimerInfo> alarm);
-    bool StopTimerInner(uint64_t timerNumber, bool needDestroy);
+    int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
     void RemoveProxy(uint64_t timerNumber, int32_t uid);
     void NotifyWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent);
+    bool CheckAllowWhileIdle(const uint32_t flag);
+    bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
+    bool AdjustTimersBasedOnDeviceIdle();
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     std::default_random_engine random_;
@@ -114,6 +118,12 @@ private:
     std::mutex proxyMutex_;
     std::set<int32_t> proxyUids_;
     std::map<int32_t, std::vector<std::shared_ptr<TimerInfo>>> proxyMap_;
+
+    std::vector<std::shared_ptr<TimerInfo>> pendingDelayTimers_;
+    // map<timerId, original trigger time> for delayed timers
+    std::map<uint64_t, std::chrono::steady_clock::time_point> delayedTimers_;
+    // idle timer
+    std::shared_ptr<TimerInfo> mPendingIdleUntil_;
 }; // timer_manager
 } // MiscServices
 } // OHOS
