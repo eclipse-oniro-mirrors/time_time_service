@@ -20,7 +20,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "securec.h"
-#include <unistd.h>
 #include "bundle_mgr_interface.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"

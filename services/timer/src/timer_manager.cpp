@@ -327,7 +327,7 @@ void TimerManager::RemoveLocked(uint64_t id)
 void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool doValidate)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d, doValidate= %{public}d", rebatching, doValidate);
-    if (mPendingIdleUntil_ != nullptr && CheckAllowWhileIdle(alarm->flags)) {
+    if (mPendingIdleUntil_ != nullptr && !CheckAllowWhileIdle(alarm->flags)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Pending not-allowed alarm in idle state, id=%{public}" PRId64 "",
             alarm->id);
         pendingDelayTimers_.push_back(alarm);
