@@ -780,7 +780,6 @@ bool TimerManager::AdjustTimersBasedOnDeviceIdle()
     bool isAdjust = false;
     for (auto batch : alarmBatches_) {
         auto n = batch->Size();
-        TIME_HILOGD(TIME_MODULE_SERVICE, "adjust batch.size=%{public}u", n);
         for (unsigned int i = 0; i < n; i++) {
             auto alarm = batch->Get(i);
             isAdjust = AdjustDeliveryTimeBasedOnDeviceIdle(alarm) ? true : isAdjust;
