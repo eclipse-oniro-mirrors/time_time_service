@@ -49,8 +49,10 @@ const auto INTERVAL_HALF_DAY = hours(12);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
 const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
+#ifdef DEVICE_STANDBY_ENABLE
 const int REASON_NATIVE_API = 0;
 const int REASON_APP_API = 1;
+#endif
 }
 
 extern bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &batch);
