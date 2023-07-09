@@ -503,11 +503,12 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
                 TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers.");
                 mPendingIdleUntil_ = nullptr;
                 delayedTimers_.clear();
-                for (const auto &delayTimer_ : pendingDelayTimers_) {
+                std::for_each(pendingDelayTimers_.begin(), pendingDelayTimers_.end(),
+                    [this] (const std::shared_ptr<TimerInfo> &pendingTimer) {
                     TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "",
-                        delayTimer_->id);
-                    SetHandlerLocked(delayTimer_, false, true);
-                }
+                        pendingTimer->id);
+                    SetHandlerLocked(pendingTimer, false, true);
+                });
                 pendingDelayTimers_.clear();
                 ReBatchAllTimers();
             }

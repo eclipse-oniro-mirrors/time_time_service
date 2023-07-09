@@ -79,8 +79,8 @@ ohos_shared_library("time_service") {
   ]
   defines = []
   if (device_standby) {
-    external_deps += ["device_standby:standby_innerkits"]
-    defines += ["DEVICE_STANDBY_ENABLE"]
+    external_deps += [ "device_standby:standby_innerkits" ]
+    defines += [ "DEVICE_STANDBY_ENABLE" ]
   }
   part_name = "time_service"
   subsystem_name = "time"
@@ -137,8 +137,8 @@ ohos_static_library("time_service_static") {
   ]
   defines = []
   if (device_standby) {
-    external_deps += ["device_standby:standby_innerkits"]
-    defines += ["DEVICE_STANDBY_ENABLE"]
+    external_deps += [ "device_standby:standby_innerkits" ]
+    defines += [ "DEVICE_STANDBY_ENABLE" ]
   }
   part_name = "time_service"
   subsystem_name = "time"
