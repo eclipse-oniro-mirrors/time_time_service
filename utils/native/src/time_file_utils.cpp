@@ -18,7 +18,6 @@
 #include "time_hilog.h"
 
 #include <fcntl.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #include "securec.h"
 #include <unistd.h>
