@@ -23,6 +23,7 @@
 #include "bundle_mgr_interface.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include "bundle_mgr_proxy.h"
 
 constexpr int CMDLINE_PATH_LEN = 32;
 constexpr int CMDLINE_LEN = 128;
@@ -47,6 +48,10 @@ std::string TimeFileUtils::GetBundleNameByUid(const int32_t uid)
     std::string bundleName = "";
     OHOS::sptr<OHOS::ISystemAbilityManager> systemAbilityManager =
         OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (!systemAbilityManager) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "null system ability manager.");
+        return bundleName;
+    }
     OHOS::sptr<OHOS::IRemoteObject> object =
         systemAbilityManager->GetSystemAbility(OHOS::BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     sptr<AppExecFwk::IBundleMgr> iBundleMgr = OHOS::iface_cast<OHOS::AppExecFwk::IBundleMgr>(object);
