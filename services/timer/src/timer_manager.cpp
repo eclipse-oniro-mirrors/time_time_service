@@ -882,7 +882,7 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
         dprintf(fd, " * timer whenElapsed   = %lu\n", mPendingIdleUntil_->whenElapsed);
         dprintf(fd, " * timer uid           = %d\n\n", mPendingIdleUntil_->uid);
     }
-    for (auto pendingTimer : pendingDelayTimers_) {
+    for (const auto &pendingTimer : pendingDelayTimers_) {
         dprintf(fd, " - dump pending delay timer id  = %lu\n", pendingTimer->id);
         dprintf(fd, " * timer type          = %d\n", pendingTimer->type);
         dprintf(fd, " * timer flag          = %lu\n", pendingTimer->flags);
