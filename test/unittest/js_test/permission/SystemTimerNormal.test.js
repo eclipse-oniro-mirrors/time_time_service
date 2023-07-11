@@ -244,7 +244,7 @@ describe('SystemTimerNormalTest', function () {
         }
         systemTimer.createTimer(options).then((timerId) => {
             systemTimer.destroyTimer(timerId)
-            expect(typeof (data) === 'undefined').assertTrue();
+            expect(true).assertTrue();
             done();
         }).catch((err) => {
             expect(false).assertTrue();
@@ -267,7 +267,7 @@ describe('SystemTimerNormalTest', function () {
         }
         systemTimer.createTimer(options).then((timerId) => {
             systemTimer.destroyTimer(timerId)
-            expect(typeof (data) === 'undefined').assertTrue();
+            expect(true).assertTrue();
             done();
         }).catch((err) => {
             expect(false).assertTrue();
@@ -290,7 +290,7 @@ describe('SystemTimerNormalTest', function () {
         }
         systemTimer.createTimer(options).then((timerId) => {
             systemTimer.destroyTimer(timerId)
-            expect(typeof (data) === 'undefined').assertTrue();
+            expect(true).assertTrue();
             done();
         }).catch((err) => {
             expect(false).assertTrue();
@@ -313,7 +313,7 @@ describe('SystemTimerNormalTest', function () {
         }
         systemTimer.createTimer(options).then((timerId) => {
             systemTimer.destroyTimer(timerId)
-            expect(typeof (data) === 'undefined').assertTrue();
+            expect(true).assertTrue();
             done();
         }).catch((err) => {
             expect(false).assertTrue();
@@ -336,7 +336,7 @@ describe('SystemTimerNormalTest', function () {
         }
         systemTimer.createTimer(options).then((timerId) => {
             systemTimer.destroyTimer(timerId)
-            expect(typeof (data) === 'undefined').assertTrue();
+            expect(true).assertTrue();
             done();
         }).catch((err) => {
             expect(false).assertTrue();
@@ -359,7 +359,7 @@ describe('SystemTimerNormalTest', function () {
         }
         systemTimer.createTimer(options).then((timerId) => {
             systemTimer.destroyTimer(timerId)
-            expect(typeof (data) === 'undefined').assertTrue();
+            expect(true).assertTrue();
             done();
         }).catch((err) => {
             expect(false).assertTrue();
@@ -382,7 +382,7 @@ describe('SystemTimerNormalTest', function () {
         }
         systemTimer.createTimer(options).then((timerId) => {
             systemTimer.destroyTimer(timerId)
-            expect(typeof (data) === 'undefined').assertTrue();
+            expect(true).assertTrue();
             done();
         }).catch((err) => {
             expect(false).assertTrue();
@@ -406,7 +406,7 @@ describe('SystemTimerNormalTest', function () {
         }
         systemTimer.createTimer(options).then((timerId) => {
             systemTimer.destroyTimer(timerId)
-            expect(typeof (data) === 'undefined').assertTrue();
+            expect(true).assertTrue();
             done();
         }).catch((err) => {
             expect(false).assertTrue();
@@ -430,13 +430,59 @@ describe('SystemTimerNormalTest', function () {
         }
         systemTimer.createTimer(options).then((timerId) => {
             systemTimer.destroyTimer(timerId)
-            expect(typeof (data) === 'undefined').assertTrue();
+            expect(true).assertTrue();
             done();
         }).catch((err) => {
             expect(false).assertTrue();
             done();
         })
         console.log('testCreateTimerInterval018 end');
+    });
+
+    /**
+     * @tc.name: TestCreateTimerType019
+     * @tc.desc: Test createTimer for promise with type is TIMER_TYPE_IDLE.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('TestCreateTimerType019', 0, async (done) => {
+        console.log("TestCreateTimerType019 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_IDLE,
+            repeat: false,
+        }
+        systemTimer.createTimer(options).then((timerId) => {
+            systemTimer.destroyTimer(timerId)
+            expect(true).assertTrue();
+            done();
+        }).catch((err) => {
+            expect(false).assertTrue();
+            done();
+        })
+        console.log('TestCreateTimerType019 end');
+    });
+
+    /**
+     * @tc.name: TestCreateTimerType020
+     * @tc.desc: Test createTimer for callback with type is TIMER_TYPE_IDLE.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('TestCreateTimerType020', 0, async (done) => {
+        console.log("TestCreateTimerType020 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_IDLE,
+            repeat: false,
+        }
+        systemTimer.createTimer(options, (err, data) => {
+            if (err) {
+                expect(false).assertTrue();
+            }
+            systemTimer.destroyTimer(data)
+            expect(true).assertTrue();
+            done();
+        })
+        console.log('TestCreateTimerType020 end');
     });
 
     /**

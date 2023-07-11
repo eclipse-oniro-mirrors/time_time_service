@@ -214,7 +214,7 @@ void TimeSystemAbility::InitTimerHandler()
     timerManagerHandler_ = TimerManager::Create();
 }
 
-void TimeSystemAbility::ParseTimerPara(std::shared_ptr<ITimerInfo> timerOptions, TimerPara &paras)
+void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras)
 {
     auto uIntType = static_cast<uint32_t>(timerOptions->type);
     bool isRealtime = (uIntType & TIMER_TYPE_REALTIME_MASK) > 0 ? true : false;
@@ -237,7 +237,6 @@ void TimeSystemAbility::ParseTimerPara(std::shared_ptr<ITimerInfo> timerOptions,
         paras.flag += ITimerManager::TimerFlag::INEXACT_REMINDER;
     }
     paras.interval = timerOptions->repeat ? timerOptions->interval : 0;
-    return;
 }
 
 int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
@@ -270,9 +269,9 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
         }
     }
     if ((paras.flag & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
-        !DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Idle timer operation permission denied.");
-        return E_TIME_NO_PERMISSION;
+        !TimePermission::CheckProxyCallingPermission()) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer.");
+        paras.flag = 0;
     }
     return timerManagerHandler_->CreateTimer(paras, callbackFunc, timerOptions->wantAgent, uid, timerId);
 }
@@ -288,12 +287,7 @@ int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(cons
             return E_TIME_NULLPTR;
         }
     }
-    if ((paras.flag & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
-        !DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Idle timer operation permission denied.");
-        return E_TIME_NO_PERMISSION;
-    }
-    return timerManagerHandler_->CreateTimer(paras, Callback, nullptr, 0, timerId);
+    return timerManagerHandler_->CreateTimer(paras, std::move(Callback), nullptr, 0, timerId);
 }
 
 int32_t TimeSystemAbility::StartTimer(uint64_t timerId, uint64_t triggerTimes)

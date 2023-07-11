@@ -119,14 +119,9 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
         return E_TIME_NOT_FOUND;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer : %{public}" PRId64 "", timerId);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "TriggerTime : %{public}" PRId64 "", triggerTime);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer: %{public}" PRId64 " TriggerTime: %{public}" PRId64 "", timerId,
+        triggerTime);
     auto timerInfo = it->second;
-    if ((timerInfo->flag & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
-        !DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Idle timer operation permission denied.");
-        return E_TIME_NO_PERMISSION;
-    }
     SetHandler(timerInfo->id,
                timerInfo->type,
                triggerTime,
@@ -158,11 +153,6 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
     if (it == timerEntryMap_.end()) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
         return E_TIME_DEAL_FAILED;
-    }
-    if ((it->second->flag & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
-        !DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Idle timer operation permission denied.");
-        return E_TIME_NO_PERMISSION;
     }
     RemoveHandler(timerNumber);
     if (it->second) {
@@ -717,13 +707,12 @@ bool TimerManager::CheckAllowWhileIdle(const uint32_t flag)
         DevStandbyMgr::StandbyServiceClient::GetInstance().GetRestrictList(DevStandbyMgr::AllowType::TIMER,
             restrictList, REASON_APP_API);
         auto it = std::find_if(restrictList.begin(), restrictList.end(),
-            [&name] (const DevStandbyMgr::AllowInfo &allowInfo) {
-                return allowInfo.GetName() == name;
-            });
+            [&name](const DevStandbyMgr::AllowInfo &allowInfo) { return allowInfo.GetName() == name; });
         if (it != restrictList.end()) {
-        return false;
+            return false;
+        }
     }
-    }
+
     if (DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
         pid_t pid = IPCSkeleton::GetCallingPid();
         std::string procName = TimeFileUtils::GetNameByPid(pid);
@@ -733,11 +722,8 @@ bool TimerManager::CheckAllowWhileIdle(const uint32_t flag)
         std::vector<DevStandbyMgr::AllowInfo> restrictList;
         DevStandbyMgr::StandbyServiceClient::GetInstance().GetRestrictList(DevStandbyMgr::AllowType::TIMER,
             restrictList, REASON_NATIVE_API);
-        auto it = std::find_if(restrictList.begin(),
-            restrictList.end(),
-            [procName](const DevStandbyMgr::AllowInfo &allowInfo) {
-                return allowInfo.GetName() == procName;
-            });
+        auto it = std::find_if(restrictList.begin(), restrictList.end(),
+            [procName](const DevStandbyMgr::AllowInfo &allowInfo) { return allowInfo.GetName() == procName; });
         if (it != restrictList.end()) {
             return false;
         }
