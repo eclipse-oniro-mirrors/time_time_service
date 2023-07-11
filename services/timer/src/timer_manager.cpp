@@ -311,9 +311,9 @@ void TimerManager::RemoveLocked(uint64_t id)
         mPendingIdleUntil_ = nullptr;
         isAdjust = AdjustTimersBasedOnDeviceIdle();
         delayedTimers_.clear();
-        for (const auto &delayTimer_ : pendingDelayTimers_) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", delayTimer_->id);
-            SetHandlerLocked(delayTimer_, true, true);
+        for (const auto &pendingTimer : pendingDelayTimers_) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", pendingTimer->id);
+            SetHandlerLocked(pendingTimer, true, true);
         }
         pendingDelayTimers_.clear();
     }
@@ -882,14 +882,14 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
         dprintf(fd, " * timer whenElapsed   = %lu\n", mPendingIdleUntil_->whenElapsed);
         dprintf(fd, " * timer uid           = %d\n\n", mPendingIdleUntil_->uid);
     }
-    for (auto delayTimer_ : pendingDelayTimers_) {
-        dprintf(fd, " - dump pending delay timer id  = %lu\n", delayTimer_->id);
-        dprintf(fd, " * timer type          = %d\n", delayTimer_->type);
-        dprintf(fd, " * timer flag          = %lu\n", delayTimer_->flags);
-        dprintf(fd, " * timer window Length = %lu\n", delayTimer_->windowLength);
-        dprintf(fd, " * timer interval      = %lu\n", delayTimer_->repeatInterval);
-        dprintf(fd, " * timer whenElapsed   = %lu\n", delayTimer_->whenElapsed);
-        dprintf(fd, " * timer uid           = %d\n\n", delayTimer_->uid);
+    for (const auto &pendingTimer : pendingDelayTimers_) {
+        dprintf(fd, " - dump pending delay timer id  = %lu\n", pendingTimer->id);
+        dprintf(fd, " * timer type          = %d\n", pendingTimer->type);
+        dprintf(fd, " * timer flag          = %lu\n", pendingTimer->flags);
+        dprintf(fd, " * timer window Length = %lu\n", pendingTimer->windowLength);
+        dprintf(fd, " * timer interval      = %lu\n", pendingTimer->repeatInterval);
+        dprintf(fd, " * timer whenElapsed   = %lu\n", pendingTimer->whenElapsed);
+        dprintf(fd, " * timer uid           = %d\n\n", pendingTimer->uid);
     }
     for (auto iter = delayedTimers_.begin(); iter != delayedTimers_.end(); iter++) {
         dprintf(fd, " - dump delayed timer id = %lu\n", iter->first);
