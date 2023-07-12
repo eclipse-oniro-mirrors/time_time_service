@@ -48,6 +48,7 @@ public:
     bool ShowTimerTriggerById(int fd, uint64_t timerId);
     bool ShowIdleTimerInfo(int fd);
     ~TimerManager() override;
+    void HandleRSSDeath();
 
 private:
     explicit TimerManager(std::shared_ptr<TimerHandler> impl);
@@ -81,7 +82,7 @@ private:
     void ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
                           std::chrono::steady_clock::time_point nowElapsed,
                           bool doValidate);
-    void SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool doValidate);
+    void SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool doValidate, bool isRebatched);
     void InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm);
     int64_t AttemptCoalesceLocked(std::chrono::steady_clock::time_point whenElapsed,
                                   std::chrono::steady_clock::time_point maxWhen);
@@ -98,7 +99,7 @@ private:
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
     void RemoveProxy(uint64_t timerNumber, int32_t uid);
     void NotifyWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent);
-    bool CheckAllowWhileIdle(const uint32_t flag);
+    bool CheckAllowWhileIdle(uint32_t flag);
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustTimersBasedOnDeviceIdle();
 
@@ -124,6 +125,7 @@ private:
     std::map<uint64_t, std::chrono::steady_clock::time_point> delayedTimers_;
     // idle timer
     std::shared_ptr<TimerInfo> mPendingIdleUntil_;
+    std::mutex idleTimerMutex_;
 }; // timer_manager
 } // MiscServices
 } // OHOS
