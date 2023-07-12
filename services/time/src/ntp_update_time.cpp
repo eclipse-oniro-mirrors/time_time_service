@@ -135,7 +135,7 @@ int32_t NtpUpdateTime::MonitorNetwork()
         TIME_HILOGD(TIME_MODULE_SERVICE, "new operator error.observer is nullptr");
         return NET_CONN_ERR_INPUT_NULL_PTR;
     }
-    int nRet = DelayedSingleton<NetConnClient>::GetInstance()->RegisterNetConnCallback(specifier, observer, 0);
+    int nRet = NetConnClient::GetInstance().RegisterNetConnCallback(specifier, observer, 0);
     TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterNetConnCallback retcode= %{public}d", nRet);
 
     return nRet;
