@@ -268,7 +268,7 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
             return E_TIME_NULLPTR;
         }
     }
-    if ((paras.flag & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
+    if ((static_cast<uint32_t>(paras.flag) & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
         !TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer.");
         paras.flag = 0;

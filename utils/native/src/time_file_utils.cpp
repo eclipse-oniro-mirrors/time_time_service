@@ -70,7 +70,7 @@ std::string TimeFileUtils::GetBundleNameByUid(const int32_t uid)
 std::string TimeFileUtils::GetNameByPid(uint32_t pid)
 {
     char path[CMDLINE_PATH_LEN] = { 0 };
-    if (snprintf_s(path, CMDLINE_PATH_LEN, CMDLINE_PATH_LEN - 1, "/proc/%d/cmdline", pid) <= 0) {
+    if (snprintf_s(path, CMDLINE_PATH_LEN, CMDLINE_PATH_LEN - 1, "/proc/%u/cmdline", pid) <= 0) {
         return "";
     }
     char cmdline[CMDLINE_LEN] = { 0 };
