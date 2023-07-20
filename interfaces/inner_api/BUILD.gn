@@ -37,7 +37,10 @@ ohos_shared_library("time_client") {
   configs = [ ":time_client_config" ]
   configs += [ "//build/config/gcc:symbol_visibility_hidden" ]
   public_configs = [ ":time_client_config" ]
-  innerapi_tags = [ "platformsdk" ]
+  innerapi_tags = [
+    "platformsdk",
+    "sasdk",
+  ]
   external_deps = [
     "ability_runtime:abilitykit_native",
     "ability_runtime:wantagent_innerkits",
