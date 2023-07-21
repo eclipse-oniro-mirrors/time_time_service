@@ -71,7 +71,7 @@ private:
                           std::chrono::steady_clock::time_point maxWhen,
                           std::chrono::milliseconds interval,
                           std::function<void (const uint64_t)> callback,
-                          std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+                          const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                           uint32_t flags,
                           bool doValidate,
                           uint64_t callingUid);
@@ -95,10 +95,10 @@ private:
     void SetLocked(int type, std::chrono::nanoseconds when);
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
     std::chrono::steady_clock::time_point GetBootTimeNs();
-    void CallbackAlarmIfNeed(std::shared_ptr<TimerInfo> alarm);
+    void CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm);
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
     void RemoveProxy(uint64_t timerNumber, int32_t uid);
-    void NotifyWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent);
+    void NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent);
     bool CheckAllowWhileIdle(uint32_t flag);
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustTimersBasedOnDeviceIdle();

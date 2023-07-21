@@ -357,7 +357,7 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     struct timeval tv {};
     tv.tv_sec = (time_t)(time / MILLI_TO_BASE);
     tv.tv_usec = (suseconds_t)((time % MILLI_TO_BASE) * MILLI_TO_MICR);
-    int result = settimeofday(&tv, NULL);
+    int result = settimeofday(&tv, nullptr);
     if (result < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday time fail: %{public}d.", result);
         return false;
@@ -402,8 +402,8 @@ int TimeSystemAbility::Dump(int fd, const std::vector<std::u16string> &args)
 void TimeSystemAbility::DumpAllTimeInfo(int fd, const std::vector<std::string> &input)
 {
     dprintf(fd, "\n - dump all time info :\n");
-    struct timespec ts;
-    struct tm timestr;
+    struct timespec ts{};
+    struct tm timestr{};
     char date_time[64];
     if (GetTimeByClockid(CLOCK_BOOTTIME, ts)) {
         strftime(date_time, sizeof(date_time), "%Y-%m-%d %H:%M:%S", localtime_r(&ts.tv_sec, &timestr));
@@ -412,7 +412,7 @@ void TimeSystemAbility::DumpAllTimeInfo(int fd, const std::vector<std::string> &
         dprintf(fd, " * dump date time error.\n");
     }
     dprintf(fd, " - dump the time Zone:\n");
-    std::string timeZone = "";
+    std::string timeZone;
     int32_t bRet = GetTimeZone(timeZone);
     if (bRet == ERR_OK) {
         dprintf(fd, " * time zone = %s\n", timeZone.c_str());
@@ -700,7 +700,7 @@ bool TimeSystemAbility::GetTimeByClockid(clockid_t clockId, struct timespec &tv)
 
 bool TimeSystemAbility::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
 {
-    if (!DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
+    if (!TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
         return E_TIME_NO_PERMISSION;
     }
@@ -718,7 +718,7 @@ bool TimeSystemAbility::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger
 
 bool TimeSystemAbility::ResetAllProxy()
 {
-    if (!DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
+    if (!TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ResetAllProxy permission check failed");
         return E_TIME_NO_PERMISSION;
     }

@@ -71,7 +71,8 @@ bool TimerInfo::UpdateWhenElapsed(std::chrono::steady_clock::time_point policyEl
     expectedMaxWhenElapsed = maxWhenElapsed;
     std::chrono::milliseconds currentTime;
     if (type == ITimerManager::RTC || type == ITimerManager::RTC_WAKEUP) {
-        currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+        currentTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     } else {
         currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(policyElapsed.time_since_epoch());
     }

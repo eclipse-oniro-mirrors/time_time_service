@@ -24,7 +24,7 @@ namespace OHOS {
 namespace MiscServices {
 int32_t NetConnCallbackObserver::NetAvailable(sptr<NetHandle> &netHandle)
 {
-    return 0;
+    return E_TIME_OK;
 }
 
 int32_t NetConnCallbackObserver::NetCapabilitiesChange(sptr<NetHandle> &netHandle,
@@ -39,28 +39,28 @@ int32_t NetConnCallbackObserver::NetCapabilitiesChange(sptr<NetHandle> &netHandl
         NtpUpdateTime::SetSystemTime();
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "Observe net capabilities change. end");
-    return 0;
+    return E_TIME_OK;
 }
 
 int32_t NetConnCallbackObserver::NetConnectionPropertiesChange(sptr<NetHandle> &netHandle,
     const sptr<NetLinkInfo> &info)
 {
-    return 0;
+    return E_TIME_OK;
 }
 
 int32_t NetConnCallbackObserver::NetLost(sptr<NetHandle> &netHandle)
 {
-    return 0;
+    return E_TIME_OK;
 }
 
 int32_t NetConnCallbackObserver::NetUnavailable()
 {
-    return 0;
+    return E_TIME_OK;
 }
 
 int32_t NetConnCallbackObserver::NetBlockStatusChange(sptr<NetHandle> &netHandle, bool blocked)
 {
-    return 0;
+    return E_TIME_OK;
 }
 } // namespace MiscServices
 } // namespace OHOS
