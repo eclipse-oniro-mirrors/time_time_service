@@ -79,6 +79,12 @@ protected:
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override;
 
 private:
+    class RSSSaDeathRecipient : public IRemoteObject::DeathRecipient {
+    public:
+        explicit RSSSaDeathRecipient()= default;;
+        ~RSSSaDeathRecipient() override = default;
+        void OnRemoteDied(const wptr<IRemoteObject> &object) override;
+    };
     int32_t Init();
     void InitServiceHandler();
     void InitTimerHandler();
@@ -88,6 +94,7 @@ private:
 
     bool CheckRtc(const std::string &rtcPath, uint64_t rtcId);
     int GetWallClockRtcId();
+    void RegisterRSSDeathCallback();
 
     ServiceRunningState state_;
     static std::mutex instanceLock_;
@@ -95,6 +102,7 @@ private:
     const int rtcId;
     static std::shared_ptr<AppExecFwk::EventHandler> serviceHandler_;
     static std::shared_ptr<TimerManager> timerManagerHandler_;
+    sptr<RSSSaDeathRecipient> deathRecipient_ {};
 };
 } // namespace MiscServices
 } // namespace OHOS

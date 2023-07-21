@@ -32,6 +32,7 @@ public:
     const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
     const uint32_t flags;
     const int uid;
+    std::chrono::milliseconds offset;
 
     uint64_t count {};
     std::chrono::milliseconds when;
@@ -55,7 +56,7 @@ public:
     virtual ~TimerInfo() = default;
     bool operator==(const TimerInfo &other) const;
     bool Matches(const std::string &packageName) const;
-    bool UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed);
+    bool UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed, std::chrono::nanoseconds offset);
 };
 } // MiscService
 } // OHOS
