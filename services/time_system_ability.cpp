@@ -130,6 +130,7 @@ void TimeSystemAbility::OnStart()
         return;
     }
     InitServiceHandler();
+    RegisterRSSDeathCallback();
     InitTimerHandler();
     DelayedSingleton<TimeTickNotify>::GetInstance()->Init();
     DelayedSingleton<TimeZoneInfo>::GetInstance()->Init();
@@ -730,6 +731,35 @@ bool TimeSystemAbility::ResetAllProxy()
         }
     }
     return timerManagerHandler_->ResetAllProxy();
+}
+
+void TimeSystemAbility::RSSSaDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &object)
+{
+    if (timerManagerHandler_ != nullptr) {
+        timerManagerHandler_->HandleRSSDeath();
+    }
+}
+
+void TimeSystemAbility::RegisterRSSDeathCallback()
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "register rss death callback");
+    auto systemAbilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (systemAbilityManager == nullptr) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Getting SystemAbilityManager failed.");
+        return;
+    }
+
+    auto systemAbility = systemAbilityManager->GetSystemAbility(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
+    if (systemAbility == nullptr) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Get SystemAbility failed.");
+        return;
+    }
+
+    if (deathRecipient_ == nullptr) {
+        deathRecipient_ = new RSSSaDeathRecipient();
+    }
+
+    systemAbility->AddDeathRecipient(deathRecipient_);
 }
 } // namespace MiscServices
 } // namespace OHOS

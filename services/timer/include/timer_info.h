@@ -41,6 +41,7 @@ public:
     std::chrono::steady_clock::time_point expectedWhenElapsed;
     std::chrono::steady_clock::time_point expectedMaxWhenElapsed;
     std::chrono::milliseconds repeatInterval;
+    std::chrono::milliseconds offset;
 
     TimerInfo(uint64_t id, int type,
         std::chrono::milliseconds when,
@@ -55,7 +56,7 @@ public:
     virtual ~TimerInfo() = default;
     bool operator==(const TimerInfo &other) const;
     bool Matches(const std::string &packageName) const;
-    bool UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed);
+    bool UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed, std::chrono::nanoseconds offset);
 };
 } // MiscService
 } // OHOS
