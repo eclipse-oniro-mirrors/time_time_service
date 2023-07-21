@@ -105,7 +105,7 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -162,7 +162,7 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -221,7 +221,7 @@ napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -280,7 +280,7 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -339,7 +339,7 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -392,7 +392,7 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -446,7 +446,7 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
