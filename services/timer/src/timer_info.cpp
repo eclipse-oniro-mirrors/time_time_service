@@ -14,8 +14,10 @@
  */
 
 #include "timer_info.h"
-#include "time_hilog.h"
+
 #include <cinttypes>
+
+#include "time_hilog.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -57,15 +59,26 @@ TimerInfo::TimerInfo(uint64_t _id, int _type,
 {
 }
 
-bool TimerInfo::UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed)
+bool TimerInfo::UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed, std::chrono::nanoseconds offset)
 {
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Update whenElapsed, id=%{public}" PRId64 "", id);
     auto oldWhenElapsed = whenElapsed;
     whenElapsed = policyElapsed;
+    auto offsetMill = std::chrono::duration_cast<std::chrono::milliseconds>(offset);
+    whenElapsed = policyElapsed + offsetMill;
     auto oldMaxWhenElapsed = maxWhenElapsed;
     maxWhenElapsed = whenElapsed + windowLength;
     expectedWhenElapsed = whenElapsed;
     expectedMaxWhenElapsed = maxWhenElapsed;
     TIME_HILOGI(TIME_MODULE_SERVICE, "Update whenElapsed, id=%{public}" PRId64 "", id);
+    std::chrono::milliseconds currentTime;
+    if (type == ITimerManager::RTC || type == ITimerManager::RTC_WAKEUP) {
+        currentTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+    } else {
+        currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(policyElapsed.time_since_epoch());
+    }
+    when = currentTime + offsetMill;
     return (oldWhenElapsed != whenElapsed) || (oldMaxWhenElapsed != maxWhenElapsed);
 }
 } // MiscServices
