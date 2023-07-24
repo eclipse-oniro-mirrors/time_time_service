@@ -155,12 +155,11 @@ uint64_t SNTPClient::GetNtpTimestamp64(int offset, const char *buffer)
 
     uint64_t milliseconds;
     ret = memcpy_s(&milliseconds, sizeof(uint64_t), valueRx, sizeof(uint64_t));
-    milliseconds = le64toh(milliseconds);
     if (ret != EOK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
         return false;
     }
-    return milliseconds;
+    return le64toh(milliseconds);
 }
 
 void SNTPClient::ConvertUnixToNtp(struct ntp_timestamp *ntpTs, struct timeval *unixTs)
@@ -203,6 +202,7 @@ int64_t SNTPClient::ConvertNtpToStamp(uint64_t _ntpTs)
     if (second < SECONDS_SINCE_FIRST_EPOCH) {
         return 0;
     }
+    // convert sntp timestamp to seconds
     return ((second - SECONDS_SINCE_FIRST_EPOCH) * MILLISECOND_TO_SECOND) +
            ((fraction * MILLISECOND_TO_SECOND) / FRACTION_TO_SECOND);
 }
