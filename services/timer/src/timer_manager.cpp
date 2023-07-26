@@ -304,7 +304,7 @@ void TimerManager::RemoveLocked(uint64_t id)
         for (const auto &pendingTimer : pendingDelayTimers_) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", pendingTimer->id);
             if (pendingTimer->whenElapsed <= GetBootTimeNs()) {
-                // If the timer has timed out, it is triggered immediately
+                // 2 means the time of performing task.
                 pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), milliseconds(2));
             } else {
                 pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), pendingTimer->offset);
@@ -759,7 +759,7 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<Tim
                 auto offset = alarm->origWhen - currentTime;
                 return alarm->UpdateWhenElapsed(GetBootTimeNs(), offset);
             }
-            // If the timer has timed out, it is triggered immediately
+            // 2 means the time of performing task.
             return alarm->UpdateWhenElapsed(GetBootTimeNs(), milliseconds(2));
         }
         return false;
