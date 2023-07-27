@@ -708,7 +708,7 @@ bool TimerManager::CheckAllowWhileIdle(uint32_t flag)
 {
 #ifdef DEVICE_STANDBY_ENABLE
     if (TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
-        std::string name = TimeFileUtils::GetBundleNameByUid(IPCSkeleton::GetCallingUid());
+        std::string name = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
         std::vector<DevStandbyMgr::AllowInfo> restrictList;
         DevStandbyMgr::StandbyServiceClient::GetInstance().GetRestrictList(DevStandbyMgr::AllowType::TIMER,
             restrictList, REASON_APP_API);
