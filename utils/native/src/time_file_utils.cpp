@@ -16,6 +16,7 @@
 #include "time_file_utils.h"
 
 #include "time_hilog.h"
+#include "time_common.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>

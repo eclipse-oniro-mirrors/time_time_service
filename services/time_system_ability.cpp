@@ -132,7 +132,7 @@ void TimeSystemAbility::OnStart()
     InitServiceHandler();
     RegisterRSSDeathCallback();
     InitTimerHandler();
-    DelayedSingleton<TimeTickNotify>::GetInstance()->Init();
+    TimeTickNotify::GetInstance().Init();
     DelayedSingleton<TimeZoneInfo>::GetInstance()->Init();
     NtpUpdateTime::GetInstance().Init();
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
@@ -188,7 +188,7 @@ void TimeSystemAbility::OnStop()
         return;
     }
     serviceHandler_ = nullptr;
-    DelayedSingleton<TimeTickNotify>::GetInstance()->Stop();
+    TimeTickNotify::GetInstance().Stop();
     state_ = ServiceRunningState::STATE_NOT_START;
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End.");
 }

@@ -192,5 +192,24 @@ HWTEST_F(TimeDfxTest, DumpShowHelp001, TestSize.Level0)
     EXPECT_NE(result.find("dump all timer info"), std::string::npos);
     EXPECT_NE(result.find("dump the timer info with timer id"), std::string::npos);
 }
+
+/**
+* @tc.name: DumpIdleTimer001
+* @tc.desc: dump idle timer
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeDfxTest, DumpIdleTimer001, TestSize.Level0)
+{
+    std::string result;
+    auto ret = TimeDfxTest::ExecuteCmd(std::string(CMD).append(" '-idle -a'"), result);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(result.find("dump idle state         = 0"), std::string::npos);
+
+    system("hidumper -s 1914 -a \"-E 4 true\"");
+    ret = TimeDfxTest::ExecuteCmd(std::string(CMD).append(" '-idle -a'"), result);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(result.find("timer whenElapsed"), std::string::npos);
+    system("hidumper -s 1914 -a \"-E 0 true\"");
+}
 } // namespace MiscServices
 } // namespace OHOS
