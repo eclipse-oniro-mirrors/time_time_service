@@ -16,17 +16,15 @@
 #ifndef TIME_TICK_NOTIFY_H
 #define TIME_TICK_NOTIFY_H
 
-#include <singleton.h>
-
 #include "timer.h"
 
 namespace OHOS {
 namespace MiscServices {
-class TimeTickNotify : public DelayedSingleton<TimeTickNotify> {
+class TimeTickNotify {
 public:
+    static TimeTickNotify &GetInstance();
     TimeTickNotify();
     ~TimeTickNotify();
-    DISALLOW_COPY_AND_MOVE(TimeTickNotify);
     void Init();
     void Callback();
     void Stop();

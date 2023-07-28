@@ -39,6 +39,12 @@ constexpr uint64_t MINUTE_TO_MILLISECOND = 60000;
 constexpr uint64_t MICRO_TO_MILESECOND = 1000;
 } // namespace
 
+TimeTickNotify &TimeTickNotify::GetInstance()
+{
+    static TimeTickNotify instance;
+    return instance;
+}
+
 TimeTickNotify::TimeTickNotify() : timer_("TickTimer"){};
 TimeTickNotify::~TimeTickNotify(){};
 

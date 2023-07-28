@@ -54,6 +54,7 @@ ohos_unittest("TimeServiceTest") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
     "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_single",
