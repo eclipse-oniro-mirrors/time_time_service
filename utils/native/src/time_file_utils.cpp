@@ -15,22 +15,22 @@
 
 #include "time_file_utils.h"
 
-#include "time_hilog.h"
-#include "time_common.h"
-
 #include <fcntl.h>
 #include <sys/stat.h>
+
+#include "accesstoken_kit.h"
+#include "ipc_skeleton.h"
 #include "securec.h"
-#include "bundle_mgr_interface.h"
-#include "iservice_registry.h"
-#include "system_ability_definition.h"
-#include "bundle_mgr_proxy.h"
+#include "time_hilog.h"
 
 constexpr int CMDLINE_PATH_LEN = 32;
 constexpr int CMDLINE_LEN = 128;
 
 namespace OHOS {
 namespace MiscServices {
+using AccessTokenKit = OHOS::Security::AccessToken::AccessTokenKit;
+using HapTokenInfo = OHOS::Security::AccessToken::HapTokenInfo;
+using TypeATokenTypeEnum = OHOS::Security::AccessToken::TypeATokenTypeEnum;
 bool TimeFileUtils::IsExistFile(const std::string &file)
 {
     if (file.empty()) {
@@ -44,28 +44,20 @@ bool TimeFileUtils::IsExistFile(const std::string &file)
     return S_ISREG(buf.st_mode);
 }
 
-std::string TimeFileUtils::GetBundleNameByUid(const int32_t uid)
+std::string TimeFileUtils::GetBundleNameByTokenID(uint32_t tokenID)
 {
-    std::string bundleName = "";
-    OHOS::sptr<OHOS::ISystemAbilityManager> systemAbilityManager =
-        OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (!systemAbilityManager) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "null system ability manager.");
-        return bundleName;
+    auto tokenType = AccessTokenKit::GetTokenTypeFlag(tokenID);
+    if (tokenType != TypeATokenTypeEnum::TOKEN_HAP) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not hap token");
+        return "";
     }
-    OHOS::sptr<OHOS::IRemoteObject> object =
-        systemAbilityManager->GetSystemAbility(OHOS::BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-    sptr<AppExecFwk::IBundleMgr> iBundleMgr = OHOS::iface_cast<OHOS::AppExecFwk::IBundleMgr>(object);
-    if (!iBundleMgr) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "null bundle manager.");
-        return bundleName;
+    HapTokenInfo hapTokenInfo;
+    int result = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfo);
+    if (result != Security::AccessToken::AccessTokenKitRet::RET_SUCCESS) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to get hap token info, result = %{public}d", result);
+        return "";
     }
-
-    ErrCode ret = iBundleMgr->GetNameForUid(uid, bundleName);
-    if (ret != ERR_OK) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "get bundle name failed for %{public}d, err_code:%{public}d.", uid, ret);
-    }
-    return bundleName;
+    return hapTokenInfo.bundleName;
 }
 
 std::string TimeFileUtils::GetNameByPid(uint32_t pid)
