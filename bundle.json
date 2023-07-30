@@ -33,7 +33,6 @@
         "ipc",
         "eventhandler",
         "netmanager_base",
-        "bundle_framework",
         "ability_base",
         "ability_runtime",
         "hilog",
