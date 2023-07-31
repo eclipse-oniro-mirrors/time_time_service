@@ -44,7 +44,7 @@ ohos_fuzztest("TimeServiceFuzzTest") {
   sources = [ "timeservice_fuzzer.cpp" ]
 
   deps = [
-    "${time_service_path}:time_service_static",
+    "${time_service_path}:time_system_ability_static",
     "//third_party/jsoncpp:jsoncpp",
   ]
 
