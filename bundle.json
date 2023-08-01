@@ -59,7 +59,7 @@
         "service_group":[
           "//base/time/time_service/services/etc/init:timeservice.cfg",
           "//base/time/time_service/services/profile:time_time_service_sa_profiles",
-          "//base/time/time_service/services:time_service",
+          "//base/time/time_service/services:time_system_ability",
           "//base/time/time_service/services/etc:time.para",
           "//base/time/time_service/services/etc:time.para.dac"
         ]
