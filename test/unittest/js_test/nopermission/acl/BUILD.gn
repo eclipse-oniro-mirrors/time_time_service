@@ -15,7 +15,7 @@ import("//build/test.gni")
 
 module_output_path = "time_service/js_nopermission"
 
-ohos_js_unittest("TimeTestNoPermission") {
+ohos_js_unittest("TimeTestNoAclPermission") {
   module_out_path = module_output_path
 
   hap_profile = "./config.json"
@@ -25,5 +25,5 @@ ohos_js_unittest("TimeTestNoPermission") {
 
 group("unittest") {
   testonly = true
-  deps = [ ":TimeTestNoPermission" ]
+  deps = [ ":TimeTestNoAclPermission" ]
 }
