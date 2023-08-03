@@ -65,6 +65,9 @@ bool TimePermission::CheckSystemUidCallingPermission(uint64_t tokenId)
     if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {
         return true;
     }
+    if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL) {
+        return true;
+    }
     return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId);
 }
 } // namespace MiscServices
