@@ -52,6 +52,7 @@ const std::string NTP_CN_SERVER = "ntp.aliyun.com";
 const std::string AUTOTIME_FILE_PATH = "/data/service/el1/public/time/autotime.json";
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NETWORK_TIME_STATUS_ON = "ON";
+uint64_t g_idleTimerId = 0;
 
 static HapPolicyParams g_policyA = {
     .apl = APL_SYSTEM_CORE,
@@ -121,6 +122,8 @@ public:
     void TearDown();
     void AddPermission();
     void DeletePermission();
+    void StartIdleTimer();
+    void DestroyIdleTimer();
 };
 
 void TimeServiceTest::SetUpTestCase(void)
@@ -151,6 +154,23 @@ void TimeServiceTest::DeletePermission()
     AccessTokenIDEx tokenIdEx = { 0 };
     tokenIdEx = AccessTokenKit::AllocHapToken(g_notSystemInfoParams, g_policyB);
     SetSelfTokenID(tokenIdEx.tokenIDEx);
+}
+
+void TimeServiceTest::StartIdleTimer()
+{
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_IDLE);
+    timerInfo->SetRepeat(false);
+    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, g_idleTimerId);
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, nullptr);
+    int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
+    TimeServiceClient::GetInstance()->StartTimerV9(g_idleTimerId, time + 5000);
+}
+
+void TimeServiceTest::DestroyIdleTimer()
+{
+    TimeServiceClient::GetInstance()->DestroyTimerV9(g_idleTimerId);
 }
 
 /**
@@ -205,6 +225,109 @@ HWTEST_F(TimeServiceTest, ProxyTimer004, TestSize.Level0)
     EXPECT_TRUE(ret);
     ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, false, false);
     EXPECT_TRUE(ret);
+}
+
+/**
+* @tc.name: IdleTimer001.
+* @tc.desc: test create idle timer for app.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, IdleTimer001, TestSize.Level0)
+{
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_IDLE);
+    timerInfo->SetRepeat(false);
+    uint64_t timerId = 0;
+    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_NE(timerId, static_cast<uint64_t>(0));
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
+}
+
+/**
+* @tc.name: IdleTimer002
+* @tc.desc: test public app start timer when device is sleeping and device sleep quit greater than timer callback.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, IdleTimer002, TestSize.Level0)
+{
+    g_data1 = 0;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_INEXACT_REMINDER);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    uint64_t timerId = 0;
+    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_NE(timerId, static_cast<uint64_t>(0));
+    StartIdleTimer();
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, nullptr);
+    int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time) + 2000);
+    sleep(2);
+    EXPECT_EQ(g_data1, 0);
+    DestroyIdleTimer();
+    sleep(1);
+    EXPECT_EQ(g_data1, 1);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
+}
+
+/**
+* @tc.name: IdleTimer003
+* @tc.desc: test public app start timer when device is sleeping and device sleep quit less than timer callback.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, IdleTimer003, TestSize.Level0)
+{
+    g_data1 = 0;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_INEXACT_REMINDER);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    uint64_t timerId = 0;
+    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_NE(timerId, static_cast<uint64_t>(0));
+    StartIdleTimer();
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, nullptr);
+    int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time) + 6000);
+    sleep(6);
+    EXPECT_EQ(g_data1, 0);
+    DestroyIdleTimer();
+    sleep(6);
+    EXPECT_EQ(g_data1, 1);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
+}
+
+/**
+* @tc.name: IdleTimer004
+* @tc.desc: test public app start timer when device is working, device sleep immediately
+*           and timer callback greater than idle quit.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, IdleTimer004, TestSize.Level0)
+{
+    g_data1 = 0;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_INEXACT_REMINDER);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    uint64_t timerId = 0;
+    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_NE(timerId, static_cast<uint64_t>(0));
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, nullptr);
+    int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time + 6000));
+    StartIdleTimer();
+    sleep(6);
+    DestroyIdleTimer();
+    EXPECT_EQ(g_data1, 1);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 
 /**
@@ -633,145 +756,6 @@ HWTEST_F(TimeServiceTest, NtpTrustedTime001, TestSize.Level0)
     EXPECT_GT(time, 0);
     int64_t cacheAge = ntpTrustedTime->GetCacheAge();
     EXPECT_GT(cacheAge, 0);
-}
-
-/**
-* @tc.name: IdleTimer001.
-* @tc.desc: test create idle timer for app.
-* @tc.type: FUNC
-* @tc.require:
-*/
-HWTEST_F(TimeServiceTest, IdleTimer001, TestSize.Level0)
-{
-    AddPermission();
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(timerInfo->TIMER_TYPE_IDLE);
-    timerInfo->SetRepeat(false);
-    uint64_t timerId = 0;
-    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_NE(timerId, static_cast<uint64_t>(0));
-    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    DeletePermission();
-}
-
-/**
-* @tc.name: IdleTimer002
-* @tc.desc: test public app start timer when device is sleeping and device sleep quit greater than timer callback.
-* @tc.type: FUNC
-* @tc.require:
-*/
-HWTEST_F(TimeServiceTest, IdleTimer002, TestSize.Level0)
-{
-    AddPermission();
-    g_data1 = 0;
-    system("hidumper -s 1914 -a \"-E 4 true\"");
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(timerInfo->TIMER_TYPE_INEXACT_REMINDER);
-    timerInfo->SetRepeat(false);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-    uint64_t timerId = 0;
-    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_NE(timerId, static_cast<uint64_t>(0));
-    struct timeval currentTime {};
-    gettimeofday(&currentTime, nullptr);
-    int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
-    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time) + 2000);
-    sleep(3);
-    system("hidumper -s 1914 -a \"-E 0 true\"");
-    EXPECT_EQ(g_data1, 1);
-    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    DeletePermission();
-}
-
-/**
-* @tc.name: IdleTimer003
-* @tc.desc: test public app start timer when device is sleeping and device sleep quit less than timer callback.
-* @tc.type: FUNC
-* @tc.require:
-*/
-HWTEST_F(TimeServiceTest, IdleTimer003, TestSize.Level0)
-{
-    AddPermission();
-    g_data1 = 0;
-    system("hidumper -s 1914 -a \"-E 4 true\"");
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(timerInfo->TIMER_TYPE_INEXACT_REMINDER);
-    timerInfo->SetRepeat(false);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-    uint64_t timerId = 0;
-    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_NE(timerId, static_cast<uint64_t>(0));
-    struct timeval currentTime {};
-    gettimeofday(&currentTime, nullptr);
-    int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
-    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time) + 5000);
-    system("hidumper -s 1914 -a \"-E 0 true\"");
-    EXPECT_EQ(g_data1, 0);
-    sleep(6);
-    EXPECT_EQ(g_data1, 1);
-    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    DeletePermission();
-}
-
-/**
-* @tc.name: IdleTimer004
-* @tc.desc: test public app start timer when device is working, device sleep immediately
-*           and timer callback less than idle quit.
-* @tc.type: FUNC
-* @tc.require:
-*/
-HWTEST_F(TimeServiceTest, IdleTimer004, TestSize.Level0)
-{
-    AddPermission();
-    g_data1 = 0;
-    system("hidumper -s 1914 -a \"-E 4 true\"");
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(timerInfo->TIMER_TYPE_INEXACT_REMINDER);
-    timerInfo->SetRepeat(false);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-    uint64_t timerId = 0;
-    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_NE(timerId, static_cast<uint64_t>(0));
-    struct timeval currentTime {};
-    gettimeofday(&currentTime, nullptr);
-    int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
-    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time) + 3000);
-    system("hidumper -s 1914 -a \"-E 0 true\"");
-    EXPECT_EQ(g_data1, 0);
-    sleep(6);
-    EXPECT_EQ(g_data1, 1);
-    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    DeletePermission();
-}
-
-/**
-* @tc.name: IdleTimer005
-* @tc.desc: test public app start timer when device is working, device sleep immediately
-*           and timer callback greater than idle quit.
-* @tc.type: FUNC
-* @tc.require:
-*/
-HWTEST_F(TimeServiceTest, IdleTimer005, TestSize.Level0)
-{
-    AddPermission();
-    g_data1 = 0;
-    system("hidumper -s 1914 -a \"-E 4 true\"");
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(timerInfo->TIMER_TYPE_INEXACT_REMINDER);
-    timerInfo->SetRepeat(false);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-    uint64_t timerId = 0;
-    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_NE(timerId, static_cast<uint64_t>(0));
-    struct timeval currentTime {};
-    gettimeofday(&currentTime, nullptr);
-    int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
-    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time + 2000));
-    sleep(3);
-    system("hidumper -s 1914 -a \"-E 0 true\"");
-    EXPECT_EQ(g_data1, 1);
-    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    DeletePermission();
 }
 
 /**

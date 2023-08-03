@@ -41,16 +41,6 @@ using namespace OHOS::Security::AccessToken;
 
 constexpr const uint16_t EACH_LINE_LENGTH = 100;
 constexpr const char *CMD = "hidumper -s 3702 -a";
-uint64_t g_selfTokenId = 0;
-
-static HapPolicyParams g_policyA = { .apl = APL_SYSTEM_CORE, .domain = "test.domain" };
-
-HapInfoParams g_systemInfoParams = { .userID = 1,
-    .bundleName = "timer",
-    .instIndex = 0,
-    .appIDDesc = "test",
-    .apiVersion = 8,
-    .isSystemApp = true };
 
 class TimeDfxTest : public testing::Test {
 public:
@@ -71,15 +61,10 @@ void TimeDfxTest::TearDownTestCase(void)
 
 void TimeDfxTest::SetUp(void)
 {
-    g_selfTokenId = GetSelfTokenID();
-    AccessTokenIDEx tokenIdEx = { 0 };
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_systemInfoParams, g_policyA);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
 }
 
 void TimeDfxTest::TearDown(void)
 {
-    SetSelfTokenID(g_selfTokenId);
 }
 
 bool TimeDfxTest::ExecuteCmd(const std::string &cmd, std::string &result)
@@ -195,7 +180,7 @@ HWTEST_F(TimeDfxTest, DumpShowHelp001, TestSize.Level0)
 
 /**
 * @tc.name: DumpIdleTimer001
-* @tc.desc: dump idle timer
+* @tc.desc: dump idle timer when working
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpIdleTimer001, TestSize.Level0)
@@ -204,12 +189,31 @@ HWTEST_F(TimeDfxTest, DumpIdleTimer001, TestSize.Level0)
     auto ret = TimeDfxTest::ExecuteCmd(std::string(CMD).append(" '-idle -a'"), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("dump idle state         = 0"), std::string::npos);
+}
 
-    system("hidumper -s 1914 -a \"-E 4 true\"");
-    ret = TimeDfxTest::ExecuteCmd(std::string(CMD).append(" '-idle -a'"), result);
+/**
+* @tc.name: DumpIdleTimer001
+* @tc.desc: dump idle timer when sleep
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeDfxTest, DumpIdleTimer002, TestSize.Level0)
+{
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_IDLE);
+    timerInfo->SetRepeat(false);
+    uint64_t timerId = 0;
+    TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, nullptr);
+    int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, time + 3000);
+
+    std::string result;
+    auto ret = TimeDfxTest::ExecuteCmd(std::string(CMD).append(" '-idle -a'"), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("timer whenElapsed"), std::string::npos);
-    system("hidumper -s 1914 -a \"-E 0 true\"");
+
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 } // namespace MiscServices
 } // namespace OHOS
