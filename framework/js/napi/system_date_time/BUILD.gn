@@ -28,8 +28,8 @@ ohos_shared_library("systemdatetime") {
   ]
 
   sources = [
-    "../common/src/napi_async_work.cpp",
     "../common/src/napi_utils.cpp",
+    "../common/src/napi_work.cpp",
     "src/date_time_init.cpp",
     "src/napi_system_date_time.cpp",
   ]
@@ -41,6 +41,7 @@ ohos_shared_library("systemdatetime") {
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hilog:libhilog",
+    "init:libbegetutil",
     "napi:ace_napi",
   ]
 

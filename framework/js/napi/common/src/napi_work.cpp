@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "napi_async_work.h"
+#include "napi_work.h"
 
 #include "napi_utils.h"
 
@@ -71,11 +71,12 @@ void ContextBase::GetCbInfo(napi_env envi, napi_callback_info info, NapiCbInfoPa
     }
 }
 
-napi_value NapiAsyncWork::Enqueue(napi_env env, ContextBase *ctxt, const std::string &name,
-    NapiAsyncExecute execute, NapiAsyncComplete complete)
+napi_value NapiWork::AsyncEnqueue(napi_env env, ContextBase *ctxt, const std::string &name,
+    NapiExecute execute, NapiComplete complete)
 {
     if (ctxt->status != napi_ok) {
         NapiUtils::ThrowError(env, CODE_TO_MESSAGE.find(ctxt->errCode)->second.c_str(), ctxt->errCode);
+        delete ctxt;
         return NapiUtils::GetUndefinedValue(env);
     }
     ctxt->execute = std::move(execute);
@@ -118,7 +119,7 @@ napi_value NapiAsyncWork::Enqueue(napi_env env, ContextBase *ctxt, const std::st
     return promise;
 }
 
-void NapiAsyncWork::GenerateOutput(ContextBase *ctxt)
+void NapiWork::GenerateOutput(ContextBase *ctxt)
 {
     napi_value result[RESULT_ALL] = { nullptr };
     if (ctxt->status == napi_ok) {
@@ -155,6 +156,55 @@ void NapiAsyncWork::GenerateOutput(ContextBase *ctxt)
         TIME_HILOGD(TIME_MODULE_JS_NAPI, "call callback function");
         napi_call_function(ctxt->env, nullptr, callback, RESULT_ALL, result, &callbackResult);
     }
+}
+
+napi_value NapiWork::SyncEnqueue(napi_env env, ContextBase *ctxt, const std::string &name,
+    NapiExecute execute, NapiComplete complete)
+{
+    if (ctxt->status != napi_ok) {
+        NapiUtils::ThrowError(env, CODE_TO_MESSAGE.find(ctxt->errCode)->second.c_str(), ctxt->errCode);
+        delete ctxt;
+        return NapiUtils::GetUndefinedValue(env);
+    }
+
+    ctxt->execute = std::move(execute);
+    ctxt->complete = std::move(complete);
+
+    if (ctxt->execute != nullptr && ctxt->status == napi_ok) {
+        ctxt->execute();
+    }
+
+    if (ctxt->complete != nullptr && (ctxt->status == napi_ok)) {
+        ctxt->complete(ctxt->output);
+    }
+
+    return GenerateOutputSync(env, ctxt);
+}
+
+napi_value NapiWork::GenerateOutputSync(napi_env env, ContextBase *ctxt)
+{
+    napi_value result = nullptr;
+    if (ctxt->status == napi_ok) {
+        if (ctxt->output == nullptr) {
+            napi_get_undefined(ctxt->env, &ctxt->output);
+        }
+        result = ctxt->output;
+    } else {
+        napi_value error = nullptr;
+        napi_value message = nullptr;
+        int32_t jsErrorCode = NapiUtils::ConvertErrorCode(ctxt->errCode);
+        napi_create_string_utf8(ctxt->env, CODE_TO_MESSAGE.find(jsErrorCode)->second.c_str(), NAPI_AUTO_LENGTH,
+                                &message);
+        napi_create_error(ctxt->env, nullptr, message, &error);
+        if (jsErrorCode != JsErrorCode::ERROR) {
+            napi_value code = nullptr;
+            napi_create_int32(ctxt->env, jsErrorCode, &code);
+            napi_set_named_property(ctxt->env, error, "code", code);
+        }
+        napi_throw(env, error);
+    }
+    delete ctxt;
+    return result;
 }
 } // namespace Time
 } // namespace MiscServices

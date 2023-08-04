@@ -21,7 +21,7 @@
 #include "event_handler.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
-#include "napi_async_work.h"
+#include "napi_work.h"
 #include "time_service_client.h"
 
 namespace OHOS {

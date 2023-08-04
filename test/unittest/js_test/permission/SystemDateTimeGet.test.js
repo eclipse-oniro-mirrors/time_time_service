@@ -528,4 +528,160 @@ describe('SystemDateTimeGetTest', function () {
         })
         console.log('testGetTimezone002 end');
     })
+
+    /**
+     * @tc.name: TestGetTime001
+     * @tc.desc: test getTime ms.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('testGetTime001', 0, function (done) {
+        console.log("testGetTime001 start");
+        const nowTime = new Date().getTime();
+        const time = systemDateTime.getTime(true);
+        console.log('Get current time is ' + time);
+        expect(typeof (time) === 'number' && time >= nowTime).assertTrue();
+        console.log('testGetTime001 end');
+        done();
+    })
+
+    /**
+     * @tc.name: TestGetTime002
+     * @tc.desc: test getTime ns.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('testGetTime002', 0, function (done) {
+        console.log("testGetTime002 start");
+        const nowTime = new Date().getTime();
+        const time = systemDateTime.getTime(false);
+        console.log('Get current time is ' + time);
+        expect(typeof (time) === 'number' && time >= nowTime).assertTrue();
+        console.log('testGetTime002 end');
+        done();
+    })
+
+    /**
+     * @tc.name: TestGetUptime001
+     * @tc.desc: test getUptime ms for STARTUP.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('testGetUptime001', 0,  function (done) {
+        console.log("testGetUptime001 start");
+        const time = systemDateTime.getUptime(systemDateTime.TimeType.STARTUP, false);
+        console.log('get uptime time is ' + time);
+        expect(typeof (time) === 'number' && time / MILLI_TO_BASE > 0).assertTrue();
+        console.log('testGetUptime001 end');
+        done();
+    })
+
+    /**
+     * @tc.name: TestGetUptime002
+     * @tc.desc: test getUptime ms for STARTUP.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('TestGetUptime002', 0,  function (done) {
+        console.log("testGetUptime002 start");
+        const time = systemDateTime.getUptime(systemDateTime.TimeType.STARTUP);
+        console.log('get uptime time is ' + time);
+        expect(typeof (time) === 'number' && time / MILLI_TO_BASE > 0).assertTrue();
+        console.log('testGetUptime002 end');
+        done();
+    })
+
+    /**
+     * @tc.name: TestGetUptime003
+     * @tc.desc: test getUptime ns for STARTUP.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('testGetUptime003', 0,  function (done) {
+        console.log("testGetUptime003 start");
+        const time = systemDateTime.getUptime(systemDateTime.TimeType.STARTUP, true);
+        console.log('get uptime time is ' + time);
+        expect(typeof (time) === 'number' && time / NANO_TO_BASE > 0).assertTrue();
+        console.log('testGetUptime003 end');
+        done();
+    })
+
+    /**
+     * @tc.name: TestGetUptime004
+     * @tc.desc: test getUptime ms for ACTIVE.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('testGetUptime004', 0,  function (done) {
+        console.log("testGetUptime004 start");
+        const time = systemDateTime.getUptime(systemDateTime.TimeType.ACTIVE, false);
+        console.log('get uptime time is ' + time);
+        expect(typeof (time) === 'number' && time / MILLI_TO_BASE > 0).assertTrue();
+        console.log('testGetUptime004 end');
+        done();
+    })
+
+    /**
+     * @tc.name: TestGetUptime005
+     * @tc.desc: test getUptime ms for ACTIVE.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('TestGetUptime005', 0,  function (done) {
+        console.log("testGetUptime005 start");
+        const time = systemDateTime.getUptime(systemDateTime.TimeType.ACTIVE);
+        console.log('get uptime time is ' + time);
+        expect(typeof (time) === 'number' && time / MILLI_TO_BASE > 0).assertTrue();
+        console.log('testGetUptime005 end');
+        done();
+    })
+
+    /**
+     * @tc.name: TestGetUptime006
+     * @tc.desc: test getUptime ns for ACTIVE.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('testGetUptime006', 0,  function (done) {
+        console.log("testGetUptime006 start");
+        const time = systemDateTime.getUptime(systemDateTime.TimeType.ACTIVE, true);
+        console.log('get uptime time is ' + time);
+        expect(typeof (time) === 'number' && time / NANO_TO_BASE > 0).assertTrue();
+        console.log('testGetUptime006 end');
+        done();
+    })
+
+    /**
+     * @tc.name: TestGetUptime007
+     * @tc.desc: test getUptime ms for invalid type.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('testGetUptime007', 0,  function (done) {
+        console.log("testGetUptime007 start");
+        try {
+            systemDateTime.getUptime(2);
+        } catch (err) {
+            expect(err.code).assertEqual(401)
+            done();
+        }
+        console.log('testGetUptime007 end');
+    })
+
+    /**
+     * @tc.name: TestGetTimezoneSync001
+     * @tc.desc: test getTimezoneSync.
+     * @tc.type: Function
+     * @tc.require:
+     */
+    it('testGetTimezoneSync001', 0, async function (done) {
+        console.log("testGetTimezoneSync001 start");
+        let timezone = "Pacific/Majuro";
+        await systemDateTime.setTimezone(timezone);
+        const currentTimezone = systemDateTime.getTimezoneSync();
+        expect(typeof (currentTimezone) == 'string' && timezone === currentTimezone).assertTrue();
+        await systemDateTime.setTimezone('Asia/Shanghai');
+        done();
+        console.log('testGetTimezoneSync001 end');
+    })
 })
