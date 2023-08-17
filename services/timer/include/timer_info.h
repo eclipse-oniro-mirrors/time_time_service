@@ -42,6 +42,7 @@ public:
     std::chrono::steady_clock::time_point expectedMaxWhenElapsed;
     std::chrono::milliseconds repeatInterval;
     std::chrono::milliseconds offset;
+    std::string bundleName;
 
     TimerInfo(uint64_t id, int type,
         std::chrono::milliseconds when,
@@ -52,7 +53,8 @@ public:
         std::function<void (const uint64_t)> callback,
         std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
         uint32_t flags,
-        int uid);
+        int uid,
+        const std::string &bundleName);
     virtual ~TimerInfo() = default;
     bool operator==(const TimerInfo &other) const;
     bool Matches(const std::string &packageName) const;
