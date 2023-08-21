@@ -589,11 +589,13 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
                                             std::chrono::steady_clock::time_point maxWhen)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start");
-    int64_t i = 0;
-    for (const auto &item : alarmBatches_) {
-        if ((item->GetFlags() & static_cast<uint32_t>(STANDALONE)) == 0 && item->CanHold(whenElapsed, maxWhen)) {
-            return i;
-        }
+    auto it = std::find_if(alarmBatches_.begin(), alarmBatches_.end(),
+        [whenElapsed, maxWhen](const std::shared_ptr<Batch> &batch) {
+            return (batch->GetFlags() & static_cast<uint32_t>(STANDALONE)) == 0 &&
+                   (batch->CanHold(whenElapsed, maxWhen));
+        });
+    if (it != alarmBatches_.end()) {
+        return std::distance(alarmBatches_.begin(), it);
     }
     return -1;
 }
