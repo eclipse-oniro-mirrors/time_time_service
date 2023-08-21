@@ -218,10 +218,10 @@ void TimeSystemAbility::InitTimerHandler()
 void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras)
 {
     auto uIntType = static_cast<uint32_t>(timerOptions->type);
-    bool isRealtime = (uIntType & TIMER_TYPE_REALTIME_MASK) > 0 ? true : false;
-    bool isWakeup = (uIntType & TIMER_TYPE_REALTIME_WAKEUP_MASK) > 0 ? true : false;
+    bool isRealtime = (uIntType & TIMER_TYPE_REALTIME_MASK) > 0;
+    bool isWakeup = (uIntType & TIMER_TYPE_REALTIME_WAKEUP_MASK) > 0;
     paras.windowLength = (uIntType & TIMER_TYPE_EXACT_MASK) > 0 ? 0 : -1;
-    paras.flag = 0;
+    paras.flag = (uIntType & TIMER_TYPE_EXACT_MASK) > 0 ? 1 : 0;
     if (isRealtime && isWakeup) {
         paras.timerType = ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP;
     } else if (isRealtime) {
