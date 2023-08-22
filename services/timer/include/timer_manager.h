@@ -62,7 +62,8 @@ private:
                     int flag,
                     std::function<void (const uint64_t)> callback,
                     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-                    int uid);
+                    int uid,
+                    const std::string &bundleName);
     void SetHandlerLocked(uint64_t id,
                           int type,
                           std::chrono::milliseconds when,
@@ -74,7 +75,8 @@ private:
                           const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                           uint32_t flags,
                           bool doValidate,
-                          uint64_t callingUid);
+                          uint64_t callingUid,
+                          const std::string &bundleName);
     void RemoveHandler(uint64_t id);
     void RemoveLocked(uint64_t id);
     void ReBatchAllTimers();
@@ -99,7 +101,7 @@ private:
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
     void RemoveProxy(uint64_t timerNumber, int32_t uid);
     void NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent);
-    bool CheckAllowWhileIdle(uint32_t flag);
+    bool CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustTimersBasedOnDeviceIdle();
 

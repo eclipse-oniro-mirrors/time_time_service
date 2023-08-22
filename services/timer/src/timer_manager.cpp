@@ -96,6 +96,7 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     while (timerId == 0) {
         timerId = random_();
     }
+    std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
     auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
         timerId,
         paras.timerType,
@@ -104,7 +105,8 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
         paras.flag,
         std::move(callback),
         wantAgent,
-        uid
+        uid,
+        bundleName
     });
     std::lock_guard<std::mutex> lock(entryMapMutex_);
     timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
@@ -130,7 +132,8 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
                timerInfo->flag,
                timerInfo->callback,
                timerInfo->wantAgent,
-               timerInfo->uid);
+               timerInfo->uid,
+               timerInfo->bundleName);
     return E_TIME_OK;
 }
 
@@ -193,7 +196,8 @@ void TimerManager::SetHandler(uint64_t id,
                               int flag,
                               std::function<void (const uint64_t)> callback,
                               std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-                              int uid)
+                              int uid,
+                              const std::string &bundleName)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE,
                 "start type:%{public}d windowLength:%{public}" PRId64"interval:%{public}" PRId64"flag:%{public}d",
@@ -242,7 +246,8 @@ void TimerManager::SetHandler(uint64_t id,
                      std::move(wantAgent),
                      static_cast<uint32_t>(flag),
                      true,
-                     uid);
+                     uid,
+                     bundleName);
 }
 
 void TimerManager::SetHandlerLocked(uint64_t id, int type,
@@ -255,11 +260,12 @@ void TimerManager::SetHandlerLocked(uint64_t id, int type,
                                     const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                                     uint32_t flags,
                                     bool doValidate,
-                                    uint64_t callingUid)
+                                    uint64_t callingUid,
+                                    const std::string &bundleName)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", id);
     auto alarm = std::make_shared<TimerInfo>(id, type, when, whenElapsed, windowLength, maxWhen,
-                                             interval, std::move(callback), wantAgent, flags, callingUid);
+                                             interval, std::move(callback), wantAgent, flags, callingUid, bundleName);
     SetHandlerLocked(alarm, false, doValidate, false);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
@@ -324,7 +330,7 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
                                     bool isRebatched)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d, doValidate= %{public}d", rebatching, doValidate);
-    if (!isRebatched && mPendingIdleUntil_ != nullptr && !CheckAllowWhileIdle(alarm->flags)) {
+    if (!isRebatched && mPendingIdleUntil_ != nullptr && !CheckAllowWhileIdle(alarm)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Pending not-allowed alarm in idle state, id=%{public}" PRId64 "",
             alarm->id);
         alarm->offset = duration_cast<milliseconds>(alarm->whenElapsed - GetBootTimeNs());
@@ -495,7 +501,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             alarm->count = 1;
             triggerList.push_back(alarm);
             TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d", alarm->uid);
-            if (mPendingIdleUntil_ == alarm) {
+            if (mPendingIdleUntil_ != nullptr && mPendingIdleUntil_->id == alarm->id) {
                 TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers.");
                 std::lock_guard<std::mutex> lock(idleTimerMutex_);
                 mPendingIdleUntil_ = nullptr;
@@ -504,6 +510,12 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
                     [this] (const std::shared_ptr<TimerInfo> &pendingTimer) {
                     TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "",
                         pendingTimer->id);
+                    if (pendingTimer->whenElapsed > GetBootTimeNs()) {
+                        pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), pendingTimer->offset);
+                    } else {
+                        // 2 means the time of performing task.
+                        pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), milliseconds(2));
+                    }
                     SetHandlerLocked(pendingTimer, false, true, false);
                 });
                 pendingDelayTimers_.clear();
@@ -516,7 +528,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
                 auto nextElapsed = alarm->whenElapsed + delta;
                 SetHandlerLocked(alarm->id, alarm->type, alarm->when + delta, nextElapsed, alarm->windowLength,
                                  MaxTriggerTime(nowElapsed, nextElapsed, alarm->repeatInterval), alarm->repeatInterval,
-                                 alarm->callback, alarm->wantAgent, alarm->flags, true, alarm->uid);
+                                 alarm->callback, alarm->wantAgent, alarm->flags, true, alarm->uid, alarm->bundleName);
             }
             if (alarm->wakeup) {
                 hasWakeup = true;
@@ -706,25 +718,24 @@ bool TimerManager::ResetAllProxy()
     return true;
 }
 
-bool TimerManager::CheckAllowWhileIdle(uint32_t flag)
+bool TimerManager::CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm)
 {
 #ifdef DEVICE_STANDBY_ENABLE
     if (TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
-        std::string name = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
         std::vector<DevStandbyMgr::AllowInfo> restrictList;
         DevStandbyMgr::StandbyServiceClient::GetInstance().GetRestrictList(DevStandbyMgr::AllowType::TIMER,
             restrictList, REASON_APP_API);
         auto it = std::find_if(restrictList.begin(), restrictList.end(),
-            [&name](const DevStandbyMgr::AllowInfo &allowInfo) { return allowInfo.GetName() == name; });
+            [&alarm](const DevStandbyMgr::AllowInfo &allowInfo) { return allowInfo.GetName() == alarm->bundleName; });
         if (it != restrictList.end()) {
             return false;
         }
     }
 
-    if (DelayedSingleton<TimePermission>::GetInstance()->CheckProxyCallingPermission()) {
+    if (TimePermission::CheckProxyCallingPermission()) {
         pid_t pid = IPCSkeleton::GetCallingPid();
         std::string procName = TimeFileUtils::GetNameByPid(pid);
-        if (flag & static_cast<uint32_t>(INEXACT_REMINDER)) {
+        if (alarm->flags & static_cast<uint32_t>(INEXACT_REMINDER)) {
             return false;
         }
         std::vector<DevStandbyMgr::AllowInfo> restrictList;
@@ -767,7 +778,7 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<Tim
         return false;
     }
 
-    if (CheckAllowWhileIdle(alarm->flags)) {
+    if (CheckAllowWhileIdle(alarm)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer unrestricted, not adjust. id=%{public}" PRId64 "", alarm->id);
         return false;
     } else if (alarm->whenElapsed > mPendingIdleUntil_->whenElapsed) {

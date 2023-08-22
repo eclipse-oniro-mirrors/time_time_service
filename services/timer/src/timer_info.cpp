@@ -40,7 +40,8 @@ TimerInfo::TimerInfo(uint64_t _id, int _type,
                      std::function<void(const uint64_t)> _callback,
                      std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent,
                      uint32_t _flags,
-                     int _uid)
+                     int _uid,
+                     const std::string &_bundleName)
     : id {_id},
       type {_type},
       origWhen {_when},
@@ -55,7 +56,8 @@ TimerInfo::TimerInfo(uint64_t _id, int _type,
       maxWhenElapsed {_maxWhen},
       expectedWhenElapsed {_whenElapsed},
       expectedMaxWhenElapsed {_maxWhen},
-      repeatInterval {_interval}
+      repeatInterval {_interval},
+      bundleName {_bundleName}
 {
 }
 

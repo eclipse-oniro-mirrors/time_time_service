@@ -31,6 +31,7 @@ struct TimerEntry {
     std::function<void (const uint64_t)> callback;
     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
     int uid;
+    std::string bundleName;
 };
 
 class ITimerManager {
