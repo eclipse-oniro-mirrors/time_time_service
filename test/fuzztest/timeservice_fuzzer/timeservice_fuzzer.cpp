@@ -25,6 +25,7 @@
 #include "nativetoken_kit.h"
 #include "time_system_ability.h"
 #include "token_setproc.h"
+#include "time_common.h"
 
 #define private public
 #define protected public
@@ -38,6 +39,7 @@ constexpr int32_t SETTIME = 0;
 constexpr int32_t PROXY_TIMER = 15;
 constexpr int32_t RESET_TIMER = 16;
 constexpr int32_t NTP_PACKAGE_SIZE = 48;
+constexpr int32_t DELAY_TIME = 3000;
 const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscservices.time.ITimeService";
 
 using namespace OHOS::Security::AccessToken;
@@ -99,6 +101,16 @@ bool FuzzTimeReceivedMessage(const uint8_t *data, size_t size)
     client->ReceivedMessage(buffer);
     return true;
 }
+
+void SetTimer()
+{
+    TimerPara timerPara{ 0, 0, 0, 0 };
+    uint64_t timerId = 0;
+    TimeSystemAbility::GetInstance()->CreateTimer(timerPara, [](uint64_t id) {}, timerId);
+    int64_t triggerTime = 0;
+    TimeSystemAbility::GetInstance()->GetWallTimeMs(triggerTime);
+    TimeSystemAbility::GetInstance()->StartTimer(timerId, triggerTime + DELAY_TIME);
+}
 } // namespace OHOS
 
 /* Fuzzer entry point */
@@ -111,5 +123,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     OHOS::FuzzTimeService(data, size);
     OHOS::FuzzTimeDump(data, size);
     OHOS::FuzzTimeReceivedMessage(data, size);
+    OHOS::SetTimer();
     return 0;
 }
