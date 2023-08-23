@@ -38,7 +38,7 @@ using namespace std::chrono;
 using namespace OHOS::AppExecFwk;
 namespace {
 static int TIME_CHANGED_BITS = 16;
-static uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
+static int TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
 const int ONE_THOUSAND = 1000;
 const float_t BATCH_WINDOW_COE = 0.75;
 const auto ZERO_FUTURITY = seconds(0);
@@ -72,12 +72,11 @@ std::shared_ptr<TimerManager> TimerManager::Create()
 
 TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
     : random_ {static_cast<uint64_t>(time(nullptr))},
-      runFlag_ {false},
+      runFlag_ {true},
       handler_ {std::move(impl)},
       lastTimeChangeClockTime_ {system_clock::time_point::min()},
       lastTimeChangeRealtime_ {steady_clock::time_point::min()}
 {
-    runFlag_ = true;
     alarmThread_.reset(new std::thread(&TimerManager::TimerLooper, this));
 }
 
@@ -426,7 +425,7 @@ void TimerManager::TimerLooper()
     pthread_setname_np(pthread_self(), "timer_loop");
     std::vector<std::shared_ptr<TimerInfo>> triggerList;
     while (runFlag_) {
-        uint32_t result = 0;
+        int result = 0;
         do {
             result = handler_->WaitForAlarm();
         } while (result < 0 && errno == EINTR);
@@ -467,6 +466,7 @@ void TimerManager::TimerLooper()
 TimerManager::~TimerManager()
 {
     if (alarmThread_ && alarmThread_->joinable()) {
+        runFlag_ = false;
         alarmThread_->join();
     }
 }
