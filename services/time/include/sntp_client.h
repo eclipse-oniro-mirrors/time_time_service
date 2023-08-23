@@ -27,13 +27,10 @@ namespace OHOS {
 namespace MiscServices {
 class SNTPClient {
 public:
-    SNTPClient();
-    ~SNTPClient();
-    bool RequestTime(std::string host);
-    int64_t getNtpTIme();
+    bool RequestTime(const std::string &host);
+    int64_t getNtpTime();
     int64_t getNtpTimeReference();
     int64_t getRoundTripTime();
-    int GetClockOffset(void);
 
 private:
     struct ntp_timestamp {

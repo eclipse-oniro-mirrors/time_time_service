@@ -29,8 +29,8 @@ public:
     void Callback();
     void Stop();
     void PowerCallback();
+
 private:
-    void StartTimer();
     void RefreshNextTriggerTime();
     uint64_t GetMillisecondsFromUTC(uint64_t UTCtimeNano);
     Utils::Timer timer_;

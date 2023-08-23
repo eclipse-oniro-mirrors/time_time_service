@@ -32,12 +32,9 @@ namespace MiscServices {
 class NtpTrustedTime {
 public:
     static NtpTrustedTime &GetInstance();
-    bool ForceRefresh(std::string ntpServer);
-    bool HasCache();
+    bool ForceRefresh(const std::string &ntpServer);
     int64_t GetCacheAge();
     int64_t CurrentTimeMillis();
-    int64_t GetCachedNtpTime();
-    int64_t GetCachedNtpTimeReference();
     class TimeResult : std::enable_shared_from_this<TimeResult> {
     public:
         TimeResult();
@@ -45,7 +42,6 @@ public:
         ~TimeResult();
         int64_t GetTimeMillis();
         int64_t GetElapsedRealtimeMillis();
-        int64_t GetCertaintyMillis();
         int64_t CurrentTimeMillis();
         int64_t GetAgeMillis();
         void Clear();

@@ -17,7 +17,6 @@
 
 #include <fstream>
 #include <mutex>
-#include <singleton.h>
 #include <sys/time.h>
 #include <vector>
 
@@ -28,11 +27,11 @@
 
 namespace OHOS {
 namespace MiscServices {
-class TimeZoneInfo : public std::enable_shared_from_this<TimeZoneInfo> {
-    DECLARE_DELAYED_SINGLETON(TimeZoneInfo)
+class TimeZoneInfo {
 public:
+    static TimeZoneInfo &GetInstance();
     bool GetTimezone(std::string &timezoneId);
-    bool SetTimezone(const std::string& timezoneId);
+    bool SetTimezone(const std::string &timezoneId);
     bool SetTimezoneToKernel();
     void Init();
 

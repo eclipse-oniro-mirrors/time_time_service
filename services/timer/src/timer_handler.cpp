@@ -15,16 +15,12 @@
 
 #include <unistd.h>
 #include <cstring>
-#include <fcntl.h>
-#include <sys/ioctl.h>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
 #include <sys/time.h>
-#include <dirent.h>
 #include <sstream>
 #include <fstream>
 #include <iostream>
-#include <linux/rtc.h>
 #include "timer_handler.h"
 
 namespace OHOS {

@@ -26,7 +26,7 @@ public:
     TimerNotifyCallback();
     ~TimerNotifyCallback();
     DISALLOW_COPY_AND_MOVE(TimerNotifyCallback);
-    virtual void Finish(const uint64_t timerId) override;
+    void Finish(uint64_t timerId) override;
 };
 }  // namespace MiscServices
 }  // namespace OHOS

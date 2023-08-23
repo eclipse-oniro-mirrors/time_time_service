@@ -46,7 +46,7 @@ TimeTickNotify &TimeTickNotify::GetInstance()
 }
 
 TimeTickNotify::TimeTickNotify() : timer_("TickTimer"){};
-TimeTickNotify::~TimeTickNotify(){};
+TimeTickNotify::~TimeTickNotify() = default;
 
 void TimeTickNotify::Init()
 {
@@ -74,7 +74,7 @@ void TimeTickNotify::Init()
 void TimeTickNotify::Callback()
 {
     auto currentTime = steady_clock::now().time_since_epoch().count();
-    DelayedSingleton<TimeServiceNotify>::GetInstance()->PublishTimeTickEvents(currentTime);
+    TimeServiceNotify::GetInstance().PublishTimeTickEvents(currentTime);
     timer_.Unregister(timerId_);
     RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };

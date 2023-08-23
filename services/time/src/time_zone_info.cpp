@@ -27,12 +27,10 @@ const int CONFIG_LEN = 35;
 const int HOUR_TO_MIN = 60;
 } // namespace
 
-TimeZoneInfo::TimeZoneInfo()
+TimeZoneInfo &TimeZoneInfo::GetInstance()
 {
-}
-
-TimeZoneInfo::~TimeZoneInfo()
-{
+    static TimeZoneInfo instance;
+    return instance;
 }
 
 void TimeZoneInfo::Init()

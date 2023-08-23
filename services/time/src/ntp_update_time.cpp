@@ -16,11 +16,7 @@
 
 #include <chrono>
 #include <cinttypes>
-#include <ctime>
-#include <fstream>
-#include <mutex>
 #include <string>
-#include <sys/prctl.h>
 #include <thread>
 #include <unistd.h>
 
@@ -32,10 +28,8 @@
 #include "nitz_subscriber.h"
 #include "ntp_trusted_time.h"
 #include "parameters.h"
-#include "simple_timer_info.h"
 #include "time_common.h"
 #include "time_system_ability.h"
-#include "time_zone_info.h"
 
 using namespace std::chrono;
 using namespace OHOS::NetManagerStandard;
@@ -66,7 +60,7 @@ void NtpUpdateTime::Init()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp Update Time start.");
     SubscriberNITZTimeChangeCommonEvent();
-    std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER.c_str(), "ntp.aliyun.com");
+    std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, "ntp.aliyun.com");
     if (ntpServer.empty()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter.");
         return;
@@ -171,10 +165,10 @@ void NtpUpdateTime::RefreshNetworkTimeByTimer(uint64_t timerId)
 
 void NtpUpdateTime::UpdateNITZSetTime()
 {
-    auto BootTimeNano = steady_clock::now().time_since_epoch().count();
-    auto BootTimeMilli = BootTimeNano / NANO_TO_MILLISECOND;
+    auto bootTimeNano = steady_clock::now().time_since_epoch().count();
+    auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
     TIME_HILOGD(TIME_MODULE_SERVICE, "nitz time changed.");
-    nitzUpdateTimeMilli_ = BootTimeMilli;
+    nitzUpdateTimeMilli_ = bootTimeMilli;
 }
 
 void NtpUpdateTime::SetSystemTime()
@@ -217,9 +211,9 @@ bool NtpUpdateTime::IsValidNITZTime()
     if (nitzUpdateTimeMilli_ == 0) {
         return false;
     }
-    auto BootTimeNano = steady_clock::now().time_since_epoch().count();
-    auto BootTimeMilli = BootTimeNano / NANO_TO_MILLISECOND;
-    return (BootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMilli_)) < DAY_TO_MILLISECOND;
+    auto bootTimeNano = steady_clock::now().time_since_epoch().count();
+    auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
+    return (bootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMilli_)) < DAY_TO_MILLISECOND;
 }
 
 void NtpUpdateTime::StartTimer()

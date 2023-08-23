@@ -24,7 +24,6 @@ using namespace OHOS::AAFwk;
 NITZSubscriber::NITZSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo)
     : CommonEventSubscriber(subscriberInfo)
 {
-    memberFuncMap_[UNKNOWN_BROADCAST_EVENT] = &NITZSubscriber::UnknownBroadcast;
     memberFuncMap_[NITZ_TIME_CHANGED_BROADCAST_EVENT] = &NITZSubscriber::NITZTimeChangeBroadcast;
     memberFuncMap_[NITZ_TIMEZONE_CHANGED_BROADCAST_EVENT] = &NITZSubscriber::NITZTimezoneChangeBroadcast;
 }
@@ -38,8 +37,8 @@ void NITZSubscriber::OnReceiveEvent(const CommonEventData &data)
 
     if (action == CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED) {
         code = NITZ_TIME_CHANGED_BROADCAST_EVENT;
-    } else {
-        code = UNKNOWN_BROADCAST_EVENT;
+    } else if (action == CommonEventSupport::COMMON_EVENT_NITZ_TIMEZONE_CHANGED) {
+        code = NITZ_TIMEZONE_CHANGED_BROADCAST_EVENT;
     }
 
     auto itFunc = memberFuncMap_.find(code);
@@ -49,11 +48,6 @@ void NITZSubscriber::OnReceiveEvent(const CommonEventData &data)
             return (this->*memberFunc)(data);
         }
     }
-}
-
-void NITZSubscriber::UnknownBroadcast(const CommonEventData &data)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "you receive one unknown broadcast!");
 }
 
 void NITZSubscriber::NITZTimeChangeBroadcast(const CommonEventData &data)

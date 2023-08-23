@@ -15,15 +15,16 @@
 #ifndef TIMER_MANAGER_H
 #define TIMER_MANAGER_H
 
-#include <cinttypes>
-#include <mutex>
-#include <vector>
-#include <map>
-#include <random>
-#include <thread>
 #include <atomic>
 #include <chrono>
+#include <cinttypes>
 #include <functional>
+#include <map>
+#include <mutex>
+#include <random>
+#include <thread>
+#include <vector>
+
 #include "batch.h"
 #include "timer_handler.h"
 #include "want_agent_helper.h"
@@ -43,7 +44,7 @@ public:
     int32_t DestroyTimer(uint64_t timerId) override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
     bool ResetAllProxy() override;
-    bool ShowtimerEntryMap(int fd);
+    bool ShowTimerEntryMap(int fd);
     bool ShowTimerEntryById(int fd, uint64_t timerId);
     bool ShowTimerTriggerById(int fd, uint64_t timerId);
     bool ShowIdleTimerInfo(int fd);
@@ -91,8 +92,7 @@ private:
     bool TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &triggerList,
                              std::chrono::steady_clock::time_point nowElapsed);
     void RescheduleKernelTimerLocked();
-    void DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList,
-                             std::chrono::steady_clock::time_point nowElapsed);
+    void DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList);
     std::shared_ptr<Batch> FindFirstWakeupBatchLocked();
     void SetLocked(int type, std::chrono::nanoseconds when);
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
@@ -104,6 +104,7 @@ private:
     bool CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustTimersBasedOnDeviceIdle();
+    void HandleRepeatTimer(const std::shared_ptr<TimerInfo> &timer, std::chrono::steady_clock::time_point nowElapsed);
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     std::default_random_engine random_;

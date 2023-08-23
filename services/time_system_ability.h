@@ -89,7 +89,7 @@ private:
     void InitServiceHandler();
     void InitTimerHandler();
     void ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras);
-    bool GetTimeByClockid(clockid_t clockId, struct timespec &tv);
+    bool GetTimeByClockId(clockid_t clockId, struct timespec &tv);
     int SetRtcTime(time_t sec);
     bool CheckRtc(const std::string &rtcPath, uint64_t rtcId);
     int GetWallClockRtcId();

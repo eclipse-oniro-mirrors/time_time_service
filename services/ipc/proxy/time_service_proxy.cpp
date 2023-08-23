@@ -27,7 +27,7 @@ TimeServiceProxy::TimeServiceProxy(const sptr<IRemoteObject> &object) : IRemoteP
 {
 }
 
-int32_t TimeServiceProxy::SetTime(const int64_t time, APIVersion apiVersion)
+int32_t TimeServiceProxy::SetTime(int64_t time, APIVersion apiVersion)
 {
     MessageParcel data, reply;
     MessageOption option;

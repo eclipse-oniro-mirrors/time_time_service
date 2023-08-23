@@ -43,7 +43,6 @@ private:
     };
     using broadcastSubscriberFunc = void (NITZSubscriber::*)(const CommonEventData &data);
 
-    void UnknownBroadcast(const CommonEventData &data);
     void NITZTimeChangeBroadcast(const CommonEventData &data);
     void NITZTimezoneChangeBroadcast(const CommonEventData &data);
     std::map<uint32_t, broadcastSubscriberFunc> memberFuncMap_;

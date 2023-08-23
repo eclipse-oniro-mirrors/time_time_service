@@ -23,13 +23,13 @@ namespace MiscServices {
 class ITimerNotifyCallback : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.miscservices.time.ITimerNotifyCallback");
-	
+
     /**
      * Notify trigger timer finished.
      *
      * @param timerId timer id.
      */
-    virtual void Finish(const uint64_t timerId) = 0;
+    virtual void Finish(uint64_t timerId) = 0;
 
     /**
      * IPC code of ITimerNotifyCallback.

@@ -27,9 +27,7 @@ namespace OHOS {
 namespace MiscServices {
 std::mutex TimeServiceClient::instanceLock_;
 sptr<TimeServiceClient> TimeServiceClient::instance_;
-TimeServiceClient::TimeServiceClient()
-{
-}
+TimeServiceClient::TimeServiceClient() = default;
 
 TimeServiceClient::~TimeServiceClient()
 {
@@ -87,7 +85,7 @@ bool TimeServiceClient::ConnectService()
     return true;
 }
 
-bool TimeServiceClient::SetTime(const int64_t time)
+bool TimeServiceClient::SetTime(int64_t time)
 {
     if (!ConnectService()) {
         return false;
@@ -99,7 +97,7 @@ bool TimeServiceClient::SetTime(const int64_t time)
     return proxy->SetTime(time) == ERR_OK;
 }
 
-bool TimeServiceClient::SetTime(const int64_t milliseconds, int32_t &code)
+bool TimeServiceClient::SetTime(int64_t milliseconds, int32_t &code)
 {
     if (!ConnectService()) {
         code = E_TIME_SA_DIED;
@@ -114,7 +112,7 @@ bool TimeServiceClient::SetTime(const int64_t milliseconds, int32_t &code)
     return code == ERR_OK;
 }
 
-int32_t TimeServiceClient::SetTimeV9(const int64_t &time)
+int32_t TimeServiceClient::SetTimeV9(int64_t time)
 {
     if (!ConnectService()) {
         return E_TIME_SA_DIED;
@@ -126,7 +124,7 @@ int32_t TimeServiceClient::SetTimeV9(const int64_t &time)
     return proxy->SetTime(time, ITimeService::API_VERSION_9);
 }
 
-bool TimeServiceClient::SetTimeZone(const std::string timezoneId)
+bool TimeServiceClient::SetTimeZone(const std::string &timezoneId)
 {
     if (!ConnectService()) {
         return false;
@@ -138,7 +136,7 @@ bool TimeServiceClient::SetTimeZone(const std::string timezoneId)
     return proxy->SetTimeZone(timezoneId) == ERR_OK;
 }
 
-bool TimeServiceClient::SetTimeZone(const std::string timezoneId, int32_t &code)
+bool TimeServiceClient::SetTimeZone(const std::string &timezoneId, int32_t &code)
 {
     if (!ConnectService()) {
         code = E_TIME_SA_DIED;
@@ -154,7 +152,7 @@ bool TimeServiceClient::SetTimeZone(const std::string timezoneId, int32_t &code)
     return code == ERR_OK;
 }
 
-int32_t TimeServiceClient::SetTimeZoneV9(const std::string timezoneId)
+int32_t TimeServiceClient::SetTimeZoneV9(const std::string &timezoneId)
 {
     if (!ConnectService()) {
         return E_TIME_SA_DIED;
@@ -166,10 +164,10 @@ int32_t TimeServiceClient::SetTimeZoneV9(const std::string timezoneId)
     return proxy->SetTimeZone(timezoneId, ITimeService::API_VERSION_9);
 }
 
-uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> TimerOptions)
+uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> timerOptions)
 {
     uint64_t timerId = 0;
-    auto errCode = CreateTimerV9(TimerOptions, timerId);
+    auto errCode = CreateTimerV9(timerOptions, timerId);
     TIME_HILOGI(TIME_MODULE_SERVICE, "CreateTimer id: %{public}" PRId64 "", timerId);
     if (errCode != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Non-system applications, create timer failed");

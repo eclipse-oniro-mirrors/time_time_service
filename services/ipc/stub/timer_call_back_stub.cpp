@@ -20,9 +20,9 @@ namespace MiscServices {
 int TimerCallbackStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "cmd = %{public}d, flags= %{public}d", code, option.GetFlags());
-    std::u16string descripter = GetDescriptor();
-    std::u16string remoteDescripter = data.ReadInterfaceToken();
-    if (descripter != remoteDescripter) {
+    std::u16string descriptor = GetDescriptor();
+    std::u16string remoteDescriptor = data.ReadInterfaceToken();
+    if (descriptor != remoteDescriptor) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " failed, descriptor is not matched!");
         return E_TIME_READ_PARCEL_ERROR;
     }

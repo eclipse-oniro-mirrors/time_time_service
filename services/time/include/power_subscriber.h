@@ -42,7 +42,6 @@ private:
     };
     using broadcastSubscriberFunc = void (PowerSubscriber::*)(const CommonEventData &data);
 
-    void UnknownBroadcast(const CommonEventData &data);
     void PowerBroadcast(const CommonEventData &data);
     std::map<uint32_t, broadcastSubscriberFunc> memberFuncMap_;
 };

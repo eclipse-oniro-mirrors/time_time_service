@@ -27,7 +27,7 @@ TimerNotifyCallbackProxy::~TimerNotifyCallbackProxy()
     TIME_HILOGD(TIME_MODULE_CLIENT, "TimerNotifyCallbackProxy instance destoryed");
 }
 
-void TimerNotifyCallbackProxy::Finish(const uint64_t timerId)
+void TimerNotifyCallbackProxy::Finish(uint64_t timerId)
 {
     TIME_HILOGD(TIME_MODULE_CLIENT, "start id:%{public}" PRId64 "", timerId);
     sptr<IRemoteObject> remote = Remote();
