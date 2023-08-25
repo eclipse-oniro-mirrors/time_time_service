@@ -30,7 +30,7 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
-static const int ALARM_TIME_CHANGE_MASK = 1 << 16;
+static const uint32_t ALARM_TIME_CHANGE_MASK = 1 << 16;
 static const clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
     CLOCK_REALTIME_ALARM,
     CLOCK_REALTIME,
@@ -115,16 +115,16 @@ int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when)
     return timerfd_settime(fds_[type], TFD_TIMER_ABSTIME, &spec, nullptr);
 }
 
-int TimerHandler::WaitForAlarm()
+uint32_t TimerHandler::WaitForAlarm()
 {
     epoll_event events[N_TIMER_FDS];
 
-    int nevents = epoll_wait(epollFd_, events, N_TIMER_FDS, -1);
-    if (nevents < 0) {
-        return nevents;
-    }
+    int nevents = 0;
+    do {
+        nevents = epoll_wait(epollFd_, events, N_TIMER_FDS, -1);
+    } while (nevents < 0 && errno == EINTR);
 
-    int result = 0;
+    uint32_t result = 0;
     for (int i = 0; i < nevents; i++) {
         uint32_t alarm_idx = events[i].data.u32;
         uint64_t unused;
