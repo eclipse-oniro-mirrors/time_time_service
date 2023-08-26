@@ -29,9 +29,6 @@ namespace Time {
 class NapiSystemDateTime {
 public:
     static napi_value SystemDateTimeInit(napi_env env, napi_value exports);
-
-    using OnEventHandlerType = std::function<napi_status(napi_env, napi_value)>;
-    using OffEventHandlerType = std::function<napi_status(napi_env, napi_value)>;
     static std::map<int32_t, int32_t> errcode_;
 
 private:
@@ -43,6 +40,12 @@ private:
     static napi_value GetDate(napi_env env, napi_callback_info info);
     static napi_value SetTimezone(napi_env env, napi_callback_info info);
     static napi_value GetTimezone(napi_env env, napi_callback_info info);
+    static napi_value GetTime(napi_env env, napi_callback_info info);
+    static napi_value GetUptime(napi_env env, napi_callback_info info);
+    static napi_value GetTimezoneSync(napi_env env, napi_callback_info info);
+
+    static int32_t GetTimezone(std::string &timezone);
+    static int32_t GetDeviceTime(clockid_t clockId, bool isNano, int64_t &time);
 };
 } // namespace Time
 } // namespace MiscServices

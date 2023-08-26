@@ -15,7 +15,8 @@
 
 #include "napi_system_date_time.h"
 
-#include "napi_async_work.h"
+#include "parameters.h"
+#include "napi_work.h"
 #include "napi_utils.h"
 #include "time_hilog.h"
 #include "time_service_client.h"
@@ -25,17 +26,38 @@ using namespace OHOS::MiscServices;
 namespace OHOS {
 namespace MiscServices {
 namespace Time {
+
+constexpr int64_t SECONDS_TO_NANO = 1000000000;
+constexpr int64_t SECONDS_TO_MILLI = 1000;
+constexpr int64_t NANO_TO_MILLI = SECONDS_TO_NANO / SECONDS_TO_MILLI;
+constexpr int32_t STARTUP = 0;
+constexpr int32_t ACTIVE = 1;
+const std::string TIMEZONE_KEY = "persist.time.timezone";
+
 napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value exports)
 {
+    napi_value timeType = nullptr;
+    napi_value startup = nullptr;
+    napi_value active = nullptr;
+    NAPI_CALL(env, napi_create_int32(env, STARTUP, &startup));
+    NAPI_CALL(env, napi_create_int32(env, ACTIVE, &active));
+    NAPI_CALL(env, napi_create_object(env, &timeType));
+    NAPI_CALL(env, napi_set_named_property(env, timeType, "STARTUP", startup));
+    NAPI_CALL(env, napi_set_named_property(env, timeType, "ACTIVE", active));
+
     napi_property_descriptor descriptors[] = {
         DECLARE_NAPI_STATIC_FUNCTION("setTime", SetTime),
         DECLARE_NAPI_STATIC_FUNCTION("getCurrentTime", GetCurrentTime),
         DECLARE_NAPI_STATIC_FUNCTION("getRealActiveTime", GetRealActiveTime),
         DECLARE_NAPI_STATIC_FUNCTION("getRealTime", GetRealTime),
+        DECLARE_NAPI_STATIC_FUNCTION("getTime", GetTime),
         DECLARE_NAPI_STATIC_FUNCTION("setDate", SetDate),
         DECLARE_NAPI_STATIC_FUNCTION("getDate", GetDate),
         DECLARE_NAPI_STATIC_FUNCTION("setTimezone", SetTimezone),
         DECLARE_NAPI_STATIC_FUNCTION("getTimezone", GetTimezone),
+        DECLARE_NAPI_STATIC_FUNCTION("getUptime", GetUptime),
+        DECLARE_NAPI_STATIC_FUNCTION("getTimezoneSync", GetTimezoneSync),
+        DECLARE_NAPI_STATIC_PROPERTY("TimeType", timeType),
     };
 
     napi_status status =
@@ -52,7 +74,7 @@ napi_value NapiSystemDateTime::SetTime(napi_env env, napi_callback_info info)
     struct SetTimeContext : public ContextBase {
         int64_t time = 0;
     };
-    SetTimeContext *setTimeContext = new SetTimeContext();
+    auto *setTimeContext = new SetTimeContext();
     auto inputParser = [env, setTimeContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimeContext, argc >= ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
@@ -70,7 +92,7 @@ napi_value NapiSystemDateTime::SetTime(napi_env env, napi_callback_info info)
         }
     };
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
-    return NapiAsyncWork::Enqueue(env, setTimeContext, "SetTime", executor, complete);
+    return NapiWork::AsyncEnqueue(env, setTimeContext, "SetTime", executor, complete);
 }
 
 napi_value NapiSystemDateTime::SetDate(napi_env env, napi_callback_info info)
@@ -78,7 +100,7 @@ napi_value NapiSystemDateTime::SetDate(napi_env env, napi_callback_info info)
     struct SetDateContext : public ContextBase {
         int64_t time = 0;
     };
-    SetDateContext *setDateContext = new SetDateContext();
+    auto *setDateContext = new SetDateContext();
     auto inputParser = [env, setDateContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, argc >= ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
@@ -116,7 +138,7 @@ napi_value NapiSystemDateTime::SetDate(napi_env env, napi_callback_info info)
         }
     };
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
-    return NapiAsyncWork::Enqueue(env, setDateContext, "SetDate", executor, complete);
+    return NapiWork::AsyncEnqueue(env, setDateContext, "SetDate", executor, complete);
 }
 
 napi_value NapiSystemDateTime::GetRealActiveTime(napi_env env, napi_callback_info info)
@@ -125,7 +147,7 @@ napi_value NapiSystemDateTime::GetRealActiveTime(napi_env env, napi_callback_inf
         int64_t time = 0;
         bool isNano = false;
     };
-    GetRealActiveTimeContext *getRealActiveTimeContext = new GetRealActiveTimeContext();
+    auto *getRealActiveTimeContext = new GetRealActiveTimeContext();
     auto inputParser = [env, getRealActiveTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
             napi_valuetype valueType = napi_undefined;
@@ -157,7 +179,7 @@ napi_value NapiSystemDateTime::GetRealActiveTime(napi_env env, napi_callback_inf
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getRealActiveTimeContext,
             "convert native object to javascript object failed", JsErrorCode::ERROR);
     };
-    return NapiAsyncWork::Enqueue(env, getRealActiveTimeContext, "GetRealActiveTime", executor, complete);
+    return NapiWork::AsyncEnqueue(env, getRealActiveTimeContext, "GetRealActiveTime", executor, complete);
 }
 
 napi_value NapiSystemDateTime::GetCurrentTime(napi_env env, napi_callback_info info)
@@ -166,7 +188,7 @@ napi_value NapiSystemDateTime::GetCurrentTime(napi_env env, napi_callback_info i
         int64_t time = 0;
         bool isNano = false;
     };
-    GetCurrentTimeContext *getCurrentTimeContext = new GetCurrentTimeContext();
+    auto *getCurrentTimeContext = new GetCurrentTimeContext();
     auto inputParser = [env, getCurrentTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
             napi_valuetype valueType = napi_undefined;
@@ -198,7 +220,42 @@ napi_value NapiSystemDateTime::GetCurrentTime(napi_env env, napi_callback_info i
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getCurrentTimeContext,
             "convert native object to javascript object failed", JsErrorCode::ERROR);
     };
-    return NapiAsyncWork::Enqueue(env, getCurrentTimeContext, "GetCurrentTime", executor, complete);
+    return NapiWork::AsyncEnqueue(env, getCurrentTimeContext, "GetCurrentTime", executor, complete);
+}
+
+napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
+{
+    struct GetTimeContext : public ContextBase {
+        int64_t time = 0;
+        bool isNano = false;
+    };
+    auto *getTimeContext = new GetTimeContext();
+    auto inputParser = [env, getTimeContext](size_t argc, napi_value *argv) {
+        if (argc >= ARGC_ONE) {
+            napi_valuetype valueType = napi_undefined;
+            napi_typeof(env, argv[ARGV_FIRST], &valueType);
+            if (valueType == napi_boolean) {
+                getTimeContext->status = napi_get_value_bool(env, argv[ARGV_FIRST], &getTimeContext->isNano);
+                CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getTimeContext, getTimeContext->status == napi_ok,
+                                       "invalid isNano", JsErrorCode::PARAMETER_ERROR);
+            }
+        }
+        getTimeContext->status = napi_ok;
+    };
+    getTimeContext->GetCbInfo(env, info, inputParser, true);
+    auto executor = [getTimeContext]() {
+        int32_t innerCode = GetDeviceTime(CLOCK_REALTIME, getTimeContext->isNano, getTimeContext->time);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            getTimeContext->errCode = innerCode;
+            getTimeContext->status = napi_generic_failure;
+        }
+    };
+    auto complete = [getTimeContext](napi_value &output) {
+        getTimeContext->status = napi_create_int64(getTimeContext->env, getTimeContext->time, &output);
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getTimeContext,
+                                 "convert native object to javascript object failed", JsErrorCode::ERROR);
+    };
+    return NapiWork::SyncEnqueue(env, getTimeContext, "GetTime", executor, complete);
 }
 
 napi_value NapiSystemDateTime::GetRealTime(napi_env env, napi_callback_info info)
@@ -207,7 +264,7 @@ napi_value NapiSystemDateTime::GetRealTime(napi_env env, napi_callback_info info
         int64_t time = 0;
         bool isNano = false;
     };
-    GetRealTimeContext *getRealTimeContext = new GetRealTimeContext();
+    auto *getRealTimeContext = new GetRealTimeContext();
     auto inputParser = [env, getRealTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
             napi_valuetype valueType = napi_undefined;
@@ -238,7 +295,55 @@ napi_value NapiSystemDateTime::GetRealTime(napi_env env, napi_callback_info info
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getRealTimeContext,
             "convert native object to javascript object failed", JsErrorCode::ERROR);
     };
-    return NapiAsyncWork::Enqueue(env, getRealTimeContext, "GetRealTime", executor, complete);
+    return NapiWork::AsyncEnqueue(env, getRealTimeContext, "GetRealTime", executor, complete);
+}
+
+napi_value NapiSystemDateTime::GetUptime(napi_env env, napi_callback_info info)
+{
+    struct GetUpTimeContext : public ContextBase {
+        int64_t time = 0;
+        int32_t timeType = STARTUP;
+        bool isNanoseconds = false;
+    };
+    auto *getUpTimeContext = new GetUpTimeContext();
+    auto inputParser = [env, getUpTimeContext](size_t argc, napi_value *argv) {
+        getUpTimeContext->status = napi_get_value_int32(env, argv[ARGV_FIRST], &getUpTimeContext->timeType);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext, getUpTimeContext->status == napi_ok,
+                               "invalid timeType", JsErrorCode::PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext,
+            (getUpTimeContext->timeType >= STARTUP && getUpTimeContext->timeType <= ACTIVE), "invalid timeType",
+            JsErrorCode::PARAMETER_ERROR);
+        if (argc >= ARGC_TWO) {
+            napi_valuetype valueType = napi_undefined;
+            napi_typeof(env, argv[ARGV_SECOND], &valueType);
+            if (valueType == napi_boolean) {
+                getUpTimeContext->status =
+                    napi_get_value_bool(env, argv[ARGV_SECOND], &getUpTimeContext->isNanoseconds);
+                CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext, getUpTimeContext->status == napi_ok,
+                    "get isNanoseconds failed", JsErrorCode::PARAMETER_ERROR);
+            }
+        }
+        getUpTimeContext->status = napi_ok;
+    };
+    getUpTimeContext->GetCbInfo(env, info, inputParser, true);
+    auto executor = [getUpTimeContext]() {
+        int32_t innerCode;
+        if (getUpTimeContext->timeType == STARTUP) {
+            innerCode = GetDeviceTime(CLOCK_BOOTTIME, getUpTimeContext->isNanoseconds, getUpTimeContext->time);
+        } else {
+            innerCode = GetDeviceTime(CLOCK_MONOTONIC, getUpTimeContext->isNanoseconds, getUpTimeContext->time);
+        }
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            getUpTimeContext->errCode = innerCode;
+            getUpTimeContext->status = napi_generic_failure;
+        }
+    };
+    auto complete = [getUpTimeContext](napi_value &output) {
+        getUpTimeContext->status = napi_create_int64(getUpTimeContext->env, getUpTimeContext->time, &output);
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext,
+                                 "convert native object to javascript object failed", JsErrorCode::ERROR);
+    };
+    return NapiWork::SyncEnqueue(env, getUpTimeContext, "GetUpTime", executor, complete);
 }
 
 napi_value NapiSystemDateTime::GetDate(napi_env env, napi_callback_info info)
@@ -246,8 +351,8 @@ napi_value NapiSystemDateTime::GetDate(napi_env env, napi_callback_info info)
     struct GetDateContext : public ContextBase {
         int64_t time = 0;
     };
-    GetDateContext *getDateContext = new GetDateContext();
-    auto inputParser = [env, getDateContext](size_t argc, napi_value *argv) { getDateContext->status = napi_ok; };
+    auto *getDateContext = new GetDateContext();
+    auto inputParser = [getDateContext](size_t argc, napi_value *argv) { getDateContext->status = napi_ok; };
     getDateContext->GetCbInfo(env, info, inputParser);
     auto executor = [getDateContext]() {
         auto innerCode = TimeServiceClient::GetInstance()->GetWallTimeMs(getDateContext->time);
@@ -262,7 +367,7 @@ napi_value NapiSystemDateTime::GetDate(napi_env env, napi_callback_info info)
             "convert native object to javascript object failed", JsErrorCode::ERROR);
     };
 
-    return NapiAsyncWork::Enqueue(env, getDateContext, "GetDate", executor, complete);
+    return NapiWork::AsyncEnqueue(env, getDateContext, "GetDate", executor, complete);
 }
 
 napi_value NapiSystemDateTime::SetTimezone(napi_env env, napi_callback_info info)
@@ -270,7 +375,7 @@ napi_value NapiSystemDateTime::SetTimezone(napi_env env, napi_callback_info info
     struct SetTimezoneContext : public ContextBase {
         std::string timezone;
     };
-    SetTimezoneContext *setTimezoneContext = new SetTimezoneContext();
+    auto *setTimezoneContext = new SetTimezoneContext();
     auto inputParser = [env, setTimezoneContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimezoneContext, argc >= ARGC_ONE, "invalid arguments",
             JsErrorCode::PARAMETER_ERROR);
@@ -288,7 +393,7 @@ napi_value NapiSystemDateTime::SetTimezone(napi_env env, napi_callback_info info
         }
     };
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
-    return NapiAsyncWork::Enqueue(env, setTimezoneContext, "SetTimezone", executor, complete);
+    return NapiWork::AsyncEnqueue(env, setTimezoneContext, "SetTimezone", executor, complete);
 }
 
 napi_value NapiSystemDateTime::GetTimezone(napi_env env, napi_callback_info info)
@@ -296,8 +401,8 @@ napi_value NapiSystemDateTime::GetTimezone(napi_env env, napi_callback_info info
     struct GetTimezoneContext : public ContextBase {
         std::string timezone;
     };
-    GetTimezoneContext *getTimezoneContext = new GetTimezoneContext();
-    auto inputParser = [env, getTimezoneContext](size_t argc, napi_value *argv) {
+    auto *getTimezoneContext = new GetTimezoneContext();
+    auto inputParser = [getTimezoneContext](size_t argc, napi_value *argv) {
         getTimezoneContext->status = napi_ok;
     };
     getTimezoneContext->GetCbInfo(env, info, inputParser);
@@ -316,7 +421,59 @@ napi_value NapiSystemDateTime::GetTimezone(napi_env env, napi_callback_info info
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getTimezoneContext,
             "convert native object to javascript object failed", JsErrorCode::ERROR);
     };
-    return NapiAsyncWork::Enqueue(env, getTimezoneContext, "GetTimezone", executor, complete);
+    return NapiWork::AsyncEnqueue(env, getTimezoneContext, "GetTimezone", executor, complete);
+}
+
+napi_value NapiSystemDateTime::GetTimezoneSync(napi_env env, napi_callback_info info)
+{
+    struct GetTimezoneContext : public ContextBase {
+        std::string timezone;
+    };
+    auto *getTimezoneContext = new GetTimezoneContext();
+    auto inputParser = [getTimezoneContext](size_t argc, napi_value *argv) { getTimezoneContext->status = napi_ok; };
+    getTimezoneContext->GetCbInfo(env, info, inputParser, true);
+
+    auto executor = [getTimezoneContext]() {
+        auto innerCode = GetTimezone(getTimezoneContext->timezone);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            getTimezoneContext->errCode = innerCode;
+            getTimezoneContext->status = napi_generic_failure;
+        }
+    };
+    auto complete = [env, getTimezoneContext](napi_value &output) {
+        getTimezoneContext->status = napi_create_string_utf8(env, getTimezoneContext->timezone.c_str(),
+            getTimezoneContext->timezone.size(), &output);
+        TIME_HILOGI(TIME_MODULE_JS_NAPI, "current timezone %{public}s, ", getTimezoneContext->timezone.c_str());
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getTimezoneContext,
+            "convert native object to javascript object failed", JsErrorCode::ERROR);
+    };
+    return NapiWork::SyncEnqueue(env, getTimezoneContext, "GetTimezone", executor, complete);
+}
+
+int32_t NapiSystemDateTime::GetDeviceTime(clockid_t clockId, bool isNano, int64_t &time)
+{
+    struct timespec tv {};
+    if (clock_gettime(clockId, &tv) < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "failed clock_gettime, errno: %{public}s", strerror(errno));
+        return ERROR;
+    }
+
+    if (isNano) {
+        time = tv.tv_sec * SECONDS_TO_NANO + tv.tv_nsec;
+    } else {
+        time = tv.tv_sec * SECONDS_TO_MILLI + tv.tv_nsec / NANO_TO_MILLI;
+    }
+    return ERROR_OK;
+}
+
+int32_t NapiSystemDateTime::GetTimezone(std::string &timezone)
+{
+    timezone = system::GetParameter(TIMEZONE_KEY, "Asia/Shanghai");
+    if (timezone.empty()) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "No found timezone from system parameter.");
+        return ERROR;
+    }
+    return ERROR_OK;
 }
 } // namespace Time
 } // namespace MiscServices
