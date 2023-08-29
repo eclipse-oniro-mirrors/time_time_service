@@ -24,11 +24,11 @@ class SimpleTimerInfo : public ITimerInfo {
 public:
     SimpleTimerInfo();
     virtual ~SimpleTimerInfo();
-    virtual void OnTrigger() override;
-    virtual void SetType(const int &type) override;
-    virtual void SetRepeat(bool repeat) override;
-    virtual void SetInterval(const uint64_t &interval) override;
-    virtual void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) override;
+    void OnTrigger() override;
+    void SetType(const int &type) override;
+    void SetRepeat(bool repeat) override;
+    void SetInterval(const uint64_t &interval) override;
+    void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) override;
 };
 } // namespace MiscServices
 } // namespace OHOS

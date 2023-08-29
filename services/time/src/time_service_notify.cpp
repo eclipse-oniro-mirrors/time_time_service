@@ -24,8 +24,11 @@ using namespace OHOS::EventFwk;
 
 namespace OHOS {
 namespace MiscServices {
-TimeServiceNotify::TimeServiceNotify(){};
-TimeServiceNotify::~TimeServiceNotify(){};
+TimeServiceNotify &TimeServiceNotify::GetInstance()
+{
+    static TimeServiceNotify instance;
+    return instance;
+}
 
 bool TimeServiceNotify::RepublishEvents()
 {

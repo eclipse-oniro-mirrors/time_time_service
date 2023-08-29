@@ -45,7 +45,7 @@ sptr<TimerCallback> TimerCallback::GetInstance()
     return instance_;
 }
 
-bool TimerCallback::InsertTimerCallbackInfo(const uint64_t timerId, const std::shared_ptr<ITimerInfo> &timerInfo)
+bool TimerCallback::InsertTimerCallbackInfo(uint64_t timerId, const std::shared_ptr<ITimerInfo> &timerInfo)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     if (timerInfo == nullptr) {
@@ -64,7 +64,7 @@ bool TimerCallback::InsertTimerCallbackInfo(const uint64_t timerId, const std::s
     return true;
 }
 
-bool TimerCallback::RemoveTimerCallbackInfo(const uint64_t timerId)
+bool TimerCallback::RemoveTimerCallbackInfo(uint64_t timerId)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::lock_guard<std::mutex> lock(timerInfoMutex_);

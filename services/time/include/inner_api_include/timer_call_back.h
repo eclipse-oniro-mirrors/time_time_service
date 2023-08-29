@@ -29,7 +29,7 @@ class TimerCallback : public TimerCallbackStub {
 public:
     DISALLOW_COPY_AND_MOVE(TimerCallback);
     static sptr<TimerCallback> GetInstance();
-    virtual void NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback) override;
+    virtual void NotifyTimer(uint64_t timerId, const sptr<IRemoteObject> &timerCallback) override;
     /**
      * Get timer callback info.
      *
@@ -37,8 +37,8 @@ public:
      * @param  timerInfo  the timer info
      * @return Get timer callback info success or not
      */
-    bool InsertTimerCallbackInfo(const uint64_t timerId, const std::shared_ptr<ITimerInfo> &timerInfo);
-    bool RemoveTimerCallbackInfo(const uint64_t timerId);
+    bool InsertTimerCallbackInfo(uint64_t timerId, const std::shared_ptr<ITimerInfo> &timerInfo);
+    bool RemoveTimerCallbackInfo(uint64_t timerId);
 
 private:
     TimerCallback();

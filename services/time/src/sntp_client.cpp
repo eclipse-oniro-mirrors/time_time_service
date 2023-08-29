@@ -63,14 +63,8 @@ constexpr int32_t NTP_PACKAGE_SIZE = 48;
 constexpr int32_t SNTP_MSG_OFFSET_SIX = 6;
 constexpr int32_t SNTP_MSG_OFFSET_THREE = 3;
 } // namespace
-SNTPClient::SNTPClient()
-{
-}
-SNTPClient::~SNTPClient()
-{
-}
 
-bool SNTPClient::RequestTime(std::string host)
+bool SNTPClient::RequestTime(const std::string &host)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     int bufLen = NTP_PACKAGE_SIZE;
@@ -130,11 +124,6 @@ bool SNTPClient::RequestTime(std::string host)
 void SNTPClient::SetClockOffset(int clockOffset)
 {
     m_clockOffset = clockOffset;
-}
-
-int SNTPClient::GetClockOffset(void)
-{
-    return m_clockOffset;
 }
 
 uint64_t SNTPClient::GetNtpTimestamp64(int offset, const char *buffer)
@@ -210,10 +199,10 @@ int64_t SNTPClient::ConvertNtpToStamp(uint64_t _ntpTs)
 void SNTPClient::CreateMessage(char *buffer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    struct ntp_timestamp ntp;
+    struct ntp_timestamp ntp{};
     struct timeval unix;
 
-    gettimeofday(&unix, NULL);
+    gettimeofday(&unix, nullptr);
     // convert unix time to ntp time
     ConvertUnixToNtp(&ntp, &unix);
     ConvertNtpToUnix(&ntp, &unix);
@@ -221,7 +210,7 @@ void SNTPClient::CreateMessage(char *buffer)
     _ntpTs = (_ntpTs << RECEIVE_TIMESTAMP_OFFSET) | ntp.fraction;
     m_originateTimestamp = _ntpTs;
 
-    SNTPMessage _sntpMsg;
+    SNTPMessage _sntpMsg{};
     // Important, if you don't set the version/mode, the server will ignore you.
     _sntpMsg.clear();
     _sntpMsg._leapIndicator = 0;
@@ -282,7 +271,7 @@ void SNTPClient::WriteTimeStamp(char *buffer, ntp_timestamp *ntp)
 void SNTPClient::ReceivedMessage(char *buffer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    struct ntp_timestamp ntp;
+    struct ntp_timestamp ntp{};
     struct timeval unix;
 
     gettimeofday(&unix, NULL);
@@ -379,7 +368,7 @@ void SNTPClient::SNTPMessage::clear()
     }
 }
 
-int64_t SNTPClient::getNtpTIme()
+int64_t SNTPClient::getNtpTime()
 {
     return mNtpTime;
 }

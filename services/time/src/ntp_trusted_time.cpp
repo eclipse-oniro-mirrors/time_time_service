@@ -39,7 +39,7 @@ NtpTrustedTime &NtpTrustedTime::GetInstance()
     return instance;
 }
 
-bool NtpTrustedTime::ForceRefresh(std::string ntpServer)
+bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     SNTPClient client;
@@ -49,7 +49,7 @@ bool NtpTrustedTime::ForceRefresh(std::string ntpServer)
                 mTimeResult->Clear();
             }
             int64_t ntpCertainty = client.getRoundTripTime() / HALF;
-            mTimeResult = std::make_shared<TimeResult>(client.getNtpTIme(), client.getNtpTimeReference(), ntpCertainty);
+            mTimeResult = std::make_shared<TimeResult>(client.getNtpTime(), client.getNtpTimeReference(), ntpCertainty);
             TIME_HILOGD(TIME_MODULE_SERVICE, "Get Ntp time result");
             return true;
         }
@@ -69,11 +69,6 @@ int64_t NtpTrustedTime::CurrentTimeMillis()
     return mTimeResult->CurrentTimeMillis();
 }
 
-bool NtpTrustedTime::HasCache()
-{
-    return mTimeResult == nullptr;
-}
-
 int64_t NtpTrustedTime::GetCacheAge()
 {
     if (mTimeResult != nullptr) {
@@ -86,16 +81,6 @@ int64_t NtpTrustedTime::GetCacheAge()
     }
 }
 
-int64_t NtpTrustedTime::GetCachedNtpTime()
-{
-    return mTimeResult == nullptr ? 0 : mTimeResult->GetTimeMillis();
-}
-
-int64_t NtpTrustedTime::GetCachedNtpTimeReference()
-{
-    return mTimeResult == nullptr ? 0 : mTimeResult->GetElapsedRealtimeMillis();
-}
-
 int64_t NtpTrustedTime::TimeResult::GetTimeMillis()
 {
     return mTimeMillis;
@@ -104,11 +89,6 @@ int64_t NtpTrustedTime::TimeResult::GetTimeMillis()
 int64_t NtpTrustedTime::TimeResult::GetElapsedRealtimeMillis()
 {
     return mElapsedRealtimeMillis;
-}
-
-int64_t NtpTrustedTime::TimeResult::GetCertaintyMillis()
-{
-    return mCertaintyMillis;
 }
 
 int64_t NtpTrustedTime::TimeResult::CurrentTimeMillis()

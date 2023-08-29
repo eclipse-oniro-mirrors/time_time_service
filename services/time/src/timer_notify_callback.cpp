@@ -17,15 +17,11 @@
 
 namespace OHOS {
 namespace MiscServices {
-TimerNotifyCallback::TimerNotifyCallback()
-{
-}
+TimerNotifyCallback::TimerNotifyCallback() = default;
 
-TimerNotifyCallback::~TimerNotifyCallback()
-{
-}
+TimerNotifyCallback::~TimerNotifyCallback() = default;
 
-void TimerNotifyCallback::Finish(const uint64_t timerId)
+void TimerNotifyCallback::Finish(uint64_t timerId)
 {
 }
 } // namespace MiscServices

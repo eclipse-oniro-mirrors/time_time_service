@@ -14,23 +14,22 @@
  */
 
 #include "timer_manager.h"
-#include <utility>
-#include <vector>
+
 #include <algorithm>
 #include <ctime>
 #include <iostream>
 #include <sys/time.h>
-#include <sys/prctl.h>
-#include "if_system_ability_manager.h"
+#include <utility>
+#include <vector>
+
 #include "system_ability_definition.h"
-#include "iservice_registry.h"
 #ifdef DEVICE_STANDBY_ENABLE
-#include "standby_service_client.h"
 #include "allow_type.h"
+#include "standby_service_client.h"
 #endif
-#include "time_permission.h"
-#include "time_file_utils.h"
 #include "ipc_skeleton.h"
+#include "time_file_utils.h"
+#include "time_permission.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -242,7 +241,7 @@ void TimerManager::SetHandler(uint64_t id,
                      maxElapsed,
                      intervalDuration,
                      std::move(callback),
-                     std::move(wantAgent),
+                     wantAgent,
                      static_cast<uint32_t>(flag),
                      true,
                      uid,
@@ -454,7 +453,7 @@ void TimerManager::TimerLooper()
         if (result != TIME_CHANGED_MASK) {
             std::lock_guard<std::mutex> lock(mutex_);
             TriggerTimersLocked(triggerList, nowElapsed);
-            DeliverTimersLocked(triggerList, nowElapsed);
+            DeliverTimersLocked(triggerList);
             RescheduleKernelTimerLocked();
         } else {
             std::lock_guard<std::mutex> lock(mutex_);
@@ -521,15 +520,9 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
                 pendingDelayTimers_.clear();
                 ReBatchAllTimers();
             }
-            if (alarm->repeatInterval > milliseconds::zero()) {
-                alarm->count += duration_cast<milliseconds>(nowElapsed -
-                                                            alarm->expectedWhenElapsed) / alarm->repeatInterval;
-                auto delta = alarm->count * alarm->repeatInterval;
-                auto nextElapsed = alarm->whenElapsed + delta;
-                SetHandlerLocked(alarm->id, alarm->type, alarm->when + delta, nextElapsed, alarm->windowLength,
-                                 MaxTriggerTime(nowElapsed, nextElapsed, alarm->repeatInterval), alarm->repeatInterval,
-                                 alarm->callback, alarm->wantAgent, alarm->flags, true, alarm->uid, alarm->bundleName);
-            }
+
+            HandleRepeatTimer(alarm, nowElapsed);
+
             if (alarm->wakeup) {
                 hasWakeup = true;
             }
@@ -612,8 +605,7 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
     return -1;
 }
 
-void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList,
-                                       std::chrono::steady_clock::time_point nowElapsed)
+void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
     for (const auto &alarm : triggerList) {
         if (alarm->callback) {
@@ -833,7 +825,7 @@ steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
     return triggerAtTime + milliseconds(static_cast<long>(BATCH_WINDOW_COE * futurity.count()));
 }
 
-bool TimerManager::ShowtimerEntryMap(int fd)
+bool TimerManager::ShowTimerEntryMap(int fd)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::lock_guard<std::mutex> lock(showTimerMutex_);
@@ -910,9 +902,9 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
         dprintf(fd, " * timer whenElapsed   = %lu\n", pendingTimer->whenElapsed);
         dprintf(fd, " * timer uid           = %d\n\n", pendingTimer->uid);
     }
-    for (auto iter = delayedTimers_.begin(); iter != delayedTimers_.end(); iter++) {
-        dprintf(fd, " - dump delayed timer id = %lu\n", iter->first);
-        dprintf(fd, " * timer whenElapsed     = %lu\n", iter->second);
+    for (const auto &delayedTimer : delayedTimers_) {
+        dprintf(fd, " - dump delayed timer id = %lu\n", delayedTimer.first);
+        dprintf(fd, " * timer whenElapsed     = %lu\n", delayedTimer.second);
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
@@ -924,6 +916,19 @@ void TimerManager::HandleRSSDeath()
     std::lock_guard<std::mutex> idleTimerLock(idleTimerMutex_);
     if (mPendingIdleUntil_ != nullptr) {
         StopTimerInner(mPendingIdleUntil_->id, true);
+    }
+}
+
+void TimerManager::HandleRepeatTimer(const std::shared_ptr<TimerInfo> &timer,
+    std::chrono::steady_clock::time_point nowElapsed)
+{
+    if (timer->repeatInterval > milliseconds::zero()) {
+        timer->count += duration_cast<milliseconds>(nowElapsed - timer->expectedWhenElapsed) / timer->repeatInterval;
+        auto delta = timer->count * timer->repeatInterval;
+        auto nextElapsed = timer->whenElapsed + delta;
+        SetHandlerLocked(timer->id, timer->type, timer->when + delta, nextElapsed, timer->windowLength,
+            MaxTriggerTime(nowElapsed, nextElapsed, timer->repeatInterval), timer->repeatInterval, timer->callback,
+            timer->wantAgent, timer->flags, true, timer->uid, timer->bundleName);
     }
 }
 } // MiscServices

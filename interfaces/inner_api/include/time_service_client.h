@@ -38,7 +38,7 @@ public:
      * @param UTC time in milliseconds.
      * @return true on success, false on failure.
      */
-    TIME_API bool SetTime(const int64_t milliseconds);
+    TIME_API bool SetTime(int64_t milliseconds);
 
     /**
      * @brief Set system time
@@ -49,7 +49,7 @@ public:
      * @param error code.
      * @return true on success, false on failure.
      */
-    TIME_API bool SetTime(const int64_t milliseconds, int32_t &code);
+    TIME_API bool SetTime(int64_t milliseconds, int32_t &code);
 
     /**
      * @brief Set system time
@@ -59,7 +59,7 @@ public:
      * @param UTC time in milliseconds.
      * @return error code.
      */
-    TIME_API int32_t SetTimeV9(const int64_t &time);
+    TIME_API int32_t SetTimeV9(int64_t time);
 
     /**
      * @brief Set Timezone
@@ -69,7 +69,7 @@ public:
      * @param const std::string time zone. example: "Beijing, China".
      * @return true on success, false on failure.
      */
-    TIME_API bool SetTimeZone(const std::string timeZoneId);
+    TIME_API bool SetTimeZone(const std::string &timeZoneId);
 
     /**
      * @brief Set Timezone
@@ -80,7 +80,7 @@ public:
      * @param error code.
      * @return true on success, false on failure.
      */
-    TIME_API bool SetTimeZone(const std::string timezoneId, int32_t &code);
+    TIME_API bool SetTimeZone(const std::string &timezoneId, int32_t &code);
 
     /**
      * @brief Set Timezone
@@ -90,7 +90,7 @@ public:
      * @param const std::string time zone. example: "Beijing, China".
      * @return error code.
      */
-    TIME_API int32_t SetTimeZoneV9(const std::string timezoneId);
+    TIME_API int32_t SetTimeZoneV9(const std::string &timezoneId);
 
     /**
      * @brief Get Timezone
@@ -271,7 +271,7 @@ public:
      * @param indicates the timer options.
      * @return timer id.
      */
-    TIME_API uint64_t CreateTimer(std::shared_ptr<ITimerInfo> TimerInfo);
+    TIME_API uint64_t CreateTimer(std::shared_ptr<ITimerInfo> timerInfo);
 
     /**
      * @brief Create Timer

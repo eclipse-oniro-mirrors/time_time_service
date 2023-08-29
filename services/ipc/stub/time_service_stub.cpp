@@ -133,13 +133,13 @@ int32_t TimeServiceStub::OnGetTimeZone(MessageParcel &data, MessageParcel &reply
 int32_t TimeServiceStub::OnGetWallTimeMs(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t times;
-    int32_t ret = GetWallTimeMs(times);
+    int64_t time;
+    int32_t ret = GetWallTimeMs(time);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
         return ret;
     }
-    reply.WriteInt64(times);
+    reply.WriteInt64(time);
     TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
     return ret;
 }
@@ -147,13 +147,13 @@ int32_t TimeServiceStub::OnGetWallTimeMs(MessageParcel &data, MessageParcel &rep
 int32_t TimeServiceStub::OnGetWallTimeNs(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t times;
-    int32_t ret = GetWallTimeNs(times);
+    int64_t time;
+    int32_t ret = GetWallTimeNs(time);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
         return ret;
     }
-    reply.WriteInt64(times);
+    reply.WriteInt64(time);
     TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
     return ret;
 }
@@ -161,13 +161,13 @@ int32_t TimeServiceStub::OnGetWallTimeNs(MessageParcel &data, MessageParcel &rep
 int32_t TimeServiceStub::OnGetBootTimeMs(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t times;
-    int32_t ret = GetBootTimeMs(times);
+    int64_t time;
+    int32_t ret = GetBootTimeMs(time);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
         return ret;
     }
-    reply.WriteInt64(times);
+    reply.WriteInt64(time);
     TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
     return ret;
 }
@@ -175,13 +175,13 @@ int32_t TimeServiceStub::OnGetBootTimeMs(MessageParcel &data, MessageParcel &rep
 int32_t TimeServiceStub::OnGetBootTimeNs(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t times;
-    int32_t ret = GetBootTimeNs(times);
+    int64_t time;
+    int32_t ret = GetBootTimeNs(time);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
         return ret;
     }
-    reply.WriteInt64(times);
+    reply.WriteInt64(time);
     TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
     return ret;
 }
@@ -189,13 +189,13 @@ int32_t TimeServiceStub::OnGetBootTimeNs(MessageParcel &data, MessageParcel &rep
 int32_t TimeServiceStub::OnGetMonotonicTimeMs(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t times;
-    int32_t ret = GetMonotonicTimeMs(times);
+    int64_t time;
+    int32_t ret = GetMonotonicTimeMs(time);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
         return ret;
     }
-    reply.WriteInt64(times);
+    reply.WriteInt64(time);
     TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
     return ret;
 }
@@ -203,13 +203,13 @@ int32_t TimeServiceStub::OnGetMonotonicTimeMs(MessageParcel &data, MessageParcel
 int32_t TimeServiceStub::OnGetMonotonicTimeNs(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t times;
-    int32_t ret = GetMonotonicTimeNs(times);
+    int64_t time;
+    int32_t ret = GetMonotonicTimeNs(time);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
         return ret;
     }
-    reply.WriteInt64(times);
+    reply.WriteInt64(time);
     TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
     return ret;
 }
@@ -217,13 +217,13 @@ int32_t TimeServiceStub::OnGetMonotonicTimeNs(MessageParcel &data, MessageParcel
 int32_t TimeServiceStub::OnGetThreadTimeMs(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t times;
-    int32_t ret = GetThreadTimeMs(times);
+    int64_t time;
+    int32_t ret = GetThreadTimeMs(time);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
         return ret;
     }
-    reply.WriteInt64(times);
+    reply.WriteInt64(time);
     TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
     return ret;
 }
@@ -231,13 +231,13 @@ int32_t TimeServiceStub::OnGetThreadTimeMs(MessageParcel &data, MessageParcel &r
 int32_t TimeServiceStub::OnGetThreadTimeNs(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t times;
-    int32_t ret = GetThreadTimeNs(times);
+    int64_t time;
+    int32_t ret = GetThreadTimeNs(time);
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
         return ret;
     }
-    reply.WriteInt64(times);
+    reply.WriteInt64(time);
     TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
     return ret;
 }
