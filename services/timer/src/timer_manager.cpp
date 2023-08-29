@@ -36,8 +36,8 @@ namespace MiscServices {
 using namespace std::chrono;
 using namespace OHOS::AppExecFwk;
 namespace {
-static int TIME_CHANGED_BITS = 16;
-static int TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
+constexpr uint32_t TIME_CHANGED_BITS = 16;
+constexpr uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
 const int ONE_THOUSAND = 1000;
 const float_t BATCH_WINDOW_COE = 0.75;
 const auto ZERO_FUTURITY = seconds(0);
@@ -424,11 +424,7 @@ void TimerManager::TimerLooper()
     pthread_setname_np(pthread_self(), "timer_loop");
     std::vector<std::shared_ptr<TimerInfo>> triggerList;
     while (runFlag_) {
-        int result = 0;
-        do {
-            result = handler_->WaitForAlarm();
-        } while (result < 0 && errno == EINTR);
-
+        uint32_t result = handler_->WaitForAlarm();
         auto nowRtc = std::chrono::system_clock::now();
         auto nowElapsed = GetBootTimeNs();
         triggerList.clear();

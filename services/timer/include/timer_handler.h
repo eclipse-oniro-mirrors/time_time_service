@@ -34,7 +34,7 @@ class TimerHandler {
 public:
     static std::shared_ptr<TimerHandler> Create();
     int Set(uint32_t type, std::chrono::nanoseconds when);
-    int WaitForAlarm();
+    uint32_t WaitForAlarm();
     ~TimerHandler();
 private:
     TimerHandler(const TimerFds &fds, int epollfd);
