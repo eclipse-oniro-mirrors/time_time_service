@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -18,51 +18,157 @@ import("//build/test.gni")
 import("../../../time.gni")
 
 ##############################fuzztest##########################################
-ohos_fuzztest("TimeServiceFuzzTest") {
-  module_out_path = "time/time_service"
+timeboundarycode_test = {
+  targetName = "TimeBoundaryCodeFuzzTest"
+  configFuzzer = "timeboundarycode_fuzzer"
+  source = "timeboundarycode_fuzzer/timeboundarycode_fuzzer.cpp"
+}
+timecreatetimer_test = {
+  targetName = "TimeCreateTimerFuzzTest"
+  configFuzzer = "timecreatetimer_fuzzer"
+  source = "timecreatetimer_fuzzer/timecreatetimer_fuzzer.cpp"
+}
+timedestroytimer_test = {
+  targetName = "TimeDestroyTimerFuzzTest"
+  configFuzzer = "timedestroytimer_fuzzer"
+  source = "timedestroytimer_fuzzer/timedestroytimer_fuzzer.cpp"
+}
+timegetboottimemilli_test = {
+  targetName = "TimeGetBootTimeMilliFuzzTest"
+  configFuzzer = "timegetboottimemilli_fuzzer"
+  source = "timegetboottimemilli_fuzzer/timegetboottimemilli_fuzzer.cpp"
+}
+timegetboottimenano_test = {
+  targetName = "TimeGetBootTimeNanoFuzzTest"
+  configFuzzer = "timegetboottimenano_fuzzer"
+  source = "timegetboottimenano_fuzzer/timegetboottimenano_fuzzer.cpp"
+}
+timegetmonotimemilli_test = {
+  targetName = "TimeGetMonoTimeMilliFuzzTest"
+  configFuzzer = "timegetmonotimemilli_fuzzer"
+  source = "timegetmonotimemilli_fuzzer/timegetmonotimemilli_fuzzer.cpp"
+}
+timegetmonotimenano_test = {
+  targetName = "TimeGetMonoTimeNanoFuzzTest"
+  configFuzzer = "timegetmonotimenano_fuzzer"
+  source = "timegetmonotimenano_fuzzer/timegetmonotimenano_fuzzer.cpp"
+}
+timegetthreadtimemilli_test = {
+  targetName = "TimeGetThreadTimeMilliFuzzTest"
+  configFuzzer = "timegetthreadtimemilli_fuzzer"
+  source = "timegetthreadtimemilli_fuzzer/timegetthreadtimemilli_fuzzer.cpp"
+}
+timegetthreadtimenano_test = {
+  targetName = "TimeGetThreadTimeNanoFuzzTest"
+  configFuzzer = "timegetthreadtimenano_fuzzer"
+  source = "timegetthreadtimenano_fuzzer/timegetthreadtimenano_fuzzer.cpp"
+}
+timegettimezone_test = {
+  targetName = "TimeGetTimeZoneFuzzTest"
+  configFuzzer = "timegettimezone_fuzzer"
+  source = "timegettimezone_fuzzer/timegettimezone_fuzzer.cpp"
+}
+timegetwalltimemilli_test = {
+  targetName = "TimeGetWallTimeMilliFuzzTest"
+  configFuzzer = "timegetwalltimemilli_fuzzer"
+  source = "timegetwalltimemilli_fuzzer/timegetwalltimemilli_fuzzer.cpp"
+}
+timegetwalltimenano_test = {
+  targetName = "TimeGetWallTimeNanoFuzzTest"
+  configFuzzer = "timegetwalltimenano_fuzzer"
+  source = "timegetwalltimenano_fuzzer/timegetwalltimenano_fuzzer.cpp"
+}
+timereceivedmessage_test = {
+  targetName = "TimeReceivedMessageFuzzTest"
+  configFuzzer = "timereceivedmessage_fuzzer"
+  source = "timereceivedmessage_fuzzer/timereceivedmessage_fuzzer.cpp"
+}
+timeservicesettimezone_test = {
+  targetName = "TimeServiceSetTimeZoneFuzzTest"
+  configFuzzer = "timeservicesettimezone_fuzzer"
+  source = "timeservicesettimezone_fuzzer/timeservicesettimezone_fuzzer.cpp"
+}
+timestarttimer_test = {
+  targetName = "TimeStartTimerFuzzTest"
+  configFuzzer = "timestarttimer_fuzzer"
+  source = "timestarttimer_fuzzer/timestarttimer_fuzzer.cpp"
+}
+timestoptimer_test = {
+  targetName = "TimeStopTimerFuzzTest"
+  configFuzzer = "timestoptimer_fuzzer"
+  source = "timestoptimer_fuzzer/timestoptimer_fuzzer.cpp"
+}
 
-  fuzz_config_file = "${time_root_path}/test/fuzztest/timeservice_fuzzer"
+time_fuzztests = [
+  timeboundarycode_test,
+  timecreatetimer_test,
+  timedestroytimer_test,
+  timegetboottimemilli_test,
+  timegetboottimenano_test,
+  timegetmonotimemilli_test,
+  timegetmonotimenano_test,
+  timegetthreadtimemilli_test,
+  timegetthreadtimenano_test,
+  timegettimezone_test,
+  timegetwalltimemilli_test,
+  timegetwalltimenano_test,
+  timereceivedmessage_test,
+  timeservicesettimezone_test,
+  timestarttimer_test,
+  timestoptimer_test,
+]
 
-  include_dirs = [
-    "${time_service_path}",
-    "${time_service_path}/dfx/include",
-    "${time_service_path}/time/include",
-    "${time_utils_path}/native/include",
-    "${time_service_path}/ipc/stub",
-    "${time_service_path}/ipc/base",
-    "${api_path}/include",
-    "${time_service_path}/timer/include",
-  ]
+foreach(item, time_fuzztests) {
+  ohos_fuzztest(item.targetName) {
+    module_out_path = "time/time_service"
 
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-  ]
+    fuzz_config_file = "${time_root_path}/test/fuzztest/timeservice_fuzzer/${item.configFuzzer}"
 
-  sources = [ "timeservice_fuzzer.cpp" ]
+    include_dirs = [
+      "${time_service_path}",
+      "${time_service_path}/dfx/include",
+      "${time_service_path}/time/include",
+      "${time_utils_path}/native/include",
+      "${time_service_path}/ipc/stub",
+      "${time_service_path}/ipc/base",
+      "${api_path}/include",
+      "${time_service_path}/timer/include",
+      "${time_root_path}/test/fuzztest/timeservice_fuzzer/common",
+    ]
 
-  deps = [
-    "${time_service_path}:time_system_ability_static",
-    "//third_party/jsoncpp:jsoncpp",
-  ]
+    cflags = [
+      "-g",
+      "-O0",
+      "-Wno-unused-variable",
+      "-fno-omit-frame-pointer",
+    ]
 
-  external_deps = [
-    "ability_base:want",
-    "ability_runtime:wantagent_innerkits",
-    "access_token:libaccesstoken_sdk",
-    "access_token:libnativetoken",
-    "access_token:libtoken_setproc",
-    "bundle_framework:appexecfwk_core",
-    "c_utils:utils",
-    "common_event_service:cesfwk_innerkits",
-    "hilog:libhilog",
-    "init:libbegetutil",
-    "ipc:ipc_single",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
-  ]
+    sources = [
+      "common/time_service_fuzz_utils.cpp",
+      item.source,
+    ]
+
+    deps = [
+      "${time_service_path}:time_system_ability_static",
+      "//third_party/jsoncpp:jsoncpp",
+    ]
+
+    external_deps = [
+      "ability_base:want",
+      "ability_runtime:wantagent_innerkits",
+      "access_token:libaccesstoken_sdk",
+      "access_token:libnativetoken",
+      "access_token:libtoken_setproc",
+      "bundle_framework:appexecfwk_core",
+      "c_utils:utils",
+      "common_event_service:cesfwk_innerkits",
+      "hilog:libhilog",
+      "init:libbegetutil",
+      "ipc:ipc_single",
+      "safwk:system_ability_fwk",
+      "samgr:samgr_proxy",
+    ]
+  }
 }
 
 ###############################################################################
@@ -71,7 +177,22 @@ group("fuzztest") {
   deps = []
   deps += [
     # deps file
-    ":TimeServiceFuzzTest",
+    ":TimeBoundaryCodeFuzzTest",
+    ":TimeCreateTimerFuzzTest",
+    ":TimeDestroyTimerFuzzTest",
+    ":TimeGetBootTimeMilliFuzzTest",
+    ":TimeGetBootTimeNanoFuzzTest",
+    ":TimeGetMonoTimeMilliFuzzTest",
+    ":TimeGetMonoTimeNanoFuzzTest",
+    ":TimeGetThreadTimeMilliFuzzTest",
+    ":TimeGetThreadTimeNanoFuzzTest",
+    ":TimeGetTimeZoneFuzzTest",
+    ":TimeGetWallTimeMilliFuzzTest",
+    ":TimeGetWallTimeNanoFuzzTest",
+    ":TimeReceivedMessageFuzzTest",
+    ":TimeServiceSetTimeZoneFuzzTest",
+    ":TimeStartTimerFuzzTest",
+    ":TimeStopTimerFuzzTest",
   ]
 }
 ###############################################################################
