@@ -12,5 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
- FUZZ
+
+#ifndef TEST_FUZZTEST_GETMONOTIMENANO_FUZZER_TIMESERVICE_FUZZER_H
+#define TEST_FUZZTEST_GETMONOTIMENANO_FUZZER_TIMESERVICE_FUZZER_H
+
+#define FUZZ_PROJECT_NAME "timegetmonotimenano_fuzzer"
+
+#endif // TEST_FUZZTEST_GETMONOTIMENANO_FUZZER_TIMESERVICE_FUZZER_H
