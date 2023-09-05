@@ -425,6 +425,7 @@ void TimerManager::TimerLooper()
     std::vector<std::shared_ptr<TimerInfo>> triggerList;
     while (runFlag_) {
         uint32_t result = handler_->WaitForAlarm();
+        TIME_HILOGI(TIME_MODULE_SERVICE, "result: %{public}u", result);
         auto nowRtc = std::chrono::system_clock::now();
         auto nowElapsed = GetBootTimeNs();
         triggerList.clear();
@@ -482,8 +483,11 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
                                        std::chrono::steady_clock::time_point nowElapsed)
 {
     bool hasWakeup = false;
+    TIME_HILOGD(TIME_MODULE_SERVICE, "current time %{public}lld", GetBootTimeNs().time_since_epoch().count());
     while (!alarmBatches_.empty()) {
         auto batch = alarmBatches_.at(0);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "first batch trigger time %{public}lld",
+            batch->GetStart().time_since_epoch().count());
         if (batch->GetStart() > nowElapsed) {
             break;
         }
@@ -495,7 +499,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             auto alarm = batch->Get(i);
             alarm->count = 1;
             triggerList.push_back(alarm);
-            TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d", alarm->uid);
+            TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d, id= %{public}llu", alarm->uid, alarm->id);
             if (mPendingIdleUntil_ != nullptr && mPendingIdleUntil_->id == alarm->id) {
                 TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers.");
                 std::lock_guard<std::mutex> lock(idleTimerMutex_);
@@ -565,7 +569,9 @@ std::shared_ptr<Batch> TimerManager::FindFirstWakeupBatchLocked()
 
 void TimerManager::SetLocked(int type, std::chrono::nanoseconds when)
 {
-    handler_->Set(static_cast<uint32_t>(type), when);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "current bootTime: %{public}lld", GetBootTimeNs().time_since_epoch().count());
+    int ret = handler_->Set(static_cast<uint32_t>(type), when);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer to kernel. ret: %{public}d", ret);
 }
 
 void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
