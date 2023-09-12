@@ -48,6 +48,9 @@ const auto INTERVAL_HALF_DAY = hours(12);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
 const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
+constexpr int32_t USE_LOCK_TIME_IN_MILLI = 2000;
+constexpr int64_t USE_LOCK_TIME_IN_NANO = 2 * NANO_TO_SECOND;
+constexpr int32_t USE_LOCK_DELAY_TIME_IN_MICRO = 10000;
 #ifdef DEVICE_STANDBY_ENABLE
 const int REASON_NATIVE_API = 0;
 const int REASON_APP_API = 1;
@@ -539,6 +542,7 @@ void TimerManager::RescheduleKernelTimerLocked()
         auto firstWakeup = FindFirstWakeupBatchLocked();
         auto firstBatch = alarmBatches_.front();
         if (firstWakeup != nullptr) {
+            HandleRunningLock(firstWakeup);
             auto alarmPtr = firstWakeup->Get(0);
             SetLocked(ELAPSED_REALTIME_WAKEUP, firstWakeup->GetStart().time_since_epoch());
         }
@@ -926,6 +930,35 @@ void TimerManager::HandleRepeatTimer(const std::shared_ptr<TimerInfo> &timer,
             MaxTriggerTime(nowElapsed, nextElapsed, timer->repeatInterval), timer->repeatInterval, timer->callback,
             timer->wantAgent, timer->flags, true, timer->uid, timer->bundleName);
     }
+}
+
+void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
+{
+    auto currentTime = duration_cast<nanoseconds>(GetBootTimeNs().time_since_epoch()).count();
+    auto nextTimerOffset =
+        duration_cast<nanoseconds>(firstWakeup->GetStart().time_since_epoch()).count() - currentTime;
+    auto lockOffset = currentTime - lockExpiredTime_;
+    if (nextTimerOffset > 0 && nextTimerOffset <= USE_LOCK_TIME_IN_NANO &&
+        ((lockOffset < 0 && std::abs(lockOffset) <= nextTimerOffset) || lockOffset >= 0)) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "need create runningLock");
+        lockExpiredTime_ = currentTime + USE_LOCK_TIME_IN_NANO;
+        std::thread lockingThread([this] {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "start add runningLock thread");
+            usleep(USE_LOCK_DELAY_TIME_IN_MICRO);
+            AddRunningLock();
+        });
+        lockingThread.detach();
+    }
+}
+
+void TimerManager::AddRunningLock()
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "create running lock");
+    if (runningLock_ == nullptr || runningLock_->IsUsed()) {
+        runningLock_ = PowerMgr::PowerMgrClient::GetInstance().CreateRunningLock("timeServiceRunningLock",
+            PowerMgr::RunningLockType::RUNNINGLOCK_BACKGROUND_NOTIFICATION);
+    }
+    runningLock_->Lock(USE_LOCK_TIME_IN_MILLI);
 }
 } // MiscServices
 } // OHOS

@@ -41,7 +41,8 @@
         "access_token",
         "hisysevent",
         "device_standby",
-        "init"
+        "init",
+        "power_manager"
       ],
       "third_party": [
         "jsoncpp"

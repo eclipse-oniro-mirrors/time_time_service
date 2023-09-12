@@ -28,6 +28,7 @@
 #include "batch.h"
 #include "timer_handler.h"
 #include "want_agent_helper.h"
+#include "power_mgr_client.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -105,6 +106,8 @@ private:
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustTimersBasedOnDeviceIdle();
     void HandleRepeatTimer(const std::shared_ptr<TimerInfo> &timer, std::chrono::steady_clock::time_point nowElapsed);
+    void HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup);
+    void AddRunningLock();
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     std::default_random_engine random_;
@@ -129,6 +132,8 @@ private:
     // idle timer
     std::shared_ptr<TimerInfo> mPendingIdleUntil_;
     std::mutex idleTimerMutex_;
+    std::shared_ptr<PowerMgr::RunningLock> runningLock_;
+    int64_t lockExpiredTime_ = 0;
 }; // timer_manager
 } // MiscServices
 } // OHOS

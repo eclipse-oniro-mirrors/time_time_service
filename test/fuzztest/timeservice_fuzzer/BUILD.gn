@@ -165,6 +165,7 @@ foreach(item, time_fuzztests) {
       "hilog:libhilog",
       "init:libbegetutil",
       "ipc:ipc_single",
+      "power_manager:powermgr_client",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
