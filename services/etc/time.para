@@ -12,5 +12,5 @@
 # limitations under the License.
 
 persist.time.timezone = "Asia/Shanghai"
-persist.time.ntpserver = "ntp.aliyun.com"
+persist.time.ntpserver = "ntp.aliyun.com, ntp.ntsc.ac.cn, time.cloud.tencent.com, cn.pool.ntp.org, cn.ntp.org.cn"
 persist.time.ntpserver_specific = "ntp.aliyun.com"

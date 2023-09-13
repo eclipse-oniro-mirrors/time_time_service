@@ -171,10 +171,35 @@ void NtpUpdateTime::UpdateNITZSetTime()
     nitzUpdateTimeMilli_ = bootTimeMilli;
 }
 
+
+std::vector<std::string> NtpUpdateTime::InterceptData(const std::string &in)
+{
+    std::vector<std::string> npts;
+    std::string ntpServer = in;
+    size_t pos = ntpServer.find(",");
+    while (pos != ntpServer.npos) {
+        std::string temp = ntpServer.substr(0, pos);
+        npts.push_back(temp);
+        ntpServer = ntpServer.substr(pos + 2, ntpServer.size());
+        pos = ntpServer.find(",");
+    }
+    npts.push_back(ntpServer);
+    return npts;
+}
+
 void NtpUpdateTime::SetSystemTime()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    if (!NtpTrustedTime::GetInstance().ForceRefresh(autoTimeInfo_.NTP_SERVER)) {
+    bool ret = false;
+    std::vector<std::string> npts = InterceptData(autoTimeInfo_.NTP_SERVER);
+    for (size_t i = 0; i < npts.size(); i++) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", npts[i].c_str());
+        ret = NtpTrustedTime::GetInstance().ForceRefresh(npts[i]);
+        if (ret) {
+            break;
+        }
+    }
+    if (!ret) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed.");
         return;
     }
@@ -280,6 +305,7 @@ void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, 
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "set time for ntp server changed");
     std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER.c_str(), "ntp.aliyun.com");
+    TIME_HILOGE(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpServer.c_str());
     if (ntpServer.empty()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter.");
         return;
