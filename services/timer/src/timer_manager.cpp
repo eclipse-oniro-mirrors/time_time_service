@@ -481,6 +481,27 @@ steady_clock::time_point TimerManager::GetBootTimeNs()
     return tp_epoch;
 }
 
+void TimerManager::TriggerIdleTimer()
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers.");
+    std::lock_guard<std::mutex> lock(idleTimerMutex_);
+    mPendingIdleUntil_ = nullptr;
+    delayedTimers_.clear();
+    std::for_each(pendingDelayTimers_.begin(), pendingDelayTimers_.end(),
+        [this](const std::shared_ptr<TimerInfo> &pendingTimer) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", pendingTimer->id);
+            if (pendingTimer->whenElapsed > GetBootTimeNs()) {
+                pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), pendingTimer->offset);
+            } else {
+                // 2 means the time of performing task.
+                pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), milliseconds(2));
+            }
+            SetHandlerLocked(pendingTimer, false, true, false);
+        });
+    pendingDelayTimers_.clear();
+    ReBatchAllTimers();
+}
+
 bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &triggerList,
                                        std::chrono::steady_clock::time_point nowElapsed)
 {
@@ -491,8 +512,8 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             break;
         }
         alarmBatches_.erase(alarmBatches_.begin());
-        TIME_HILOGI(TIME_MODULE_SERVICE, "after erase alarmBatches_.size= %{public}d",
-                    static_cast<int>(alarmBatches_.size()));
+        TIME_HILOGI(
+            TIME_MODULE_SERVICE, "after erase alarmBatches_.size= %{public}d", static_cast<int>(alarmBatches_.size()));
         const auto n = batch->Size();
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
@@ -500,24 +521,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             triggerList.push_back(alarm);
             TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d", alarm->uid);
             if (mPendingIdleUntil_ != nullptr && mPendingIdleUntil_->id == alarm->id) {
-                TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers.");
-                std::lock_guard<std::mutex> lock(idleTimerMutex_);
-                mPendingIdleUntil_ = nullptr;
-                delayedTimers_.clear();
-                std::for_each(pendingDelayTimers_.begin(), pendingDelayTimers_.end(),
-                    [this] (const std::shared_ptr<TimerInfo> &pendingTimer) {
-                    TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "",
-                        pendingTimer->id);
-                    if (pendingTimer->whenElapsed > GetBootTimeNs()) {
-                        pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), pendingTimer->offset);
-                    } else {
-                        // 2 means the time of performing task.
-                        pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), milliseconds(2));
-                    }
-                    SetHandlerLocked(pendingTimer, false, true, false);
-                });
-                pendingDelayTimers_.clear();
-                ReBatchAllTimers();
+                TriggerIdleTimer();
             }
 
             HandleRepeatTimer(alarm, nowElapsed);
@@ -528,9 +532,9 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         }
     }
     std::sort(triggerList.begin(), triggerList.end(),
-              [] (const std::shared_ptr<TimerInfo> &l, const std::shared_ptr<TimerInfo> &r) {
-                  return l->whenElapsed < r->whenElapsed;
-              });
+        [](const std::shared_ptr<TimerInfo> &l, const std::shared_ptr<TimerInfo> &r) {
+            return l->whenElapsed < r->whenElapsed;
+        });
 
     return hasWakeup;
 }

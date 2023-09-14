@@ -32,7 +32,7 @@ public:
     ~TimerNotifyCallbackProxy();
     DISALLOW_COPY_AND_MOVE(TimerNotifyCallbackProxy);
 
-    void Finish(const uint64_t timerId) override;
+    void Finish(uint64_t timerId) override;
 private:
     static inline BrokerDelegator<TimerNotifyCallbackProxy> delegator_;
 };

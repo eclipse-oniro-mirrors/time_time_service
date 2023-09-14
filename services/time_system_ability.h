@@ -59,7 +59,7 @@ public:
     int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
         uint64_t &timerId) override;
     int32_t CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> Callback, uint64_t &timerId);
-    int32_t StartTimer(uint64_t timerId, uint64_t triggerTimes) override;
+    int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
