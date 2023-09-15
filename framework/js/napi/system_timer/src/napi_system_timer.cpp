@@ -219,7 +219,7 @@ napi_value NapiSystemTimer::CreateTimer(napi_env env, napi_callback_info info)
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, createTimerContext,
             "convert native object to javascript object failed", ERROR);
     };
-    return NapiAsyncWork::Enqueue(env, createTimerContext, "SetTime", executor, complete);
+    return NapiWork::AsyncEnqueue(env, createTimerContext, "SetTime", executor, complete);
 }
 
 napi_value NapiSystemTimer::StartTimer(napi_env env, napi_callback_info info)
@@ -254,7 +254,7 @@ napi_value NapiSystemTimer::StartTimer(napi_env env, napi_callback_info info)
         }
     };
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
-    return NapiAsyncWork::Enqueue(env, startTimerContext, "StartTimer", executor, complete);
+    return NapiWork::AsyncEnqueue(env, startTimerContext, "StartTimer", executor, complete);
 }
 
 napi_value NapiSystemTimer::StopTimer(napi_env env, napi_callback_info info)
@@ -282,7 +282,7 @@ napi_value NapiSystemTimer::StopTimer(napi_env env, napi_callback_info info)
         }
     };
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
-    return NapiAsyncWork::Enqueue(env, stopTimerContext, "StopTimer", executor, complete);
+    return NapiWork::AsyncEnqueue(env, stopTimerContext, "StopTimer", executor, complete);
 }
 
 napi_value NapiSystemTimer::DestroyTimer(napi_env env, napi_callback_info info)
@@ -311,7 +311,7 @@ napi_value NapiSystemTimer::DestroyTimer(napi_env env, napi_callback_info info)
     };
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
 
-    return NapiAsyncWork::Enqueue(env, destroyTimerContext, "DestroyTimer", executor, complete);
+    return NapiWork::AsyncEnqueue(env, destroyTimerContext, "DestroyTimer", executor, complete);
 }
 } // namespace Time
 } // namespace MiscServices

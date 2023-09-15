@@ -29,8 +29,8 @@ namespace OHOS {
 namespace MiscServices {
 namespace Time {
 using NapiCbInfoParser = std::function<void(size_t argc, napi_value *argv)>;
-using NapiAsyncExecute = std::function<void(void)>;
-using NapiAsyncComplete = std::function<void(napi_value &)>;
+using NapiExecute = std::function<void(void)>;
+using NapiComplete = std::function<void(napi_value &)>;
 
 struct ContextBase {
     virtual ~ContextBase();
@@ -40,7 +40,7 @@ struct ContextBase {
     napi_env env = nullptr;
     napi_value output = nullptr;
     napi_status status = napi_invalid_arg;
-    std::string errMessage = "";
+    std::string errMessage;
     int32_t errCode = 0;
     napi_value self = nullptr;
 
@@ -50,18 +50,20 @@ private:
     napi_ref callbackRef = nullptr;
     napi_ref selfRef = nullptr;
 
-    NapiAsyncExecute execute = nullptr;
-    NapiAsyncComplete complete = nullptr;
+    NapiExecute execute = nullptr;
+    NapiComplete complete = nullptr;
 
     static constexpr size_t ARGC_MAX = 3;
 
-    friend class NapiAsyncWork;
+    friend class NapiWork;
 };
 
-class NapiAsyncWork {
+class NapiWork {
 public:
-    static napi_value Enqueue(napi_env env, ContextBase *ctxt, const std::string &name,
-        NapiAsyncExecute execute = NapiAsyncExecute(), NapiAsyncComplete complete = NapiAsyncComplete());
+    static napi_value AsyncEnqueue(napi_env env, ContextBase *ctxt, const std::string &name,
+        NapiExecute execute = NapiExecute(), NapiComplete complete = NapiComplete());
+    static napi_value SyncEnqueue(napi_env env, ContextBase *ctxt, const std::string &name,
+                              NapiExecute execute = NapiExecute(), NapiComplete complete = NapiComplete());
 
 private:
     enum {
@@ -71,6 +73,7 @@ private:
         RESULT_ALL = 2
     };
     static void GenerateOutput(ContextBase *ctxt);
+    static napi_value GenerateOutputSync(napi_env env, ContextBase *ctxt);
 };
 } // namespace Time
 } // namespace MiscServices
