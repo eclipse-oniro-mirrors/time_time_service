@@ -90,6 +90,7 @@ private:
     void InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm);
     int64_t AttemptCoalesceLocked(std::chrono::steady_clock::time_point whenElapsed,
                                   std::chrono::steady_clock::time_point maxWhen);
+    void TriggerIdleTimer();
     bool TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &triggerList,
                              std::chrono::steady_clock::time_point nowElapsed);
     void RescheduleKernelTimerLocked();

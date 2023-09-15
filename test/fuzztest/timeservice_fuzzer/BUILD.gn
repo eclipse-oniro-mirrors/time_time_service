@@ -120,7 +120,7 @@ time_fuzztests = [
 
 foreach(item, time_fuzztests) {
   ohos_fuzztest(item.targetName) {
-    module_out_path = "time/time_service"
+    module_out_path = "time_service/time"
 
     fuzz_config_file = "${time_root_path}/test/fuzztest/timeservice_fuzzer/${item.configFuzzer}"
 
