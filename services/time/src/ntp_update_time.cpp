@@ -44,6 +44,7 @@ const std::string NETWORK_TIME_STATUS_ON = "ON";
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NTP_SERVER_SYSTEM_PARAMETER = "persist.time.ntpserver";
 const int64_t INVALID_TIMES = -1;
+const uint32_t NTP_MAX_SIZE = 5;
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_ {};
@@ -172,29 +173,36 @@ void NtpUpdateTime::UpdateNITZSetTime()
 }
 
 
-std::vector<std::string> NtpUpdateTime::InterceptData(const std::string &in)
+std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
 {
-    std::vector<std::string> npts;
-    std::string ntpServer = in;
-    size_t pos = ntpServer.find(",");
-    while (pos != ntpServer.npos) {
-        std::string temp = ntpServer.substr(0, pos);
-        npts.push_back(temp);
-        ntpServer = ntpServer.substr(pos + 2, ntpServer.size());
-        pos = ntpServer.find(",");
-    }
-    npts.push_back(ntpServer);
-    return npts;
+    std::vector<std::string> ntpList;
+    size_t start = 0;
+    do {
+        size_t end = ntpStr.find(',', start);
+        std::string temp = ntpStr.substr(start, end - start);
+        if (temp.empty()) {
+            ++start;
+            continue;
+        }
+        if (end == std::string::npos) {
+            ntpList.emplace_back(temp);
+            break;
+        }
+        ntpList.emplace_back(temp);
+        start = end + 1;
+    } while (start < ntpStr.size());
+    return ntpList;
 }
 
 void NtpUpdateTime::SetSystemTime()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     bool ret = false;
-    std::vector<std::string> npts = InterceptData(autoTimeInfo_.NTP_SERVER);
-    for (size_t i = 0; i < npts.size(); i++) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", npts[i].c_str());
-        ret = NtpTrustedTime::GetInstance().ForceRefresh(npts[i]);
+    std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.NTP_SERVER);
+    size_t size = ntpList.size() < NTP_MAX_SIZE ? ntpList.size() : NTP_MAX_SIZE;
+    for (size_t i = 0; i < size; i++) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpList[i].c_str());
+        ret = NtpTrustedTime::GetInstance().ForceRefresh(ntpList[i]);
         if (ret) {
             break;
         }
@@ -305,7 +313,6 @@ void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, 
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "set time for ntp server changed");
     std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER.c_str(), "ntp.aliyun.com");
-    TIME_HILOGE(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpServer.c_str());
     if (ntpServer.empty()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter.");
         return;
