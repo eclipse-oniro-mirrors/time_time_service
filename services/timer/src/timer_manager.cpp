@@ -963,12 +963,16 @@ void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
 
 void TimerManager::AddRunningLock()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "create running lock");
-    if (runningLock_ == nullptr || runningLock_->IsUsed()) {
+    if (runningLock_ == nullptr) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "runningLock is nullptr, create runningLock");
         runningLock_ = PowerMgr::PowerMgrClient::GetInstance().CreateRunningLock("timeServiceRunningLock",
             PowerMgr::RunningLockType::RUNNINGLOCK_BACKGROUND_NOTIFICATION);
     }
-    runningLock_->Lock(USE_LOCK_TIME_IN_MILLI);
+    if (runningLock_ != nullptr) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "runningLock is not nullptr");
+        runningLock_->UnLock();
+        runningLock_->Lock(USE_LOCK_TIME_IN_MILLI);
+    }
 }
 } // MiscServices
 } // OHOS
