@@ -42,6 +42,7 @@ private:
     static void ChangeNtpServerCallback(const char *key, const char *value, void *context);
     static bool GetAutoTimeInfoFromFile(AutoTimeInfo &info);
     static bool SaveAutoTimeInfoToFile(const AutoTimeInfo &info);
+    static std::vector<std::string> SplitNtpAddrs(const std::string &ntpStr);
     void SubscriberNITZTimeChangeCommonEvent();
     void StartTimer();
     void RefreshNextTriggerTime();

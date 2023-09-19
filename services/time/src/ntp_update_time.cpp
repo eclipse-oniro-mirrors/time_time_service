@@ -44,6 +44,7 @@ const std::string NETWORK_TIME_STATUS_ON = "ON";
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NTP_SERVER_SYSTEM_PARAMETER = "persist.time.ntpserver";
 const int64_t INVALID_TIMES = -1;
+const uint32_t NTP_MAX_SIZE = 5;
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_ {};
@@ -171,10 +172,42 @@ void NtpUpdateTime::UpdateNITZSetTime()
     nitzUpdateTimeMilli_ = bootTimeMilli;
 }
 
+
+std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
+{
+    std::vector<std::string> ntpList;
+    size_t start = 0;
+    do {
+        size_t end = ntpStr.find(',', start);
+        std::string temp = ntpStr.substr(start, end - start);
+        if (temp.empty()) {
+            ++start;
+            continue;
+        }
+        if (end == std::string::npos) {
+            ntpList.emplace_back(temp);
+            break;
+        }
+        ntpList.emplace_back(temp);
+        start = end + 1;
+    } while (start < ntpStr.size());
+    return ntpList;
+}
+
 void NtpUpdateTime::SetSystemTime()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    if (!NtpTrustedTime::GetInstance().ForceRefresh(autoTimeInfo_.NTP_SERVER)) {
+    bool ret = false;
+    std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.NTP_SERVER);
+    size_t size = ntpList.size() < NTP_MAX_SIZE ? ntpList.size() : NTP_MAX_SIZE;
+    for (size_t i = 0; i < size; i++) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpList[i].c_str());
+        ret = NtpTrustedTime::GetInstance().ForceRefresh(ntpList[i]);
+        if (ret) {
+            break;
+        }
+    }
+    if (!ret) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed.");
         return;
     }
