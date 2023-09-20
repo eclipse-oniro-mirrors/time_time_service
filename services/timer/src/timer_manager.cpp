@@ -929,11 +929,12 @@ void TimerManager::HandleRSSDeath()
     }
 }
 
-void TimerManager::HandleRepeatTimer(const std::shared_ptr<TimerInfo> &timer,
-    std::chrono::steady_clock::time_point nowElapsed)
+void TimerManager::HandleRepeatTimer(
+    const std::shared_ptr<TimerInfo> &timer, std::chrono::steady_clock::time_point nowElapsed)
 {
     if (timer->repeatInterval > milliseconds::zero()) {
-        timer->count += duration_cast<milliseconds>(nowElapsed - timer->expectedWhenElapsed) / timer->repeatInterval;
+        timer->count += static_cast<uint64_t>(
+            duration_cast<milliseconds>(nowElapsed - timer->expectedWhenElapsed) / timer->repeatInterval);
         auto delta = timer->count * timer->repeatInterval;
         auto nextElapsed = timer->whenElapsed + delta;
         SetHandlerLocked(timer->id, timer->type, timer->when + delta, nextElapsed, timer->windowLength,

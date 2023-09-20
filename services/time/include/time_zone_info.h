@@ -37,6 +37,7 @@ public:
 
 private:
     std::string curTimezoneId_;
+    std::mutex timezoneMutex_;
 };
 } // namespace MiscServices
 } // namespace OHOS

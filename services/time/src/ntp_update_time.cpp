@@ -169,9 +169,8 @@ void NtpUpdateTime::UpdateNITZSetTime()
     auto bootTimeNano = steady_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
     TIME_HILOGD(TIME_MODULE_SERVICE, "nitz time changed.");
-    nitzUpdateTimeMilli_ = bootTimeMilli;
+    nitzUpdateTimeMilli_ = static_cast<uint64_t>(bootTimeMilli);
 }
-
 
 std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
 {
