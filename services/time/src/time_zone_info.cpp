@@ -49,6 +49,7 @@ void TimeZoneInfo::Init()
 
 bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
 {
+    std::lock_guard<std::mutex> lock(timezoneMutex_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "Set timezone");
     if (curTimezoneId_ == timezoneId) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Same Timezone has been set.");
