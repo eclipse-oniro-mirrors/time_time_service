@@ -21,7 +21,8 @@
 namespace OHOS {
 namespace MiscServices {
 struct AutoTimeInfo {
-    std::string NTP_SERVER;
+    std::string ntpServer;
+    std::string ntpServerSpec;
     std::string status;
     int64_t lastUpdateTime;
 };
