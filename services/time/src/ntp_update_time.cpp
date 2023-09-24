@@ -43,6 +43,7 @@ const std::string AUTOTIME_FILE_PATH = "/data/service/el1/public/time/autotime.j
 const std::string NETWORK_TIME_STATUS_ON = "ON";
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NTP_SERVER_SYSTEM_PARAMETER = "persist.time.ntpserver";
+const std::string NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER = "persist.time.ntpserver_specific";
 const int64_t INVALID_TIMES = -1;
 const uint32_t NTP_MAX_SIZE = 5;
 } // namespace
@@ -62,14 +63,16 @@ void NtpUpdateTime::Init()
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp Update Time start.");
     SubscriberNITZTimeChangeCommonEvent();
     std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, "ntp.aliyun.com");
-    if (ntpServer.empty()) {
+    std::string ntpServerSpec = system::GetParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER, "");
+    if (ntpServer.empty() && ntpServerSpec.empty()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter.");
         return;
     }
     RegisterNtpServerListener();
     if (!GetAutoTimeInfoFromFile(autoTimeInfo_)) {
         autoTimeInfo_.lastUpdateTime = INVALID_TIMES;
-        autoTimeInfo_.NTP_SERVER = ntpServer;
+        autoTimeInfo_.ntpServer = ntpServer;
+        autoTimeInfo_.ntpServerSpec = ntpServerSpec;
         autoTimeInfo_.status = NETWORK_TIME_STATUS_ON;
         if (!SaveAutoTimeInfoToFile(autoTimeInfo_)) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "end, SaveAutoTimeInfoToFile failed.");
@@ -80,7 +83,6 @@ void NtpUpdateTime::Init()
             return;
         }
     }
-
     std::thread th = std::thread([this]() {
         pthread_setname_np(pthread_self(), "time_monitor_network");
         constexpr int RETRY_MAX_TIMES = 100;
@@ -95,16 +97,13 @@ void NtpUpdateTime::Init()
         } while (retryCount < RETRY_MAX_TIMES);
     });
     th.detach();
-
     int32_t timerType = ITimerManager::TimerType::ELAPSED_REALTIME;
     auto callback = [this](uint64_t id) { this->RefreshNetworkTimeByTimer(id); };
-
     TimerPara timerPara{};
     timerPara.timerType = timerType;
     timerPara.windowLength = 0;
     timerPara.interval = DAY_TO_MILLISECOND;
     timerPara.flag = 0;
-
     TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update timerId: %{public}" PRId64 "", timerId_);
     RefreshNextTriggerTime();
@@ -177,6 +176,9 @@ std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
     std::vector<std::string> ntpList;
     size_t start = 0;
     do {
+        if (ntpList.size() == NTP_MAX_SIZE) {
+            break;
+        }
         size_t end = ntpStr.find(',', start);
         std::string temp = ntpStr.substr(start, end - start);
         if (temp.empty()) {
@@ -197,11 +199,12 @@ void NtpUpdateTime::SetSystemTime()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     bool ret = false;
-    std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.NTP_SERVER);
-    size_t size = ntpList.size() < NTP_MAX_SIZE ? ntpList.size() : NTP_MAX_SIZE;
-    for (size_t i = 0; i < size; i++) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpList[i].c_str());
-        ret = NtpTrustedTime::GetInstance().ForceRefresh(ntpList[i]);
+    std::vector<std::string> ntpSpecList = SplitNtpAddrs(autoTimeInfo_.ntpServerSpec);
+    std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.ntpServer);
+    ntpSpecList.insert(ntpSpecList.end(), ntpList.begin(), ntpList.end());
+    for (size_t i = 0; i < ntpSpecList.size(); i++) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpSpecList[i].c_str());
+        ret = NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[i]);
         if (ret) {
             break;
         }
@@ -273,10 +276,12 @@ bool NtpUpdateTime::GetAutoTimeInfoFromFile(AutoTimeInfo &info)
         return false;
     }
     info.status = jsonValue["status"].asString();
-    info.NTP_SERVER = jsonValue["ntpServer"].asString();
+    info.ntpServer = jsonValue["ntpServer"].asString();
+    info.ntpServerSpec = jsonValue["ntpServerSpec"].asString();
     info.lastUpdateTime = jsonValue["lastUpdateTime"].asInt64();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Read file %{public}s.", info.status.c_str());
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Read file %{public}s.", info.NTP_SERVER.c_str());
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Read file %{public}s.", info.ntpServer.c_str());
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Read file %{public}s.", info.ntpServerSpec.c_str());
     TIME_HILOGD(TIME_MODULE_SERVICE, "Read file %{public}" PRId64 "", info.lastUpdateTime);
     ifs.close();
     return true;
@@ -288,14 +293,16 @@ bool NtpUpdateTime::SaveAutoTimeInfoToFile(const AutoTimeInfo &info)
     std::ofstream ofs;
     ofs.open(AUTOTIME_FILE_PATH);
     jsonValue["status"] = info.status;
-    jsonValue["ntpServer"] = info.NTP_SERVER;
+    jsonValue["ntpServer"] = info.ntpServer;
+    jsonValue["ntpServerSpec"] = info.ntpServerSpec;
     jsonValue["lastUpdateTime"] = info.lastUpdateTime;
     Json::StreamWriterBuilder builder;
     const std::string json_file = Json::writeString(builder, jsonValue);
     ofs << json_file;
     ofs.close();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}s.", info.status.c_str());
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}s.", info.NTP_SERVER.c_str());
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}s.", info.ntpServer.c_str());
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}s.", info.ntpServerSpec.c_str());
     TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}" PRId64 "", info.lastUpdateTime);
     return true;
 }
@@ -303,6 +310,11 @@ bool NtpUpdateTime::SaveAutoTimeInfoToFile(const AutoTimeInfo &info)
 void NtpUpdateTime::RegisterNtpServerListener()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "register ntp server lister");
+    if (SystemWatchParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER.c_str(), ChangeNtpServerCallback, nullptr)
+        != E_TIME_OK) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "register specific ntp server lister fail");
+    }
+
     if (SystemWatchParameter(NTP_SERVER_SYSTEM_PARAMETER.c_str(), ChangeNtpServerCallback, nullptr) != E_TIME_OK) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "register ntp server lister fail");
     }
@@ -311,8 +323,9 @@ void NtpUpdateTime::RegisterNtpServerListener()
 void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, void *context)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "set time for ntp server changed");
-    std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER.c_str(), "ntp.aliyun.com");
-    if (ntpServer.empty()) {
+    std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, "ntp.aliyun.com");
+    std::string ntpServerSpec = system::GetParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER, "");
+    if (ntpServer.empty() && ntpServerSpec.empty()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter.");
         return;
     }
@@ -320,7 +333,8 @@ void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, 
         autoTimeInfo_.lastUpdateTime = INVALID_TIMES;
         autoTimeInfo_.status = NETWORK_TIME_STATUS_ON;
     }
-    autoTimeInfo_.NTP_SERVER = ntpServer;
+    autoTimeInfo_.ntpServer = ntpServer;
+    autoTimeInfo_.ntpServerSpec = ntpServerSpec;
     if (!SaveAutoTimeInfoToFile(autoTimeInfo_)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "end, SaveAutoTimeInfoToFile failed.");
         return;
