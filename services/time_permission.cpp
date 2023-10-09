@@ -34,7 +34,8 @@ bool TimePermission::CheckCallingPermission(const std::string &permissionName)
     int result = Security::AccessToken::PERMISSION_DENIED;
     if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL) {
         result = Security::AccessToken::PERMISSION_GRANTED;
-    } else if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_HAP) {
+    } else if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_HAP ||
+               tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {
         result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
     } else {
         TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, callerToken:%{public}u,tokenType:%{public}d",
