@@ -51,6 +51,7 @@ const int WANTAGENT_CODE_ELEVEN = 11;
 constexpr int32_t USE_LOCK_TIME_IN_MILLI = 2000;
 constexpr int64_t USE_LOCK_TIME_IN_NANO = 2 * NANO_TO_SECOND;
 constexpr int32_t USE_LOCK_DELAY_TIME_IN_MICRO = 10000;
+constexpr int32_t MAX_RETRY_LOCK_TIMES = 3;
 #ifdef DEVICE_STANDBY_ENABLE
 const int REASON_NATIVE_API = 0;
 const int REASON_APP_API = 1;
@@ -955,8 +956,12 @@ void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
         lockExpiredTime_ = currentTime + USE_LOCK_TIME_IN_NANO;
         std::thread lockingThread([this] {
             TIME_HILOGI(TIME_MODULE_SERVICE, "start add runningLock thread");
-            usleep(USE_LOCK_DELAY_TIME_IN_MICRO);
-            AddRunningLock();
+            int32_t retryCount = 0;
+            while(retryCount < MAX_RETRY_LOCK_TIMES) {
+                AddRunningLock();
+                usleep(USE_LOCK_DELAY_TIME_IN_MICRO);
+                ++retryCount;
+            }
         });
         lockingThread.detach();
     }
