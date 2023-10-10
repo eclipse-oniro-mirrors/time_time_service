@@ -957,7 +957,7 @@ void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
         std::thread lockingThread([this] {
             TIME_HILOGI(TIME_MODULE_SERVICE, "start add runningLock thread");
             int32_t retryCount = 0;
-            while(retryCount < MAX_RETRY_LOCK_TIMES) {
+            while (retryCount < MAX_RETRY_LOCK_TIMES) {
                 AddRunningLock();
                 usleep(USE_LOCK_DELAY_TIME_IN_MICRO);
                 ++retryCount;
