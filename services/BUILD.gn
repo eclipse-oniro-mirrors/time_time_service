@@ -84,6 +84,13 @@ ohos_shared_library("time_system_ability") {
     external_deps += [ "device_standby:standby_innerkits" ]
     defines += [ "DEVICE_STANDBY_ENABLE" ]
   }
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    blocklist = "./time_blocklist.txt"
+    debug = time_sanitize_debug
+  }
   part_name = "time_service"
   subsystem_name = "time"
 }
@@ -142,6 +149,12 @@ ohos_static_library("time_system_ability_static") {
   if (device_standby) {
     external_deps += [ "device_standby:standby_innerkits" ]
     defines += [ "DEVICE_STANDBY_ENABLE" ]
+  }
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    debug = time_sanitize_debug
   }
   part_name = "time_service"
   subsystem_name = "time"

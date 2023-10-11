@@ -45,8 +45,13 @@ ohos_shared_library("systemdatetime") {
     "napi:ace_napi",
   ]
 
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    debug = time_sanitize_debug
+  }
   relative_install_dir = "module"
-
   subsystem_name = "time"
   part_name = "time_service"
 }
