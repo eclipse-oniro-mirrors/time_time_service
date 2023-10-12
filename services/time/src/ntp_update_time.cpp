@@ -46,6 +46,9 @@ const std::string NTP_SERVER_SYSTEM_PARAMETER = "persist.time.ntpserver";
 const std::string NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER = "persist.time.ntpserver_specific";
 const int64_t INVALID_TIMES = -1;
 const uint32_t NTP_MAX_SIZE = 5;
+const std::string AUTO_TIME_SYSTEM_PARAMETER = "persist.time.auto_time";
+const std::string AUTO_TIME_STATUS_ON = "ON";
+const std::string AUTO_TIME_STATUS_OFF = "OFF";
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_ {};
@@ -64,43 +67,29 @@ void NtpUpdateTime::Init()
     SubscriberNITZTimeChangeCommonEvent();
     std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, "ntp.aliyun.com");
     std::string ntpServerSpec = system::GetParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER, "");
-    if (ntpServer.empty() && ntpServerSpec.empty()) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter.");
+    std::string autoTime = system::GetParameter(AUTO_TIME_SYSTEM_PARAMETER, "ON");
+    if ((ntpServer.empty() && ntpServerSpec.empty()) || autoTime.empty()) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "No found parameter from system parameter.");
         return;
     }
-    RegisterNtpServerListener();
+    RegisterSystemParameterListener();
     if (!GetAutoTimeInfoFromFile(autoTimeInfo_)) {
         autoTimeInfo_.lastUpdateTime = INVALID_TIMES;
-        autoTimeInfo_.ntpServer = ntpServer;
-        autoTimeInfo_.ntpServerSpec = ntpServerSpec;
-        autoTimeInfo_.status = NETWORK_TIME_STATUS_ON;
-        if (!SaveAutoTimeInfoToFile(autoTimeInfo_)) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "end, SaveAutoTimeInfoToFile failed.");
-            return;
-        }
-        if (!GetAutoTimeInfoFromFile(autoTimeInfo_)) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "end, GetAutoTimeInfoFromFile failed.");
-            return;
-        }
     }
+    autoTimeInfo_.ntpServer = ntpServer;
+    autoTimeInfo_.ntpServerSpec = ntpServerSpec;
+    autoTimeInfo_.status = autoTime;
+    SaveAutoTimeInfoToFile(autoTimeInfo_);
     std::thread th = std::thread([this]() {
         pthread_setname_np(pthread_self(), "time_monitor_network");
-        constexpr int RETRY_MAX_TIMES = 100;
-        int retryCount = 0;
-        constexpr int RETRY_TIME_INTERVAL_MILLISECOND = 1 * 1000 * 1000; // retry after 2 second
-        do {
-            if (this->MonitorNetwork() == NETMANAGER_SUCCESS) {
-                break;
-            }
-            retryCount++;
-            usleep(RETRY_TIME_INTERVAL_MILLISECOND);
-        } while (retryCount < RETRY_MAX_TIMES);
+        if (this->MonitorNetwork() != NETMANAGER_SUCCESS) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "monitor network failed");
+        }
     });
     th.detach();
-    int32_t timerType = ITimerManager::TimerType::ELAPSED_REALTIME;
     auto callback = [this](uint64_t id) { this->RefreshNetworkTimeByTimer(id); };
     TimerPara timerPara{};
-    timerPara.timerType = timerType;
+    timerPara.timerType = static_cast<int>(ITimerManager::TimerType::ELAPSED_REALTIME);
     timerPara.windowLength = 0;
     timerPara.interval = DAY_TO_MILLISECOND;
     timerPara.flag = 0;
@@ -198,6 +187,10 @@ std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
 void NtpUpdateTime::SetSystemTime()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    if (autoTimeInfo_.status != AUTO_TIME_STATUS_ON) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "auto sync switch off");
+        return;
+    }
     bool ret = false;
     std::vector<std::string> ntpSpecList = SplitNtpAddrs(autoTimeInfo_.ntpServerSpec);
     std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.ntpServer);
@@ -238,7 +231,7 @@ void NtpUpdateTime::RefreshNextTriggerTime()
 
 bool NtpUpdateTime::CheckStatus()
 {
-    return autoTimeInfo_.status == NETWORK_TIME_STATUS_ON;
+    return autoTimeInfo_.status == AUTO_TIME_STATUS_ON;
 }
 
 bool NtpUpdateTime::IsValidNITZTime()
@@ -307,9 +300,9 @@ bool NtpUpdateTime::SaveAutoTimeInfoToFile(const AutoTimeInfo &info)
     return true;
 }
 
-void NtpUpdateTime::RegisterNtpServerListener()
+void NtpUpdateTime::RegisterSystemParameterListener()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "register ntp server lister");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "register system parameter modify lister");
     if (SystemWatchParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER.c_str(), ChangeNtpServerCallback, nullptr)
         != E_TIME_OK) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "register specific ntp server lister fail");
@@ -317,6 +310,10 @@ void NtpUpdateTime::RegisterNtpServerListener()
 
     if (SystemWatchParameter(NTP_SERVER_SYSTEM_PARAMETER.c_str(), ChangeNtpServerCallback, nullptr) != E_TIME_OK) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "register ntp server lister fail");
+    }
+
+    if (SystemWatchParameter(AUTO_TIME_SYSTEM_PARAMETER.c_str(), ChangeAutoTimeCallback, nullptr) != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "register auto sync switch lister fail");
     }
 }
 
@@ -329,17 +326,30 @@ void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, 
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter.");
         return;
     }
-    if (!GetAutoTimeInfoFromFile(autoTimeInfo_)) {
-        autoTimeInfo_.lastUpdateTime = INVALID_TIMES;
-        autoTimeInfo_.status = NETWORK_TIME_STATUS_ON;
-    }
     autoTimeInfo_.ntpServer = ntpServer;
     autoTimeInfo_.ntpServerSpec = ntpServerSpec;
-    if (!SaveAutoTimeInfoToFile(autoTimeInfo_)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "end, SaveAutoTimeInfoToFile failed.");
+    SetSystemTime();
+    SaveAutoTimeInfoToFile(autoTimeInfo_);
+}
+
+void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, void *context)
+{
+    if (key == nullptr || value == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "key or value is nullptr");
         return;
     }
+    if (AUTO_TIME_SYSTEM_PARAMETER.compare(key) != 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "incorrect key:%{public}s", key);
+        return;
+    }
+
+    if (AUTO_TIME_STATUS_ON.compare(value) != 0 && AUTO_TIME_STATUS_OFF.compare(value) != 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "incorrect value:%{public}s", value);
+        return;
+    }
+    autoTimeInfo_.status = std::string(value);
     SetSystemTime();
+    SaveAutoTimeInfoToFile(autoTimeInfo_);
 }
 } // namespace MiscServices
 } // namespace OHOS

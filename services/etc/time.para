@@ -14,3 +14,4 @@
 persist.time.timezone = "Asia/Shanghai"
 persist.time.ntpserver = "ntp.aliyun.com"
 persist.time.ntpserver_specific = ""
+persist.time.auto_time = "ON"
