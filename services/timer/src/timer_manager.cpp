@@ -631,11 +631,14 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
 void TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "trigger wantAgent.");
-    std::shared_ptr<AAFwk::Want> want =
-        OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
+    std::shared_ptr<AAFwk::Want> want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
+    if (want == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr");
+        return;
+    }
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
-    OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(
-        wantAgent, nullptr, paramsInfo);
+    auto code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "trigger wantAgent result: %{public}d", code);
 }
 
 void TimerManager::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
