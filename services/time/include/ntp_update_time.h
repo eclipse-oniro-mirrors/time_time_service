@@ -48,7 +48,8 @@ private:
     void StartTimer();
     void RefreshNextTriggerTime();
     bool CheckStatus();
-    void RegisterNtpServerListener();
+    void RegisterSystemParameterListener();
+    static void ChangeAutoTimeCallback(const char *key, const char *value, void *context);
 
     static AutoTimeInfo autoTimeInfo_;
     uint64_t timerId_;
