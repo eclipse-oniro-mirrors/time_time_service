@@ -37,11 +37,13 @@ ohos_source_set("time_utils") {
     "hilog:libhilog",
     "ipc:ipc_single",
   ]
-
+  branch_protector_ret = "pac_ret"
   sanitize = {
     integer_overflow = true
     ubsan = true
     boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
     debug = time_sanitize_debug
   }
   part_name = "time_service"

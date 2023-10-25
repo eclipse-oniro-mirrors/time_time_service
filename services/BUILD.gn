@@ -90,10 +90,13 @@ ohos_shared_library("time_system_ability") {
     defines += [ "POWER_MANAGER_ENABLE" ]
   }
 
+  branch_protector_ret = "pac_ret"
   sanitize = {
     integer_overflow = true
     ubsan = true
     boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
     blocklist = "./time_blocklist.txt"
     debug = time_sanitize_debug
   }
@@ -162,10 +165,13 @@ ohos_static_library("time_system_ability_static") {
     defines += [ "POWER_MANAGER_ENABLE" ]
   }
 
+  branch_protector_ret = "pac_ret"
   sanitize = {
     integer_overflow = true
     ubsan = true
     boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
     debug = time_sanitize_debug
   }
   part_name = "time_service"
