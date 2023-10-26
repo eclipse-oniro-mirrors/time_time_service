@@ -75,7 +75,6 @@ ohos_shared_library("time_system_ability") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "netmanager_base:net_conn_manager_if",
-    "power_manager:powermgr_client",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -84,6 +83,13 @@ ohos_shared_library("time_system_ability") {
     external_deps += [ "device_standby:standby_innerkits" ]
     defines += [ "DEVICE_STANDBY_ENABLE" ]
   }
+
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.powermgr_power_manager)) {
+    external_deps += [ "power_manager:powermgr_client" ]
+    defines += [ "POWER_MANAGER_ENABLE" ]
+  }
+
   sanitize = {
     integer_overflow = true
     ubsan = true
@@ -141,7 +147,6 @@ ohos_static_library("time_system_ability_static") {
     "init:libbeget_proxy",
     "ipc:ipc_single",
     "netmanager_base:net_conn_manager_if",
-    "power_manager:powermgr_client",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -150,6 +155,13 @@ ohos_static_library("time_system_ability_static") {
     external_deps += [ "device_standby:standby_innerkits" ]
     defines += [ "DEVICE_STANDBY_ENABLE" ]
   }
+
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.powermgr_power_manager)) {
+    external_deps += [ "power_manager:powermgr_client" ]
+    defines += [ "POWER_MANAGER_ENABLE" ]
+  }
+
   sanitize = {
     integer_overflow = true
     ubsan = true

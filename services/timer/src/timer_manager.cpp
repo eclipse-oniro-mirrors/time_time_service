@@ -48,10 +48,14 @@ const auto INTERVAL_HALF_DAY = hours(12);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
 const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
+
+#ifdef POWER_MANAGER_ENABLE
 constexpr int32_t USE_LOCK_TIME_IN_MILLI = 2000;
 constexpr int64_t USE_LOCK_TIME_IN_NANO = 2 * NANO_TO_SECOND;
 constexpr int32_t USE_LOCK_DELAY_TIME_IN_MICRO = 10000;
 constexpr int32_t MAX_RETRY_LOCK_TIMES = 3;
+#endif
+
 #ifdef DEVICE_STANDBY_ENABLE
 const int REASON_NATIVE_API = 0;
 const int REASON_APP_API = 1;
@@ -551,7 +555,9 @@ void TimerManager::RescheduleKernelTimerLocked()
         auto firstWakeup = FindFirstWakeupBatchLocked();
         auto firstBatch = alarmBatches_.front();
         if (firstWakeup != nullptr) {
+            #ifdef POWER_MANAGER_ENABLE
             HandleRunningLock(firstWakeup);
+            #endif
             auto alarmPtr = firstWakeup->Get(0);
             SetLocked(ELAPSED_REALTIME_WAKEUP, firstWakeup->GetStart().time_since_epoch());
         }
@@ -947,6 +953,7 @@ void TimerManager::HandleRepeatTimer(
     }
 }
 
+#ifdef POWER_MANAGER_ENABLE
 void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
 {
     auto currentTime = duration_cast<nanoseconds>(GetBootTimeNs().time_since_epoch()).count();
@@ -983,5 +990,6 @@ void TimerManager::AddRunningLock()
         runningLock_->Lock(USE_LOCK_TIME_IN_MILLI);
     }
 }
+#endif
 } // MiscServices
 } // OHOS
