@@ -1,3 +1,2 @@
 src:*/services/dfx/src/time_cmd_dispatcher.cpp
 src:*/services/dfx/src/time_cmd_parse.cpp
-src:*/services/time/src/sntp_client.cpp

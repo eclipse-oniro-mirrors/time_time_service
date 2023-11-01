@@ -34,7 +34,7 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
-constexpr auto SECONDS_SINCE_FIRST_EPOCH = (2208988800UL); // Seconds from 1/1/1900 00.00 to 1/1/1970 00.00;
+constexpr uint64_t SECONDS_SINCE_FIRST_EPOCH = 2208988800; // Seconds from 1/1/1900 00.00 to 1/1/1970 00.00;
 constexpr uint64_t MILLISECOND_TO_SECOND = 1000;
 constexpr uint64_t FRACTION_TO_SECOND = 0x100000000;
 constexpr uint64_t UINT32_MASK = 0xFFFFFFFF;
@@ -157,7 +157,7 @@ void SNTPClient::ConvertUnixToNtp(struct ntp_timestamp *ntpTs, struct timeval *u
     // 0x83AA7E80; the seconds from Jan 1, 1900 to Jan 1, 1970
     ntpTs->second = unixTs->tv_sec + SECONDS_SINCE_FIRST_EPOCH; // 0x83AA7E80;
     ntpTs->fraction =
-        (uint32_t)((double)(unixTs->tv_usec + 1) * (double)(1LL << RECEIVE_TIMESTAMP_OFFSET) * TEN_TO_MINUS_SIX_POWER);
+        static_cast<uint64_t>((unixTs->tv_usec + 1) * (1LL << RECEIVE_TIMESTAMP_OFFSET) * TEN_TO_MINUS_SIX_POWER);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
@@ -167,7 +167,7 @@ void SNTPClient::ConvertNtpToUnix(struct ntp_timestamp *ntpTs, struct timeval *u
     // 0x83AA7E80; the seconds from Jan 1, 1900 to Jan 1, 1970
     unixTs->tv_sec = ntpTs->second - SECONDS_SINCE_FIRST_EPOCH;
     unixTs->tv_usec =
-        (uint32_t)((double)ntpTs->fraction * TEN_TO_SIX_POWER / (double)(1LL << RECEIVE_TIMESTAMP_OFFSET));
+        static_cast<uint64_t>(ntpTs->fraction * TEN_TO_SIX_POWER / (1LL << RECEIVE_TIMESTAMP_OFFSET));
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 

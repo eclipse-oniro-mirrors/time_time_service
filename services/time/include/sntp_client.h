@@ -34,8 +34,8 @@ public:
 
 private:
     struct ntp_timestamp {
-        uint32_t second;
-        uint32_t fraction;
+        uint64_t second;
+        uint64_t fraction;
     };
 
     struct date_structure {
