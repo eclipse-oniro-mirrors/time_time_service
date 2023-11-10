@@ -97,16 +97,18 @@ static HapPolicyParams g_policyA = {
     }
 };
 
-HapInfoParams g_systemInfoParams = { .userID = 1,
+static HapInfoParams g_systemInfoParams = {
+    .userID = 1,
     .bundleName = "timer",
     .instIndex = 0,
     .appIDDesc = "test",
     .apiVersion = 8,
-    .isSystemApp = true };
+    .isSystemApp = true
+};
 
 static HapPolicyParams g_policyB = { .apl = APL_NORMAL, .domain = "test.domain" };
 
-HapInfoParams g_notSystemInfoParams = {
+static HapInfoParams g_notSystemInfoParams = {
     .userID = 1,
     .bundleName = "timer",
     .instIndex = 0,

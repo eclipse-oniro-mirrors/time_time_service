@@ -45,7 +45,12 @@ ohos_unittest("TimeServiceTest") {
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
   ]
-
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   external_deps = [
     "ability_base:want",
     "ability_runtime:runtime",
@@ -77,7 +82,12 @@ ohos_unittest("TimeClientTest") {
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
   ]
-
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   external_deps = [
     "ability_base:want",
     "ability_runtime:runtime",
@@ -107,7 +117,12 @@ ohos_unittest("TimeDfxTest") {
     "${time_service_path}:time_system_ability_static",
     "//third_party/googletest:gtest_main",
   ]
-
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   external_deps = [
     "ability_base:want",
     "ability_runtime:runtime",
@@ -138,7 +153,12 @@ ohos_unittest("TimePermissionTest") {
     "//third_party/googletest:gtest_main",
     "//third_party/jsoncpp:jsoncpp",
   ]
-
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   external_deps = [
     "ability_base:want",
     "ability_runtime:runtime",
