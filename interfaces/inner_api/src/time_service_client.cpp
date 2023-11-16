@@ -22,6 +22,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "time_common.h"
+#include "timer_call_back.h"
 
 namespace OHOS {
 namespace MiscServices {
