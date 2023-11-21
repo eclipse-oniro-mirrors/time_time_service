@@ -17,11 +17,12 @@
 #define SERVICES_INCLUDE_TIME_SERVICES_MANAGER_H
 
 #include <mutex>
+#include <sstream>
 
+#include "itimer_info.h"
 #include "refbase.h"
 #include "time_service_interface.h"
-#include "time_common.h"
-#include "timer_call_back.h"
+#include "visibility.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -373,7 +374,6 @@ private:
         ~TimeSaDeathRecipient() = default;
         void OnRemoteDied(const wptr<IRemoteObject> &object) override
         {
-            TIME_HILOGE(TIME_MODULE_CLIENT, "TimeSaDeathRecipient on remote systemAbility died.");
             TimeServiceClient::GetInstance()->ClearProxy();
             TimeServiceClient::GetInstance()->ConnectService();
         };

@@ -16,6 +16,7 @@
 #include <string>
 
 #include "napi_utils.h"
+#include "time_common.h"
 #include "time_service_client.h"
 
 namespace OHOS {

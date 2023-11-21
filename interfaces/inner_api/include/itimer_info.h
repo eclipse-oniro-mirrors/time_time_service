@@ -16,7 +16,8 @@
 #define I_TIMER_INFO_H
 
 #include <mutex>
-#include "time_common.h"
+
+#include "visibility.h"
 #include "want_agent_helper.h"
 
 namespace OHOS {
