@@ -51,7 +51,6 @@ void TimerNotifyCallbackProxy::Finish(uint64_t timerId)
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "SendRequest is failed, error code: %{public}d", ret);
     }
-    TIME_HILOGI(TIME_MODULE_CLIENT, "end.");
 }
 } // namespace MiscServices
 } // namespace OHOS

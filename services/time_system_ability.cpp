@@ -74,7 +74,7 @@ TimeSystemAbility::TimeSystemAbility(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), state_(ServiceRunningState::STATE_NOT_START),
       rtcId(GetWallClockRtcId())
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, " TimeSystemAbility Start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, " TimeSystemAbility Start.");
 }
 
 TimeSystemAbility::TimeSystemAbility() : state_(ServiceRunningState::STATE_NOT_START), rtcId(GetWallClockRtcId())
@@ -123,7 +123,7 @@ void TimeSystemAbility::InitDumpCmd()
 
 void TimeSystemAbility::OnStart()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "TimeSystemAbility OnStart.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "TimeSystemAbility OnStart.");
     if (state_ == ServiceRunningState::STATE_RUNNING) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "TimeSystemAbility is already running.");
         return;
@@ -136,7 +136,7 @@ void TimeSystemAbility::OnStart()
     NtpUpdateTime::GetInstance().Init();
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     InitDumpCmd();
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
     if (Init() != ERR_OK) {
         auto callback = [this]() { Init(); };
         serviceHandler_->PostTask(callback, "time_service_init_retry", INIT_INTERVAL);
@@ -146,7 +146,7 @@ void TimeSystemAbility::OnStart()
 
 void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId:%{public}d added!", systemAbilityId);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId:%{public}d added!", systemAbilityId);
     if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
         RegisterSubscriber();
     } else {
@@ -157,15 +157,15 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
 
 void TimeSystemAbility::RegisterSubscriber()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterSubscriber Started");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber Started");
     bool subRes = TimeServiceNotify::GetInstance().RepublishEvents();
     if (!subRes) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to RegisterSubscriber");
         auto callback = [this]() { TimeServiceNotify::GetInstance().RepublishEvents(); };
         serviceHandler_->PostTask(callback, "time_service_subscriber_retry", INIT_INTERVAL);
-    } else {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterSubscriber success.");
+        return;
     }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber success.");
 }
 
 int32_t TimeSystemAbility::Init()
@@ -175,38 +175,39 @@ int32_t TimeSystemAbility::Init()
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init Failed.");
         return E_TIME_PUBLISH_FAIL;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Init Success.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Init Success.");
     state_ = ServiceRunningState::STATE_RUNNING;
     return ERR_OK;
 }
 
 void TimeSystemAbility::OnStop()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop Started.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "OnStop Started.");
     if (state_ != ServiceRunningState::STATE_RUNNING) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "state is running.");
         return;
     }
     serviceHandler_ = nullptr;
     TimeTickNotify::GetInstance().Stop();
     state_ = ServiceRunningState::STATE_NOT_START;
-    TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "OnStop End.");
 }
 
 void TimeSystemAbility::InitServiceHandler()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "InitServiceHandler started.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "InitServiceHandler started.");
     if (serviceHandler_ != nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " Already init.");
         return;
     }
     std::shared_ptr<AppExecFwk::EventRunner> runner = AppExecFwk::EventRunner::Create(TIME_SERVICE_NAME);
     serviceHandler_ = std::make_shared<AppExecFwk::EventHandler>(runner);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "InitServiceHandler Succeeded.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "InitServiceHandler Succeeded.");
 }
 
 void TimeSystemAbility::InitTimerHandler()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Init Timer started.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Init Timer started.");
     if (timerManagerHandler_ != nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, " Already init.");
         return;
