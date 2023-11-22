@@ -32,7 +32,7 @@ TimeServiceNotify &TimeServiceNotify::GetInstance()
 
 bool TimeServiceNotify::RepublishEvents()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start to Republish events");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start to Republish events");
     auto currentTime = std::chrono::steady_clock::now().time_since_epoch().count();
     return PublishTimeChangeEvents(currentTime) && PublishTimeZoneChangeEvents(currentTime) &&
         PublishTimeTickEvents(currentTime);

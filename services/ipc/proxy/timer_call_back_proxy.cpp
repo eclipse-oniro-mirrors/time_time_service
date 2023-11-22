@@ -55,7 +55,6 @@ void TimerCallbackProxy::NotifyTimer(const uint64_t timerId, const sptr<IRemoteO
     if (ret != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "SendRequest is failed, error code: %{public}d", ret);
     }
-    TIME_HILOGI(TIME_MODULE_CLIENT, "end.");
 }
 } // namespace MiscServices
 } // namespace OHOS

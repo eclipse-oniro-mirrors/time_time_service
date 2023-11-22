@@ -257,7 +257,7 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
         wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>(
             data.ReadParcelable<OHOS::AbilityRuntime::WantAgent::WantAgent>());
         if (!wantAgent) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "Input wantagent nullptr");
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Input wantagent nullptr");
             return E_TIME_NULLPTR;
         }
     }

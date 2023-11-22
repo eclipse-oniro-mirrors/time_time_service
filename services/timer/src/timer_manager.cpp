@@ -278,10 +278,10 @@ void TimerManager::SetHandlerLocked(uint64_t id, int type,
 
 void TimerManager::RemoveHandler(uint64_t id)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lock(mutex_);
     RemoveLocked(id);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 void TimerManager::RemoveLocked(uint64_t id)
@@ -329,7 +329,7 @@ void TimerManager::RemoveLocked(uint64_t id)
     if (didRemove || isAdjust) {
         ReBatchAllTimersLocked(true);
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool doValidate,
@@ -414,15 +414,14 @@ std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono
     if (type == RTC || type == RTC_WAKEUP) {
         auto systemTimeNow = system_clock::now().time_since_epoch();
         auto offset = when - systemTimeNow;
-        TIME_HILOGI(TIME_MODULE_SERVICE, "systemTimeNow : %{public}lld", systemTimeNow.count());
-        TIME_HILOGI(TIME_MODULE_SERVICE, "offset : %{public}lld", offset.count());
+        TIME_HILOGD(TIME_MODULE_SERVICE, "systemTimeNow : %{public}lld offset : %{public}lld",
+                    systemTimeNow.count(), offset.count());
         return bootTimePoint + offset;
     }
     auto bootTimeNow = bootTimePoint.time_since_epoch();
     auto offset = when - bootTimeNow;
-    TIME_HILOGI(TIME_MODULE_SERVICE, "bootTimeNow : %{public}lld", bootTimeNow.count());
-    TIME_HILOGI(TIME_MODULE_SERVICE, "offset : %{public}lld", offset.count());
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "bootTimeNow : %{public}lld offset : %{public}lld",
+                bootTimeNow.count(), offset.count());
     return bootTimePoint + offset;
 }
 
@@ -489,7 +488,7 @@ steady_clock::time_point TimerManager::GetBootTimeNs()
 
 void TimerManager::TriggerIdleTimer()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Idle alarm triggers.");
     std::lock_guard<std::mutex> lock(idleTimerMutex_);
     mPendingIdleUntil_ = nullptr;
     delayedTimers_.clear();
@@ -610,7 +609,7 @@ void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
 int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_point whenElapsed,
                                             std::chrono::steady_clock::time_point maxWhen)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     auto it = std::find_if(alarmBatches_.begin(), alarmBatches_.end(),
         [whenElapsed, maxWhen](const std::shared_ptr<Batch> &batch) {
             return (batch->GetFlags() & static_cast<uint32_t>(STANDALONE)) == 0 &&
@@ -657,7 +656,7 @@ void TimerManager::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
         TIME_HILOGI(TIME_MODULE_SERVICE, "Trigger id: %{public}" PRId64 "", alarm->id);
         return;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Alarm is proxy!");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Alarm is proxy!");
     auto itMap = proxyMap_.find(uid);
     if (itMap == proxyMap_.end()) {
         std::vector<std::shared_ptr<TimerInfo>> timeInfoVec;

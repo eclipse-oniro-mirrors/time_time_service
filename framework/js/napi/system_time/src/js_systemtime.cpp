@@ -409,13 +409,15 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
     napi_ref callback = nullptr;
     if (NapiUtils::ParseParametersGet(env, argv, argc, callback) == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "param undefined");
         return NapiUtils::GetUndefinedValue(env);
     }
     AsyncContext *asyncContext = new (std::nothrow) AsyncContext{ .env = env };
     if (!asyncContext) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "asyncContext is nullptr, out of memory");
         return NapiUtils::JSParaError(env, callback);
     }
-    TIME_HILOGI(TIME_MODULE_JS_NAPI, " jsgetTimezone start==");
+    TIME_HILOGD(TIME_MODULE_JS_NAPI, "getTimezone start");
     napi_value promise = nullptr;
     TimePaddingAsyncCallbackInfo(env, asyncContext, callback, promise);
     napi_value resource = nullptr;
@@ -429,6 +431,7 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
         [](napi_env env, napi_status status, void *data) {
             AsyncContext *asyncContext = (AsyncContext *)data;
             if (asyncContext == nullptr) {
+                TIME_HILOGE(TIME_MODULE_JS_NAPI, "asyncContext is nullptr");
                 return;
             }
             if (asyncContext->timeZone == "") {
