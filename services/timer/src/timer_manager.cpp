@@ -414,13 +414,13 @@ std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono
     if (type == RTC || type == RTC_WAKEUP) {
         auto systemTimeNow = system_clock::now().time_since_epoch();
         auto offset = when - systemTimeNow;
-        TIME_HILOGD(TIME_MODULE_SERVICE, "systemTimeNow : %{public}" PRId64 " offset : %{public}" PRId64 "",
+        TIME_HILOGD(TIME_MODULE_SERVICE, "systemTimeNow : %{public}lld offset : %{public}lld",
                     systemTimeNow.count(), offset.count());
         return bootTimePoint + offset;
     }
     auto bootTimeNow = bootTimePoint.time_since_epoch();
     auto offset = when - bootTimeNow;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "bootTimeNow : %{public}" PRId64 " offset : %{public}" PRId64 "",
+    TIME_HILOGD(TIME_MODULE_SERVICE, "bootTimeNow : %{public}lld offset : %{public}lld",
                 bootTimeNow.count(), offset.count());
     return bootTimePoint + offset;
 }
@@ -511,10 +511,10 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
                                        std::chrono::steady_clock::time_point nowElapsed)
 {
     bool hasWakeup = false;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "current time %{public}" PRId64 "", GetBootTimeNs().time_since_epoch().count());
+    TIME_HILOGD(TIME_MODULE_SERVICE, "current time %{public}lld", GetBootTimeNs().time_since_epoch().count());
     while (!alarmBatches_.empty()) {
         auto batch = alarmBatches_.at(0);
-        TIME_HILOGD(TIME_MODULE_SERVICE, "first batch trigger time %{public}" PRId64 "",
+        TIME_HILOGD(TIME_MODULE_SERVICE, "first batch trigger time %{public}lld",
             batch->GetStart().time_since_epoch().count());
         if (batch->GetStart() > nowElapsed) {
             break;
@@ -583,8 +583,7 @@ std::shared_ptr<Batch> TimerManager::FindFirstWakeupBatchLocked()
 
 void TimerManager::SetLocked(int type, std::chrono::nanoseconds when)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "current bootTime: %{public}" PRId64 "",
-                GetBootTimeNs().time_since_epoch().count());
+    TIME_HILOGI(TIME_MODULE_SERVICE, "current bootTime: %{public}lld", GetBootTimeNs().time_since_epoch().count());
     int ret = handler_->Set(static_cast<uint32_t>(type), when);
     TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer to kernel. ret: %{public}d", ret);
 }
