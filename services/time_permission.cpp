@@ -30,17 +30,7 @@ bool TimePermission::CheckCallingPermission(const std::string &permissionName)
         return false;
     }
     auto callerToken = IPCSkeleton::GetCallingTokenID();
-    auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
-    int result = Security::AccessToken::PERMISSION_DENIED;
-    if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL) {
-        result = Security::AccessToken::PERMISSION_GRANTED;
-    } else if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_HAP ||
-               tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {
-        result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
-    } else {
-        TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, callerToken:%{public}u,tokenType:%{public}d",
-            callerToken, tokenType);
-    }
+    int result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
     if (result != Security::AccessToken::PERMISSION_GRANTED) {
         TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, permission:%{public}s, callerToken:%{public}u",
             permissionName.c_str(), callerToken);
@@ -59,12 +49,7 @@ bool TimePermission::CheckProxyCallingPermission()
 
 bool TimePermission::CheckSystemUidCallingPermission(uint64_t tokenId)
 {
-    auto callerToken = IPCSkeleton::GetCallingTokenID();
-    auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
-    if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {
-        return true;
-    }
-    if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL) {
+    if (CheckProxyCallingPermission()) {
         return true;
     }
     return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId);
