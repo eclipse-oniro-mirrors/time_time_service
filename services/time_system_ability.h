@@ -70,6 +70,10 @@ public:
     void DumpTimerInfoById(int fd, const std::vector<std::string> &input);
     void DumpTimerTriggerById(int fd, const std::vector<std::string> &input);
     void DumpIdleTimerInfo(int fd, const std::vector<std::string> &input);
+    void DumpProxyTimerInfo(int fd, const std::vector<std::string> &input);
+    void DumpUidTimerMapInfo(int fd, const std::vector<std::string> &input);
+    void SetProxyDelayTime(int fd, const std::vector<std::string> &input);
+    void DumpProxyDelayTime(int fd, const std::vector<std::string> &input);
     void InitDumpCmd();
     void RegisterSubscriber();
 

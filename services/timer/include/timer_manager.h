@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -94,6 +94,8 @@ private:
     int64_t AttemptCoalesceLocked(std::chrono::steady_clock::time_point whenElapsed,
                                   std::chrono::steady_clock::time_point maxWhen);
     void TriggerIdleTimer();
+    void ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
+        std::vector<std::shared_ptr<TimerInfo>> &triggerList, const std::chrono::steady_clock::time_point &nowElapsed);
     bool TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &triggerList,
                              std::chrono::steady_clock::time_point nowElapsed);
     void RescheduleKernelTimerLocked();
@@ -102,9 +104,7 @@ private:
     void SetLocked(int type, std::chrono::nanoseconds when);
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
     std::chrono::steady_clock::time_point GetBootTimeNs();
-    void CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm);
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
-    void RemoveProxy(uint64_t timerNumber, int32_t uid);
     void NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent);
     bool CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
@@ -114,6 +114,8 @@ private:
     void HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup);
     void AddRunningLock();
     #endif
+
+    void UpdateTimersState(std::shared_ptr<TimerInfo> &alarm);
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     std::default_random_engine random_;
@@ -126,11 +128,6 @@ private:
     std::mutex showTimerMutex_;
     std::chrono::system_clock::time_point lastTimeChangeClockTime_;
     std::chrono::steady_clock::time_point lastTimeChangeRealtime_;
-
-    // proxy uid
-    std::mutex proxyMutex_;
-    std::set<int32_t> proxyUids_;
-    std::map<int32_t, std::vector<std::shared_ptr<TimerInfo>>> proxyMap_;
 
     std::vector<std::shared_ptr<TimerInfo>> pendingDelayTimers_;
     // map<timerId, original trigger time> for delayed timers

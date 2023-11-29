@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Copyright (C) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,6 +30,7 @@
 #include "ipc_skeleton.h"
 #include "time_file_utils.h"
 #include "time_permission.h"
+#include "timer_proxy.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -130,6 +131,12 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
     TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer: %{public}" PRId64 " TriggerTime: %{public}" PRId64 "", timerId,
         triggerTime);
     auto timerInfo = it->second;
+    if (TimerProxy::GetInstance().IsUidProxy(timerInfo->uid)) {
+        TIME_HILOGI(TIME_MODULE_SERVICE,
+            "Do not start timer, timer already proxy, id=%{public}" PRId64 ", uid = %{public}d",
+            timerInfo->id, timerInfo->uid);
+        return E_TIME_DEAL_FAILED;
+    }
     SetHandler(timerInfo->id,
                timerInfo->type,
                triggerTime,
@@ -166,32 +173,14 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
     RemoveHandler(timerNumber);
     if (it->second) {
         int32_t uid = it->second->uid;
-        RemoveProxy(timerNumber, uid);
+        TimerProxy::GetInstance().RemoveProxy(timerNumber, uid);
+        TimerProxy::GetInstance().EraseTimerFromProxyUidMap(timerNumber, uid);
     }
     if (needDestroy) {
         timerEntryMap_.erase(it);
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return E_TIME_OK;
-}
-
-void TimerManager::RemoveProxy(uint64_t timerNumber, int32_t uid)
-{
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    auto itMap = proxyMap_.find(uid);
-    if (itMap != proxyMap_.end()) {
-        auto alarms = itMap->second;
-        for (auto itAlarm = alarms.begin(); itAlarm != alarms.end();) {
-            if ((*itAlarm)->id == timerNumber) {
-                alarms.erase(itAlarm);
-            } else {
-                itAlarm++;
-            }
-        }
-        if (alarms.empty()) {
-            proxyMap_.erase(uid);
-        }
-    }
 }
 
 void TimerManager::SetHandler(uint64_t id,
@@ -281,6 +270,7 @@ void TimerManager::RemoveHandler(uint64_t id)
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lock(mutex_);
     RemoveLocked(id);
+    TimerProxy::GetInstance().RemoveUidTimerMap(id);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
@@ -336,6 +326,8 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
                                     bool isRebatched)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d, doValidate= %{public}d", rebatching, doValidate);
+    TimerProxy::GetInstance().RecordUidTimerMap(alarm, isRebatched);
+
     if (!isRebatched && mPendingIdleUntil_ != nullptr && !CheckAllowWhileIdle(alarm)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Pending not-allowed alarm in idle state, id=%{public}" PRId64 "",
             alarm->id);
@@ -387,7 +379,10 @@ void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
                                     std::chrono::steady_clock::time_point nowElapsed,
                                     bool doValidate)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "ReAddTimerLocked start. uid= %{public}d, id=%{public}" PRId64 ""
+        ", timer whenElapsed=%{public}lld, now=%{public}lld",
+        timer->uid, timer->id, timer->whenElapsed.time_since_epoch().count(),
+        GetBootTimeNs().time_since_epoch().count());
     auto whenElapsed = ConvertToElapsed(timer->when, timer->type);
     if (whenElapsed < nowElapsed) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "invalid timer end.");
@@ -507,6 +502,28 @@ void TimerManager::TriggerIdleTimer()
     ReBatchAllTimers();
 }
 
+void TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
+    std::vector<std::shared_ptr<TimerInfo>> &triggerList, const std::chrono::steady_clock::time_point &nowElapsed)
+{
+    alarm->count = 1;
+    if (mPendingIdleUntil_ != nullptr && mPendingIdleUntil_->id == alarm->id) {
+        TriggerIdleTimer();
+    }
+    if (TimerProxy::GetInstance().IsUidProxy(alarm->uid)) {
+        alarm->UpdateWhenElapsed(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
+        TIME_HILOGD(TIME_MODULE_SERVICE, "UpdateWhenElapsed for proxy timer trigger. "
+            "uid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
+            alarm->uid, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
+            nowElapsed.time_since_epoch().count());
+        SetHandlerLocked(alarm->id, alarm->type, alarm->when, alarm->whenElapsed, alarm->windowLength,
+            alarm->maxWhenElapsed, alarm->repeatInterval, alarm->callback,
+            alarm->wantAgent, alarm->flags, true, alarm->uid, alarm->bundleName);
+    } else {
+        triggerList.push_back(alarm);
+        HandleRepeatTimer(alarm, nowElapsed);
+    }
+}
+
 bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &triggerList,
                                        std::chrono::steady_clock::time_point nowElapsed)
 {
@@ -525,14 +542,8 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         const auto n = batch->Size();
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
-            alarm->count = 1;
-            triggerList.push_back(alarm);
-            TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d, id= %{public}llu", alarm->uid, alarm->id);
-            if (mPendingIdleUntil_ != nullptr && mPendingIdleUntil_->id == alarm->id) {
-                TriggerIdleTimer();
-            }
-
-            HandleRepeatTimer(alarm, nowElapsed);
+            ProcTriggerTimer(alarm, triggerList, nowElapsed);
+            TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d, id=%{public}" PRId64 "", alarm->uid, alarm->id);
 
             if (alarm->wakeup) {
                 hasWakeup = true;
@@ -593,7 +604,7 @@ void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
     int64_t whichBatch = (alarm->flags & static_cast<uint32_t>(STANDALONE)) ?
                          -1 :
                          AttemptCoalesceLocked(alarm->whenElapsed, alarm->maxWhenElapsed);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "whichBatch= %{public}" PRId64 "", whichBatch);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "whichBatch= %{public}" PRId64 ", id=%{public}" PRId64 "", whichBatch, alarm->id);
     if (whichBatch < 0) {
         AddBatchLocked(alarmBatches_, std::make_shared<Batch>(*alarm));
     } else {
@@ -625,7 +636,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
 {
     for (const auto &alarm : triggerList) {
         if (alarm->callback) {
-            CallbackAlarmIfNeed(alarm);
+            TimerProxy::GetInstance().CallbackAlarmIfNeed(alarm);
         }
         if (alarm->wantAgent) {
             NotifyWantAgent(alarm->wantAgent);
@@ -646,87 +657,25 @@ void TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::W
     TIME_HILOGI(TIME_MODULE_SERVICE, "trigger wantAgent result: %{public}d", code);
 }
 
-void TimerManager::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
+void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm)
 {
-    int uid = alarm->uid;
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    auto it = proxyUids_.find(uid);
-    if (it == proxyUids_.end()) {
-        alarm->callback(alarm->id);
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Trigger id: %{public}" PRId64 "", alarm->id);
-        return;
-    }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Alarm is proxy!");
-    auto itMap = proxyMap_.find(uid);
-    if (itMap == proxyMap_.end()) {
-        std::vector<std::shared_ptr<TimerInfo>> timeInfoVec;
-        timeInfoVec.push_back(alarm);
-        proxyMap_[uid] = timeInfoVec;
-    } else {
-        std::vector<std::shared_ptr<TimerInfo>> timeInfoVec = itMap->second;
-        timeInfoVec.push_back(alarm);
-        proxyMap_[uid] = timeInfoVec;
-    }
+    RemoveLocked(alarm->id);
+    InsertAndBatchTimerLocked(alarm);
+    RescheduleKernelTimerLocked();
 }
 
 bool TimerManager::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
 {
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
-    if (isProxy) {
-        proxyUids_.insert(uid);
-        return true;
-    }
-    auto it = proxyUids_.find(uid);
-    if (it != proxyUids_.end()) {
-        proxyUids_.erase(uid);
-    } else {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Uid: %{public}d doesn't exist in the proxy list." PRId64 "", uid);
-        return false;
-    }
-    if (!needRetrigger) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "ProxyTimer doesn't need retrigger, clear all callbacks!");
-        proxyMap_.erase(uid);
-        return true;
-    }
-    auto itMap = proxyMap_.find(uid);
-    if (itMap != proxyMap_.end()) {
-        auto timeInfoVec = itMap->second;
-        for (const auto& alarm : timeInfoVec) {
-            if (!alarm->callback) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer Callback is nullptr!");
-                continue;
-            }
-            alarm->callback(alarm->id);
-            TIME_HILOGD(TIME_MODULE_SERVICE, "Shut down proxy, proxyUid: %{public}d, alarmId: %{public}" PRId64 "",
-                uid, alarm->id);
-        }
-        timeInfoVec.clear();
-        proxyMap_.erase(uid);
-    }
-    return true;
+    std::lock_guard<std::mutex> lock(mutex_);
+    return TimerProxy::GetInstance().ProxyTimer(uid, isProxy, needRetrigger, GetBootTimeNs(),
+        [this] (std::shared_ptr<TimerInfo> &alarm) { UpdateTimersState(alarm); });
 }
 
 bool TimerManager::ResetAllProxy()
 {
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
-    for (auto it = proxyMap_.begin(); it != proxyMap_.end(); it++) {
-        auto timeInfoVec = it->second;
-        for (const auto& alarm : timeInfoVec) {
-            if (!alarm->callback) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "Callback is nullptr!");
-                continue;
-            }
-            alarm->callback(alarm->id);
-            TIME_HILOGD(TIME_MODULE_SERVICE, "Reset all proxy, proxyUid: %{public}d, alarmId: %{public}" PRId64 "",
-                it->first, alarm->id);
-        }
-        timeInfoVec.clear();
-    }
-    proxyMap_.clear();
-    proxyUids_.clear();
-    return true;
+    std::lock_guard<std::mutex> lock(mutex_);
+    return TimerProxy::GetInstance().ResetAllProxy(GetBootTimeNs(),
+        [this] (std::shared_ptr<TimerInfo> &alarm) { UpdateTimersState(alarm); });
 }
 
 bool TimerManager::CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm)
@@ -949,6 +898,8 @@ void TimerManager::HandleRepeatTimer(
         SetHandlerLocked(timer->id, timer->type, timer->when + delta, nextElapsed, timer->windowLength,
             MaxTriggerTime(nowElapsed, nextElapsed, timer->repeatInterval), timer->repeatInterval, timer->callback,
             timer->wantAgent, timer->flags, true, timer->uid, timer->bundleName);
+    } else {
+        TimerProxy::GetInstance().RemoveUidTimerMap(timer);
     }
 }
 
