@@ -52,13 +52,13 @@ void NITZSubscriber::OnReceiveEvent(const CommonEventData &data)
 
 void NITZSubscriber::NITZTimeChangeBroadcast(const CommonEventData &data)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "NITZ Timezone changed broadcast code:%{public}d", data.GetCode());
+    TIME_HILOGD(TIME_MODULE_SERVICE, "NITZ Time changed broadcast code:%{public}d", data.GetCode());
     NtpUpdateTime::GetInstance().UpdateNITZSetTime();
 }
 
 void NITZSubscriber::NITZTimezoneChangeBroadcast(const CommonEventData &data)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "NITZ Time changed broadcast code:%{public}d", data.GetCode());
+    TIME_HILOGD(TIME_MODULE_SERVICE, "NITZ Timezone changed broadcast code:%{public}d", data.GetCode());
 }
 } // namespace MiscServices
 } // namespace OHOS

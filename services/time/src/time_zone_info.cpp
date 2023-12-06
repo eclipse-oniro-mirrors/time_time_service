@@ -55,6 +55,8 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
         TIME_HILOGI(TIME_MODULE_SERVICE, "Same Timezone has been set.");
         return true;
     }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone : %{public}s, Current timezone : %{public}s", timezoneId.c_str(),
+        curTimezoneId_.c_str());
     if (!TimeFileUtils::IsExistFile(std::string(TIMEZONE_PATH).append(timezoneId))) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid timezone");
         return false;
