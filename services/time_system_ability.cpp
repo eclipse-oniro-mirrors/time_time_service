@@ -42,6 +42,7 @@
 #include "time_tick_notify.h"
 #include "time_zone_info.h"
 #include "timer_manager_interface.h"
+#include "timer_proxy.h"
 
 using namespace std::chrono;
 
@@ -119,6 +120,27 @@ void TimeSystemAbility::InitDumpCmd()
         "dump idle state and timer info, include pending delay timers and delayed info.",
         [this](int fd, const std::vector<std::string> &input) { DumpIdleTimerInfo(fd, input); });
     TimeCmdDispatcher::GetInstance().RegisterCommand(cmdTimerIdle);
+
+    auto cmdProxyTimer = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-ProxyTimer", "-l" }),
+        "dump proxy timer info.",
+        [this](int fd, const std::vector<std::string> &input) { DumpProxyTimerInfo(fd, input); });
+    TimeCmdDispatcher::GetInstance().RegisterCommand(cmdProxyTimer);
+
+    auto cmdUidTimer = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-UidTimer", "-l" }),
+        "dump uid timer map.",
+        [this](int fd, const std::vector<std::string> &input) { DumpUidTimerMapInfo(fd, input); });
+    TimeCmdDispatcher::GetInstance().RegisterCommand(cmdUidTimer);
+
+    auto cmdSetDelayTimer = std::make_shared<TimeCmdParse>(
+        std::vector<std::string>({ "-ProxyDelayTime", "-s", "[n]" }),
+        "set proxy delay time.",
+        [this](int fd, const std::vector<std::string> &input) { SetProxyDelayTime(fd, input); });
+    TimeCmdDispatcher::GetInstance().RegisterCommand(cmdSetDelayTimer);
+
+    auto cmdShowDelayTimer = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-ProxyDelayTime", "-l" }),
+        "dump proxy delay time.",
+        [this](int fd, const std::vector<std::string> &input) { DumpProxyDelayTime(fd, input); });
+    TimeCmdDispatcher::GetInstance().RegisterCommand(cmdShowDelayTimer);
 }
 
 void TimeSystemAbility::OnStart()
@@ -477,6 +499,35 @@ void TimeSystemAbility::DumpIdleTimerInfo(int fd, const std::vector<std::string>
         }
     }
     timerManagerHandler_->ShowIdleTimerInfo(fd);
+}
+
+void TimeSystemAbility::DumpProxyTimerInfo(int fd, const std::vector<std::string> &input)
+{
+    dprintf(fd, "\n - dump proxy map:\n");
+    int64_t times;
+    GetBootTimeNs(times);
+    TimerProxy::GetInstance().ShowProxyTimerInfo(fd, times);
+}
+
+void TimeSystemAbility::DumpUidTimerMapInfo(int fd, const std::vector<std::string> &input)
+{
+    dprintf(fd, "\n - dump uid timer map:\n");
+    int64_t times;
+    GetBootTimeNs(times);
+    TimerProxy::GetInstance().ShowUidTimerMapInfo(fd, times);
+}
+
+void TimeSystemAbility::SetProxyDelayTime(int fd, const std::vector<std::string> &input)
+{
+    dprintf(fd, "\n - set proxy delay time:\n");
+    int paramNumPos = 2;
+    TimerProxy::GetInstance().SetProxyDelayTime(fd, std::atoi(input.at(paramNumPos).c_str()));
+}
+
+void TimeSystemAbility::DumpProxyDelayTime(int fd, const std::vector<std::string> &input)
+{
+    dprintf(fd, "\n - dump proxy delay time:\n");
+    TimerProxy::GetInstance().ShowProxyDelayTime(fd);
 }
 
 int TimeSystemAbility::SetRtcTime(time_t sec)

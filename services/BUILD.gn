@@ -54,6 +54,7 @@ ohos_shared_library("time_system_ability") {
     "timer/src/timer_handler.cpp",
     "timer/src/timer_info.cpp",
     "timer/src/timer_manager.cpp",
+    "timer/src/timer_proxy.cpp",
   ]
 
   deps = [
@@ -130,6 +131,7 @@ ohos_static_library("time_system_ability_static") {
     "timer/src/timer_handler.cpp",
     "timer/src/timer_info.cpp",
     "timer/src/timer_manager.cpp",
+    "timer/src/timer_proxy.cpp",
   ]
 
   deps = [

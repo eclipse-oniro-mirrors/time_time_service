@@ -215,5 +215,113 @@ HWTEST_F(TimeDfxTest, DumpIdleTimer002, TestSize.Level0)
 
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
+
+/**
+* @tc.name: DumpUidTimerMapInfo001
+* @tc.desc: dump uid timer map info
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeDfxTest, DumpUidTimerMapInfo001, TestSize.Level0)
+{
+    std::string result;
+    auto CMD1 = std::string(CMD).append(" \"-UidTimer -l ").append(" \"");
+
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(1);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(5);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_TRUE(timerId1 > 0);
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, nullptr);
+    int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, time + 3000);
+    EXPECT_TRUE(ret);
+
+    ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(result.find("* timer id"), std::string::npos);
+    EXPECT_NE(result.find("* timer whenElapsed"), std::string::npos);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "-UidTimer -l: %{public}s", result.c_str());
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    EXPECT_TRUE(ret);
+}
+
+/**
+* @tc.name: DumpPeoxyTimerMapInfo001
+* @tc.desc: dump proxy timer map info
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeDfxTest, DumpPeoxyTimerMapInfo001, TestSize.Level0)
+{
+    std::string result;
+    auto CMD1 = std::string(CMD).append(" \"-ProxyTimer -l ").append(" \"");
+
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(1);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(5);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_TRUE(timerId1 > 0);
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, nullptr);
+    int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, time + 3000);
+    EXPECT_TRUE(ret);
+
+    ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(result.find("proxy uid"), std::string::npos);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyTimer -l: %{public}s", result.c_str());
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    EXPECT_TRUE(ret);
+}
+
+/**
+* @tc.name: DumpProxyDelayTime001
+* @tc.desc: dump proxy delay time
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeDfxTest, DumpProxyDelayTime001, TestSize.Level0)
+{
+    std::string result;
+    auto CMD1 = std::string(CMD).append(" \"-ProxyDelayTime -s 0").append(" \"");
+    auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(result.find("259200000"), std::string::npos);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyDelayTime -s 0: %{public}s", result.c_str());
+
+    CMD1 = std::string(CMD).append(" \"-ProxyDelayTime -l ").append(" \"");
+    ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(result.find("259200000"), std::string::npos);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyDelayTime -l: %{public}s", result.c_str());
+}
+
+/**
+* @tc.name: SetProxyDelayTime001
+* @tc.desc: set proxy delay time
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeDfxTest, SetProxyDelayTime001, TestSize.Level0)
+{
+    std::string result;
+    auto CMD1 = std::string(CMD).append(" \"-ProxyDelayTime -s 3000").append(" \"");
+
+    auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(result.find("3000"), std::string::npos);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyDelayTime -s: %{public}s", result.c_str());
+
+    CMD1 = std::string(CMD).append(" \"-ProxyDelayTime -s 0").append(" \"");
+    ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(result.find("259200000"), std::string::npos);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyDelayTime -s 0: %{public}s", result.c_str());
+}
 } // namespace MiscServices
 } // namespace OHOS
