@@ -21,6 +21,7 @@ config("time_client_config") {
     "include",
     "${time_utils_path}/native/include",
     "${time_service_path}/time/include/inner_api_include",
+    "${ability_runtime_want_path}/interfaces/inner_api/wantagent/include",
   ]
 }
 
