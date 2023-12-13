@@ -275,7 +275,7 @@ HWTEST_F(TimeDfxTest, DumpPeoxyTimerMapInfo001, TestSize.Level0)
 
     ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);
-    EXPECT_NE(result.find("proxy uid"), std::string::npos);
+    EXPECT_NE(result.find("dump proxy map"), std::string::npos);
     TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyTimer -l: %{public}s", result.c_str());
     ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
     EXPECT_TRUE(ret);

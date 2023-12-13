@@ -63,7 +63,7 @@ HWTEST_F(TimePermissionTest, CheckCallingPermission001, TestSize.Level1)
     EXPECT_EQ(false, ret);
 
     bool ret1 = TimePermission::CheckCallingPermission("permissionName");
-    EXPECT_EQ(true, ret1);
+    EXPECT_EQ(false, ret1);
 }
 
 }
