@@ -32,6 +32,9 @@ ITimerInfoInstance::ITimerInfoInstance() : callbackInfo_{}
 
 ITimerInfoInstance::~ITimerInfoInstance()
 {
+    if (callbackInfo_.ref != nullptr) {
+        napi_delete_reference(callbackInfo_.env, callbackInfo_.ref);
+    }
 }
 
 void ITimerInfoInstance::OnTrigger()
