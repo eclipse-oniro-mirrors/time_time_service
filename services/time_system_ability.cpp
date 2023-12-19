@@ -151,12 +151,12 @@ void TimeSystemAbility::OnStart()
         return;
     }
     InitServiceHandler();
-    RegisterRSSDeathCallback();
     InitTimerHandler();
     TimeTickNotify::GetInstance().Init();
     TimeZoneInfo::GetInstance().Init();
     NtpUpdateTime::GetInstance().Init();
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
+    AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
     InitDumpCmd();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
     if (Init() != ERR_OK) {
@@ -171,6 +171,8 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
     TIME_HILOGD(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId:%{public}d added!", systemAbilityId);
     if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
         RegisterSubscriber();
+    } else if (systemAbilityId == DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID) {
+        RegisterRSSDeathCallback();
     } else {
         TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not COMMON_EVENT_SERVICE_ID");
         return;
