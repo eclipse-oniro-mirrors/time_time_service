@@ -32,6 +32,38 @@ ITimerInfoInstance::ITimerInfoInstance() : callbackInfo_{}
 
 ITimerInfoInstance::~ITimerInfoInstance()
 {
+    auto *callback = new (std::nothrow) CallbackInfo(callbackInfo_.env, callbackInfo_.ref);
+    if (callback == nullptr) {
+        return;
+    }
+    ITimerInfoInstance::Call(callbackInfo_.env, reinterpret_cast<void *>(callback), UvDelete);
+}
+
+void ITimerInfoInstance::Call(napi_env env, void *data, uv_after_work_cb afterCallback)
+{
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env, &loop);
+    if (loop == nullptr) {
+        delete reinterpret_cast<CallbackInfo *>(data);
+        return;
+    }
+    auto *work = new (std::nothrow) uv_work_t;
+    if (work == nullptr) {
+        delete reinterpret_cast<CallbackInfo *>(data);
+        return;
+    }
+    work->data = data;
+    uv_queue_work(loop, work, [](uv_work_t *work) {}, afterCallback);
+}
+
+void ITimerInfoInstance::UvDelete(uv_work_t *work, int status)
+{
+    auto *callback = reinterpret_cast<CallbackInfo *>(work->data);
+    if (callback != nullptr) {
+        napi_delete_reference(callback->env, callback->ref);
+        delete callback;
+    }
+    delete work;
 }
 
 void ITimerInfoInstance::OnTrigger()

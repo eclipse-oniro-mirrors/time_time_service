@@ -19,6 +19,7 @@
 #include <functional>
 
 #include "event_handler.h"
+#include "uv.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi_work.h"
@@ -41,10 +42,14 @@ public:
 
 private:
     struct CallbackInfo {
+        CallbackInfo(){};
+        CallbackInfo(napi_env napiEnv, napi_ref napiRef) : env(napiEnv), ref(napiRef){};
         napi_env env;
         napi_ref ref;
     };
 
+    void Call(napi_env env, void *data, uv_after_work_cb afterCallback);
+    static void UvDelete(uv_work_t *work, int status);
     CallbackInfo callbackInfo_;
     std::shared_ptr<EventHandler> handler_;
 };
