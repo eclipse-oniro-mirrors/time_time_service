@@ -44,8 +44,8 @@ private:
     struct CallbackInfo {
         CallbackInfo(){};
         CallbackInfo(napi_env napiEnv, napi_ref napiRef) : env(napiEnv), ref(napiRef){};
-        napi_env env;
-        napi_ref ref;
+        napi_env env = nullptr;
+        napi_ref ref = nullptr;
     };
 
     void Call(napi_env env, void *data, uv_after_work_cb afterCallback);
