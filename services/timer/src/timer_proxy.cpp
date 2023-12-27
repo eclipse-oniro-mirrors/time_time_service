@@ -26,6 +26,8 @@ using namespace OHOS::AppExecFwk;
 
 namespace {
 constexpr int MILLI_TO_SECOND =  1000;
+/* ms for 3 days */
+constexpr int64_t PROXY_DELAY_TIME_IN_MILLI = 3 * 24 * 60 * 60 * 1000;
 }
 
 IMPLEMENT_SINGLE_INSTANCE(TimerProxy)
@@ -374,8 +376,7 @@ bool TimerProxy::SetProxyDelayTime(int fd, const int64_t proxyDelayTime)
     }
 
     if (proxyDelayTime == 0) {
-        /* ms for 3 days */
-        proxyDelayTime_ = 3 * 24 * 60 * 60 * 1000;
+        proxyDelayTime_ = PROXY_DELAY_TIME_IN_MILLI;
     } else {
         proxyDelayTime_ = proxyDelayTime;
     }
