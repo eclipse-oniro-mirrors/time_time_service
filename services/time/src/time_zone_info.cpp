@@ -87,7 +87,7 @@ bool TimeZoneInfo::SetTimezoneToKernel()
     time_t t = time(nullptr);
     struct tm *localTime = localtime(&t);
     struct timezone tz {};
-    tz.tz_minuteswest = localTime->tm_gmtoff / HOUR_TO_MIN;
+    tz.tz_minuteswest = -localTime->tm_gmtoff / HOUR_TO_MIN;
     tz.tz_dsttime = 0;
     int result = settimeofday(nullptr, &tz);
     if (result < 0) {
