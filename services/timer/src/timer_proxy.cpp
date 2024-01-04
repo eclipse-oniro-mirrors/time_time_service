@@ -41,9 +41,8 @@ void TimerProxy::RemoveProxy(uint64_t timerNumber, int32_t uid)
         for (auto itAlarm = alarms.begin(); itAlarm != alarms.end();) {
             if ((*itAlarm)->id == timerNumber) {
                 alarms.erase(itAlarm);
-            } else {
-                itAlarm++;
             }
+            itAlarm++;
         }
         if (alarms.empty()) {
             proxyMap_.erase(uid);
@@ -285,7 +284,6 @@ bool TimerProxy::RestoreProxyWhenElapsedByUid(const int32_t uid,
     std::lock_guard<std::mutex> lockUidTimers(uidTimersMutex_);
     if (uidTimersMap_.find(uid) == uidTimersMap_.end()) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "uid timer info map not found, just erase proxy map. uid: %{public}d", uid);
-        proxyUids_.erase(uid);
         return true;
     }
 
@@ -326,7 +324,7 @@ void TimerProxy::ResetAllProxyWhenElapsed(const std::chrono::steady_clock::time_
     std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback)
 {
     std::lock_guard<std::mutex> lockProxy(proxyMutex_);
-    for (auto it = proxyUids_.begin(); it!= proxyUids_.end(); ++it) {
+    for (auto it = proxyUids_.begin(); it != proxyUids_.end(); ++it) {
         RestoreProxyWhenElapsedByUid(it->first, now, insertAlarmCallback);
     }
     proxyUids_.clear();

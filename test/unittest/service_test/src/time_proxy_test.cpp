@@ -274,5 +274,46 @@ HWTEST_F(TimeProxyTest, ProxyTimer002, TestSize.Level1)
     timerManagerHandler_->DestroyTimer(timerId);
     usleep(BLOCK_TEST_TIME);
 }
+
+/**
+* @tc.name: ProxyTimer003
+* @tc.desc: reset all proxy测试
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, ProxyTimer003, TestSize.Level1)
+{
+    /* 代理三个timer，可以代理成功，可以记录到proxyUid_中 */
+    int32_t uid = 2000;
+    bool retProxy = timerManagerHandler_->ProxyTimer(uid, true, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyUids_.size(), (const unsigned int)1);
+    auto it = TimerProxy::GetInstance().proxyUids_.find(uid);
+    EXPECT_NE(it, TimerProxy::GetInstance().proxyUids_.end());
+    EXPECT_EQ(it->second.size(), (const unsigned int)0);
+
+    uid = 3000;
+    retProxy = timerManagerHandler_->ProxyTimer(uid, true, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyUids_.size(), (const unsigned int)2);
+    it = TimerProxy::GetInstance().proxyUids_.find(uid);
+    EXPECT_NE(it, TimerProxy::GetInstance().proxyUids_.end());
+    EXPECT_EQ(it->second.size(), (const unsigned int)0);
+
+    uid = 4000;
+    retProxy = timerManagerHandler_->ProxyTimer(uid, true, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyUids_.size(), (const unsigned int)3);
+    it = TimerProxy::GetInstance().proxyUids_.find(uid);
+    EXPECT_NE(it, TimerProxy::GetInstance().proxyUids_.end());
+    EXPECT_EQ(it->second.size(), (const unsigned int)0);
+
+    /* 可以正常reset，且map会清空 */
+    retProxy = timerManagerHandler_->ResetAllProxy();
+    EXPECT_TRUE(retProxy);
+    EXPECT_TRUE(TimerProxy::GetInstance().proxyUids_.empty());
+}
 }  // MiscServices
 }  // OHOS
