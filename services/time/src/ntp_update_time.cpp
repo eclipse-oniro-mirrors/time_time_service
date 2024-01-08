@@ -194,7 +194,6 @@ void NtpUpdateTime::SetSystemTime()
     }
     if (isRequesting_.exchange(true)) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "The NTP request is in progress.");
-        isRequesting_ = false;
         return;
     }
     bool ret = false;
