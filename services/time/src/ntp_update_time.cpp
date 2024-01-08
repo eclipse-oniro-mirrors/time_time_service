@@ -52,7 +52,7 @@ const std::string AUTO_TIME_STATUS_OFF = "OFF";
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
-std::atomic<bool> NtpUpdateTime::ntpRequesting_ = false;
+std::atomic<bool> NtpUpdateTime::isRequesting_ = false;
 
 NtpUpdateTime::NtpUpdateTime() : timerId_(0), nitzUpdateTimeMilli_(0), nextTriggerTime_(0){};
 
@@ -192,11 +192,11 @@ void NtpUpdateTime::SetSystemTime()
         TIME_HILOGI(TIME_MODULE_SERVICE, "auto sync switch off");
         return;
     }
-    if (ntpRequesting_) {
+    if (isRequesting_.exchange(true)) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "The NTP request is in progress.");
+        isRequesting_ = false;
         return;
     }
-    ntpRequesting_ = true;
     bool ret = false;
     std::vector<std::string> ntpSpecList = SplitNtpAddrs(autoTimeInfo_.ntpServerSpec);
     std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.ntpServer);
@@ -210,24 +210,24 @@ void NtpUpdateTime::SetSystemTime()
     }
     if (!ret) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed.");
-        ntpRequesting_ = false;
+        isRequesting_ = false;
         return;
     }
     int64_t currentTime = NtpTrustedTime::GetInstance().CurrentTimeMillis();
     if (currentTime == INVALID_TIMES) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update time failed");
-        ntpRequesting_ = false;
+        isRequesting_ = false;
         return;
     }
     if (currentTime <= 0) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "current time invalid.");
-        ntpRequesting_ = false;
+        isRequesting_ = false;
         return;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp UTC Time: %{public}" PRId64 "", currentTime);
     TimeSystemAbility::GetInstance()->SetTime(currentTime);
     autoTimeInfo_.lastUpdateTime = currentTime;
-    ntpRequesting_ = false;
+    isRequesting_ = false;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update currentTime: %{public}" PRId64 "", currentTime);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }

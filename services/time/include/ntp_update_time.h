@@ -56,7 +56,7 @@ private:
     uint64_t timerId_;
     uint64_t nitzUpdateTimeMilli_;
     uint64_t nextTriggerTime_;
-    static std::atomic<bool> ntpRequesting_;
+    static std::atomic<bool> isRequesting_;
 };
 } // namespace MiscServices
 } // namespace OHOS
