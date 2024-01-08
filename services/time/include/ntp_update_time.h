@@ -17,6 +17,7 @@
 #define NTP_UPDATE_TIME_H
 
 #include <string>
+#include <atomic>
 
 namespace OHOS {
 namespace MiscServices {
@@ -55,6 +56,7 @@ private:
     uint64_t timerId_;
     uint64_t nitzUpdateTimeMilli_;
     uint64_t nextTriggerTime_;
+    static std::atomic<bool> ntpRequesting_;
 };
 } // namespace MiscServices
 } // namespace OHOS
