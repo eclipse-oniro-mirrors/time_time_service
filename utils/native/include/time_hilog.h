@@ -32,7 +32,7 @@ enum TimeSubModule {
     TIME_MODULE_BUTT,
 };
 
-static constexpr unsigned int BASE_TIME_DOMAIN_ID = 0xD001C04;
+static constexpr unsigned int BASE_TIME_DOMAIN_ID = 0xD001C40;
 
 enum TimeDomainId {
     TIME_INNERKIT_DOMAIN = BASE_TIME_DOMAIN_ID + TIME_MODULE_INNERKIT,
