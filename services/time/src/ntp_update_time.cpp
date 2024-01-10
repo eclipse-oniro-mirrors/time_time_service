@@ -40,8 +40,6 @@ namespace {
 constexpr int64_t NANO_TO_MILLISECOND = 1000000;
 constexpr int64_t DAY_TO_MILLISECOND = 86400000;
 const std::string AUTOTIME_FILE_PATH = "/data/service/el1/public/time/autotime.json";
-const std::string NETWORK_TIME_STATUS_ON = "ON";
-const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NTP_SERVER_SYSTEM_PARAMETER = "persist.time.ntpserver";
 const std::string NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER = "persist.time.ntpserver_specific";
 const int64_t INVALID_TIMES = -1;
@@ -88,17 +86,20 @@ void NtpUpdateTime::Init()
         }
     });
     th.detach();
-    auto callback = [this](uint64_t id) { this->RefreshNetworkTimeByTimer(id); };
+    auto callback = [this](uint64_t id) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "ntp update timer trigger");
+        this->RefreshNetworkTimeByTimer(id);
+    };
     TimerPara timerPara{};
     timerPara.timerType = static_cast<int>(ITimerManager::TimerType::ELAPSED_REALTIME);
     timerPara.windowLength = 0;
     timerPara.interval = DAY_TO_MILLISECOND;
     timerPara.flag = 0;
     TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update timerId: %{public}" PRId64 "", timerId_);
     RefreshNextTriggerTime();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update triggertime: %{public}" PRId64 "", nextTriggerTime_);
     TimeSystemAbility::GetInstance()->StartTimer(timerId_, nextTriggerTime_);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "ntp update timerId: %{public}" PRIu64 "triggertime: %{public}" PRId64 "",
+                timerId_, nextTriggerTime_);
 }
 
 int32_t NtpUpdateTime::MonitorNetwork()
@@ -116,7 +117,7 @@ int32_t NtpUpdateTime::MonitorNetwork()
     }
     sptr<NetConnCallbackObserver> observer = new (std::nothrow) NetConnCallbackObserver();
     if (observer == nullptr) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "new operator error.observer is nullptr");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "new operator error.observer is nullptr");
         return NET_CONN_ERR_INPUT_NULL_PTR;
     }
     int nRet = NetConnClient::GetInstance().RegisterNetConnCallback(specifier, observer, 0);
@@ -187,7 +188,8 @@ std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
 
 void NtpUpdateTime::SetSystemTime()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "auto_time switch is: %{public}s",
+        system::GetParameter(AUTO_TIME_SYSTEM_PARAMETER, autoTimeInfo_.status).c_str());
     if (autoTimeInfo_.status != AUTO_TIME_STATUS_ON) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "auto sync switch off");
         return;
@@ -228,7 +230,6 @@ void NtpUpdateTime::SetSystemTime()
     autoTimeInfo_.lastUpdateTime = currentTime;
     isRequesting_ = false;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update currentTime: %{public}" PRId64 "", currentTime);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
 void NtpUpdateTime::RefreshNextTriggerTime()
@@ -250,6 +251,8 @@ bool NtpUpdateTime::IsValidNITZTime()
     }
     auto bootTimeNano = steady_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
+    TIME_HILOGI(TIME_MODULE_SERVICE, "nitz update time: %{public}" PRIu64 " currentTime: %{public}" PRId64 "",
+        nitzUpdateTimeMilli_, bootTimeMilli);
     return (bootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMilli_)) < DAY_TO_MILLISECOND;
 }
 

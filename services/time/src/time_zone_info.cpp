@@ -15,6 +15,7 @@
 
 #include "time_zone_info.h"
 
+#include "ipc_skeleton.h"
 #include "time_file_utils.h"
 
 namespace OHOS {
@@ -50,13 +51,12 @@ void TimeZoneInfo::Init()
 bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
 {
     std::lock_guard<std::mutex> lock(timezoneMutex_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Set timezone");
     if (curTimezoneId_ == timezoneId) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Same Timezone has been set.");
         return true;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone : %{public}s, Current timezone : %{public}s", timezoneId.c_str(),
-        curTimezoneId_.c_str());
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone : %{public}s, Current timezone : %{public}s, uid: %{public}d",
+        timezoneId.c_str(), curTimezoneId_.c_str(), IPCSkeleton::GetCallingUid());
     if (!TimeFileUtils::IsExistFile(std::string(TIMEZONE_PATH).append(timezoneId))) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid timezone");
         return false;
