@@ -112,7 +112,7 @@ private:
     void HandleRepeatTimer(const std::shared_ptr<TimerInfo> &timer, std::chrono::steady_clock::time_point nowElapsed);
     #ifdef POWER_MANAGER_ENABLE
     void HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup);
-    void AddRunningLock();
+    void AddRunningLock(long long holdLockTime);
     #endif
 
     void UpdateTimersState(std::shared_ptr<TimerInfo> &alarm);
