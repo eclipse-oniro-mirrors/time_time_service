@@ -51,10 +51,11 @@ const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
 
 #ifdef POWER_MANAGER_ENABLE
-constexpr int32_t USE_LOCK_TIME_IN_MILLI = 2000;
-constexpr int64_t USE_LOCK_TIME_IN_NANO = 2 * NANO_TO_SECOND;
+constexpr int64_t USE_LOCK_TIME_IN_NANO = NANO_TO_SECOND;
 constexpr int32_t USE_LOCK_DELAY_TIME_IN_MICRO = 10000;
 constexpr int32_t MAX_RETRY_LOCK_TIMES = 3;
+constexpr int32_t NANO_TO_MILLI = 1000000;
+constexpr int64_t ONE_HUNDRED_MILLI = 100000000; // 100ms
 #endif
 
 #ifdef DEVICE_STANDBY_ENABLE
@@ -899,13 +900,21 @@ void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
     auto lockOffset = currentTime - lockExpiredTime_;
     if (nextTimerOffset > 0 && nextTimerOffset <= USE_LOCK_TIME_IN_NANO &&
         ((lockOffset < 0 && std::abs(lockOffset) <= nextTimerOffset) || lockOffset >= 0)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "need create runningLock");
-        lockExpiredTime_ = currentTime + USE_LOCK_TIME_IN_NANO;
-        std::thread lockingThread([this] {
+        auto firstAlarm = firstWakeup->Get(0);
+        if (firstAlarm == nullptr) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "first alarm is null");
+            return;
+        }
+        auto holdLockTime = nextTimerOffset + ONE_HUNDRED_MILLI;
+        TIME_HILOGI(TIME_MODULE_SERVICE, "runningLock time:%{public}" PRIu64 ", timerId:%{public}"
+                    PRIu64", uid:%{public}d  bundleName=%{public}s", static_cast<uint64_t>(holdLockTime),
+                    firstAlarm->id, firstAlarm->uid, firstAlarm->bundleName.c_str());
+        lockExpiredTime_ = currentTime + holdLockTime;
+        std::thread lockingThread([this, holdLockTime] {
             TIME_HILOGI(TIME_MODULE_SERVICE, "start add runningLock thread");
             int32_t retryCount = 0;
             while (retryCount < MAX_RETRY_LOCK_TIMES) {
-                AddRunningLock();
+                AddRunningLock(holdLockTime);
                 usleep(USE_LOCK_DELAY_TIME_IN_MICRO);
                 ++retryCount;
             }
@@ -914,7 +923,7 @@ void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
     }
 }
 
-void TimerManager::AddRunningLock()
+void TimerManager::AddRunningLock(long long holdLockTime)
 {
     if (runningLock_ == nullptr) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "runningLock is nullptr, create runningLock");
@@ -924,7 +933,7 @@ void TimerManager::AddRunningLock()
     if (runningLock_ != nullptr) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "runningLock is not nullptr");
         runningLock_->UnLock();
-        runningLock_->Lock(USE_LOCK_TIME_IN_MILLI);
+        runningLock_->Lock(static_cast<int32_t>(holdLockTime / NANO_TO_MILLI));
     }
 }
 #endif
