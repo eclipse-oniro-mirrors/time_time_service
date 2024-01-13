@@ -94,13 +94,13 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
                                   int uid,
                                   uint64_t &timerId)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE,
-        "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}d "
-                                                                                             "uid:%{public}d",
-        paras.timerType, paras.windowLength, paras.interval, paras.flag, IPCSkeleton::GetCallingUid());
     while (timerId == 0) {
         timerId = random_();
     }
+    TIME_HILOGI(TIME_MODULE_SERVICE,
+                "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}d"
+                "uid:%{public}d pid:%{public}d", paras.timerType, paras.windowLength, paras.interval, paras.flag,
+                IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
     std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
     auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
         timerId,
@@ -126,8 +126,9 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
         return E_TIME_NOT_FOUND;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer: %{public}" PRIu64 " TriggerTime: %{public}" PRIu64 "", timerId,
-        triggerTime);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer: %{public}" PRIu64 " TriggerTime: %{public}" PRIu64""
+                "uid:%{public}d pid:%{public}d", timerId, triggerTime, IPCSkeleton::GetCallingUid(),
+                IPCSkeleton::GetCallingPid());
     auto timerInfo = it->second;
     if (TimerProxy::GetInstance().IsUidProxy(timerInfo->uid)) {
         TIME_HILOGI(TIME_MODULE_SERVICE,
@@ -532,7 +533,8 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
             ProcTriggerTimer(alarm, triggerList, nowElapsed);
-            TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d, id=%{public}" PRId64 "", alarm->uid, alarm->id);
+            TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d, id=%{public}" PRId64 " bundleName=%{public}s",
+                        alarm->uid, alarm->id, alarm->bundleName.c_str());
 
             if (alarm->wakeup) {
                 hasWakeup = true;
