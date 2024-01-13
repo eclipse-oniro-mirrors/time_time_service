@@ -366,8 +366,8 @@ int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId)
 
 bool TimeSystemAbility::SetRealTime(int64_t time)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Setting time of day to milliseconds: %{public}" PRId64 " uid:%{public}d", time,
-        IPCSkeleton::GetCallingUid());
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Setting time of day to milliseconds: %{public}" PRId64 ""
+                "uid:%{public}d pid:%{public}d ", time, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
     if (time < 0 || time / 1000LL >= LLONG_MAX) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "input param error");
         return false;
