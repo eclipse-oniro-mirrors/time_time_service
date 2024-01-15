@@ -25,7 +25,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetCurrentTimeMs001
      * @tc.desc: test getCurrentTime ms for promise.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetCurrentTimeMs001', 0, async function (done) {
@@ -41,7 +43,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetCurrentTimeMs002
      * @tc.desc: test getCurrentTime ms for callback.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetCurrentTimeMs002', 0, async function (done) {
@@ -60,7 +64,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetCurrentTimeMs003
      * @tc.desc: test getCurrentTime ms for promise when isNano is false.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetCurrentTimeMs003', 0, async function (done) {
@@ -76,7 +82,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetCurrentTimeMs004
      * @tc.desc: test getCurrentTime ms for callback when isNano is false.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetCurrentTimeMs004', 0, async function (done) {
@@ -95,7 +103,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetCurrentTimeNs001
      * @tc.desc: test getCurrentTime ns for promise when inNano is true
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetCurrentTimeNs001', 0, async function (done) {
@@ -112,7 +122,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetCurrentTimeNs002
      * @tc.desc: test getCurrentTime ns for promise when inNano is true
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetCurrentTimeNs002', 0, async function (done) {
@@ -131,7 +143,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealActiveTimeMs001
      * @tc.desc: test getRealActiveTime ms for promise.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealActiveTimeMs001', 0, async function (done) {
@@ -146,7 +160,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealActiveTimeMs002
      * @tc.desc: test getRealActiveTime ms for callback.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealActiveTimeMs002', 0, async function (done) {
@@ -164,7 +180,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealActiveTimeMs003
      * @tc.desc: test getRealActiveTime ms for promise when isNano is false.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealActiveTimeMs003', 0, async function (done) {
@@ -178,7 +196,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealActiveTimeMs004
      * @tc.desc: test getRealActiveTime ms for callback when isNano is false.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealActiveTimeMs004', 0, async function (done) {
@@ -196,7 +216,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealActiveTimeNs001
      * @tc.desc: test getRealActiveTime ns for promise when isNano is true.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealActiveTimeNs001', 0, async function (done) {
@@ -211,7 +233,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealActiveTimeNs002
      * @tc.desc: test getRealActiveTime ns for callback when isNano is true.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealActiveTimeNs002', 0, async function (done) {
@@ -229,7 +253,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealTimeMs001
      * @tc.desc: test getRealTime ms for promise.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealTimeMs001', 0, async function (done) {
@@ -244,7 +270,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealTimeMs002
      * @tc.desc: test getRealTime ms for callback.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealTimeMs002', 0, async function (done) {
@@ -262,7 +290,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealTimeMs003
      * @tc.desc: test getRealTime ms for promise when isNano is false.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealTimeMs003', 0, async function (done) {
@@ -277,7 +307,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealTimeMs004
      * @tc.desc: test getRealTime ms for callback when isNano is false.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealTimeMs004', 0, async function (done) {
@@ -295,7 +327,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealTimeNs001
      * @tc.desc: test getRealTime ns for promise when isNano is true.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealTimeNs001', 0, async function (done) {
@@ -310,7 +344,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealTimeNs002
      * @tc.desc: test getRealTime ns for callback when isNano is true.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealTimeNs002', 0, async function (done) {
@@ -328,7 +364,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetDate001
      * @tc.desc: test getDate for promise.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetDate001', 0, async function (done) {
@@ -344,7 +382,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetDate002
      * @tc.desc: test getDate for callback.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetDate002', 0, async function (done) {
@@ -364,7 +404,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetCurrentTimeInvalidParam001
      * @tc.desc: test getCurrentTime for promise with invalid param.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetCurrentTimeInvalidParam001', 0, async function (done) {
@@ -384,7 +426,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetCurrentTimeInvalidParam002
      * @tc.desc: test getCurrentTime for callback with invalid param.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetCurrentTimeInvalidParam002', 0, async function (done) {
@@ -407,7 +451,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetCurrentTimeInvalidParam002
      * @tc.desc: test getRealActiveTime for callback with invalid param.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetCurrentTimeInvalidParam002', 0, async function (done) {
@@ -427,7 +473,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealActiveTimeInvalidParam001
      * @tc.desc: test getRealActiveTime for promise with invalid param.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealActiveTimeInvalidParam001', 0, async function (done) {
@@ -450,7 +498,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealActiveTimeInvalidParam001
      * @tc.desc: test getRealTime for promise with invalid param.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealTimeInvalidParam001', 0, async function (done) {
@@ -470,7 +520,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetRealTimeInvalidParam002
      * @tc.desc: test getRealTime for callback with invalid param.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetRealTimeInvalidParam002', 0, async function (done) {
@@ -493,7 +545,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetTimezone001
      * @tc.desc: test getTimezone for promise.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetTimezone001', 0, async function (done) {
@@ -510,7 +564,9 @@ describe('SystemTimeGetTest', function () {
     /**
      * @tc.name: TestGetTimezone002
      * @tc.desc: test getTimezone for callback.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testGetTimezone002', 0, async function (done) {

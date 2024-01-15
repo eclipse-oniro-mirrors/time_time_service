@@ -22,9 +22,12 @@ const ACL_ERROR = 201;
 describe('SystemDateTimeTest', function () {
 
     /**
+     * @tc.number: TestSetTimeNoPermission001
      * @tc.name: TestSetTimeNoPermission001
      * @tc.desc: Test setTime no acl permission for promise
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('TestSetTimeNoPermission001', 0, async function (done) {
@@ -41,9 +44,12 @@ describe('SystemDateTimeTest', function () {
     })
 
     /**
+     * @tc.number: TestSetTimeNoPermission002
      * @tc.name: TestSetTimeNoPermission002
      * @tc.desc: Test setTime no acl permission for callback
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testSetTimeNoPermission002', 0, async function (done) {
@@ -52,19 +58,21 @@ describe('SystemDateTimeTest', function () {
         systemDateTime.setTime(nowTime, (err) => {
             if (err) {
                 expect(err.code).assertEqual(ACL_ERROR);
-                done();
             } else {
                 expect(false).assertTrue();
-                done();
             }
+            done();
         })
         console.log('testSetTimeNoPermission002 end');
     })
 
     /**
+     * @tc.number: TestSetTimezoneNoPermission001
      * @tc.name: TestSetTimezoneNoPermission001
      * @tc.desc: Test setTimezone no permission for promise
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('TestSetTimezoneNoPermission001', 0, async function (done) {
@@ -81,9 +89,12 @@ describe('SystemDateTimeTest', function () {
     })
 
     /**
+     * @tc.number: TestSetTimezoneNoPermission002
      * @tc.name: TestSetTimezoneNoPermission002
      * @tc.desc: Test setTime no acl permission for callback
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('TestSetTimezoneNoPermission002', 0, async function (done) {
@@ -92,11 +103,10 @@ describe('SystemDateTimeTest', function () {
         systemDateTime.setTimezone(timezone, (err) => {
             if (err) {
                 expect(err.code).assertEqual(ACL_ERROR);
-                done();
             } else {
                 expect(false).assertTrue();
-                done();
             }
+            done();
         })
         console.log('testSetTimezoneNoPermission002 end');
     })

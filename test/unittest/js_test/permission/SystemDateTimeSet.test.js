@@ -28,9 +28,12 @@ let timezone = ["Antarctica/McMurdo", "America/Argentina/Buenos_Aires", "Austral
 describe("SystemDateTimeSetTest", function () {
 
     /**
+     * @tc.number: TestSetTime001
      * @tc.name: TestSetTime001
      * @tc.desc: Test setTime for promise.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTime001", 0,function (done) {
@@ -46,9 +49,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetTime002
      * @tc.name: TestSetTime002
      * @tc.desc: Test setTime for callback.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTime002", 0, async function (done) {
@@ -65,9 +71,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetTimeInvalidValue003
      * @tc.name: TestSetTimeInvalidValue003
      * @tc.desc: Test setTime for promise with invalid value.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTimeInvalidValue003", 0, async function (done) {
@@ -84,9 +93,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetTimeInvalidValue004
      * @tc.name: TestSetTimeInvalidValue004
      * @tc.desc: Test setTime for callback with invalid value.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTimeInvalidValue004", 0, async function (done) {
@@ -95,19 +107,21 @@ describe("SystemDateTimeSetTest", function () {
         systemDateTime.setTime(time, (err) => {
             if (err) {
                 expect(true).assertTrue();
-                done();
             } else {
                 expect(false).assertTrue();
-                done();
             }
+            done();
         })
         console.log("testSetTimeInvalidValue004 end");
     });
 
     /**
+     * @tc.number: TestSetTimeInvalidParam005
      * @tc.name: TestSetTimeInvalidParam005
      * @tc.desc: Test setTime for promise with invalid param.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTimeInvalidParam005", 0, async function (done) {
@@ -128,9 +142,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetTimeInvalidParam006
      * @tc.name: TestSetTimeInvalidParam006
      * @tc.desc: Test setTime for callback with invalid param.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTimeInvalidParam006", 0, async function (done) {
@@ -139,11 +156,10 @@ describe("SystemDateTimeSetTest", function () {
             systemDateTime.setTime("time", (err) => {
                 if (err) {
                     expect(err.code).assertEqual(401);
-                    done();
                 } else {
                     expect(false).assertTrue();
-                    done();
                 }
+                done();
             })
         } catch (err) {
             expect(err.code).assertEqual(401);
@@ -153,9 +169,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetTimeInvalidValue007
      * @tc.name: TestSetTimeInvalidValue007
      * @tc.desc: Test setTime for callback with invalid value.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTimeInvalidValue007", 0, async function (done) {
@@ -171,9 +190,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetTimeInvalidValue008
      * @tc.name: TestSetTimeInvalidValue008
      * @tc.desc: Test setTime for callback with invalid value.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTimeInvalidValue008", 0, async function (done) {
@@ -181,19 +203,21 @@ describe("SystemDateTimeSetTest", function () {
         systemDateTime.setTime(-1, (err) => {
             if (err) {
                 expect(err.code).assertEqual(undefined);
-                done();
             } else {
                 expect(false).assertTrue();
-                done();
             }
+            done();
         })
         console.log("testSetTimeInvalidValue008 end");
     });
 
     /**
+     * @tc.number: TestSetDate001
      * @tc.name: TestSetDate001
      * @tc.desc: Test setDate for promise.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetDate001", 0, async function (done) {
@@ -213,9 +237,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetDate002
      * @tc.name: TestSetDate002
      * @tc.desc: Test setDate for callback.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetDate002", 0, async function (done) {
@@ -236,9 +263,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetDateNull001
      * @tc.name: TestSetDateNull001
      * @tc.desc: Test setDate for promise with null.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetDateNull001", 0, async function (done) {
@@ -257,9 +287,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetDateNull002
      * @tc.name: TestSetDateNull002
      * @tc.desc: Test setDate for callback with null.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetDateNull002", 0, async function (done) {
@@ -267,11 +300,10 @@ describe("SystemDateTimeSetTest", function () {
             systemDateTime.setDate(null, (err) => {
                 if (err) {
                     expect(true).assertTrue();
-                    done()
                 } else {
                     expect(false).assertTrue();
-                    done();
                 }
+                done();
             })
         } catch (err) {
             expect(true).assertTrue();
@@ -280,9 +312,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetTimezone001
      * @tc.name: TestSetTimezone001
      * @tc.desc: Test setDate for promise.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTimezone001", 0, async function (done) {
@@ -304,9 +339,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetTimezone002
      * @tc.name: TestSetTimezone002
      * @tc.desc: Test setDate for callback.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTimezone002", 0, async function (done) {
@@ -322,9 +360,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetTimezoneNull003
      * @tc.name: TestSetTimezoneNull003
      * @tc.desc: Test setDate for promise with null.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTimezoneNull003", 0, async function (done) {
@@ -343,9 +384,12 @@ describe("SystemDateTimeSetTest", function () {
     });
 
     /**
+     * @tc.number: TestSetTimezoneNull004
      * @tc.name: TestSetTimezoneNull004
      * @tc.desc: Test setDate for callback with null.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it("testSetTimezoneNull004", 0, async function (done) {

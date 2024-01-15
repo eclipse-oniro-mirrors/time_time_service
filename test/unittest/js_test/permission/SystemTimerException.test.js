@@ -14,16 +14,56 @@
  */
 
 // @ts-nocheck
-import {describe, beforeAll, beforeEach, afterEach, afterAll, it, expect} from 'deccjsunit/index'
+import { describe, beforeAll, beforeEach, afterEach, afterAll, it, expect } from 'deccjsunit/index'
 import systemTimer from '@ohos.systemTimer'
 
 describe('SystemTimerExceptionTest', function () {
     console.log('start################################start');
 
+    async function testCreateTimerPromise(options, done) {
+        try {
+            systemTimer.createTimer(options).then(() => {
+                expect(false).assertTrue();
+                done();
+            })
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+            done();
+        }
+    }
+
+    async function testCreateTimerCallback(options, done) {
+        try {
+            systemTimer.createTimer(options, (err) => {
+                if (err) {
+                    expect(err.code).assertEqual(401);
+                } else {
+                    expect(false).assertTrue();
+                }
+                done();
+            })
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+            done();
+        }
+    }
+
+    let timeErr = function (err, done) {
+        if (err) {
+            expect(true).assertTrue();
+        } else {
+            expect(false).assertTrue();
+        }
+        done();
+    }
+
     /**
+     * @tc.number: TestCreateTimerType001
      * @tc.name: TestCreateTimerType001
      * @tc.desc: Test createTimer for promise when type is 16.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerType001', 0, async function (done) {
@@ -40,9 +80,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestCreateTimerType002
      * @tc.name: TestCreateTimerType002
      * @tc.desc: Test createTimer for promise when type is string.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerType002', 0, async function (done) {
@@ -51,22 +94,17 @@ describe('SystemTimerExceptionTest', function () {
             type: "type",
             repeat: false
         }
-        try {
-            systemTimer.createTimer(options).then(() => {
-                expect(false).assertTrue();
-                done();
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
+        await testCreateTimerPromise(options, done);
         console.log('testCreateTimerType002 end');
     });
 
     /**
+     * @tc.number: TestCreateTimerRepeat003
      * @tc.name: TestCreateTimerRepeat003
      * @tc.desc: Test createTimer for promise when repeat is string.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerRepeat003', 0, async function (done) {
@@ -75,23 +113,18 @@ describe('SystemTimerExceptionTest', function () {
             type: systemTimer.TIMER_TYPE_EXACT,
             repeat: "true"
         }
-        try {
-            systemTimer.createTimer(options).then(() => {
-                expect(false).assertTrue();
-                done();
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
+        await testCreateTimerPromise(options, done);
         console.log('testCreateTimerRepeat003 end');
     });
 
 
     /**
+     * @tc.number: TestCreateTimerWantAgent004
      * @tc.name: TestCreateTimerWantAgent004
      * @tc.desc: Test createTimer for promise when wantAgent is number.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerWantAgent004', 0, async function (done) {
@@ -101,22 +134,17 @@ describe('SystemTimerExceptionTest', function () {
             repeat: false,
             wantAgent: 123,
         }
-        try {
-            systemTimer.createTimer(options).then(() => {
-                expect(false).assertTrue();
-                done();
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
+        await testCreateTimerPromise(options, done);
         console.log('testCreateTimerWantAgent004 end');
     });
 
     /**
+     * @tc.number: TestCreateTimerCallback005
      * @tc.name: TestCreateTimerCallback005
      * @tc.desc: Test createTimer for promise when callback is number.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerCallback005', 0, async function (done) {
@@ -126,22 +154,17 @@ describe('SystemTimerExceptionTest', function () {
             repeat: false,
             callback: 123,
         }
-        try {
-            systemTimer.createTimer(options).then(() => {
-                expect(false).assertTrue();
-                done();
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
+        await testCreateTimerPromise(options, done);
         console.log('testCreateTimerCallback005 end');
     });
 
     /**
+     * @tc.number: TestCreateTimerNull006
      * @tc.name: TestCreateTimerNull006
      * @tc.desc: Test createTimer for promise when option is null.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerNull006', 0, async function (done) {
@@ -159,9 +182,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestCreateTimerRepeat007
      * @tc.name: TestCreateTimerRepeat007
      * @tc.desc: Test createTimer for promise when not repeat.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerRepeat007', 0, async function (done) {
@@ -169,22 +195,17 @@ describe('SystemTimerExceptionTest', function () {
         let options = {
             type: systemTimer.TIMER_TYPE_EXACT
         }
-        try {
-            systemTimer.createTimer(options).then(() => {
-                expect(false).assertTrue();
-                done();
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
+        await testCreateTimerPromise(options, done);
         console.log('testCreateTimerRepeat007 end');
     });
 
     /**
+     * @tc.number: TestCreateTimerInterval008
      * @tc.name: TestCreateTimerInterval008
      * @tc.desc: Test createTimer for promise when interval is string .
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerInterval008', 0, async function (done) {
@@ -194,22 +215,17 @@ describe('SystemTimerExceptionTest', function () {
             repeat: false,
             interval: "1000"
         }
-        try {
-            systemTimer.createTimer(options).then(() => {
-                expect(false).assertTrue();
-                done();
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
+        await testCreateTimerPromise(options, done);
         console.log('testCreateTimerInterval008 end');
     });
 
     /**
+     * @tc.number: TestCreateTimerType009
      * @tc.name: TestCreateTimerType009
      * @tc.desc: Test createTimer for callback when type is 16.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerType009', 0, async function (done) {
@@ -234,9 +250,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestCreateTimerType010
      * @tc.name: TestCreateTimerType010
      * @tc.desc: Test createTimer for callback when type is string .
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerType010', 0, async function (done) {
@@ -245,26 +264,17 @@ describe('SystemTimerExceptionTest', function () {
             type: "type",
             repeat: false
         }
-        try {
-            systemTimer.createTimer(options, (err) => {
-                if (err) {
-                    expect(err.code).assertEqual(401);
-                } else {
-                    expect(false).assertTrue();
-                }
-                done();
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
+        await testCreateTimerCallback(options, done);
         console.log('testCreateTimerType010 end');
     });
 
     /**
+     * @tc.number: TestCreateTimerRepeat011
      * @tc.name: TestCreateTimerRepeat011
      * @tc.desc: Test createTimer for callback when repeat is string .
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerRepeat011', 0, async function (done) {
@@ -273,26 +283,17 @@ describe('SystemTimerExceptionTest', function () {
             type: systemTimer.TIMER_TYPE_EXACT,
             repeat: "true"
         }
-        try {
-            systemTimer.createTimer(options, (err) => {
-                if (err) {
-                    expect(err.code).assertEqual(401);
-                } else {
-                    expect(false).assertTrue();
-                }
-                done();
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
+        await testCreateTimerCallback(options, done);
         console.log('testCreateTimerRepeat011 end');
     });
 
     /**
+     * @tc.number: TestCreateTimerWantAgent012
      * @tc.name: TestCreateTimerWantAgent012
      * @tc.desc: Test createTimer for callback when wantAgent is number.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerWantAgent012', 0, async function (done) {
@@ -302,26 +303,17 @@ describe('SystemTimerExceptionTest', function () {
             repeat: false,
             wantAgent: 123,
         }
-        try {
-            systemTimer.createTimer(options, (err) => {
-                if (err) {
-                    expect(err.code).assertEqual(401);
-                } else {
-                    expect(false).assertTrue();
-                }
-                done();
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
+        await testCreateTimerCallback(options, done);
         console.log('testCreateTimerWantAgent012 end');
     });
 
     /**
+     * @tc.number: TestCreateTimerCallback013
      * @tc.name: TestCreateTimerCallback013
      * @tc.desc: Test createTimer for callback when callback is number.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerCallback013', 0, async function (done) {
@@ -331,26 +323,17 @@ describe('SystemTimerExceptionTest', function () {
             repeat: false,
             callback: 123,
         }
-        try {
-            systemTimer.createTimer(options, (err) => {
-                if (err) {
-                    expect(err.code).assertEqual(401);
-                } else {
-                    expect(false).assertTrue();
-                }
-                done();
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
+        await testCreateTimerCallback(options, done);
         console.log('testCreateTimerCallback013 end');
     });
 
     /**
+     * @tc.number: TestCreateTimerNull014
      * @tc.name: TestCreateTimerNull014
      * @tc.desc: Test createTimer for callback when option is null.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerNull014', 0, async function (done) {
@@ -372,15 +355,38 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestCreateTimerRepeat015
      * @tc.name: TestCreateTimerRepeat015
      * @tc.desc: Test createTimer for callback when not repeat.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerRepeat015', 0, async function (done) {
         console.log("testCreateTimerRepeat015 start")
         let options = {
             type: systemTimer.TIMER_TYPE_EXACT
+        }
+        await testCreateTimerCallback(options, done);
+        console.log('testCreateTimerRepeat015 end');
+    });
+
+    /**
+     * @tc.number: TestCreateTimerInterval016
+     * @tc.name: TestCreateTimerInterval016
+     * @tc.desc: Test createTimer for callback when interval is string .
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('testCreateTimerInterval016', 0, async function (done) {
+        console.log("testCreateTimerInterval008 start")
+        let options = {
+            type: systemTimer.TIMER_TYPE_EXACT,
+            repeat: false,
+            interval: "1000"
         }
         try {
             systemTimer.createTimer(options, (err) => {
@@ -395,43 +401,16 @@ describe('SystemTimerExceptionTest', function () {
             expect(err.code).assertEqual(401);
             done();
         }
-        console.log('testCreateTimerRepeat015 end');
-    });
-
-    /**
-     * @tc.name: TestCreateTimerInterval016
-     * @tc.desc: Test createTimer for callback when interval is string .
-     * @tc.type: Function
-     * @tc.require:
-     */
-    it('testCreateTimerInterval016', 0, async function (done) {
-        console.log("testCreateTimerInterval008 start")
-        let options = {
-            type: systemTimer.TIMER_TYPE_EXACT,
-            repeat: false,
-            interval: "1000"
-        }
-        try {
-            systemTimer.createTimer(options, (err) => {
-                if (err) {
-                    expect(err.code).assertEqual(401);
-                    done();
-                } else {
-                    expect(false).assertTrue();
-                    done();
-                }
-            })
-        } catch (err) {
-            expect(err.code).assertEqual(401);
-            done();
-        }
         console.log('testCreateTimerInterval016 end');
     });
 
     /**
+     * @tc.number: TestStartTimerLackParam001
      * @tc.name: TestStartTimerLackParam001
      * @tc.desc: Test startTimer for callback when not triggerTime.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStartTimerLackParam001', 0, async function (done) {
@@ -456,9 +435,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStartTimerLackParam002
      * @tc.name: TestStartTimerLackParam002
      * @tc.desc: Test startTimer for promise when not triggerTime.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStartTimerLackParam002', 0, async function (done) {
@@ -483,9 +465,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStartTimerInvalidParam003
      * @tc.name: TestStartTimerInvalidParam003
      * @tc.desc: Test startTimer for callback when timerId is string.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStartTimerInvalidParam003', 0, async function (done) {
@@ -503,9 +488,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStartTimerInvalidParam004
      * @tc.name: TestStartTimerInvalidParam004
      * @tc.desc: Test startTimer for promise when timerId is string.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStartTimerInvalidParam004', 0, async function (done) {
@@ -523,9 +511,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStartTimerInvalidValue005
      * @tc.name: TestStartTimerInvalidValue005
      * @tc.desc: Test startTimer for callback when timerId is invalid.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStartTimerInvalidValue005', 0, async function (done) {
@@ -544,9 +535,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStartTimerInvalidValue006
      * @tc.name: TestStartTimerInvalidValue006
      * @tc.desc: Test startTimer for promise when timerId is invalid.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStartTimerInvalidValue006', 0, async function (done) {
@@ -569,9 +563,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStartTimerInvalidValue007
      * @tc.name: TestStartTimerInvalidValue007
      * @tc.desc: Test startTimer for callback when triggerTime is -1.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStartTimerInvalidValue007', 0, async function (done) {
@@ -593,9 +590,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStartTimerInvalidValue008
      * @tc.name: TestStartTimerInvalidValue008
      * @tc.desc: Test startTimer for callback when triggerTime is -1.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('SUB_time_systemTimer_startTimer_0008', 0, async function (done) {
@@ -621,9 +621,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestDestroyTimerInvalidParam001
      * @tc.name: TestDestroyTimerInvalidParam001
      * @tc.desc: Test destroyTimer for callback when timerId is string.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testDestroyTimerInvalidParam001', 0, async function (done) {
@@ -641,9 +644,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestDestroyTimerInvalidParam002
      * @tc.name: TestDestroyTimerInvalidParam002
      * @tc.desc: Test destroyTimer for promise when timerId is string.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testDestroyTimerInvalidParam002', 0, async function (done) {
@@ -661,22 +667,18 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestDestroyTimerInvalidValue003
      * @tc.name: TestDestroyTimerInvalidValue003
      * @tc.desc: Test destroyTimer for callback when timerId is invalid.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testDestroyTimerInvalidValue003', 0, async function (done) {
         console.log("testDestroyTimerInvalidValue003 start");
         try {
-            systemTimer.destroyTimer(123456, function (err) {
-                if (err) {
-                    expect(true).assertTrue();
-                } else {
-                    expect(false).assertTrue();
-                }
-                done();
-            });
+            systemTimer.destroyTimer(123456, timeErr(err, done));
         } catch (err) {
             expect(true).assertTrue();
             done();
@@ -685,9 +687,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestDestroyTimerInvalidValue004
      * @tc.name: TestDestroyTimerInvalidValue004
      * @tc.desc: Test destroyTimer for promise when timerId is invalid.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testDestroyTimerInvalidValue004', 0, async function (done) {
@@ -708,9 +713,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStopTimerInvalidParam001
      * @tc.name: TestStopTimerInvalidParam001
      * @tc.desc: Test stopTimer for promise when timerId is string.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStopTimerInvalidParam001', 0, async function (done) {
@@ -726,9 +734,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStopTimerInvalidParam002
      * @tc.name: TestStopTimerInvalidParam002
      * @tc.desc: Test stopTimer for callback when timerId is string.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStopTimerInvalidParam002', 0, async function (done) {
@@ -744,21 +755,17 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStopTimerInvalidValue003
      * @tc.name: TestStopTimerInvalidValue003
      * @tc.desc: Test stopTimer for callback when timerId is invalid.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStopTimerInvalidValue003', 0, async function (done) {
         try {
-            systemTimer.stopTimer(123456, function (err) {
-                if (err) {
-                    expect(true).assertTrue();
-                } else {
-                    expect(false).assertTrue();
-                }
-                done();
-            });
+            systemTimer.stopTimer(123456, timeErr(err ,done));
         } catch (err) {
             expect(true).assertTrue();
             done();
@@ -766,9 +773,12 @@ describe('SystemTimerExceptionTest', function () {
     });
 
     /**
+     * @tc.number: TestStopTimerInvalidValue004
      * @tc.name: TestStopTimerInvalidValue004
      * @tc.desc: Test stopTimer for promise when timerId is invalid.
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStopTimerInvalidValue004', 0, async function (done) {
