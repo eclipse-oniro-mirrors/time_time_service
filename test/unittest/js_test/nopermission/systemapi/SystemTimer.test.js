@@ -20,9 +20,12 @@ import systemTimer from '@ohos.systemTimer'
 describe('SystemTimerTest', function () {
 
     /**
+     * @tc.number: TestCreateTimerNoPermission001
      * @tc.name: TestCreateTimerNoPermission001
      * @tc.desc: Test createTimer no permission for promise
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerNoPermission001', 0, async function (done) {
@@ -42,9 +45,12 @@ describe('SystemTimerTest', function () {
     });
 
     /**
+     * @tc.number: TestCreateTimerNoPermission002
      * @tc.name: TestCreateTimerNoPermission002
      * @tc.desc: Test setTime no permission for callback
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testCreateTimerNoPermission002', 0, async function (done) {
@@ -56,19 +62,21 @@ describe('SystemTimerTest', function () {
         systemTimer.createTimer(options, (err) => {
             if (err) {
                 expect(true).assertTrue();
-                done();
             } else {
                 expect(false).assertTrue();
-                done();
             }
+            done();
         })
         console.log('testCreateTimerNoPermission002 end');
     });
 
     /**
+     * @tc.number: TestStartTimerNoPermission001
      * @tc.name: TestStartTimerNoPermission001
      * @tc.desc: Test startTimer no permission for promise
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStartTimerNoPermission001', 0, async function (done) {
@@ -76,19 +84,21 @@ describe('SystemTimerTest', function () {
         systemTimer.startTimer(123456, 123456, (err) => {
             if (err) {
                 expect(err.code).assertEqual(202);
-                done();
             } else {
                 expect(false).assertTrue();
-                done();
             }
+            done();
         });
         console.log('testStartTimerNoPermission001 end');
     });
 
     /**
+     * @tc.number: TestStartTimerNoPermission002
      * @tc.name: TestStartTimerNoPermission002
      * @tc.desc: Test startTimer no permission for callback
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStartTimerNoPermission002', 0, async function (done) {
@@ -104,9 +114,12 @@ describe('SystemTimerTest', function () {
     });
 
     /**
+     * @tc.number: TestDestroyTimerNoPermission001
      * @tc.name: TestDestroyTimerNoPermission001
      * @tc.desc: Test destroyTimer no permission for promise
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testDestroyTimerNoPermission001', 0, async function (done) {
@@ -114,19 +127,21 @@ describe('SystemTimerTest', function () {
         systemTimer.destroyTimer(123456, (err) => {
             if (err) {
                 expect(err.code).assertEqual(202);
-                done();
             } else {
                 expect(false).assertTrue();
-                done();
             }
+            done();
         });
         console.log('testDestroyTimerNoPermission001 end');
     });
 
     /**
+     * @tc.number: TestDestroyTimerNoPermission002
      * @tc.name: TestDestroyTimerNoPermission002
      * @tc.desc: Test destroyTimer no permission for callback
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testDestroyTimerNoPermission002', 0, async function (done) {
@@ -142,9 +157,12 @@ describe('SystemTimerTest', function () {
     });
 
     /**
+     * @tc.number: TestStopTimerNoPermission001
      * @tc.name: TestStopTimerNoPermission001
      * @tc.desc: Test stopTimer no permission for promise
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStopTimerNoPermission001', 0, async function (done) {
@@ -158,20 +176,22 @@ describe('SystemTimerTest', function () {
     });
 
     /**
+     * @tc.number: TestStopTimerNoPermission002
      * @tc.name: TestStopTimerNoPermission002
      * @tc.desc: Test stopTimer no permission for callback
+     * @tc.size: MediumTest
      * @tc.type: Function
+     * @tc.level: Level 1
      * @tc.require:
      */
     it('testStopTimerNoPermission002', 0, async function (done) {
         systemTimer.stopTimer(123456, function (err) {
             if (err) {
                 expect(err.code).assertEqual(202);
-                done();
             } else {
                 expect(false).assertTrue();
-                done();
             }
+            done();
         });
     });
 })
