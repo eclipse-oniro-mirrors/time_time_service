@@ -43,6 +43,15 @@ typedef struct AsyncContext {
     std::string message = "system error";
 } AsyncContext;
 
+void CheckReturnValue(napi_status status, napi_env env, AsyncContext *asyncContext)
+{
+    if (status != napi_ok) {
+        napi_delete_async_work(env, asyncContext->work);
+        delete asyncContext;
+        NAPI_CALL(env, status);
+    }
+}
+
 void TimePaddingAsyncCallbackInfo(const napi_env &env, AsyncContext *&asynccallbackinfo, const napi_ref &callback,
     napi_value &promise)
 {
@@ -106,7 +115,8 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
+    CheckReturnValue(
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -163,7 +173,8 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
+    CheckReturnValue(
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -222,7 +233,8 @@ napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
+    CheckReturnValue(
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -281,7 +293,8 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
+    CheckReturnValue(
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -340,7 +353,8 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
+    CheckReturnValue(
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -393,7 +407,8 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
+    CheckReturnValue(
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {
@@ -445,7 +460,8 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated));
+    CheckReturnValue(
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     if (asyncContext->isCallback) {
         return NapiUtils::NapiGetNull(env);
     } else {

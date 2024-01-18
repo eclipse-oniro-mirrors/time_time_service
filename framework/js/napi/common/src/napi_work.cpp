@@ -115,7 +115,11 @@ napi_value NapiWork::AsyncEnqueue(napi_env env, ContextBase *ctxt, const std::st
             delete ctxt;
         },
         reinterpret_cast<void *>(ctxt), &ctxt->work);
-    napi_queue_async_work_with_qos(ctxt->env, ctxt->work, napi_qos_user_initiated);
+    auto ret = napi_queue_async_work_with_qos(ctxt->env, ctxt->work, napi_qos_user_initiated);
+    if (ret != napi_ok) {
+        napi_delete_async_work(env, ctxt->work);
+        delete ctxt;
+    }
     return promise;
 }
 

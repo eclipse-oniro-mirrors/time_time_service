@@ -53,7 +53,11 @@ void ITimerInfoInstance::Call(napi_env env, void *data, uv_after_work_cb afterCa
         return;
     }
     work->data = data;
-    uv_queue_work(loop, work, [](uv_work_t *work) {}, afterCallback);
+    auto ret = uv_queue_work(loop, work, [](uv_work_t *work) {}, afterCallback);
+    if (ret != 0) {
+        delete reinterpret_cast<CallbackInfo *>(data);
+        delete work;
+    }
 }
 
 void ITimerInfoInstance::UvDelete(uv_work_t *work, int status)
