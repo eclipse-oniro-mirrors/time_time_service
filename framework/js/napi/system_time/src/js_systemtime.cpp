@@ -102,12 +102,8 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
             if (asyncContext == nullptr) {
                 return;
             }
-            CallbackPromiseInfo info;
-            info.isCallback = asyncContext->isCallback;
-            info.callback = asyncContext->callbackRef;
-            info.deferred = asyncContext->deferred;
-            info.errorCode = asyncContext->errorCode;
-            info.message = asyncContext->message;
+            CallbackPromiseInfo info{ asyncContext->callbackRef, asyncContext->deferred, asyncContext->isCallback,
+                asyncContext->errorCode, asyncContext->message };
             napi_value result = 0;
             napi_get_null(env, &result);
             NapiUtils::ReturnCallbackPromise(env, info, result);
@@ -117,11 +113,7 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
         (void *)asyncContext, &asyncContext->work);
     CheckReturnValue(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    if (asyncContext->isCallback) {
-        return NapiUtils::NapiGetNull(env);
-    } else {
-        return promise;
-    }
+    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
@@ -160,12 +152,8 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
             if (asyncContext == nullptr) {
                 return;
             }
-            CallbackPromiseInfo info;
-            info.isCallback = asyncContext->isCallback;
-            info.callback = asyncContext->callbackRef;
-            info.deferred = asyncContext->deferred;
-            info.errorCode = asyncContext->errorCode;
-            info.message = asyncContext->message;
+            CallbackPromiseInfo info{ asyncContext->callbackRef, asyncContext->deferred, asyncContext->isCallback,
+                asyncContext->errorCode, asyncContext->message };
             napi_value result = 0;
             napi_get_null(env, &result);
             NapiUtils::ReturnCallbackPromise(env, info, result);
@@ -175,11 +163,7 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
         (void *)asyncContext, &asyncContext->work);
     CheckReturnValue(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    if (asyncContext->isCallback) {
-        return NapiUtils::NapiGetNull(env);
-    } else {
-        return promise;
-    }
+    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
@@ -220,12 +204,8 @@ napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
             if (asyncContext->time < 0) {
                 asyncContext->errorCode = JsErrorCode::ERROR;
             }
-            CallbackPromiseInfo info;
-            info.isCallback = asyncContext->isCallback;
-            info.callback = asyncContext->callbackRef;
-            info.deferred = asyncContext->deferred;
-            info.errorCode = asyncContext->errorCode;
-            info.message = asyncContext->message;
+            CallbackPromiseInfo info{ asyncContext->callbackRef, asyncContext->deferred, asyncContext->isCallback,
+                asyncContext->errorCode, asyncContext->message };
             napi_value result = nullptr;
             napi_create_int64(env, asyncContext->time, &result);
             NapiUtils::ReturnCallbackPromise(env, info, result);
@@ -235,11 +215,7 @@ napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
         (void *)asyncContext, &asyncContext->work);
     CheckReturnValue(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    if (asyncContext->isCallback) {
-        return NapiUtils::NapiGetNull(env);
-    } else {
-        return promise;
-    }
+    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
@@ -280,12 +256,8 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
             if (asyncContext->time < 0) {
                 asyncContext->errorCode = JsErrorCode::ERROR;
             }
-            CallbackPromiseInfo info;
-            info.isCallback = asyncContext->isCallback;
-            info.callback = asyncContext->callbackRef;
-            info.deferred = asyncContext->deferred;
-            info.errorCode = asyncContext->errorCode;
-            info.message = asyncContext->message;
+            CallbackPromiseInfo info{ asyncContext->callbackRef, asyncContext->deferred, asyncContext->isCallback,
+                asyncContext->errorCode, asyncContext->message };
             napi_value result = nullptr;
             napi_create_int64(env, asyncContext->time, &result);
             NapiUtils::ReturnCallbackPromise(env, info, result);
@@ -295,11 +267,7 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
         (void *)asyncContext, &asyncContext->work);
     CheckReturnValue(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    if (asyncContext->isCallback) {
-        return NapiUtils::NapiGetNull(env);
-    } else {
-        return promise;
-    }
+    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
@@ -340,12 +308,8 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
             if (asyncContext->time < 0) {
                 asyncContext->errorCode = JsErrorCode::ERROR;
             }
-            CallbackPromiseInfo info;
-            info.isCallback = asyncContext->isCallback;
-            info.callback = asyncContext->callbackRef;
-            info.deferred = asyncContext->deferred;
-            info.errorCode = asyncContext->errorCode;
-            info.message = asyncContext->message;
+            CallbackPromiseInfo info{ asyncContext->callbackRef, asyncContext->deferred, asyncContext->isCallback,
+                asyncContext->errorCode, asyncContext->message };
             napi_value result = nullptr;
             napi_create_int64(env, asyncContext->time, &result);
             NapiUtils::ReturnCallbackPromise(env, info, result);
@@ -355,11 +319,7 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
         (void *)asyncContext, &asyncContext->work);
     CheckReturnValue(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    if (asyncContext->isCallback) {
-        return NapiUtils::NapiGetNull(env);
-    } else {
-        return promise;
-    }
+    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
@@ -394,12 +354,8 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
             if (asyncContext->time < 0) {
                 asyncContext->errorCode = JsErrorCode::ERROR;
             }
-            CallbackPromiseInfo info;
-            info.isCallback = asyncContext->isCallback;
-            info.callback = asyncContext->callbackRef;
-            info.deferred = asyncContext->deferred;
-            info.errorCode = asyncContext->errorCode;
-            info.message = asyncContext->message;
+            CallbackPromiseInfo info{ asyncContext->callbackRef, asyncContext->deferred, asyncContext->isCallback,
+                asyncContext->errorCode, asyncContext->message };
             napi_value result = nullptr;
             napi_create_date(env, asyncContext->time, &result);
             NapiUtils::ReturnCallbackPromise(env, info, result);
@@ -430,7 +386,8 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
     TimePaddingAsyncCallbackInfo(env, asyncContext, callback, promise);
     napi_value resource = nullptr;
     napi_create_string_utf8(env, "JSSystemTimeGetTimeZone", NAPI_AUTO_LENGTH, &resource);
-    napi_create_async_work(env, nullptr, resource,
+    napi_create_async_work(
+        env, nullptr, resource,
         [](napi_env env, void *data) {
             AsyncContext *asyncContext = (AsyncContext *)data;
             asyncContext->timeZone = TimeServiceClient::GetInstance()->GetTimeZone();
@@ -443,12 +400,8 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
             if (asyncContext->timeZone == "") {
                 asyncContext->errorCode = JsErrorCode::ERROR;
             }
-            CallbackPromiseInfo info;
-            info.isCallback = asyncContext->isCallback;
-            info.callback = asyncContext->callbackRef;
-            info.deferred = asyncContext->deferred;
-            info.errorCode = asyncContext->errorCode;
-            info.message = asyncContext->message;
+            CallbackPromiseInfo info{ asyncContext->callbackRef, asyncContext->deferred, asyncContext->isCallback,
+                asyncContext->errorCode, asyncContext->message };
             napi_value result = nullptr;
             napi_create_string_utf8(env, asyncContext->timeZone.c_str(), asyncContext->timeZone.length(), &result);
             NapiUtils::ReturnCallbackPromise(env, info, result);
@@ -458,11 +411,7 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
         (void *)asyncContext, &asyncContext->work);
     CheckReturnValue(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    if (asyncContext->isCallback) {
-        return NapiUtils::NapiGetNull(env);
-    } else {
-        return promise;
-    }
+    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 EXTERN_C_START
