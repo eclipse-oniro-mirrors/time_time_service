@@ -57,6 +57,7 @@ void ITimerInfoInstance::Call(napi_env env, void *data, uv_after_work_cb afterCa
     if (ret != 0) {
         delete reinterpret_cast<CallbackInfo *>(data);
         delete work;
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "uv_queue_work failed retCode:%{public}d", ret);
     }
 }
 
