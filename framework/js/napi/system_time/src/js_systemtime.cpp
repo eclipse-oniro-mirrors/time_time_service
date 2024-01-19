@@ -48,7 +48,7 @@ void CheckReturnValue(napi_status status, napi_env env, AsyncContext *asyncConte
     if (status != napi_ok) {
         napi_delete_async_work(env, asyncContext->work);
         delete asyncContext;
-        NAPI_CALL(env, status);
+        NAPI_CALL_RETURN_VOID(env, status);
     }
 }
 
@@ -409,11 +409,7 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
         (void *)asyncContext, &asyncContext->work);
     CheckReturnValue(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    if (asyncContext->isCallback) {
-        return NapiUtils::NapiGetNull(env);
-    } else {
-        return promise;
-    }
+    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
