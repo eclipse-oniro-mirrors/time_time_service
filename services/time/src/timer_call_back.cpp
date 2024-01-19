@@ -94,7 +94,7 @@ void TimerCallback::NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject
         timerInfo->OnTrigger();
     }
     if (timerCallback == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "timerCallback nullptr timerId:%{public}" PRId64 "", timerId);
+        TIME_HILOGW(TIME_MODULE_SERVICE, "timerCallback nullptr timerId:%{public}" PRIu64 "", timerId);
         return;
     }
     sptr<ITimerNotifyCallback> timerNotifyCallback = iface_cast<ITimerNotifyCallback>(timerCallback);
