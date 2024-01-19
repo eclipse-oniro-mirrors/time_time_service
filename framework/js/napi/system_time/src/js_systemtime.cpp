@@ -43,7 +43,7 @@ typedef struct AsyncContext {
     std::string message = "system error";
 } AsyncContext;
 
-void CheckReturnValue(napi_status status, napi_env env, AsyncContext *asyncContext)
+void FreeWorkIfFail(napi_status status, napi_env env, AsyncContext *asyncContext)
 {
     if (status != napi_ok) {
         napi_delete_async_work(env, asyncContext->work);
@@ -111,7 +111,7 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    CheckReturnValue(
+    FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
@@ -161,7 +161,7 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    CheckReturnValue(
+    FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
@@ -213,7 +213,7 @@ napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    CheckReturnValue(
+    FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
@@ -265,7 +265,7 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    CheckReturnValue(
+    FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
@@ -317,7 +317,7 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    CheckReturnValue(
+    FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
@@ -363,7 +363,7 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    CheckReturnValue(
+    FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
@@ -409,7 +409,7 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
-    CheckReturnValue(
+    FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
     return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
