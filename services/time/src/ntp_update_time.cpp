@@ -87,7 +87,6 @@ void NtpUpdateTime::Init()
     });
     th.detach();
     auto callback = [this](uint64_t id) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "ntp update timer trigger");
         this->RefreshNetworkTimeByTimer(id);
     };
     TimerPara timerPara{};
@@ -141,17 +140,20 @@ void NtpUpdateTime::SubscriberNITZTimeChangeCommonEvent()
 
 void NtpUpdateTime::RefreshNetworkTimeByTimer(uint64_t timerId)
 {
-    if (!(CheckStatus())) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Network time status off.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "The timer is up");
+    if (!CheckStatus()) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Auto Sync Switch Off");
         return;
     }
+
     if (IsValidNITZTime()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "NITZ Time is valid.");
+        TIME_HILOGI(TIME_MODULE_SERVICE, "NITZ is valid");
         return;
     }
+
     SetSystemTime();
     SaveAutoTimeInfoToFile(autoTimeInfo_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update triggertime: %{public}" PRId64 "", nextTriggerTime_);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp next triggertime: %{public}" PRId64 "", nextTriggerTime_);
 }
 
 void NtpUpdateTime::UpdateNITZSetTime()
@@ -188,8 +190,6 @@ std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
 
 void NtpUpdateTime::SetSystemTime()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "auto_time switch is: %{public}s",
-        system::GetParameter(AUTO_TIME_SYSTEM_PARAMETER, autoTimeInfo_.status).c_str());
     if (autoTimeInfo_.status != AUTO_TIME_STATUS_ON) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "auto sync switch off");
         return;
@@ -215,21 +215,14 @@ void NtpUpdateTime::SetSystemTime()
         return;
     }
     int64_t currentTime = NtpTrustedTime::GetInstance().CurrentTimeMillis();
-    if (currentTime == INVALID_TIMES) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update time failed");
-        isRequesting_ = false;
-        return;
-    }
     if (currentTime <= 0) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "current time invalid.");
+        TIME_HILOGI(TIME_MODULE_SERVICE, "current time is invalid: %{public}" PRIu64 "", currentTime);
         isRequesting_ = false;
         return;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp UTC Time: %{public}" PRId64 "", currentTime);
     TimeSystemAbility::GetInstance()->SetTime(currentTime);
     autoTimeInfo_.lastUpdateTime = currentTime;
     isRequesting_ = false;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp update currentTime: %{public}" PRId64 "", currentTime);
 }
 
 void NtpUpdateTime::RefreshNextTriggerTime()
@@ -331,7 +324,7 @@ void NtpUpdateTime::RegisterSystemParameterListener()
 
 void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, void *context)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "set time for ntp server changed");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Ntp server changed");
     std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, "ntp.aliyun.com");
     std::string ntpServerSpec = system::GetParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER, "");
     if (ntpServer.empty() && ntpServerSpec.empty()) {
@@ -346,6 +339,7 @@ void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, 
 
 void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, void *context)
 {
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Auto sync switch changed");
     if (key == nullptr || value == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "key or value is nullptr");
         return;
