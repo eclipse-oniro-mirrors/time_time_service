@@ -44,18 +44,18 @@ void ITimerInfoInstance::Call(napi_env env, void *data, uv_after_work_cb afterCa
     uv_loop_s *loop = nullptr;
     napi_get_uv_event_loop(env, &loop);
     if (loop == nullptr) {
-        delete reinterpret_cast<CallbackInfo *>(data);
+        delete static_cast<CallbackInfo *>(data);
         return;
     }
     auto *work = new (std::nothrow) uv_work_t;
     if (work == nullptr) {
-        delete reinterpret_cast<CallbackInfo *>(data);
+        delete static_cast<CallbackInfo *>(data);
         return;
     }
     work->data = data;
     auto ret = uv_queue_work(loop, work, [](uv_work_t *work) {}, afterCallback);
     if (ret != 0) {
-        delete reinterpret_cast<CallbackInfo *>(data);
+        delete static_cast<CallbackInfo *>(data);
         delete work;
         TIME_HILOGE(TIME_MODULE_JS_NAPI, "uv_queue_work failed retCode:%{public}d", ret);
     }
