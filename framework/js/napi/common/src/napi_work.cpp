@@ -103,8 +103,7 @@ napi_value NapiWork::AsyncEnqueue(napi_env env, ContextBase *ctxt, const std::st
         [](napi_env env, napi_status status, void *data) {
             CHECK_RETURN_VOID(TIME_MODULE_JS_NAPI, data != nullptr, "napi_async_complete_callback nullptr");
             auto ctxt = reinterpret_cast<ContextBase *>(data);
-            TIME_HILOGD(TIME_MODULE_JS_NAPI, "napi_async_complete_callback status=%{public}d, ctxt->status=%{public}d",
-                status, ctxt->status);
+            TIME_HILOGD(TIME_MODULE_JS_NAPI, "status=%{public}d, ctxt->status=%{public}d", status, ctxt->status);
             if ((status != napi_ok) && (ctxt->status == napi_ok)) {
                 ctxt->status = status;
             }
@@ -115,7 +114,12 @@ napi_value NapiWork::AsyncEnqueue(napi_env env, ContextBase *ctxt, const std::st
             delete ctxt;
         },
         reinterpret_cast<void *>(ctxt), &ctxt->work);
-    napi_queue_async_work_with_qos(ctxt->env, ctxt->work, napi_qos_user_initiated);
+    auto ret = napi_queue_async_work_with_qos(ctxt->env, ctxt->work, napi_qos_user_initiated);
+    if (ret != napi_ok) {
+        napi_delete_async_work(env, ctxt->work);
+        delete ctxt;
+        NAPI_CALL(env, ret);
+    }
     return promise;
 }
 
