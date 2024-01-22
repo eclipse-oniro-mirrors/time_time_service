@@ -25,7 +25,7 @@ namespace MiscServices {
 class ITimerInfo {
 public:
     TIME_API ITimerInfo();
-    TIME_API ~ITimerInfo();
+    TIME_API virtual ~ITimerInfo();
 
     int type;
     bool repeat;
