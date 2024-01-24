@@ -38,6 +38,7 @@ public:
     void Init();
     int32_t MonitorNetwork();
     bool IsValidNITZTime();
+    uint64_t GetNITZUpdateTime();
 
 private:
     NtpUpdateTime();
@@ -57,6 +58,7 @@ private:
     uint64_t nitzUpdateTimeMilli_;
     uint64_t nextTriggerTime_;
     static std::atomic<bool> isRequesting_;
+    int64_t lastNITZUpdateTime_;
 };
 } // namespace MiscServices
 } // namespace OHOS
