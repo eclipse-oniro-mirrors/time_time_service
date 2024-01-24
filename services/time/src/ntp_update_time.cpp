@@ -47,12 +47,13 @@ const uint32_t NTP_MAX_SIZE = 5;
 const std::string AUTO_TIME_SYSTEM_PARAMETER = "persist.time.auto_time";
 const std::string AUTO_TIME_STATUS_ON = "ON";
 const std::string AUTO_TIME_STATUS_OFF = "OFF";
+constexpr uint64_t TWO_SECONDS = 2000;
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
 std::atomic<bool> NtpUpdateTime::isRequesting_ = false;
 
-NtpUpdateTime::NtpUpdateTime() : timerId_(0), nitzUpdateTimeMilli_(0), nextTriggerTime_(0){};
+NtpUpdateTime::NtpUpdateTime() : timerId_(0), nitzUpdateTimeMilli_(0), nextTriggerTime_(0), lastNITZUpdateTime_(0){};
 
 NtpUpdateTime& NtpUpdateTime::GetInstance()
 {
@@ -160,6 +161,9 @@ void NtpUpdateTime::UpdateNITZSetTime()
 {
     auto bootTimeNano = steady_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
+    if (TimeSystemAbility::GetInstance()->GetBootTimeMs(lastNITZUpdateTime_) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail.");
+    }
     TIME_HILOGD(TIME_MODULE_SERVICE, "nitz time changed.");
     nitzUpdateTimeMilli_ = static_cast<uint64_t>(bootTimeMilli);
 }
@@ -217,6 +221,17 @@ void NtpUpdateTime::SetSystemTime()
     int64_t currentTime = NtpTrustedTime::GetInstance().CurrentTimeMillis();
     if (currentTime <= 0) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "current time is invalid: %{public}" PRIu64 "", currentTime);
+        isRequesting_ = false;
+        return;
+    }
+    int64_t curBootTime = 0;
+    if (TimeSystemAbility::GetInstance()->GetBootTimeMs(curBootTime) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail.");
+        isRequesting_ = false;
+        return;
+    }
+    if (curBootTime - NtpUpdateTime::GetInstance().GetNITZUpdateTime() <= TWO_SECONDS) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "nitz updated time");
         isRequesting_ = false;
         return;
     }
@@ -356,6 +371,10 @@ void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, v
     autoTimeInfo_.status = std::string(value);
     SetSystemTime();
     SaveAutoTimeInfoToFile(autoTimeInfo_);
+}
+uint64_t NtpUpdateTime::GetNITZUpdateTime()
+{
+    return static_cast<uint64_t>(lastNITZUpdateTime_);
 }
 } // namespace MiscServices
 } // namespace OHOS
