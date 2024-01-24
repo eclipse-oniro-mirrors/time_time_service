@@ -145,7 +145,7 @@ void TimeSystemAbility::InitDumpCmd()
 
 void TimeSystemAbility::OnStart()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "TimeSystemAbility OnStart.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "TimeSystemAbility OnStart.");
     if (state_ == ServiceRunningState::STATE_RUNNING) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "TimeSystemAbility is already running.");
         return;
@@ -267,13 +267,10 @@ void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerO
 int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
     uint64_t &timerId)
 {
-    int uid = IPCSkeleton::GetCallingUid();
     if (obj == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Input nullptr.");
         return E_TIME_NULLPTR;
     }
-    struct TimerPara paras {};
-    ParseTimerPara(timerOptions, paras);
     sptr<ITimerCallback> timerCallback = iface_cast<ITimerCallback>(obj);
     if (timerCallback == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ITimerCallback nullptr.");
@@ -282,9 +279,8 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     auto callbackFunc = [timerCallback](uint64_t id) {
         timerCallback->NotifyTimer(id, nullptr);
     };
-    int64_t triggerTime = 0;
-    GetWallTimeMs(triggerTime);
-    StatisticReporter(IPCSkeleton::GetCallingPid(), uid, timerOptions->type, triggerTime, timerOptions->interval);
+    struct TimerPara paras {};
+    ParseTimerPara(timerOptions, paras);
     if (timerManagerHandler_ == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
         timerManagerHandler_ = TimerManager::Create();
@@ -298,10 +294,11 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
         TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer.");
         paras.flag = 0;
     }
-    return timerManagerHandler_->CreateTimer(paras, callbackFunc, timerOptions->wantAgent, uid, timerId);
+    return timerManagerHandler_->CreateTimer(paras, callbackFunc, timerOptions->wantAgent,
+        IPCSkeleton::GetCallingUid(), timerId);
 }
 
-int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> Callback,
+int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> callback,
     uint64_t &timerId)
 {
     if (timerManagerHandler_ == nullptr) {
@@ -312,7 +309,7 @@ int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(cons
             return E_TIME_NULLPTR;
         }
     }
-    return timerManagerHandler_->CreateTimer(paras, std::move(Callback), nullptr, 0, timerId);
+    return timerManagerHandler_->CreateTimer(paras, std::move(callback), nullptr, 0, timerId);
 }
 
 int32_t TimeSystemAbility::StartTimer(uint64_t timerId, uint64_t triggerTime)
@@ -373,17 +370,15 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     instance->GetWallTimeMs(beforeTime);
     int64_t bootTime = 0;
     instance->GetBootTimeMs(bootTime);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Before Current Time: %{public}" PRId64 ""
-                " Set time: %{public}" PRId64 ""
-                " Difference: %{public}" PRId64 ""
-                " uid:%{public}d pid:%{public}d ",
-                beforeTime,
-                time,
-                time - bootTime,
-                IPCSkeleton::GetCallingUid(),
-                IPCSkeleton::GetCallingPid());
+    TIME_HILOGI(TIME_MODULE_SERVICE,
+        "Before Current Time: %{public}s"
+        " Set time: %{public}s"
+        " Difference: %{public}s"
+        " uid:%{public}d pid:%{public}d ",
+        std::to_string(beforeTime).c_str(), std::to_string(time).c_str(), std::to_string(time - bootTime).c_str(),
+        IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
     if (time < 0 || time / 1000LL >= LLONG_MAX) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "input param error");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "input param error %{public}" PRId64 "", time);
         return false;
     }
     int64_t currentTime = 0;
@@ -579,7 +574,8 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
         rtc.tm_isdst = tm.tm_isdst;
         res = ioctl(fd, RTC_SET_TIME, &rtc);
         if (res < 0) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "ioctl RTC_SET_TIME failed: %{public}s", strerror(errno));
+            TIME_HILOGE(TIME_MODULE_SERVICE, "ioctl RTC_SET_TIME failed,errno: %{public}s, res: %{public}d",
+                strerror(errno), res);
         }
     } else {
         TIME_HILOGE(TIME_MODULE_SERVICE, "convert rtc time failed: %{public}s", strerror(errno));
@@ -662,93 +658,91 @@ int32_t TimeSystemAbility::GetTimeZone(std::string &timeZoneId)
     return ERR_OK;
 }
 
-int32_t TimeSystemAbility::GetWallTimeMs(int64_t &times)
+int32_t TimeSystemAbility::GetWallTimeMs(int64_t &time)
 {
     struct timespec tv {};
     if (GetTimeByClockId(CLOCK_REALTIME, tv)) {
-        times = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
+        time = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
         return ERR_OK;
     }
     return E_TIME_DEAL_FAILED;
 }
 
-int32_t TimeSystemAbility::GetWallTimeNs(int64_t &times)
+int32_t TimeSystemAbility::GetWallTimeNs(int64_t &time)
 {
     struct timespec tv {};
     if (GetTimeByClockId(CLOCK_REALTIME, tv)) {
-        times = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
+        time = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
         return ERR_OK;
     }
     return E_TIME_DEAL_FAILED;
 }
 
-int32_t TimeSystemAbility::GetBootTimeMs(int64_t &times)
+int32_t TimeSystemAbility::GetBootTimeMs(int64_t &time)
 {
     struct timespec tv {};
     if (GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
-        times = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
+        time = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
         return ERR_OK;
     }
     return E_TIME_DEAL_FAILED;
 }
 
-int32_t TimeSystemAbility::GetBootTimeNs(int64_t &times)
+int32_t TimeSystemAbility::GetBootTimeNs(int64_t &time)
 {
     struct timespec tv {};
     if (GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
-        times = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
+        time = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
         return ERR_OK;
     }
     return E_TIME_DEAL_FAILED;
 }
 
-int32_t TimeSystemAbility::GetMonotonicTimeMs(int64_t &times)
+int32_t TimeSystemAbility::GetMonotonicTimeMs(int64_t &time)
 {
     struct timespec tv {};
     if (GetTimeByClockId(CLOCK_MONOTONIC, tv)) {
-        times = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
+        time = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
         return ERR_OK;
     }
     return E_TIME_DEAL_FAILED;
 }
 
-int32_t TimeSystemAbility::GetMonotonicTimeNs(int64_t &times)
+int32_t TimeSystemAbility::GetMonotonicTimeNs(int64_t &time)
 {
     struct timespec tv {};
     if (GetTimeByClockId(CLOCK_MONOTONIC, tv)) {
-        times = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
+        time = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
         return ERR_OK;
     }
     return E_TIME_DEAL_FAILED;
 }
 
-int32_t TimeSystemAbility::GetThreadTimeMs(int64_t &times)
+int32_t TimeSystemAbility::GetThreadTimeMs(int64_t &time)
 {
     struct timespec tv {};
-    int ret;
     clockid_t cid;
-    ret = pthread_getcpuclockid(pthread_self(), &cid);
-    if (ret != 0) {
+    int ret = pthread_getcpuclockid(pthread_self(), &cid);
+    if (ret != E_TIME_OK) {
         return E_TIME_PARAMETERS_INVALID;
     }
     if (GetTimeByClockId(cid, tv)) {
-        times = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
+        time = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
         return ERR_OK;
     }
     return E_TIME_DEAL_FAILED;
 }
 
-int32_t TimeSystemAbility::GetThreadTimeNs(int64_t &times)
+int32_t TimeSystemAbility::GetThreadTimeNs(int64_t &time)
 {
     struct timespec tv {};
-    int ret;
     clockid_t cid;
-    ret = pthread_getcpuclockid(pthread_self(), &cid);
-    if (ret != 0) {
+    int ret = pthread_getcpuclockid(pthread_self(), &cid);
+    if (ret != E_TIME_OK) {
         return E_TIME_PARAMETERS_INVALID;
     }
     if (GetTimeByClockId(cid, tv)) {
-        times = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
+        time = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
         return ERR_OK;
     }
     return E_TIME_DEAL_FAILED;
