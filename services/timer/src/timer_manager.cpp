@@ -368,10 +368,6 @@ void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
         timer->uid, timer->id, timer->whenElapsed.time_since_epoch().count(),
         GetBootTimeNs().time_since_epoch().count());
     auto whenElapsed = ConvertToElapsed(timer->when, timer->type);
-    if (whenElapsed < nowElapsed) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid timer. id: %{public}" PRIu64 "", timer->id);
-        return;
-    }
     steady_clock::time_point maxElapsed;
     if (timer->windowLength == milliseconds::zero()) {
         maxElapsed = whenElapsed;
