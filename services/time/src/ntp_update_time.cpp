@@ -21,7 +21,6 @@
 #include <unistd.h>
 
 #include "init_param.h"
-#include "json/json.h"
 #include "net_conn_callback_observer.h"
 #include "net_conn_client.h"
 #include "net_specifier.h"
@@ -39,10 +38,8 @@ namespace MiscServices {
 namespace {
 constexpr int64_t NANO_TO_MILLISECOND = 1000000;
 constexpr int64_t DAY_TO_MILLISECOND = 86400000;
-const std::string AUTOTIME_FILE_PATH = "/data/service/el1/public/time/autotime.json";
 const std::string NTP_SERVER_SYSTEM_PARAMETER = "persist.time.ntpserver";
 const std::string NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER = "persist.time.ntpserver_specific";
-const int64_t INVALID_TIMES = -1;
 const uint32_t NTP_MAX_SIZE = 5;
 const std::string AUTO_TIME_SYSTEM_PARAMETER = "persist.time.auto_time";
 const std::string AUTO_TIME_STATUS_ON = "ON";
@@ -74,13 +71,9 @@ void NtpUpdateTime::Init()
         return;
     }
     RegisterSystemParameterListener();
-    if (!GetAutoTimeInfoFromFile(autoTimeInfo_)) {
-        autoTimeInfo_.lastUpdateTime = INVALID_TIMES;
-    }
     autoTimeInfo_.ntpServer = ntpServer;
     autoTimeInfo_.ntpServerSpec = ntpServerSpec;
     autoTimeInfo_.status = autoTime;
-    SaveAutoTimeInfoToFile(autoTimeInfo_);
     std::thread th = std::thread([this]() {
         pthread_setname_np(pthread_self(), "time_monitor_network");
         if (this->MonitorNetwork() != NETMANAGER_SUCCESS) {
@@ -154,7 +147,6 @@ void NtpUpdateTime::RefreshNetworkTimeByTimer(uint64_t timerId)
     }
 
     SetSystemTime();
-    SaveAutoTimeInfoToFile(autoTimeInfo_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp next triggertime: %{public}" PRId64 "", nextTriggerTime_);
 }
 
@@ -238,7 +230,6 @@ void NtpUpdateTime::SetSystemTime()
         return;
     }
     TimeSystemAbility::GetInstance()->SetTime(currentTime);
-    autoTimeInfo_.lastUpdateTime = currentTime;
     isRequesting_ = false;
 }
 
@@ -277,51 +268,6 @@ void NtpUpdateTime::Stop()
     TimeSystemAbility::GetInstance()->DestroyTimer(timerId_);
 }
 
-bool NtpUpdateTime::GetAutoTimeInfoFromFile(AutoTimeInfo &info)
-{
-    Json::Value jsonValue;
-    std::ifstream ifs;
-    ifs.open(AUTOTIME_FILE_PATH);
-    Json::CharReaderBuilder builder;
-    builder["collectComments"] = true;
-    JSONCPP_STRING errs;
-    if (!parseFromStream(builder, ifs, &jsonValue, &errs)) {
-        ifs.close();
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Read file failed %{public}s.", errs.c_str());
-        return false;
-    }
-    info.status = jsonValue["status"].asString();
-    info.ntpServer = jsonValue["ntpServer"].asString();
-    info.ntpServerSpec = jsonValue["ntpServerSpec"].asString();
-    info.lastUpdateTime = jsonValue["lastUpdateTime"].asInt64();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Read file %{public}s.", info.status.c_str());
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Read file %{public}s.", info.ntpServer.c_str());
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Read file %{public}s.", info.ntpServerSpec.c_str());
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Read file %{public}" PRId64 "", info.lastUpdateTime);
-    ifs.close();
-    return true;
-}
-
-bool NtpUpdateTime::SaveAutoTimeInfoToFile(const AutoTimeInfo &info)
-{
-    Json::Value jsonValue;
-    std::ofstream ofs;
-    ofs.open(AUTOTIME_FILE_PATH);
-    jsonValue["status"] = info.status;
-    jsonValue["ntpServer"] = info.ntpServer;
-    jsonValue["ntpServerSpec"] = info.ntpServerSpec;
-    jsonValue["lastUpdateTime"] = info.lastUpdateTime;
-    Json::StreamWriterBuilder builder;
-    const std::string json_file = Json::writeString(builder, jsonValue);
-    ofs << json_file;
-    ofs.close();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}s.", info.status.c_str());
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}s.", info.ntpServer.c_str());
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}s.", info.ntpServerSpec.c_str());
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Write file %{public}" PRId64 "", info.lastUpdateTime);
-    return true;
-}
-
 void NtpUpdateTime::RegisterSystemParameterListener()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "register system parameter modify lister");
@@ -351,7 +297,6 @@ void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, 
     autoTimeInfo_.ntpServer = ntpServer;
     autoTimeInfo_.ntpServerSpec = ntpServerSpec;
     SetSystemTime();
-    SaveAutoTimeInfoToFile(autoTimeInfo_);
 }
 
 void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, void *context)
@@ -372,7 +317,6 @@ void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, v
     }
     autoTimeInfo_.status = std::string(value);
     SetSystemTime();
-    SaveAutoTimeInfoToFile(autoTimeInfo_);
 }
 
 uint64_t NtpUpdateTime::GetNITZUpdateTime()

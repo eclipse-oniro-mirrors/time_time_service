@@ -17,7 +17,6 @@
 #include <ctime>
 #include <chrono>
 #include <fstream>
-#include "json/json.h"
 #include <gtest/gtest.h>
 #include "time_common.h"
 #include "time_permission.h"

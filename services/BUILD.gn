@@ -57,10 +57,7 @@ ohos_shared_library("time_system_ability") {
     "timer/src/timer_proxy.cpp",
   ]
 
-  deps = [
-    "${time_utils_path}:time_utils",
-    "//third_party/jsoncpp:jsoncpp",
-  ]
+  deps = [ "${time_utils_path}:time_utils" ]
   external_deps = [
     "ability_base:want",
     "ability_runtime:abilitykit_native",
@@ -132,10 +129,7 @@ ohos_static_library("time_system_ability_static") {
     "timer/src/timer_proxy.cpp",
   ]
 
-  deps = [
-    "${time_utils_path}:time_utils",
-    "//third_party/jsoncpp:jsoncpp",
-  ]
+  deps = [ "${time_utils_path}:time_utils" ]
   external_deps = [
     "ability_base:want",
     "ability_runtime:abilitykit_native",

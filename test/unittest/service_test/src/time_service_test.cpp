@@ -49,7 +49,6 @@ using namespace OHOS::Security::AccessToken;
 
 const int32_t RESERVED_UID = 99999;
 const std::string NTP_CN_SERVER = "ntp.aliyun.com";
-const std::string AUTOTIME_FILE_PATH = "/data/service/el1/public/time/autotime.json";
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NETWORK_TIME_STATUS_ON = "ON";
 uint64_t g_idleTimerId = 0;
@@ -716,26 +715,6 @@ HWTEST_F(TimeServiceTest, SntpClient001, TestSize.Level0)
     uint64_t time = 999999999911;
     timeStamp = ntpClient->ConvertNtpToStamp(time << 32);
     EXPECT_GT(timeStamp, 0);
-}
-
-/**
-* @tc.name: NtpUpdateTime001.
-* @tc.desc: test NtpUpdateTime.
-* @tc.type: FUNC
-* @tc.require:
-*/
-HWTEST_F(TimeServiceTest, NtpUpdateTime001, TestSize.Level0)
-{
-    auto ntpUpdateTime = std::make_shared<NtpUpdateTime>();
-    ntpUpdateTime->autoTimeInfo_.lastUpdateTime = 0;
-
-    ntpUpdateTime->autoTimeInfo_.status = NETWORK_TIME_STATUS_OFF;
-    ntpUpdateTime->RefreshNetworkTimeByTimer(123);
-    ntpUpdateTime->autoTimeInfo_.status = NETWORK_TIME_STATUS_ON;
-    ntpUpdateTime->RefreshNetworkTimeByTimer(123);
-    ntpUpdateTime->nitzUpdateTimeMilli_ = steady_clock::now().time_since_epoch().count();
-    ntpUpdateTime->RefreshNetworkTimeByTimer(123);
-    EXPECT_EQ(ntpUpdateTime->autoTimeInfo_.lastUpdateTime, 0);
 }
 
 /**

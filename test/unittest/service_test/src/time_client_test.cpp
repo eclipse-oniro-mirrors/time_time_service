@@ -22,7 +22,6 @@
 
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
-#include "json/json.h"
 #include "nativetoken_kit.h"
 #include "time_common.h"
 #include "timer_info_test.h"

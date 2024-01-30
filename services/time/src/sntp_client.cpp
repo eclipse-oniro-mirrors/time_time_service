@@ -50,7 +50,6 @@ constexpr int32_t TIME_OUT = 5;
 constexpr unsigned char MODE_THREE = 3;
 constexpr unsigned char VERSION_THREE = 3;
 constexpr double TEN_TO_MINUS_SIX_POWER = 1.0e-6;
-constexpr double TEN_TO_SIX_POWER = 1.0e6;
 char const *NTP_PORT = "123";
 constexpr int32_t NTP_MSG_OFFSET_ROOT_DELAY = 4;
 constexpr int32_t NTP_MSG_OFFSET_ROOT_DISPERSION = 8;
@@ -161,16 +160,6 @@ void SNTPClient::ConvertUnixToNtp(struct ntp_timestamp *ntpTs, struct timeval *u
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
-void SNTPClient::ConvertNtpToUnix(struct ntp_timestamp *ntpTs, struct timeval *unixTs)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    // 0x83AA7E80; the seconds from Jan 1, 1900 to Jan 1, 1970
-    unixTs->tv_sec = ntpTs->second - SECONDS_SINCE_FIRST_EPOCH;
-    unixTs->tv_usec =
-        static_cast<uint64_t>(ntpTs->fraction * TEN_TO_SIX_POWER / (1LL << RECEIVE_TIMESTAMP_OFFSET));
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-}
-
 /*
   *	/// SNTP Timestamp Format (as described in RFC 2030)
   *                         1                   2                   3
@@ -205,7 +194,6 @@ void SNTPClient::CreateMessage(char *buffer)
     gettimeofday(&unix, nullptr);
     // convert unix time to ntp time
     ConvertUnixToNtp(&ntp, &unix);
-    ConvertNtpToUnix(&ntp, &unix);
     uint64_t _ntpTs = ntp.second;
     _ntpTs = (_ntpTs << RECEIVE_TIMESTAMP_OFFSET) | ntp.fraction;
     m_originateTimestamp = _ntpTs;
