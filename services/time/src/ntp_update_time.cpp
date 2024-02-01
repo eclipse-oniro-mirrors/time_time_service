@@ -194,6 +194,10 @@ std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
 
 void NtpUpdateTime::SetSystemTime()
 {
+    if (autoTimeInfo_.status != AUTO_TIME_STATUS_ON) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "auto sync switch off");
+        return;
+    }
     if (isRequesting_.exchange(true)) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "The NTP request is in progress.");
         return;
@@ -229,11 +233,6 @@ void NtpUpdateTime::SetSystemTime()
     if (curBootTime - NtpUpdateTime::GetInstance().GetNITZUpdateTime() <= TWO_SECONDS) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "nitz updated time");
         isRequesting_ = false;
-        return;
-    }
-    if (autoTimeInfo_.status != AUTO_TIME_STATUS_ON) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "auto sync switch off, ntp time: %{public}s",
-                    std::to_string(currentTime).c_str());
         return;
     }
     TimeSystemAbility::GetInstance()->SetTime(currentTime);
