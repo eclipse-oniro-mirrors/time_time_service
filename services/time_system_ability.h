@@ -97,6 +97,7 @@ private:
     bool CheckRtc(const std::string &rtcPath, uint64_t rtcId);
     int GetWallClockRtcId();
     void RegisterRSSDeathCallback();
+    bool IsValidTime(int64_t time);
 
     ServiceRunningState state_;
     static std::mutex instanceLock_;
