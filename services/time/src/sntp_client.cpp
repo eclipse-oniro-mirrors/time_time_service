@@ -77,7 +77,7 @@ bool SNTPClient::RequestTime(const std::string &host)
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime1.");
     int status = getaddrinfo(host.c_str(), NTP_PORT, &hints, &addrs);
     if (status != 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "getaddrinfo failed");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "getaddrinfo failed status %{public}d", status);
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime2.");
