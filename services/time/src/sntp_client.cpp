@@ -270,15 +270,12 @@ void SNTPClient::WriteTimeStamp(char *buffer, ntp_timestamp *ntp)
 
 void SNTPClient::ReceivedMessage(char *buffer)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     struct ntp_timestamp ntp{};
     struct timeval unix;
-
     gettimeofday(&unix, NULL);
     ConvertUnixToNtp(&ntp, &unix);
     uint64_t _ntpTs = ntp.second;
     _ntpTs = (_ntpTs << RECEIVE_TIMESTAMP_OFFSET) | ntp.fraction;
-
     SNTPMessage _sntpMsg;
     _sntpMsg.clear();
     _sntpMsg._leapIndicator = buffer[INDEX_ZERO] >> SNTP_MSG_OFFSET_SIX;
@@ -299,17 +296,18 @@ void SNTPClient::ReceivedMessage(char *buffer)
     _sntpMsg._originateTimestamp = GetNtpTimestamp64(ORIGINATE_TIMESTAMP_OFFSET, buffer);
     _sntpMsg._receiveTimestamp = GetNtpTimestamp64(RECEIVE_TIMESTAMP_OFFSET, buffer);
     _sntpMsg._transmitTimestamp = GetNtpTimestamp64(TRANSMIT_TIMESTAMP_OFFSET, buffer);
-
     uint64_t _tempOriginate = m_originateTimestamp;
     if (_sntpMsg._originateTimestamp > 0) {
         _tempOriginate = _sntpMsg._originateTimestamp;
     }
-
     int64_t _originClient = ConvertNtpToStamp(_tempOriginate);
     int64_t _receiveServer = ConvertNtpToStamp(_sntpMsg._receiveTimestamp);
     int64_t _transmitServer = ConvertNtpToStamp(_sntpMsg._transmitTimestamp);
     int64_t _receiveClient = ConvertNtpToStamp(_ntpTs);
-
+    TIME_HILOGI(TIME_MODULE_SERVICE, "_originClient:%{public}s, _receiveServer:%{public}s, _transmitServer:%{public}s,"
+                "_receiveClient:%{public}s", std::to_string(_originClient).c_str(),
+                std::to_string(_receiveServer).c_str(), std::to_string(_transmitServer).c_str(),
+                std::to_string(_receiveClient).c_str());
     int64_t _clockOffset = (((_receiveServer - _originClient) + (_transmitServer - _receiveClient)) / INDEX_TWO);
     int64_t _roundTripDelay = (_receiveClient - _originClient) - (_transmitServer - _receiveServer);
     mRoundTripTime = _roundTripDelay;
@@ -318,7 +316,6 @@ void SNTPClient::ReceivedMessage(char *buffer)
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
             .count();
     SetClockOffset(_clockOffset);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
 unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer)
