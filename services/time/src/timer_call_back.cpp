@@ -81,17 +81,15 @@ bool TimerCallback::RemoveTimerCallbackInfo(uint64_t timerId)
 void TimerCallback::NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::shared_ptr<ITimerInfo> timerInfo;
     {
         std::lock_guard<std::mutex> lock(timerInfoMutex_);
         auto it = timerInfoMap_.find(timerId);
         if (it != timerInfoMap_.end()) {
             TIME_HILOGD(TIME_MODULE_SERVICE, "ontrigger.");
-            timerInfo = it->second;
+            if (it->second != nullptr) {
+                it->second->OnTrigger();
+            }
         }
-    }
-    if (timerInfo != nullptr) {
-        timerInfo->OnTrigger();
     }
     if (timerCallback == nullptr) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "timerCallback nullptr timerId:%{public}" PRIu64 "", timerId);
