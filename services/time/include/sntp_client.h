@@ -93,13 +93,6 @@ private:
      * @param unixTs the structure UNIX (with the already set tv_sec and tv_usec)
      */
     void ConvertUnixToNtp(struct ntp_timestamp *ntpTs, struct timeval *unixTs);
-    /**
-     * This function converts the NTP time to UNIX
-     *
-     * @param ntpTs the structure NTP where the NTP values are already set
-     * @param unixTs the structure UNIX where the UNIX values are stored
-     */
-    void ConvertNtpToUnix(struct ntp_timestamp *ntpTs, struct timeval *unixTs);
 
     /**
     * This function creates the SNTP message ready for transmission (SNTP Req)

@@ -43,7 +43,6 @@ ohos_unittest("TimeServiceTest") {
     "${api_path}:time_client",
     "${time_service_path}:time_system_ability_static",
     "//third_party/googletest:gtest_main",
-    "//third_party/jsoncpp:jsoncpp",
   ]
   branch_protector_ret = "pac_ret"
   sanitize = {
@@ -80,7 +79,6 @@ ohos_unittest("TimeClientTest") {
     "${api_path}:time_client",
     "${time_service_path}:time_system_ability_static",
     "//third_party/googletest:gtest_main",
-    "//third_party/jsoncpp:jsoncpp",
   ]
   branch_protector_ret = "pac_ret"
   sanitize = {
@@ -151,7 +149,6 @@ ohos_unittest("TimePermissionTest") {
   deps = [
     "${time_utils_path}:time_utils",
     "//third_party/googletest:gtest_main",
-    "//third_party/jsoncpp:jsoncpp",
   ]
   branch_protector_ret = "pac_ret"
   sanitize = {

@@ -148,10 +148,7 @@ foreach(item, time_fuzztests) {
       item.source,
     ]
 
-    deps = [
-      "${time_service_path}:time_system_ability_static",
-      "//third_party/jsoncpp:jsoncpp",
-    ]
+    deps = [ "${time_service_path}:time_system_ability_static" ]
 
     external_deps = [
       "ability_base:want",

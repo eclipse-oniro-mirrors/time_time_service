@@ -43,9 +43,6 @@
         "device_standby",
         "init",
         "power_manager"
-      ],
-      "third_party": [
-        "jsoncpp"
       ]
     },
     "build": {
