@@ -19,7 +19,6 @@
 #include <atomic>
 
 std::atomic<int> g_data1(0);
-
 void TimeOutCallback1(void)
 {
     g_data1 += 1;

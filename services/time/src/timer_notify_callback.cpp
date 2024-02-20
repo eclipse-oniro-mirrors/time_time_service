@@ -14,15 +14,39 @@
  */
 
 #include "timer_notify_callback.h"
+#include "timer_manager.h"
 
 namespace OHOS {
 namespace MiscServices {
+std::mutex TimerNotifyCallback::instanceLock_;
+sptr<TimerNotifyCallback> TimerNotifyCallback::instance_;
+std::shared_ptr<TimerManager> TimerNotifyCallback::managerHandler_;
+
 TimerNotifyCallback::TimerNotifyCallback() = default;
 
 TimerNotifyCallback::~TimerNotifyCallback() = default;
 
+sptr<TimerNotifyCallback> TimerNotifyCallback::GetInstance(std::shared_ptr<TimerManager> &timerManager)
+{
+    if (instance_ == nullptr) {
+        std::lock_guard<std::mutex> autoLock(instanceLock_);
+        if (instance_ == nullptr) {
+            instance_ = new TimerNotifyCallback;
+            instance_->managerHandler_ = timerManager;
+        }
+    }
+    return instance_;
+}
+
 void TimerNotifyCallback::Finish(uint64_t timerId)
 {
+    #ifdef POWER_MANAGER_ENABLE
+    if (managerHandler_ == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "timermanager is nullptr");
+        return;
+    }
+    managerHandler_->DecRunningLockRef();
+    #endif
 }
 } // namespace MiscServices
 } // namespace OHOS

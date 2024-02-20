@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
+#include <thread>
 
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
@@ -81,6 +82,9 @@ static HapPolicyParams g_policyA = {
     }
 };
 
+constexpr int ONE_THOUSAND = 1000;
+constexpr int FIVE_HUNDRED = 500;
+
 static HapInfoParams g_systemInfoParams = {
     .userID = 1,
     .bundleName = "timer",
@@ -139,6 +143,20 @@ void TimeClientTest::SetUp(void)
 
 void TimeClientTest::TearDown(void)
 {
+}
+
+std::atomic<int> g_data3(0);
+void TimeOutCallback3(void)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(ONE_THOUSAND));
+    g_data3 += 1;
+}
+
+std::atomic<int> g_data4(0);
+void TimeOutCallback4(void)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(FIVE_HUNDRED));
+    g_data4 += 1;
 }
 
 /**
@@ -681,5 +699,78 @@ HWTEST_F(TimeClientTest, StartTimer006, TestSize.Level1)
     TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
     EXPECT_GT(g_data1, 0);
+}
+
+/**
+* @tc.name: StartTimer007
+* @tc.desc: Start system timer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
+{
+    AddPermission();
+    g_data3 = 0;
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(1<<2);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback3);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    uint64_t ret = 0;
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, ret);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 2000);
+    pid_t uid = IPCSkeleton::GetCallingUid();
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, true, true);
+    sleep(4);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
+    TimeServiceClient::GetInstance()->ResetAllProxy();
+    EXPECT_GT(g_data3, 0);
+}
+
+/**
+* @tc.name: StartTimer008
+* @tc.desc: Start system timer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, StartTimer008, TestSize.Level1)
+{
+    AddPermission();
+    g_data3 = 0;
+    g_data4 = 0;
+    uint64_t timerId1;
+    auto timerInfo1 = std::make_shared<TimerInfoTest>();
+    timerInfo1->SetType(1<<2);
+    timerInfo1->SetRepeat(false);
+    timerInfo1->SetCallbackInfo(TimeOutCallback3);
+    auto errCode1 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo1, timerId1);
+    uint64_t ret1 = 0;
+    EXPECT_TRUE(errCode1 == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, ret1);
+    auto triggerTime1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + 2000);
+    pid_t uid1 = IPCSkeleton::GetCallingUid();
+    TimeServiceClient::GetInstance()->ProxyTimer(uid1, true, true);
+
+    uint64_t timerId2;
+    auto timerInfo2 = std::make_shared<TimerInfoTest>();
+    timerInfo2->SetType(1<<2);
+    timerInfo2->SetRepeat(false);
+    timerInfo2->SetCallbackInfo(TimeOutCallback4);
+    auto errCode2 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo2, timerId2);
+    uint64_t ret2 = 0;
+    EXPECT_TRUE(errCode2 == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, ret2);
+    auto triggerTime2 = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId2, triggerTime2 + 2000);
+    pid_t uid2 = IPCSkeleton::GetCallingUid();
+    TimeServiceClient::GetInstance()->ProxyTimer(uid2, true, true);
+    
+    sleep(4);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
+    TimeServiceClient::GetInstance()->ResetAllProxy();
+    EXPECT_GT(g_data3, 0);
+    EXPECT_GT(g_data4, 0);
 }
 } // namespace

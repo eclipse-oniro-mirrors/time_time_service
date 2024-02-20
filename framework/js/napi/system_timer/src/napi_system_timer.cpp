@@ -89,7 +89,7 @@ void ITimerInfoInstance::OnTrigger()
         TIME_HILOGE(TIME_MODULE_JS_NAPI, "handler is nullptr");
         return;
     }
-    handler_->PostImmediateTask(callback, "TimerCallbackHandler");
+    handler_->PostSyncTask(callback, "TimerCallbackHandler", AppExecFwk::EventQueue::Priority::IMMEDIATE);
 }
 
 void ITimerInfoInstance::SetCallbackInfo(const napi_env &env, const napi_ref &ref)

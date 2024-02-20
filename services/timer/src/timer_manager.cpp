@@ -32,6 +32,9 @@
 #include "time_permission.h"
 #include "timer_proxy.h"
 #include "time_sysevent.h"
+#ifdef DEVICE_STANDBY_ENABLE
+#include "time_system_ability.h"
+#endif
 
 namespace OHOS {
 namespace MiscServices {
@@ -616,16 +619,29 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             StatisticReporter(IPCSkeleton::GetCallingPid(), timer->uid, timer->type,
                 timer->whenElapsed.time_since_epoch().count(), timer->repeatInterval.count());
         }
+        bool flag = timer->type == ITimerManager::TimerType::RTC_WAKEUP ||
+             timer->type == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP;
         if (timer->callback) {
+            #ifdef POWER_MANAGER_ENABLE
+            if (flag) {
+                IncRunningLockRef();
+            }
+            #endif
             TimerProxy::GetInstance().CallbackAlarmIfNeed(timer);
         }
         if (timer->wantAgent) {
-            NotifyWantAgent(timer->wantAgent);
+            #ifdef POWER_MANAGER_ENABLE
+            if (flag) {
+                IncRunningLockRef();
+            }
+            #endif
+            NotifyWantAgent(timer->wantAgent, flag);
         }
     }
 }
 
-void TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent)
+void TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
+                                   bool needCallback)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "trigger wantAgent.");
     std::shared_ptr<AAFwk::Want> want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
@@ -634,7 +650,17 @@ void TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::W
         return;
     }
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
+    #ifdef POWER_MANAGER_ENABLE
+    auto code = 0;
+    if (needCallback) {
+        auto callback = std::make_shared<WantAgentCompleteCallBack>();
+        code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, callback, paramsInfo);
+    } else {
+        code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
+    }
+    #else
     auto code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
+    #endif
     TIME_HILOGI(TIME_MODULE_SERVICE, "trigger wantAgent result: %{public}d", code);
 }
 
@@ -883,6 +909,30 @@ void TimerManager::HandleRepeatTimer(
 }
 
 #ifdef POWER_MANAGER_ENABLE
+void TimerManager::IncRunningLockRef()
+{
+    countLock_.lock();
+    if (count_ == 0) {
+        AddRunningLock(USE_LOCK_TIME_IN_NANO);
+    }
+    count_ += 1;
+    countLock_.unlock();
+}
+
+void TimerManager::DecRunningLockRef()
+{
+    countLock_.lock();
+    if (count_ >= 1) {
+        count_ -= 1;
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "count_=%{public}d", count_);
+    if (count_ == 0) {
+        runningLock_->UnLock();
+        TIME_HILOGI(TIME_MODULE_SERVICE, "runninglock unlock");
+    }
+    countLock_.unlock();
+}
+
 void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
 {
     auto currentTime = duration_cast<nanoseconds>(GetBootTimeNs().time_since_epoch()).count();
@@ -926,6 +976,17 @@ void TimerManager::AddRunningLock(long long holdLockTime)
         runningLock_->UnLock();
         runningLock_->Lock(static_cast<int32_t>(holdLockTime / NANO_TO_MILLI));
     }
+}
+
+void WantAgentCompleteCallBack::OnSendFinished(
+    const AAFwk::Want &want, int resultCode, const std::string &resultData, const AAFwk::WantParams &resultExtras)
+{
+    auto handler = TimeSystemAbility::GetInstance()->GetManagerHandler();
+    if (handler == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "timermanager is nullptr");
+        return;
+    }
+    handler->DecRunningLockRef();
 }
 #endif
 } // MiscServices
