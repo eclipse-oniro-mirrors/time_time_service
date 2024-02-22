@@ -12,6 +12,6 @@
 # limitations under the License.
 
 persist.time.timezone = "Asia/Shanghai"
-persist.time.ntpserver = "pool.ntp.org"
+persist.time.ntpserver = "1.cn.pool.ntp.org"
 persist.time.ntpserver_specific = ""
 persist.time.auto_time = "ON"
