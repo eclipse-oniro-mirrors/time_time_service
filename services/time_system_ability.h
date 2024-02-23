@@ -27,7 +27,6 @@
 #include "time_cmd_parse.h"
 #include "time_service_notify.h"
 #include "time_service_stub.h"
-#include "time_sysevent.h"
 #include "timer_manager.h"
 
 namespace OHOS {
@@ -47,18 +46,18 @@ public:
     bool SetRealTime(int64_t time);
     int32_t SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
     int32_t GetTimeZone(std::string &timeZoneId) override;
-    int32_t GetWallTimeMs(int64_t &times) override;
-    int32_t GetWallTimeNs(int64_t &times) override;
-    int32_t GetBootTimeMs(int64_t &times) override;
-    int32_t GetBootTimeNs(int64_t &times) override;
-    int32_t GetMonotonicTimeMs(int64_t &times) override;
-    int32_t GetMonotonicTimeNs(int64_t &times) override;
-    int32_t GetThreadTimeMs(int64_t &times) override;
-    int32_t GetThreadTimeNs(int64_t &times) override;
+    int32_t GetWallTimeMs(int64_t &time) override;
+    int32_t GetWallTimeNs(int64_t &time) override;
+    int32_t GetBootTimeMs(int64_t &time) override;
+    int32_t GetBootTimeNs(int64_t &time) override;
+    int32_t GetMonotonicTimeMs(int64_t &time) override;
+    int32_t GetMonotonicTimeNs(int64_t &time) override;
+    int32_t GetThreadTimeMs(int64_t &time) override;
+    int32_t GetThreadTimeNs(int64_t &time) override;
 
     int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
         uint64_t &timerId) override;
-    int32_t CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> Callback, uint64_t &timerId);
+    int32_t CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> callback, uint64_t &timerId);
     int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;

@@ -36,9 +36,9 @@ int32_t NetConnCallbackObserver::NetCapabilitiesChange(sptr<NetHandle> &netHandl
             TIME_HILOGW(TIME_MODULE_SERVICE, "NITZ Time is valid.");
             return E_TIME_DEAL_FAILED;
         }
+        TIME_HILOGI(TIME_MODULE_SERVICE, "internet ready");
         NtpUpdateTime::SetSystemTime();
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Observe net capabilities change. end");
     return E_TIME_OK;
 }
 

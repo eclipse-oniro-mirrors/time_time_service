@@ -31,6 +31,7 @@
 #include "time_file_utils.h"
 #include "time_permission.h"
 #include "timer_proxy.h"
+#include "time_sysevent.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -127,13 +128,14 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
         return E_TIME_NOT_FOUND;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start timer: %{public}" PRIu64 " TriggerTime: %{public}" PRIu64""
-                "uid:%{public}d pid:%{public}d", timerId, triggerTime, IPCSkeleton::GetCallingUid(),
-                IPCSkeleton::GetCallingPid());
+    TIME_HILOGI(TIME_MODULE_SERVICE,
+        "Start timer: %{public}" PRIu64 " TriggerTime: %{public}s"
+        "uid:%{public}d pid:%{public}d",
+        timerId, std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
     auto timerInfo = it->second;
     if (TimerProxy::GetInstance().IsUidProxy(timerInfo->uid)) {
         TIME_HILOGI(TIME_MODULE_SERVICE,
-            "Do not start timer, timer already proxy, id=%{public}" PRId64 ", uid = %{public}d",
+            "Do not start timer, timer already proxy, id=%{public}" PRIu64 ", uid = %{public}d",
             timerInfo->id, timerInfo->uid);
         return E_TIME_DEAL_FAILED;
     }
@@ -239,7 +241,6 @@ void TimerManager::SetHandler(uint64_t id,
                      std::move(callback),
                      wantAgent,
                      static_cast<uint32_t>(flag),
-                     true,
                      uid,
                      bundleName);
 }
@@ -253,14 +254,13 @@ void TimerManager::SetHandlerLocked(uint64_t id, int type,
                                     std::function<void (const uint64_t)> callback,
                                     const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                                     uint32_t flags,
-                                    bool doValidate,
                                     uint64_t callingUid,
                                     const std::string &bundleName)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", id);
     auto alarm = std::make_shared<TimerInfo>(id, type, when, whenElapsed, windowLength, maxWhen,
                                              interval, std::move(callback), wantAgent, flags, callingUid, bundleName);
-    SetHandlerLocked(alarm, false, doValidate, false);
+    SetHandlerLocked(alarm, false, false);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
@@ -308,20 +308,19 @@ void TimerManager::RemoveLocked(uint64_t id)
             } else {
                 pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), pendingTimer->offset);
             }
-            SetHandlerLocked(pendingTimer, false, true, false);
+            SetHandlerLocked(pendingTimer, false, false);
         }
         pendingDelayTimers_.clear();
     }
 
     if (didRemove || isAdjust) {
-        ReBatchAllTimersLocked(true);
+        ReBatchAllTimers();
     }
 }
 
-void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool doValidate,
-                                    bool isRebatched)
+void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool isRebatched)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d, doValidate= %{public}d", rebatching, doValidate);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d", rebatching);
     TimerProxy::GetInstance().RecordUidTimerMap(alarm, isRebatched);
 
     if (!isRebatched && mPendingIdleUntil_ != nullptr && !CheckAllowWhileIdle(alarm)) {
@@ -349,28 +348,20 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
 
 void TimerManager::ReBatchAllTimers()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
-    ReBatchAllTimersLocked(true);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
-}
-
-void TimerManager::ReBatchAllTimersLocked(bool doValidate)
-{
     auto oldSet = alarmBatches_;
     alarmBatches_.clear();
     auto nowElapsed = GetBootTimeNs();
     for (const auto &batch : oldSet) {
         auto n = batch->Size();
         for (unsigned int i = 0; i < n; i++) {
-            ReAddTimerLocked(batch->Get(i), nowElapsed, doValidate);
+            ReAddTimerLocked(batch->Get(i), nowElapsed);
         }
     }
     RescheduleKernelTimerLocked();
 }
 
 void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
-                                    std::chrono::steady_clock::time_point nowElapsed,
-                                    bool doValidate)
+                                    std::chrono::steady_clock::time_point nowElapsed)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "ReAddTimerLocked start. uid= %{public}d, id=%{public}" PRId64 ""
         ", timer whenElapsed=%{public}lld, now=%{public}lld",
@@ -387,7 +378,7 @@ void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
     }
     timer->whenElapsed = whenElapsed;
     timer->maxWhenElapsed = maxElapsed;
-    SetHandlerLocked(timer, true, doValidate, true);
+    SetHandlerLocked(timer, true, true);
 }
 
 std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono::milliseconds when, int type)
@@ -483,7 +474,7 @@ void TimerManager::TriggerIdleTimer()
                 // 2 means the time of performing task.
                 pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), milliseconds(2));
             }
-            SetHandlerLocked(pendingTimer, false, true, false);
+            SetHandlerLocked(pendingTimer, false, false);
         });
     pendingDelayTimers_.clear();
     ReBatchAllTimers();
@@ -504,7 +495,7 @@ void TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
             nowElapsed.time_since_epoch().count());
         SetHandlerLocked(alarm->id, alarm->type, alarm->when, alarm->whenElapsed, alarm->windowLength,
             alarm->maxWhenElapsed, alarm->repeatInterval, alarm->callback,
-            alarm->wantAgent, alarm->flags, true, alarm->uid, alarm->bundleName);
+            alarm->wantAgent, alarm->flags, alarm->uid, alarm->bundleName);
     } else {
         triggerList.push_back(alarm);
         HandleRepeatTimer(alarm, nowElapsed);
@@ -620,12 +611,16 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
 
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
-    for (const auto &alarm : triggerList) {
-        if (alarm->callback) {
-            TimerProxy::GetInstance().CallbackAlarmIfNeed(alarm);
+    for (const auto &timer : triggerList) {
+        if (timer->wakeup) {
+            StatisticReporter(IPCSkeleton::GetCallingPid(), timer->uid, timer->type,
+                timer->whenElapsed.time_since_epoch().count(), timer->repeatInterval.count());
         }
-        if (alarm->wantAgent) {
-            NotifyWantAgent(alarm->wantAgent);
+        if (timer->callback) {
+            TimerProxy::GetInstance().CallbackAlarmIfNeed(timer);
+        }
+        if (timer->wantAgent) {
+            NotifyWantAgent(timer->wantAgent);
         }
     }
 }
@@ -881,7 +876,7 @@ void TimerManager::HandleRepeatTimer(
         auto nextElapsed = timer->whenElapsed + delta;
         SetHandlerLocked(timer->id, timer->type, timer->when + delta, nextElapsed, timer->windowLength,
             MaxTriggerTime(nowElapsed, nextElapsed, timer->repeatInterval), timer->repeatInterval, timer->callback,
-            timer->wantAgent, timer->flags, true, timer->uid, timer->bundleName);
+            timer->wantAgent, timer->flags, timer->uid, timer->bundleName);
     } else {
         TimerProxy::GetInstance().RemoveUidTimerMap(timer);
     }
