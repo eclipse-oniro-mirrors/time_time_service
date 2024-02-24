@@ -50,6 +50,7 @@ private:
 
     void Call(napi_env env, void *data, uv_after_work_cb afterCallback);
     static void UvDelete(uv_work_t *work, int status);
+    static void TriggerCallback(uv_work_t *work, int status);
     CallbackInfo callbackInfo_;
     std::shared_ptr<EventHandler> handler_;
 };
