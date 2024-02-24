@@ -42,6 +42,7 @@ public:
     TimeSystemAbility();
     ~TimeSystemAbility();
     static sptr<TimeSystemAbility> GetInstance();
+    static std::shared_ptr<TimerManager> GetManagerHandler();
     int32_t SetTime(int64_t time, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
     bool SetRealTime(int64_t time);
     int32_t SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) override;

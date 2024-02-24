@@ -18,6 +18,7 @@
 
 #include <mutex>
 #include "timer_notify_callback_stub.h"
+#include "timer_manager.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -26,7 +27,13 @@ public:
     TimerNotifyCallback();
     ~TimerNotifyCallback();
     DISALLOW_COPY_AND_MOVE(TimerNotifyCallback);
+    static sptr<TimerNotifyCallback> GetInstance(std::shared_ptr<TimerManager> &timerManager);
     void Finish(uint64_t timerId) override;
+
+private:
+    static std::mutex instanceLock_;
+    static sptr<TimerNotifyCallback> instance_;
+    static std::shared_ptr<TimerManager> managerHandler_;
 };
 }  // namespace MiscServices
 }  // namespace OHOS

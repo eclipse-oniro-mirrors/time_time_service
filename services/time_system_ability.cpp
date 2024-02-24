@@ -41,6 +41,7 @@
 #include "time_common.h"
 #include "time_tick_notify.h"
 #include "time_zone_info.h"
+#include "timer_notify_callback.h"
 #include "timer_manager_interface.h"
 #include "timer_proxy.h"
 
@@ -93,6 +94,11 @@ sptr<TimeSystemAbility> TimeSystemAbility::GetInstance()
         }
     }
     return instance_;
+}
+
+std::shared_ptr<TimerManager> TimeSystemAbility::GetManagerHandler()
+{
+    return timerManagerHandler_;
 }
 
 void TimeSystemAbility::InitDumpCmd()
@@ -276,9 +282,6 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
         TIME_HILOGE(TIME_MODULE_SERVICE, "ITimerCallback nullptr.");
         return E_TIME_NULLPTR;
     }
-    auto callbackFunc = [timerCallback](uint64_t id) {
-        timerCallback->NotifyTimer(id, nullptr);
-    };
     struct TimerPara paras {};
     ParseTimerPara(timerOptions, paras);
     if (timerManagerHandler_ == nullptr) {
@@ -289,6 +292,19 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
             return E_TIME_NULLPTR;
         }
     }
+    auto callbackFunc = [timerCallback, timerOptions](uint64_t id) {
+        #ifdef POWER_MANAGER_ENABLE
+        if (timerOptions->type == ITimerManager::TimerType::RTC_WAKEUP ||
+            timerOptions->type == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP) {
+            auto notifyCallback = TimerNotifyCallback::GetInstance(timerManagerHandler_);
+            timerCallback->NotifyTimer(id, notifyCallback->AsObject());
+        } else {
+            timerCallback->NotifyTimer(id, nullptr);
+        }
+        #else
+        timerCallback->NotifyTimer(id, nullptr);
+        #endif
+    };
     if ((static_cast<uint32_t>(paras.flag) & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
         !TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer.");

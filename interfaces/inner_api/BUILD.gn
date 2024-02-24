@@ -21,6 +21,7 @@ config("time_client_config") {
     "include",
     "${time_utils_path}/native/include",
     "${time_service_path}/time/include/inner_api_include",
+    "${time_service_path}/timer/include",
     "${ability_runtime_want_path}/interfaces/inner_api/wantagent/include",
   ]
 }
@@ -29,11 +30,10 @@ ohos_shared_library("time_client") {
   sources = [
     "${api_path}/src/time_service_client.cpp",
     "${time_service_path}/ipc/proxy/time_service_proxy.cpp",
+    "${time_service_path}/ipc/proxy/timer_notify_callback_proxy.cpp",
     "${time_service_path}/ipc/stub/timer_call_back_stub.cpp",
-    "${time_service_path}/ipc/stub/timer_notify_callback_stub.cpp",
     "${time_service_path}/time/src/itimer_info.cpp",
     "${time_service_path}/time/src/timer_call_back.cpp",
-    "${time_service_path}/time/src/timer_notify_callback.cpp",
   ]
   configs = [ ":time_client_config" ]
   configs += [ "//build/config/gcc:symbol_visibility_hidden" ]
