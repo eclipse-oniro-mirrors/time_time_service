@@ -48,7 +48,6 @@ const std::string AUTO_TIME_SYSTEM_PARAMETER = "persist.time.auto_time";
 const std::string AUTO_TIME_STATUS_ON = "ON";
 const std::string AUTO_TIME_STATUS_OFF = "OFF";
 constexpr uint64_t TWO_SECONDS = 2000;
-const std::string DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
@@ -66,7 +65,7 @@ void NtpUpdateTime::Init()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp Update Time start.");
     SubscriberNITZTimeChangeCommonEvent();
-    std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, DEFAULT_NTP_SERVER);
+    std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, "ntp.aliyun.com");
     std::string ntpServerSpec = system::GetParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER, "");
     std::string autoTime = system::GetParameter(AUTO_TIME_SYSTEM_PARAMETER, "ON");
     if ((ntpServer.empty() && ntpServerSpec.empty()) || autoTime.empty()) {
@@ -341,7 +340,7 @@ void NtpUpdateTime::RegisterSystemParameterListener()
 void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, void *context)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Ntp server changed");
-    std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, DEFAULT_NTP_SERVER);
+    std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, "ntp.aliyun.com");
     std::string ntpServerSpec = system::GetParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER, "");
     if (ntpServer.empty() && ntpServerSpec.empty()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter.");
@@ -373,7 +372,6 @@ void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, v
     SetSystemTime();
     SaveAutoTimeInfoToFile(autoTimeInfo_);
 }
-
 uint64_t NtpUpdateTime::GetNITZUpdateTime()
 {
     return static_cast<uint64_t>(lastNITZUpdateTime_);
