@@ -79,14 +79,17 @@ private:
                           std::function<void (const uint64_t)> callback,
                           const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                           uint32_t flags,
+                          bool doValidate,
                           uint64_t callingUid,
                           const std::string &bundleName);
     void RemoveHandler(uint64_t id);
     void RemoveLocked(uint64_t id);
     void ReBatchAllTimers();
+    void ReBatchAllTimersLocked(bool doValidate);
     void ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
-                          std::chrono::steady_clock::time_point nowElapsed);
-    void SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool isRebatched);
+                          std::chrono::steady_clock::time_point nowElapsed,
+                          bool doValidate);
+    void SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool doValidate, bool isRebatched);
     void InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm);
     int64_t AttemptCoalesceLocked(std::chrono::steady_clock::time_point whenElapsed,
                                   std::chrono::steady_clock::time_point maxWhen);

@@ -121,9 +121,11 @@ NtpTrustedTime::TimeResult::TimeResult(int64_t mTimeMillis, int64_t mElapsedReal
 
 void NtpTrustedTime::TimeResult::Clear()
 {
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     mTimeMillis = 0;
     mElapsedRealtimeMillis = 0;
     mCertaintyMillis = 0;
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 } // namespace MiscServices
 } // namespace OHOS
