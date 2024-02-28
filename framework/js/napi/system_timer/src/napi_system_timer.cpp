@@ -71,31 +71,19 @@ void ITimerInfoInstance::UvDelete(uv_work_t *work, int status)
     delete work;
 }
 
-void ITimerInfoInstance::TriggerCallback(uv_work_t *work, int status)
-{
-    auto *info = reinterpret_cast<CallbackInfo *>(work->data);
-    if (info != nullptr) {
-        TIME_HILOGD(TIME_MODULE_JS_NAPI, "uvloop timerCallback success");
-        napi_value undefined = nullptr;
-        napi_get_undefined(info->env, &undefined);
-        napi_value callback = nullptr;
-        napi_get_reference_value(info->env, info->ref, &callback);
-        napi_call_function(info->env, undefined, callback, ARGC_ZERO, &undefined, &undefined);
-        delete info;
-    }
-    delete work;
-}
-
 void ITimerInfoInstance::OnTrigger()
 {
     if (callbackInfo_.ref == nullptr) {
         return;
     }
     auto callbackInfo = callbackInfo_;
-    auto callback = [callbackInfo, this]() {
+    auto callback = [callbackInfo]() {
         TIME_HILOGD(TIME_MODULE_JS_NAPI, "timerCallback success");
-        auto *info = new (std::nothrow) CallbackInfo(callbackInfo.env, callbackInfo.ref);
-        Call(callbackInfo.env, reinterpret_cast<void *>(info), TriggerCallback);
+        napi_value undefined = nullptr;
+        napi_get_undefined(callbackInfo.env, &undefined);
+        napi_value callback = nullptr;
+        napi_get_reference_value(callbackInfo.env, callbackInfo.ref, &callback);
+        napi_call_function(callbackInfo.env, undefined, callback, ARGC_ZERO, &undefined, &undefined);
     };
     if (handler_ == nullptr) {
         TIME_HILOGE(TIME_MODULE_JS_NAPI, "handler is nullptr");
