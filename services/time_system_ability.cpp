@@ -366,8 +366,22 @@ int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId)
     return ret;
 }
 
+bool TimeSystemAbility::IsValidTime(int64_t time)
+{
+#if __SIZEOF_POINTER__ == 4
+    if (time / MILLI_TO_BASE > LONG_MAX) {
+        return false;
+    }
+#endif
+    return true;
+}
+
 bool TimeSystemAbility::SetRealTime(int64_t time)
 {
+    if (!IsValidTime(time)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "time is invalid: %{public}s", std::to_string(time).c_str());
+        return false;
+    }
     sptr<TimeSystemAbility> instance = TimeSystemAbility::GetInstance();
     int64_t beforeTime = 0;
     instance->GetWallTimeMs(beforeTime);
@@ -396,7 +410,8 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     tv.tv_usec = (suseconds_t)((time % MILLI_TO_BASE) * MILLI_TO_MICR);
     int result = settimeofday(&tv, nullptr);
     if (result < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday time fail: %{public}d.", result);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday time fail: %{public}d. error: %{public}s", result,
+            strerror(errno));
         return false;
     }
     auto ret = SetRtcTime(tv.tv_sec);
