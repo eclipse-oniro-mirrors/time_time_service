@@ -32,7 +32,7 @@
 #include "time_permission.h"
 #include "timer_proxy.h"
 #include "time_sysevent.h"
-#ifdef DEVICE_STANDBY_ENABLE
+#ifdef POWER_MANAGER_ENABLE
 #include "time_system_ability.h"
 #endif
 
