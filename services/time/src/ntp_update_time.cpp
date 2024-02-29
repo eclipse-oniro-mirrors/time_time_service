@@ -45,7 +45,7 @@ const std::string AUTO_TIME_SYSTEM_PARAMETER = "persist.time.auto_time";
 const std::string AUTO_TIME_STATUS_ON = "ON";
 const std::string AUTO_TIME_STATUS_OFF = "OFF";
 constexpr uint64_t TWO_SECONDS = 2000;
-const std::string DEFAULT_NTP_SERVER = "pool.ntp.org";
+const std::string DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
