@@ -96,6 +96,9 @@ void TimeTickNotify::RefreshNextTriggerTime()
 {
     time_t t = time(nullptr);
     struct tm *tblock = localtime(&t);
+    if (tblock == nullptr) {
+        return;
+    }
     TIME_HILOGD(TIME_MODULE_SERVICE, "Time now: %{public}s", asctime(tblock));
     auto UTCTimeMicro = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
     auto timeMilliseconds = GetMillisecondsFromUTC(UTCTimeMicro);
