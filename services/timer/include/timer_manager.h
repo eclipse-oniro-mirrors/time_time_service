@@ -56,9 +56,6 @@ public:
     ~TimerManager() override;
     void HandleRSSDeath();
     #ifdef POWER_MANAGER_ENABLE
-    uint32_t count_;
-    std::mutex countLock_;
-    std::shared_ptr<PowerMgr::RunningLock> runningLock_;
     void DecRunningLockRef();
     #endif
 
@@ -142,6 +139,9 @@ private:
     std::shared_ptr<TimerInfo> mPendingIdleUntil_;
     std::mutex idleTimerMutex_;
     #ifdef POWER_MANAGER_ENABLE
+    uint32_t count_;
+    std::mutex countLock_;
+    std::shared_ptr<PowerMgr::RunningLock> runningLock_;
     int64_t lockExpiredTime_ = 0;
     #endif
 }; // timer_manager
