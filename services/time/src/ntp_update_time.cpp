@@ -106,7 +106,7 @@ int32_t NtpUpdateTime::MonitorNetwork()
     netSpecifier.netCapabilities_ = netAllCapabilities;
     sptr<NetSpecifier> specifier = new (std::nothrow) NetSpecifier(netSpecifier);
     if (specifier == nullptr) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "new operator error.specifier is nullptr");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "new operator error.specifier is nullptr");
         return NET_CONN_ERR_INPUT_NULL_PTR;
     }
     sptr<NetConnCallbackObserver> observer = new (std::nothrow) NetConnCallbackObserver();
@@ -115,7 +115,7 @@ int32_t NtpUpdateTime::MonitorNetwork()
         return NET_CONN_ERR_INPUT_NULL_PTR;
     }
     int nRet = NetConnClient::GetInstance().RegisterNetConnCallback(specifier, observer, 0);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterNetConnCallback retcode= %{public}d", nRet);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterNetConnCallback retcode= %{public}d", nRet);
 
     return nRet;
 }
