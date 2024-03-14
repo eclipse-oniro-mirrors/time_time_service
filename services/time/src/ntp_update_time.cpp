@@ -45,7 +45,7 @@ const std::string AUTO_TIME_SYSTEM_PARAMETER = "persist.time.auto_time";
 const std::string AUTO_TIME_STATUS_ON = "ON";
 const std::string AUTO_TIME_STATUS_OFF = "OFF";
 constexpr uint64_t TWO_SECONDS = 2000;
-const std::string DEFAULT_NTP_SERVER = "pool.ntp.org";
+const std::string DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
@@ -106,7 +106,7 @@ int32_t NtpUpdateTime::MonitorNetwork()
     netSpecifier.netCapabilities_ = netAllCapabilities;
     sptr<NetSpecifier> specifier = new (std::nothrow) NetSpecifier(netSpecifier);
     if (specifier == nullptr) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "new operator error.specifier is nullptr");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "new operator error.specifier is nullptr");
         return NET_CONN_ERR_INPUT_NULL_PTR;
     }
     sptr<NetConnCallbackObserver> observer = new (std::nothrow) NetConnCallbackObserver();
@@ -115,7 +115,7 @@ int32_t NtpUpdateTime::MonitorNetwork()
         return NET_CONN_ERR_INPUT_NULL_PTR;
     }
     int nRet = NetConnClient::GetInstance().RegisterNetConnCallback(specifier, observer, 0);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterNetConnCallback retcode= %{public}d", nRet);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterNetConnCallback retcode= %{public}d", nRet);
 
     return nRet;
 }
