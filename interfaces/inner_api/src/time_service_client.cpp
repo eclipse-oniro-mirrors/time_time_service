@@ -171,7 +171,6 @@ uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> timerOptions
     auto errCode = CreateTimerV9(timerOptions, timerId);
     TIME_HILOGD(TIME_MODULE_SERVICE, "CreateTimer id: %{public}" PRId64 "", timerId);
     if (errCode != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Non-system applications, create timer failed");
         return 0;
     }
     if (timerId == 0) {
@@ -201,7 +200,7 @@ int32_t TimeServiceClient::CreateTimerV9(std::shared_ptr<ITimerInfo> timerOption
     }
     auto errCode = proxy->CreateTimer(timerOptions, timerCallbackInfoObject, timerId);
     if (errCode != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "create timer failed");
+        TIME_HILOGE(TIME_MODULE_CLIENT, "create timer failed, errCode=%{public}d", errCode);
         return errCode;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "CreateTimer id: %{public}" PRId64 "", timerId);

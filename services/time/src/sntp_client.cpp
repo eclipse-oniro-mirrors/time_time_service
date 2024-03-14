@@ -40,7 +40,6 @@ constexpr uint64_t FRACTION_TO_SECOND = 0x100000000;
 constexpr uint64_t UINT32_MASK = 0xFFFFFFFF;
 const int VERSION_MASK = 0x38;
 const int MODE_MASK = 0x7;
-constexpr int32_t INVALID_RETURN = -1;
 constexpr int32_t INDEX_ZERO = 0;
 constexpr int32_t INDEX_ONE = 1;
 constexpr int32_t INDEX_TWO = 2;
@@ -65,57 +64,55 @@ constexpr int32_t SNTP_MSG_OFFSET_THREE = 3;
 
 bool SNTPClient::RequestTime(const std::string &host)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     int bufLen = NTP_PACKAGE_SIZE;
-
     struct addrinfo hints = { 0 }, *addrs;
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
-
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime1.");
     int status = getaddrinfo(host.c_str(), NTP_PORT, &hints, &addrs);
     if (status != 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "getaddrinfo failed status %{public}d", status);
         return false;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime2.");
+
     // Create a socket for sending data
     int sendSocket = socket(addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
-    if (sendSocket == 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "create socket failed");
+    if (sendSocket < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE,
+                    "create socket failed: %{public}s family: %{public}d socktype: %{public}d protocol: %{public}d",
+                    strerror(errno), addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
         return false;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime3.");
+
     // Set send and recv function timeout
     struct timeval timeout = { TIME_OUT, 0 };
     setsockopt(sendSocket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(struct timeval));
     setsockopt(sendSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
-
     if (connect(sendSocket, addrs->ai_addr, addrs->ai_addrlen) < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "socket connect failed");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "socket connect failed: %{public}s", strerror(errno));
+        close(sendSocket);
         return false;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime4.");
+
     // Create the NTP tx timestamp and fill the fields in the msg to be tx
     char sendBuf[NTP_PACKAGE_SIZE] = { 0 };
     CreateMessage(sendBuf);
-    if (send(sendSocket, sendBuf, bufLen, 0) == INVALID_RETURN) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Send socket message failed. Host: %{public}s", host.c_str());
+    if (send(sendSocket, sendBuf, bufLen, 0) < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Send socket message failed: %{public}s, Host: %{public}s",
+                    strerror(errno), host.c_str());
         close(sendSocket);
         return false;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime5.");
+
     char bufferRx[NTP_PACKAGE_SIZE] = { 0 };
     // Receive until the peer closes the connection
-    if (recv(sendSocket, bufferRx, NTP_PACKAGE_SIZE, 0) == INVALID_RETURN) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Receive socket message failed. Host: %{public}s", host.c_str());
+    if (recv(sendSocket, bufferRx, NTP_PACKAGE_SIZE, 0) < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Receive socket message failed: %{public}s, Host: %{public}s",
+                    strerror(errno), host.c_str());
         close(sendSocket);
         return false;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RequestTime6.");
     ReceivedMessage(bufferRx);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     close(sendSocket);
     return true;
 }
@@ -132,7 +129,7 @@ uint64_t SNTPClient::GetNtpTimestamp64(int offset, const char *buffer)
     char valueRx[_len];
     errno_t ret = memset_s(valueRx, sizeof(uint64_t), 0, sizeof(uint64_t));
     if (ret != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);
         return false;
     }
     int numOfBit = sizeof(uint64_t) - 1;
@@ -144,7 +141,7 @@ uint64_t SNTPClient::GetNtpTimestamp64(int offset, const char *buffer)
     uint64_t milliseconds;
     ret = memcpy_s(&milliseconds, sizeof(uint64_t), valueRx, sizeof(uint64_t));
     if (ret != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);
         return false;
     }
     return le64toh(milliseconds);
@@ -209,7 +206,7 @@ void SNTPClient::CreateMessage(char *buffer)
     char value[sizeof(uint64_t)];
     errno_t ret = memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
     if (ret != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);
         return;
     }
     int numOfBit = sizeof(uint64_t) - 1;
@@ -241,7 +238,7 @@ void SNTPClient::WriteTimeStamp(char *buffer, ntp_timestamp *ntp)
     char value[sizeof(uint64_t)];
     errno_t ret = memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
     if (ret != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);
         return;
     }
     int numOfBit = sizeof(uint64_t) - 1;
@@ -313,7 +310,7 @@ unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer)
     char valueRx[_len];
     errno_t ret = memset_s(valueRx, _len, 0, _len);
     if (ret != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);
         return false;
     }
     int numOfBit = sizeof(int) - 1;
@@ -325,7 +322,7 @@ unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer)
     unsigned int milliseconds;
     errno_t retValue = memcpy_s(&milliseconds, sizeof(int), valueRx, sizeof(int));
     if (retValue != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %d\n", retValue);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", retValue);
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
@@ -349,7 +346,7 @@ void SNTPClient::SNTPMessage::clear()
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     errno_t ret = memset_s(this, sizeof(*this), 0, sizeof(*this));
     if (ret != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);
     }
 }
 
