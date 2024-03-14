@@ -60,14 +60,16 @@ static constexpr OHOS::HiviewDFX::HiLogLabel TIME_MODULE_LABEL[TIME_MODULE_BUTT]
 
 // In order to improve performance, do not check the module range.
 // Besides, make sure module is less than TIME_MODULE_BUTT.
-#define TIME_HILOGF(module, ...) \
-    (void)OHOS::HiviewDFX::HiLog::Fatal(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
-#define TIME_HILOGE(module, ...) \
-    (void)OHOS::HiviewDFX::HiLog::Error(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
-#define TIME_HILOGW(module, ...) (void)OHOS::HiviewDFX::HiLog::Warn(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
-#define TIME_HILOGI(module, ...) (void)OHOS::HiviewDFX::HiLog::Info(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
-#define TIME_HILOGD(module, ...) \
-    (void)OHOS::HiviewDFX::HiLog::Debug(TIME_MODULE_LABEL[module], R_FORMATED(__VA_ARGS__))
+#define TIME_HILOGF(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_FATAL, TIME_MODULE_LABEL[module].domain, \
+    TIME_MODULE_LABEL[module].tag, "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__)
+#define TIME_HILOGE(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_ERROR, TIME_MODULE_LABEL[module].domain, \
+    TIME_MODULE_LABEL[module].tag, "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__)
+#define TIME_HILOGW(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_WARN, TIME_MODULE_LABEL[module].domain, \
+    TIME_MODULE_LABEL[module].tag, "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__)
+#define TIME_HILOGI(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_INFO, TIME_MODULE_LABEL[module].domain, \
+    TIME_MODULE_LABEL[module].tag, "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__)
+#define TIME_HILOGD(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_DEBUG, TIME_MODULE_LABEL[module].domain, \
+    TIME_MODULE_LABEL[module].tag, "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__)
 
 #define CHECK_AND_RETURN_RET_LOG(module, cond, ret, ...)  \
     do {                                                  \
