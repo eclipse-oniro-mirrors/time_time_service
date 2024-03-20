@@ -76,9 +76,7 @@ void NtpUpdateTime::Init()
     autoTimeInfo_.status = autoTime;
     std::thread th = std::thread([this]() {
         pthread_setname_np(pthread_self(), "time_monitor_network");
-        if (this->MonitorNetwork() != NETMANAGER_SUCCESS) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "monitor network failed");
-        }
+        this->MonitorNetwork();
     });
     th.detach();
     auto callback = [this](uint64_t id) {
@@ -213,7 +211,7 @@ void NtpUpdateTime::SetSystemTime()
     }
     int64_t currentTime = NtpTrustedTime::GetInstance().CurrentTimeMillis();
     if (currentTime <= 0) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "current time is invalid: %{public}" PRIu64 "", currentTime);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "current time is invalid: %{public}" PRIu64 "", currentTime);
         isRequesting_ = false;
         return;
     }
@@ -270,17 +268,20 @@ void NtpUpdateTime::Stop()
 void NtpUpdateTime::RegisterSystemParameterListener()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "register system parameter modify lister");
-    if (SystemWatchParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER.c_str(), ChangeNtpServerCallback, nullptr)
-        != E_TIME_OK) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "register specific ntp server lister fail");
+    auto specificNtpResult = SystemWatchParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER.c_str(),
+                                                  ChangeNtpServerCallback, nullptr);
+    if (specificNtpResult != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "register specific ntp server lister fail: %{public}d", specificNtpResult);
     }
 
-    if (SystemWatchParameter(NTP_SERVER_SYSTEM_PARAMETER.c_str(), ChangeNtpServerCallback, nullptr) != E_TIME_OK) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "register ntp server lister fail");
+    auto netResult = SystemWatchParameter(NTP_SERVER_SYSTEM_PARAMETER.c_str(), ChangeNtpServerCallback, nullptr);
+    if (netResult != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "register ntp server lister fail: %{public}d", netResult);
     }
 
-    if (SystemWatchParameter(AUTO_TIME_SYSTEM_PARAMETER.c_str(), ChangeAutoTimeCallback, nullptr) != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "register auto sync switch lister fail");
+    auto switchResult = SystemWatchParameter(AUTO_TIME_SYSTEM_PARAMETER.c_str(), ChangeAutoTimeCallback, nullptr);
+    if (switchResult != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "register auto sync switch lister fail: %{public}d", switchResult);
     }
 }
 

@@ -63,7 +63,7 @@ napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value expor
     napi_status status =
         napi_define_properties(env, exports, sizeof(descriptors) / sizeof(napi_property_descriptor), descriptors);
     if (status != napi_ok) {
-        TIME_HILOGE(TIME_MODULE_JS_NAPI, "define manager properties failed");
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "define manager properties failed, status=%{public}d", status);
         return NapiUtils::GetUndefinedValue(env);
     }
     return exports;

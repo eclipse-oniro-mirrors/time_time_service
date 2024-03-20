@@ -339,9 +339,6 @@ int32_t TimeSystemAbility::StartTimer(uint64_t timerId, uint64_t triggerTime)
         }
     }
     auto ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
-    if (ret != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "TimerId Not found.");
-    }
     return ret;
 }
 
@@ -356,9 +353,6 @@ int32_t TimeSystemAbility::StopTimer(uint64_t timerId)
         }
     }
     auto ret = timerManagerHandler_->StopTimer(timerId);
-    if (ret != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "TimerId Not found.");
-    }
     return ret;
 }
 
@@ -373,9 +367,6 @@ int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId)
         }
     }
     auto ret = timerManagerHandler_->DestroyTimer(timerId);
-    if (ret != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "TimerId Not found.");
-    }
     return ret;
 }
 
@@ -682,7 +673,7 @@ int32_t TimeSystemAbility::SetTimeZone(const std::string &timeZoneId, APIVersion
 int32_t TimeSystemAbility::GetTimeZone(std::string &timeZoneId)
 {
     if (!TimeZoneInfo::GetInstance().GetTimezone(timeZoneId)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "get timezone failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get timezone failed");
         return E_TIME_DEAL_FAILED;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "Current timezone : %{public}s", timeZoneId.c_str());

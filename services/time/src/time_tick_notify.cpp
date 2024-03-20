@@ -79,8 +79,7 @@ void TimeTickNotify::Callback()
     RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
     timerId_ = timer_.Register(callback, nextTriggerTime_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify triggertime: %{public}" PRId64 "", nextTriggerTime_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick timer ID: %{public}d", timerId_);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime_);
 }
 
 void TimeTickNotify::PowerCallback()
@@ -89,8 +88,7 @@ void TimeTickNotify::PowerCallback()
     RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
     timerId_ = timer_.Register(callback, nextTriggerTime_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify triggertime: %{public}" PRId64 "", nextTriggerTime_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick timer ID: %{public}d", timerId_);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime_);
 }
 void TimeTickNotify::RefreshNextTriggerTime()
 {
