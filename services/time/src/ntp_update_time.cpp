@@ -74,11 +74,6 @@ void NtpUpdateTime::Init()
     autoTimeInfo_.ntpServer = ntpServer;
     autoTimeInfo_.ntpServerSpec = ntpServerSpec;
     autoTimeInfo_.status = autoTime;
-    std::thread th = std::thread([this]() {
-        pthread_setname_np(pthread_self(), "time_monitor_network");
-        this->MonitorNetwork();
-    });
-    th.detach();
     auto callback = [this](uint64_t id) {
         this->RefreshNetworkTimeByTimer(id);
     };
