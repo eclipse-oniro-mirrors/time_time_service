@@ -163,6 +163,7 @@ void TimeSystemAbility::OnStart()
     NtpUpdateTime::GetInstance().Init();
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
+    AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
     InitDumpCmd();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
     if (Init() != ERR_OK) {
@@ -179,8 +180,11 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         RegisterSubscriber();
     } else if (systemAbilityId == DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID) {
         RegisterRSSDeathCallback();
+    } else if (systemAbilityId == COMM_NET_CONN_MANAGER_SYS_ABILITY_ID) {
+        NtpUpdateTime::GetInstance().MonitorNetwork();
     } else {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not COMMON_EVENT_SERVICE_ID");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not valid, id is %{public}d",
+            systemAbilityId);
         return;
     }
 }
