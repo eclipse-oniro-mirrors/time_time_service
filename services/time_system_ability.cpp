@@ -44,8 +44,12 @@
 #include "timer_notify_callback.h"
 #include "timer_manager_interface.h"
 #include "timer_proxy.h"
+#include "common_event_manager.h"
+#include "common_event_support.h"
+#include "power_subscriber.h"
 
 using namespace std::chrono;
+using namespace OHOS::EventFwk;
 
 namespace OHOS {
 namespace MiscServices {
@@ -198,6 +202,14 @@ void TimeSystemAbility::RegisterSubscriber()
         auto callback = [this]() { TimeServiceNotify::GetInstance().RepublishEvents(); };
         serviceHandler_->PostTask(callback, "time_service_subscriber_retry", INIT_INTERVAL);
         return;
+    }
+    MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_SCREEN_ON);
+    CommonEventSubscribeInfo subscriberInfo(matchingSkills);
+    std::shared_ptr<PowerSubscriber> subscriberPtr = std::make_shared<PowerSubscriber>(subscriberInfo);
+    bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
+    if (!subscribeResult) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent failed");
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber success.");
 }
