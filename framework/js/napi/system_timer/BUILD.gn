@@ -34,7 +34,6 @@ config("native_module_config") {
 ohos_shared_library("systemtimer") {
   include_dirs = [
     "../common/include",
-    "../../../../../inner_api/include",
     "include",
   ]
 
