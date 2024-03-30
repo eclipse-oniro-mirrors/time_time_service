@@ -28,6 +28,7 @@
 #include "batch.h"
 #include "timer_handler.h"
 #include "want_agent_helper.h"
+#include "time_common.h"
 
 #ifdef POWER_MANAGER_ENABLE
 #include "completed_callback.h"
@@ -36,6 +37,8 @@
 
 namespace OHOS {
 namespace MiscServices {
+constexpr const char *NEED_RECOVER_ON_REBOOT = "not_support";
+
 class TimerManager : public ITimerManager {
 public:
     static std::shared_ptr<TimerManager> Create();
@@ -43,7 +46,9 @@ public:
                         std::function<void (const uint64_t)> callback,
                         std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                         int uid,
-                        uint64_t &timerId) override;
+                        uint64_t &timerId,
+                        DatabaseType type) override;
+    void ReCreateTimer(uint64_t timerId, std::shared_ptr<TimerEntry> timerInfo);
     int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;

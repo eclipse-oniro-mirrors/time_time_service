@@ -28,6 +28,8 @@
 #include "time_service_notify.h"
 #include "time_service_stub.h"
 #include "timer_manager.h"
+#include "shutdown/sync_shutdown_callback_stub.h"
+#include "shutdown/shutdown_client.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -37,6 +39,11 @@ class TimeSystemAbility : public SystemAbility, public TimeServiceStub {
     DECLARE_SYSTEM_ABILITY(TimeSystemAbility);
 
 public:
+    class TimePowerStateListener : public OHOS::PowerMgr::SyncShutdownCallbackStub {
+    public:
+        ~TimePowerStateListener() override = default;
+        void OnSyncShutdown() override;
+    };
     DISALLOW_COPY_AND_MOVE(TimeSystemAbility);
     TimeSystemAbility(int32_t systemAbilityId, bool runOnCreate);
     TimeSystemAbility();
@@ -55,7 +62,6 @@ public:
     int32_t GetMonotonicTimeNs(int64_t &time) override;
     int32_t GetThreadTimeMs(int64_t &time) override;
     int32_t GetThreadTimeNs(int64_t &time) override;
-
     int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
         uint64_t &timerId) override;
     int32_t CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> callback, uint64_t &timerId);
@@ -89,6 +95,7 @@ private:
         ~RSSSaDeathRecipient() override = default;
         void OnRemoteDied(const wptr<IRemoteObject> &object) override;
     };
+
     int32_t Init();
     void InitServiceHandler();
     void InitTimerHandler();
@@ -98,6 +105,7 @@ private:
     bool CheckRtc(const std::string &rtcPath, uint64_t rtcId);
     int GetWallClockRtcId();
     void RegisterRSSDeathCallback();
+    void RegisterPowerStateListener();
     bool IsValidTime(int64_t time);
 
     ServiceRunningState state_;

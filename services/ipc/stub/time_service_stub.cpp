@@ -271,7 +271,7 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
     timerOptions->repeat = repeat;
     timerOptions->interval = interval;
     timerOptions->wantAgent = wantAgent;
-    uint64_t timerId = 0;
+    uint64_t timerId = data.ReadUint64();
     auto errCode = CreateTimer(timerOptions, obj, timerId);
     if (errCode != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Create timer failed");

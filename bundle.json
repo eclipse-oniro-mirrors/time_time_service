@@ -35,6 +35,7 @@
         "netmanager_base",
         "ability_base",
         "ability_runtime",
+        "relational_store",
         "hilog",
         "safwk",
         "c_utils",

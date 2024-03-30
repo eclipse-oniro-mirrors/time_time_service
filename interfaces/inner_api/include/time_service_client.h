@@ -22,6 +22,9 @@
 #include "itimer_info.h"
 #include "refbase.h"
 #include "time_service_interface.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
+#include "system_ability_status_change_stub.h"
 #include "visibility.h"
 
 namespace OHOS {
@@ -382,8 +385,23 @@ private:
         DISALLOW_COPY_AND_MOVE(TimeSaDeathRecipient);
     };
 
+    class TimeServiceListener : public OHOS::SystemAbilityStatusChangeStub {
+        public:
+            TimeServiceListener();
+            ~TimeServiceListener() = default;
+            virtual void OnAddSystemAbility(int32_t saId, const std::string &deviceId) override;
+            virtual void OnRemoveSystemAbility(int32_t asId, const std::string &deviceId) override;
+    };
+
+    struct RecoverTimerInfo {
+        std::shared_ptr<ITimerInfo> timerInfo;
+        uint8_t state;
+        uint64_t triggerTime;
+    };
+
     TimeServiceClient();
     ~TimeServiceClient();
+    bool SubscribeSA(sptr<ISystemAbilityManager> systemAbilityManager);
     bool ConnectService();
     void ClearProxy();
     sptr<ITimeService> GetProxy();
@@ -391,6 +409,8 @@ private:
 
     static std::mutex instanceLock_;
     static sptr<TimeServiceClient> instance_;
+    static std::map<uint64_t, std::shared_ptr<RecoverTimerInfo>> recoverTimerInfoMap_;
+    static std::mutex recoverTimerInfoLock_;
     std::mutex proxyLock_;
     std::mutex deathLock_;
     sptr<ITimeService> timeServiceProxy_;

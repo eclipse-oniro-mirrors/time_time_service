@@ -27,7 +27,49 @@
 namespace OHOS {
 namespace MiscServices {
 std::mutex TimeServiceClient::instanceLock_;
+std::mutex TimeServiceClient::recoverTimerInfoLock_;
 sptr<TimeServiceClient> TimeServiceClient::instance_;
+std::map<uint64_t, std::shared_ptr<TimeServiceClient::RecoverTimerInfo>> TimeServiceClient::recoverTimerInfoMap_;
+
+TimeServiceClient::TimeServiceListener::TimeServiceListener ()
+{
+}
+
+void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
+    int32_t saId, const std::string &deviceId)
+{
+    TIME_HILOGI(TIME_MODULE_CLIENT, "OnAddSystemAbility");
+    if (saId == TIME_SERVICE_ID) {
+        auto proxy = TimeServiceClient::GetInstance()->GetProxy();
+        if (proxy == nullptr) {
+            return;
+        }
+        auto timerCallbackInfoObject = TimerCallback::GetInstance()->AsObject();
+        if (!timerCallbackInfoObject) {
+            TIME_HILOGE(TIME_MODULE_CLIENT, "New TimerCallback failed");
+            return;
+        }
+        std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
+        auto iter = recoverTimerInfoMap_.begin();
+        for (; iter != recoverTimerInfoMap_.end(); iter++) {
+            auto timerId = iter->first;
+            proxy->CreateTimer(iter->second->timerInfo, timerCallbackInfoObject, timerId);
+            if (iter->second->state == 1) {
+                proxy->StartTimer(timerId, iter->second->triggerTime);
+            }
+        }
+        return;
+    } else {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Id is not TIME_SERVICE_ID");
+        return;
+    }
+}
+
+void TimeServiceClient::TimeServiceListener::OnRemoveSystemAbility(
+    int32_t saId, const std::string &deviceId)
+{
+}
+
 TimeServiceClient::TimeServiceClient() = default;
 
 TimeServiceClient::~TimeServiceClient()
@@ -50,6 +92,21 @@ sptr<TimeServiceClient> TimeServiceClient::GetInstance()
         }
     }
     return instance_;
+}
+
+bool TimeServiceClient::SubscribeSA(sptr<ISystemAbilityManager> systemAbilityManager)
+{
+    auto timeServiceListener = new (std::nothrow) TimeServiceListener();
+    if (timeServiceListener == nullptr) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Get timeServiceListener failed.");
+        return false;
+    }
+    auto ret = systemAbilityManager->SubscribeSystemAbility(TIME_SERVICE_ID, timeServiceListener);
+    if (ret != 0) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "SubscribeSystemAbility failed: %{public}d", ret);
+        return false;
+    }
+    return true;
 }
 
 bool TimeServiceClient::ConnectService()
@@ -83,6 +140,10 @@ bool TimeServiceClient::ConnectService()
         return false;
     }
     SetProxy(proxy);
+
+    if (!SubscribeSA(systemAbilityManager)) {
+        return false;
+    }
     return true;
 }
 
@@ -203,7 +264,23 @@ int32_t TimeServiceClient::CreateTimerV9(std::shared_ptr<ITimerInfo> timerOption
         TIME_HILOGE(TIME_MODULE_CLIENT, "create timer failed, errCode=%{public}d", errCode);
         return errCode;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "CreateTimer id: %{public}" PRId64 "", timerId);
+
+    if (timerOptions->wantAgent == nullptr) {
+        std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
+        auto info = recoverTimerInfoMap_.find(timerId);
+        if (info != recoverTimerInfoMap_.end()) {
+            TIME_HILOGE(TIME_MODULE_CLIENT, "recover timer info already insert.");
+            return E_TIME_DEAL_FAILED;
+        } else {
+            auto recoverTimerInfo = std::make_shared<RecoverTimerInfo>();
+            recoverTimerInfo->timerInfo = timerOptions;
+            recoverTimerInfo->state = 0;
+            recoverTimerInfo->triggerTime = 0;
+            recoverTimerInfoMap_[timerId] = recoverTimerInfo;
+        }
+    }
+
+    TIME_HILOGD(TIME_MODULE_CLIENT, "CreateTimer id: %{public}" PRId64 "", timerId);
     auto ret = TimerCallback::GetInstance()->InsertTimerCallbackInfo(timerId, timerOptions);
     if (!ret) {
         return E_TIME_DEAL_FAILED;
@@ -229,7 +306,18 @@ int32_t TimeServiceClient::StartTimerV9(uint64_t timerId, uint64_t triggerTime)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    return proxy->StartTimer(timerId, triggerTime);
+    auto startRet = proxy->StartTimer(timerId, triggerTime);
+    if (startRet != 0) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "start timer failed: %{public}d", startRet);
+        return startRet;
+    }
+    std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
+    auto info = recoverTimerInfoMap_.find(timerId);
+    if (info != recoverTimerInfoMap_.end()) {
+        info->second->state = 1;
+        info->second->triggerTime = triggerTime;
+    }
+    return startRet;
 }
 
 bool TimeServiceClient::StopTimer(uint64_t timerId)
@@ -250,7 +338,17 @@ int32_t TimeServiceClient::StopTimerV9(uint64_t timerId)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    return proxy->StopTimer(timerId);
+    auto stopRet = proxy->StopTimer(timerId);
+    if (stopRet != 0) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "stop timer failed: %{public}d", stopRet);
+        return stopRet;
+    }
+    std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
+    auto info = recoverTimerInfoMap_.find(timerId);
+    if (info != recoverTimerInfoMap_.end()) {
+        info->second->state = 0;
+    }
+    return stopRet;
 }
 
 bool TimeServiceClient::DestroyTimer(uint64_t timerId)
@@ -272,9 +370,15 @@ int32_t TimeServiceClient::DestroyTimerV9(uint64_t timerId)
         return E_TIME_NULLPTR;
     }
     auto errCode = proxy->DestroyTimer(timerId);
-    if (errCode == E_TIME_OK) {
-        TimerCallback::GetInstance()->RemoveTimerCallbackInfo(timerId);
-        return E_TIME_OK;
+    if (errCode != 0) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "destroy timer failed: %{public}d", errCode);
+        return errCode;
+    }
+    TimerCallback::GetInstance()->RemoveTimerCallbackInfo(timerId);
+    std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
+    auto info = recoverTimerInfoMap_.find(timerId);
+    if (info != recoverTimerInfoMap_.end()) {
+        recoverTimerInfoMap_.erase(timerId);
     }
     return errCode;
 }
