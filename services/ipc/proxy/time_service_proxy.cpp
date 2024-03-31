@@ -87,6 +87,10 @@ int32_t TimeServiceProxy::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOp
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write timerCallback");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
+    if (!data.WriteUint64(timerId)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write timerId");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
     auto ret =
         Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::CREATE_TIMER), data, reply, option);
     if (ret == E_TIME_OK) {

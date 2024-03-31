@@ -55,7 +55,7 @@ public:
     virtual int32_t CreateTimer(TimerPara &paras,
                                 std::function<void (const uint64_t)> callback,
                                 std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-                                int uid, uint64_t &timerId) = 0;
+                                int uid, uint64_t &timerId, DatabaseType type) = 0;
 
     virtual int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) = 0;
     virtual int32_t StopTimer(uint64_t timerId) = 0;

@@ -25,6 +25,8 @@
 #include <vector>
 
 #include "time_common.h"
+
+#define private public
 #include "time_service_client.h"
 
 namespace OHOS {

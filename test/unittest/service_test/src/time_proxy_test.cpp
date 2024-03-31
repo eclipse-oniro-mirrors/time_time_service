@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include "timer_manager.h"
 #include "timer_proxy.h"
+#include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -81,7 +82,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap001, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     uint64_t timerId = 1000;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId);
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
 
@@ -122,7 +123,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap002, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     uint64_t timerId = 1000;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId);
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
 
@@ -158,7 +159,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     uint64_t timerId = 1000;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId);
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
 
@@ -225,7 +226,7 @@ HWTEST_F(TimeProxyTest, ProxyTimer002, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     uint64_t timerId = 1000;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId);
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
 

@@ -23,6 +23,11 @@
 #include <vector>
 
 #include "system_ability_definition.h"
+#include "rdb_errno.h"
+#include "rdb_helper.h"
+#include "rdb_open_callback.h"
+#include "rdb_predicates.h"
+#include "rdb_store.h"
 #ifdef DEVICE_STANDBY_ENABLE
 #include "allow_type.h"
 #include "standby_service_client.h"
@@ -32,6 +37,7 @@
 #include "time_permission.h"
 #include "timer_proxy.h"
 #include "time_sysevent.h"
+#include "time_database.h"
 #ifdef POWER_MANAGER_ENABLE
 #include "time_system_ability.h"
 #endif
@@ -93,11 +99,30 @@ TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
     alarmThread_.reset(new std::thread(&TimerManager::TimerLooper, this));
 }
 
+OHOS::NativeRdb::ValuesBucket GetInsertValues(uint64_t &timerId, TimerPara &paras,
+                                              int uid, std::string bundleName,
+                                              std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent)
+{
+    OHOS::NativeRdb::ValuesBucket insertValues;
+    insertValues.PutLong("timerId", timerId);
+    insertValues.PutInt("type", paras.timerType);
+    insertValues.PutInt("flag", paras.flag);
+    insertValues.PutLong("windowLength", paras.windowLength);
+    insertValues.PutLong("interval", paras.interval);
+    insertValues.PutInt("uid", uid);
+    insertValues.PutString("bundleName", bundleName);
+    insertValues.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues.PutInt("state", 0);
+    insertValues.PutLong("triggerTime", 0);
+    return insertValues;
+}
+
 int32_t TimerManager::CreateTimer(TimerPara &paras,
                                   std::function<void (const uint64_t)> callback,
                                   std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                                   int uid,
-                                  uint64_t &timerId)
+                                  uint64_t &timerId,
+                                  DatabaseType type)
 {
     while (timerId == 0) {
         timerId = random_();
@@ -120,7 +145,23 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     });
     std::lock_guard<std::mutex> lock(entryMapMutex_);
     timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
+
+    if (type == NOT_STORE) {
+        return E_TIME_OK;
+    } else if (bundleName == NEED_RECOVER_ON_REBOOT) {
+        OHOS::NativeRdb::ValuesBucket insertValues = GetInsertValues(timerId, paras, uid, bundleName, wantAgent);
+        TimeDatabase::GetInstance().Insert(std::string("hold_on_reboot"), insertValues);
+    } else {
+        OHOS::NativeRdb::ValuesBucket insertValues = GetInsertValues(timerId, paras, uid, bundleName, wantAgent);
+        TimeDatabase::GetInstance().Insert(std::string("drop_on_reboot"), insertValues);
+    }
     return E_TIME_OK;
+}
+
+void TimerManager::ReCreateTimer(uint64_t timerId, std::shared_ptr<TimerEntry> timerInfo)
+{
+    std::lock_guard<std::mutex> lock(entryMapMutex_);
+    timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
 }
 
 int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
@@ -152,6 +193,27 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
                timerInfo->wantAgent,
                timerInfo->uid,
                timerInfo->bundleName);
+
+    if (timerInfo->bundleName == NEED_RECOVER_ON_REBOOT) {
+        OHOS::NativeRdb::ValuesBucket values;
+        values.PutInt("state", 1);
+        values.PutLong("triggerTime", static_cast<int64_t>(triggerTime));
+        OHOS::NativeRdb::RdbPredicates rdbPredicates("hold_on_reboot");
+        rdbPredicates.EqualTo("state", 0)
+            ->And()
+            ->EqualTo("timerId", static_cast<int64_t>(timerId));
+        TimeDatabase::GetInstance().Update(values, rdbPredicates);
+    } else {
+        OHOS::NativeRdb::ValuesBucket values;
+        values.PutInt("state", 1);
+        values.PutLong("triggerTime", static_cast<int64_t>(triggerTime));
+        OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
+        rdbPredicates.EqualTo("state", 0)
+            ->And()
+            ->EqualTo("timerId", static_cast<int64_t>(timerId));
+        TimeDatabase::GetInstance().Update(values, rdbPredicates);
+    }
+    
     return E_TIME_OK;
 }
 
@@ -181,8 +243,35 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         TimerProxy::GetInstance().RemoveProxy(timerNumber, uid);
         TimerProxy::GetInstance().EraseTimerFromProxyUidMap(timerNumber, uid);
     }
-    if (needDestroy) {
-        timerEntryMap_.erase(it);
+    std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
+    if (bundleName == NEED_RECOVER_ON_REBOOT) {
+        OHOS::NativeRdb::ValuesBucket values;
+        values.PutInt("state", 0);
+        OHOS::NativeRdb::RdbPredicates rdbPredicates("hold_on_reboot");
+        rdbPredicates.EqualTo("state", 1)
+            ->And()
+            ->EqualTo("timerId", static_cast<int64_t>(timerNumber));
+        TimeDatabase::GetInstance().Update(values, rdbPredicates);
+        if (needDestroy) {
+            timerEntryMap_.erase(it);
+            OHOS::NativeRdb::RdbPredicates rdbPredicates("hold_on_reboot");
+            rdbPredicates.EqualTo("timerId", static_cast<int64_t>(timerNumber));
+            TimeDatabase::GetInstance().Delete(rdbPredicates);
+        }
+    } else {
+        OHOS::NativeRdb::ValuesBucket values;
+        values.PutInt("state", 0);
+        OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
+        rdbPredicates.EqualTo("state", 1)
+            ->And()
+            ->EqualTo("timerId", static_cast<int64_t>(timerNumber));
+        TimeDatabase::GetInstance().Update(values, rdbPredicates);
+        if (needDestroy) {
+            timerEntryMap_.erase(it);
+            OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
+            rdbPredicates.EqualTo("timerId", static_cast<int64_t>(timerNumber));
+            TimeDatabase::GetInstance().Delete(rdbPredicates);
+        }
     }
     return E_TIME_OK;
 }

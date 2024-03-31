@@ -53,6 +53,11 @@ enum TimeError {
     E_TIME_NO_PERMISSION,
     E_TIME_NOT_SYSTEM_APP,
 };
+
+enum DatabaseType {
+    NOT_STORE = 0,
+    STORE,
+};
 } // namespace MiscServices
 } // namespace OHOS
 #endif // SERVICES_INCLUDE_TIME_COMMON_H

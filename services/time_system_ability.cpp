@@ -44,6 +44,7 @@
 #include "timer_notify_callback.h"
 #include "timer_manager_interface.h"
 #include "timer_proxy.h"
+#include "time_database.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
 #include "power_subscriber.h"
@@ -162,11 +163,13 @@ void TimeSystemAbility::OnStart()
     }
     InitServiceHandler();
     InitTimerHandler();
+    TimeDatabase::GetInstance().Recover(timerManagerHandler_);
     TimeTickNotify::GetInstance().Init();
     TimeZoneInfo::GetInstance().Init();
     NtpUpdateTime::GetInstance().Init();
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
+    AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
     InitDumpCmd();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
@@ -184,6 +187,8 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         RegisterSubscriber();
     } else if (systemAbilityId == DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID) {
         RegisterRSSDeathCallback();
+    } else if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
+        RegisterPowerStateListener();
     } else if (systemAbilityId == COMM_NET_CONN_MANAGER_SYS_ABILITY_ID) {
         NtpUpdateTime::GetInstance().MonitorNetwork();
     } else {
@@ -326,8 +331,12 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
         TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer.");
         paras.flag = 0;
     }
+    auto type = DatabaseType::NOT_STORE;
+    if (timerOptions->wantAgent != nullptr) {
+        type = DatabaseType::STORE;
+    }
     return timerManagerHandler_->CreateTimer(paras, callbackFunc, timerOptions->wantAgent,
-        IPCSkeleton::GetCallingUid(), timerId);
+                                             IPCSkeleton::GetCallingUid(), timerId, type);
 }
 
 int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> callback,
@@ -341,7 +350,7 @@ int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(cons
             return E_TIME_NULLPTR;
         }
     }
-    return timerManagerHandler_->CreateTimer(paras, std::move(callback), nullptr, 0, timerId);
+    return timerManagerHandler_->CreateTimer(paras, std::move(callback), nullptr, 0, timerId, NOT_STORE);
 }
 
 int32_t TimeSystemAbility::StartTimer(uint64_t timerId, uint64_t triggerTime)
@@ -857,6 +866,26 @@ void TimeSystemAbility::RegisterRSSDeathCallback()
     }
 
     systemAbility->AddDeathRecipient(deathRecipient_);
+}
+
+void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
+{
+    // Clears `drop_on_reboot` table.
+    TIME_HILOGI(TIME_MODULE_SERVICE, "OnSyncShutdown");
+    TimeDatabase::GetInstance().ClearDropOnReboot();
+}
+
+void TimeSystemAbility::RegisterPowerStateListener()
+{
+    TIME_HILOGI(TIME_MODULE_CLIENT, "RegisterPowerStateListener");
+    auto& powerManagerClient = OHOS::PowerMgr::ShutdownClient::GetInstance();
+    sptr<OHOS::PowerMgr::ISyncShutdownCallback> syncShutdownCallback = new TimePowerStateListener();
+    if (!syncShutdownCallback) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get TimePowerStateListener failed.");
+        return;
+    }
+    powerManagerClient.RegisterShutdownCallback(syncShutdownCallback, PowerMgr::ShutdownPriority::HIGH);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "RegisterPowerStateListener end");
 }
 } // namespace MiscServices
 } // namespace OHOS
