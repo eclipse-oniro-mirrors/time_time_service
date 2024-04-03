@@ -59,6 +59,8 @@ TimerInfo::TimerInfo(uint64_t _id, int _type,
       repeatInterval {_interval},
       bundleName {_bundleName}
 {
+    originWhenElapsed = _whenElapsed;
+    originMaxWhenElapsed = _maxWhen;
 }
 
 bool TimerInfo::UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed, std::chrono::nanoseconds offset)
@@ -79,6 +81,46 @@ bool TimerInfo::UpdateWhenElapsed(std::chrono::steady_clock::time_point policyEl
         currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(policyElapsed.time_since_epoch());
     }
     when = currentTime + offsetMill;
+    return (oldWhenElapsed != whenElapsed) || (oldMaxWhenElapsed != maxWhenElapsed);
+}
+
+bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now, const uint32_t interval)
+{
+    auto oldWhenElapsed = whenElapsed;
+    auto oldMaxWhenElapsed = maxWhenElapsed;
+    std::chrono::duration<int, std::ratio<1, HALF_SECEND>> halfIntervalSec(interval);
+    std::chrono::duration<int, std::ratio<1, 1>> intervalSec(interval);
+    auto oldTimeSec = std::chrono::duration_cast<std::chrono::seconds>(whenElapsed.time_since_epoch());
+    auto timeSec = ((oldTimeSec + halfIntervalSec) / intervalSec) * intervalSec;
+    whenElapsed = std::chrono::steady_clock::time_point(timeSec);
+    if (windowLength == std::chrono::milliseconds::zero()) {
+        maxWhenElapsed = whenElapsed;
+    } else {
+        auto oldMaxTimeSec = std::chrono::duration_cast<std::chrono::seconds>(maxWhenElapsed.time_since_epoch());
+        auto maxTimeSec = ((oldMaxTimeSec + halfIntervalSec) / intervalSec) * intervalSec;
+        maxWhenElapsed = std::chrono::steady_clock::time_point(maxTimeSec);
+    }
+    if (whenElapsed < now) {
+        whenElapsed += std::chrono::duration_cast<std::chrono::milliseconds>(intervalSec);
+    }
+    if (maxWhenElapsed < now) {
+        maxWhenElapsed += std::chrono::duration_cast<std::chrono::milliseconds>(intervalSec);
+    }
+    auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
+        whenElapsed.time_since_epoch() - oldWhenElapsed.time_since_epoch());
+    when = when + delta;
+    return (oldWhenElapsed != whenElapsed) || (oldMaxWhenElapsed != maxWhenElapsed);
+}
+
+bool TimerInfo::RestoreAdjustTimer()
+{
+    auto oldWhenElapsed = whenElapsed;
+    auto oldMaxWhenElapsed = maxWhenElapsed;
+    whenElapsed = originWhenElapsed;
+    maxWhenElapsed = originMaxWhenElapsed;
+    auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
+        whenElapsed.time_since_epoch() - oldWhenElapsed.time_since_epoch());
+    when = when + delta;
     return (oldWhenElapsed != whenElapsed) || (oldMaxWhenElapsed != maxWhenElapsed);
 }
 } // MiscServices

@@ -367,6 +367,75 @@ bool TimeServiceProxy::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
     return true;
 }
 
+int32_t TimeServiceProxy::AdjustTimer(bool isAdjust, uint32_t interval)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    if (!data.WriteBool(isAdjust)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write adjust state");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    if (!data.WriteUint32(interval)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write interval");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    int32_t result =
+        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::ADJUST_TIMER), data, reply, option);
+    if (result != ERR_NONE) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Adjust Timer failed, error code is: %{public}d", result);
+        return result;
+    }
+    return result;
+}
+
+int32_t TimeServiceProxy::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+
+    if (nameArr.empty()) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Nothing need cache");
+        return E_TIME_NOT_FOUND;
+    }
+
+    uint32_t size = static_cast<uint32_t>(nameArr.size());
+    if (!data.WriteUint32(size)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write size");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+
+    for (auto name : nameArr) {
+        if (!data.WriteString(name)) {
+            TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write name");
+            return E_TIME_WRITE_PARCEL_ERROR;
+        }
+    }
+
+    if (!data.WriteBool(isExemption)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write is exemption");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+
+    int32_t result =
+        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIMER_EXEMPTION),
+            data, reply, option);
+    if (result != ERR_NONE) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Set Timer Exemption failed, error code is: %{public}d", result);
+        return result;
+    }
+    return result;
+}
+
 bool TimeServiceProxy::ResetAllProxy()
 {
     MessageParcel data, reply;

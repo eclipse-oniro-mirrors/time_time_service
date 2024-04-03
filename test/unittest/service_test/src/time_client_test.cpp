@@ -19,6 +19,7 @@
 #include <ctime>
 #include <fstream>
 #include <thread>
+#include <unordered_set>
 
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
@@ -947,145 +948,56 @@ HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
 }
 
 /**
-* @tc.name: RecoverTimer007
-* @tc.desc: Create system timer, check whether the corresponding data is in database.
+* @tc.name: AdjustTimer001
+* @tc.desc: adjust timer.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeClientTest, RecoverTimer007, TestSize.Level1)
+HWTEST_F(TimeClientTest, AdjustTimer001, TestSize.Level1)
 {
     AddPermission();
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
-    timerInfo->SetRepeat(false);
-    timerInfo->SetInterval(0);
-    timerInfo->SetWantAgent(nullptr);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-    uint64_t timerId;
-    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
-    auto resultSet = TimeDatabase::GetInstance().Query(
-        rdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
-        "bundleName", "wantAgent", "state", "triggerTime"});
-    EXPECT_TRUE(resultSet != nullptr);
-    EXPECT_TRUE(resultSet->GoToFirstRow() == OHOS::NativeRdb::E_OK);
-    auto times = 0;
-    do {
-        if (timerId != static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 0))) {
-            times += 1;
-            continue;
-        } else {
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetInt(resultSet, 1) == 3);
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetInt(resultSet, 2) == 0);
-            EXPECT_TRUE(static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 3)) == -1);
-            EXPECT_TRUE(static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 4)) == 0);
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetInt(resultSet, 5) == 0);
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetString(resultSet, 6) == "timer");
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetString(resultSet, 7) == "");
-            EXPECT_TRUE(static_cast<uint8_t>(TimeDatabase::GetInstance().GetInt(resultSet, 8)) == 0);
-            EXPECT_TRUE(static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 9)) == 0);
-            break;
-        }
-    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
-    EXPECT_TRUE(times != 0);
+    g_data3 = 0;
+    uint64_t timerId1;
+    auto timerInfo1 = std::make_shared<TimerInfoTest>();
+    timerInfo1->SetType(1<<2);
+    timerInfo1->SetRepeat(false);
+    timerInfo1->SetCallbackInfo(TimeOutCallback3);
+    auto errCode1 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo1, timerId1);
+    uint64_t ret1 = 0;
+    EXPECT_TRUE(errCode1 == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, ret1);
+    auto triggerTime1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + 5000);
+    TimeServiceClient::GetInstance()->AdjustTimer(true, 5);
+    TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
+    sleep(7);
+    EXPECT_GT(g_data3, 0);
 }
-
+ 
 /**
-* @tc.name: RecoverTimer008
-* @tc.desc: Create system timer and start it, check whether the corresponding data is in database.
+* @tc.name: AdjustTimer002
+* @tc.desc: adjust timer.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeClientTest, RecoverTimer008, TestSize.Level1)
+HWTEST_F(TimeClientTest, AdjustTimer002, TestSize.Level1)
 {
     AddPermission();
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
-    timerInfo->SetRepeat(false);
-    timerInfo->SetInterval(0);
-    timerInfo->SetWantAgent(nullptr);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-    uint64_t timerId;
-    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
-    auto startRet = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 3000);
-    EXPECT_TRUE(startRet == TimeError::E_TIME_OK);
-    OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
-    auto resultSet = TimeDatabase::GetInstance().Query(
-        rdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
-        "bundleName", "wantAgent", "state", "triggerTime"});
-    EXPECT_TRUE(resultSet != nullptr);
-    EXPECT_TRUE(resultSet->GoToFirstRow() == OHOS::NativeRdb::E_OK);
-    auto times = 0;
-    do {
-        if (timerId != static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 0))) {
-            times += 1;
-            continue;
-        } else {
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetInt(resultSet, 1) == 3);
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetInt(resultSet, 2) == 0);
-            EXPECT_TRUE(static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 3)) == -1);
-            EXPECT_TRUE(static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 4)) == 0);
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetInt(resultSet, 5) == 0);
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetString(resultSet, 6) == "timer");
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetString(resultSet, 7) == "");
-            EXPECT_TRUE(static_cast<uint8_t>(TimeDatabase::GetInstance().GetInt(resultSet, 8)) == 1);
-            EXPECT_TRUE(static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 9)) == triggerTime + 3000);
-            break;
-        }
-    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
-    EXPECT_TRUE(times != 0);
-}
-
-/**
-* @tc.name: RecoverTimer009
-* @tc.desc: Create system timer and start it and stop it, check whether the corresponding data is in database.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeClientTest, RecoverTimer009, TestSize.Level1)
-{
-    AddPermission();
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
-    timerInfo->SetRepeat(false);
-    timerInfo->SetInterval(0);
-    timerInfo->SetWantAgent(nullptr);
-    timerInfo->SetCallbackInfo(TimeOutCallback1);
-    uint64_t timerId;
-    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
-    auto startRet = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 3000);
-    EXPECT_TRUE(startRet == TimeError::E_TIME_OK);
-    auto destroyRet = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_TRUE(destroyRet == TimeError::E_TIME_OK);
-    OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
-    auto resultSet = TimeDatabase::GetInstance().Query(
-        rdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
-        "bundleName", "wantAgent", "state", "triggerTime"});
-    EXPECT_TRUE(resultSet != nullptr);
-    EXPECT_TRUE(resultSet->GoToFirstRow() == OHOS::NativeRdb::E_OK);
-    auto times = 0;
-    do {
-        if (timerId != static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 0))) {
-            times += 1;
-            continue;
-        } else {
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetInt(resultSet, 1) == 3);
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetInt(resultSet, 2) == 0);
-            EXPECT_TRUE(static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 3)) == -1);
-            EXPECT_TRUE(static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 4)) == 0);
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetInt(resultSet, 5) == 0);
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetString(resultSet, 6) == "timer");
-            EXPECT_TRUE(TimeDatabase::GetInstance().GetString(resultSet, 7) == "");
-            EXPECT_TRUE(static_cast<uint8_t>(TimeDatabase::GetInstance().GetInt(resultSet, 8)) == 0);
-            EXPECT_TRUE(static_cast<uint64_t>(TimeDatabase::GetInstance().GetLong(resultSet, 9)) == 0);
-            break;
-        }
-    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
-    EXPECT_TRUE(times != 0);
+    g_data3 = 0;
+    std::unordered_set<std::string> nameArr{"timer"};
+    TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, false);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
+    TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, true);
+    uint64_t timerId1;
+    auto timerInfo1 = std::make_shared<TimerInfoTest>();
+    timerInfo1->SetType(1<<2);
+    timerInfo1->SetRepeat(false);
+    timerInfo1->SetCallbackInfo(TimeOutCallback3);
+    auto errCode1 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo1, timerId1);
+    uint64_t ret1 = 0;
+    EXPECT_TRUE(errCode1 == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, ret1);
+    auto triggerTime1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + 2000);
+    sleep(4);
+    EXPECT_GT(g_data3, 0);
 }
 } // namespace

@@ -15,6 +15,7 @@
 
 #include <string>
 #include <cinttypes>
+#include <algorithm>
 
 #include "timer_proxy.h"
 #include "time_hilog.h"
@@ -115,6 +116,87 @@ bool TimerProxy::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger,
         proxyMap_.erase(uid);
     }
     return true;
+}
+
+bool TimerProxy::AdjustTimer(bool isAdjust, uint32_t interval,
+    const std::chrono::steady_clock::time_point &now,
+    std::function<void(AdjustTimerCallback adjustTimer)> updateTimerDeliveries)
+{
+    std::lock_guard<std::mutex> lockProxy(adjustMutex_);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "adjust timer state: %{public}d, interval: %{public}d", isAdjust, interval);
+    auto callback = [this, isAdjust, interval, now] (std::shared_ptr<TimerInfo> timer) {
+        if (proxyUids_.find(timer->uid) != proxyUids_.end()) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "already proxy uid %{public}d", timer->uid);
+            return false;
+        }
+        return isAdjust ? UpdateAdjustWhenElapsed(now, interval, timer) : RestoreAdjustWhenElapsed(timer);
+    };
+    updateTimerDeliveries(callback);
+    if (!isAdjust) {
+        adjustTimers_.clear();
+    }
+    return true;
+}
+
+bool TimerProxy::UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_point &now,
+    uint32_t interval, std::shared_ptr<TimerInfo> &timer)
+{
+    if (IsTimerExemption(timer)) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "adjust exemption timer bundleName: %{public}s",
+            timer->bundleName.c_str());
+        return false;
+    }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "adjust single time id: %{public}" PRId64 ", "
+        "uid: %{public}d, bundleName: %{public}s",
+        timer->id, timer->uid, timer->bundleName.c_str());
+    adjustTimers_.push_back(timer);
+    return timer->AdjustTimer(now, interval);
+}
+
+bool TimerProxy::RestoreAdjustWhenElapsed(std::shared_ptr<TimerInfo> &timer)
+{
+    auto it = std::find_if(adjustTimers_.begin(),
+                           adjustTimers_.end(),
+                           [&timer](const std::shared_ptr<TimerInfo> &compareTimer) {
+                               return compareTimer->id == timer->id;
+                           });
+    if (it == adjustTimers_.end()) {
+        return false;
+    }
+    return timer->RestoreAdjustTimer();
+}
+
+bool TimerProxy::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+{
+    std::lock_guard<std::mutex> lockProxy(adjustMutex_);
+    bool isChanged = false;
+    if (!isExemption) {
+        for (const auto &name : nameArr) {
+            adjustExemptionList_.erase(name);
+        }
+        return isChanged;
+    }
+    adjustExemptionList_.insert(nameArr.begin(), nameArr.end());
+
+    for (auto it = adjustTimers_.begin(); it != adjustTimers_.end(); it++) {
+        if (!IsTimerExemption(*it)) {
+            continue;
+        }
+        if ((*it)->RestoreAdjustTimer()) {
+            isChanged = true;
+            adjustTimers_.erase(it);
+        }
+    }
+    return isChanged;
+}
+
+bool TimerProxy::IsTimerExemption(std::shared_ptr<TimerInfo> timer)
+{
+    if (adjustExemptionList_.find(timer->bundleName) != adjustExemptionList_.end()
+        && timer->windowLength == milliseconds::zero()) {
+        return true;
+    }
+    return false;
 }
 
 void TimerProxy::ResetProxyMaps()
@@ -362,6 +444,21 @@ bool TimerProxy::ShowUidTimerMapInfo(int fd, const int64_t now)
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
+}
+
+void TimerProxy::ShowAdjustTimerInfo(int fd)
+{
+    std::lock_guard<std::mutex> lockProxy(adjustMutex_);
+    dprintf(fd, "show adjust timer");
+    for (auto timer : adjustTimers_) {
+        dprintf(fd, " * timer id            = %lu\n", timer->id);
+        dprintf(fd, " * timer uid           = %d\n\n", timer->uid);
+        dprintf(fd, " * timer bundleName           = %s\n\n", timer->bundleName.c_str());
+        dprintf(fd, " * timer originWhenElapsed           = %lld\n\n", timer->originWhenElapsed);
+        dprintf(fd, " * timer whenElapsed           = %lld\n\n", timer->whenElapsed);
+        dprintf(fd, " * timer originMaxWhenElapsed           = %lld\n\n", timer->originMaxWhenElapsed);
+        dprintf(fd, " * timer maxWhenElapsed           = %lld\n\n", timer->maxWhenElapsed);
+    }
 }
 
 bool TimerProxy::SetProxyDelayTime(int fd, const int64_t proxyDelayTime)

@@ -18,6 +18,7 @@
 #include <chrono>
 #include <functional>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 #include <memory>
 #include <stdint.h>
@@ -27,6 +28,7 @@
 
 namespace OHOS {
 namespace MiscServices {
+using AdjustTimerCallback = std::function<bool(std::shared_ptr<TimerInfo> timer)>;
 class TimerProxy {
     DECLARE_SINGLE_INSTANCE(TimerProxy)
 public:
@@ -35,6 +37,11 @@ public:
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
+    bool AdjustTimer(bool isAdjust, uint32_t interval,
+        const std::chrono::steady_clock::time_point &now,
+        std::function<void(AdjustTimerCallback adjustTimer)> updateTimerDeliveries);
+    bool SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption);
+    bool IsTimerExemption(std::shared_ptr<TimerInfo> time);
     bool ResetAllProxy(const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
     void EraseTimerFromProxyUidMap(const uint64_t id, const uint32_t uid);
@@ -46,6 +53,7 @@ public:
     bool ShowUidTimerMapInfo(int fd, const int64_t now);
     bool SetProxyDelayTime(int fd, const int64_t proxyDelayTime);
     bool ShowProxyDelayTime(int fd);
+    void ShowAdjustTimerInfo(int fd);
     int64_t GetProxyDelayTime() const;
 
 private:
@@ -55,6 +63,9 @@ private:
     void UpdateProxyWhenElapsedForProxyUidMap(const int32_t uid,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
+    bool UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_point &now,
+        uint32_t interval, std::shared_ptr<TimerInfo> &timer);
+    bool RestoreAdjustWhenElapsed(std::shared_ptr<TimerInfo> &timer);
     bool RestoreProxyWhenElapsedByUid(const int32_t uid,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
@@ -71,6 +82,9 @@ private:
     /* <uid, <id, trigger time>> */
     std::unordered_map<int32_t, std::unordered_map<uint64_t, std::chrono::steady_clock::time_point>> proxyUids_ {};
     std::map<int32_t, std::vector<std::shared_ptr<TimerInfo>>> proxyMap_ {};
+    std::mutex adjustMutex_;
+    std::unordered_set<std::string> adjustExemptionList_ {};
+    std::vector<std::shared_ptr<TimerInfo>> adjustTimers_ {};
     /* ms for 3 days */
     int64_t proxyDelayTime_ = 3 * 24 * 60 * 60 * 1000;
 }; // timer_proxy
