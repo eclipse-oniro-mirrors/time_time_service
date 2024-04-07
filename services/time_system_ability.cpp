@@ -163,10 +163,10 @@ void TimeSystemAbility::OnStart()
     }
     InitServiceHandler();
     InitTimerHandler();
-    TimeDatabase::GetInstance().Recover(timerManagerHandler_);
     TimeTickNotify::GetInstance().Init();
     TimeZoneInfo::GetInstance().Init();
     NtpUpdateTime::GetInstance().Init();
+    AddSystemAbilityListener(ABILITY_MGR_SERVICE_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
@@ -191,6 +191,8 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         RegisterPowerStateListener();
     } else if (systemAbilityId == COMM_NET_CONN_MANAGER_SYS_ABILITY_ID) {
         NtpUpdateTime::GetInstance().MonitorNetwork();
+    } else if (systemAbilityId == ABILITY_MGR_SERVICE_ID) {
+        TimeDatabase::GetInstance().Recover(timerManagerHandler_);
     } else {
         TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not valid, id is %{public}d",
             systemAbilityId);
@@ -872,6 +874,7 @@ void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
 {
     // Clears `drop_on_reboot` table.
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnSyncShutdown");
+    TimeDatabase::GetInstance().SetAutoBoot();
     TimeDatabase::GetInstance().ClearDropOnReboot();
 }
 
