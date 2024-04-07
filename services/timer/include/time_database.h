@@ -78,6 +78,7 @@ public:
         const OHOS::NativeRdb::AbsRdbPredicates &predicates, const std::vector<std::string> &columns);
     bool Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates);
     void ClearDropOnReboot();
+    void SetAutoBoot();
     int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
     int64_t GetLong(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
     std::string GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);

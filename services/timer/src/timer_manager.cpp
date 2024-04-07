@@ -726,6 +726,23 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             #endif
             NotifyWantAgent(timer->wantAgent, flag);
         }
+        if (timer->bundleName == NEED_RECOVER_ON_REBOOT) {
+            OHOS::NativeRdb::ValuesBucket values;
+            values.PutInt("state", 0);
+            OHOS::NativeRdb::RdbPredicates rdbPredicates("hold_on_reboot");
+            rdbPredicates.EqualTo("state", 1)
+                ->And()
+                ->EqualTo("timerId", static_cast<int64_t>(timer->id));
+            TimeDatabase::GetInstance().Update(values, rdbPredicates);
+        } else {
+            OHOS::NativeRdb::ValuesBucket values;
+            values.PutInt("state", 0);
+            OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
+            rdbPredicates.EqualTo("state", 1)
+                ->And()
+                ->EqualTo("timerId", static_cast<int64_t>(timer->id));
+            TimeDatabase::GetInstance().Update(values, rdbPredicates);
+        }
     }
 }
 
