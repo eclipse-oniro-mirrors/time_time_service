@@ -24,7 +24,6 @@
 #include "net_conn_callback_observer.h"
 #include "net_conn_client.h"
 #include "net_specifier.h"
-#include "nitz_subscriber.h"
 #include "ntp_trusted_time.h"
 #include "parameters.h"
 #include "time_common.h"
@@ -62,7 +61,6 @@ NtpUpdateTime& NtpUpdateTime::GetInstance()
 void NtpUpdateTime::Init()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp Update Time start.");
-    SubscriberNITZTimeChangeCommonEvent();
     std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, DEFAULT_NTP_SERVER);
     std::string ntpServerSpec = system::GetParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER, "");
     std::string autoTime = system::GetParameter(AUTO_TIME_SYSTEM_PARAMETER, "ON");
@@ -111,19 +109,6 @@ int32_t NtpUpdateTime::MonitorNetwork()
     TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterNetConnCallback retcode= %{public}d", nRet);
 
     return nRet;
-}
-
-void NtpUpdateTime::SubscriberNITZTimeChangeCommonEvent()
-{
-    // Broadcast subscription
-    MatchingSkills matchingSkills;
-    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED);
-    CommonEventSubscribeInfo subscriberInfo(matchingSkills);
-    std::shared_ptr<NITZSubscriber> subscriberPtr = std::make_shared<NITZSubscriber>(subscriberInfo);
-    bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
-    if (!subscribeResult) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent failed");
-    }
 }
 
 void NtpUpdateTime::RefreshNetworkTimeByTimer(uint64_t timerId)

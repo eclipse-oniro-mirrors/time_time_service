@@ -48,6 +48,7 @@
 #include "common_event_manager.h"
 #include "common_event_support.h"
 #include "power_subscriber.h"
+#include "nitz_subscriber.h"
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
@@ -206,17 +207,26 @@ void TimeSystemAbility::RegisterSubscriber()
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to RegisterSubscriber");
         auto callback = [this]() { TimeServiceNotify::GetInstance().RepublishEvents(); };
         serviceHandler_->PostTask(callback, "time_service_subscriber_retry", INIT_INTERVAL);
-        return;
     }
+
     MatchingSkills matchingSkills;
     matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_SCREEN_ON);
     CommonEventSubscribeInfo subscriberInfo(matchingSkills);
     std::shared_ptr<PowerSubscriber> subscriberPtr = std::make_shared<PowerSubscriber>(subscriberInfo);
     bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
     if (!subscribeResult) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent failed");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent COMMON_EVENT_SCREEN_ON failed");
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber success.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber COMMON_EVENT_SCREEN_ON success.");
+
+    MatchingSkills matchingNITZSkills;
+    matchingNITZSkills.AddEvent(CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED);
+    CommonEventSubscribeInfo subscriberNITZInfo(matchingNITZSkills);
+    std::shared_ptr<NITZSubscriber> subscriberNITZPtr = std::make_shared<NITZSubscriber>(subscriberNITZInfo);
+    bool subscribeNITZResult = CommonEventManager::SubscribeCommonEvent(subscriberNITZPtr);
+    if (!subscribeNITZResult) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent COMMON_EVENT_NITZ_TIME_CHANGED failed");
+    }
 }
 
 int32_t TimeSystemAbility::Init()
