@@ -20,7 +20,13 @@
 
 namespace OHOS {
 namespace MiscServices {
-void StatisticReporter(int32_t callerPid, int32_t callerUid, int32_t type, int64_t triggerTime, uint64_t interval);
+void StatisticReporter(int32_t callerPid,
+                       int32_t callerUid,
+                       std::string bundleOrProcessName,
+                       int32_t size,
+                       int32_t type,
+                       int64_t triggerTime,
+                       uint64_t interval);
 } // namespace MiscServices
 } // namespace OHOS
 #endif // TIME_SYSEVENT_H
