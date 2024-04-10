@@ -257,8 +257,8 @@ bool NtpUpdateTime::IsValidNITZTime()
     if (nitzUpdateTimeMilli_ == 0) {
         return false;
     }
-    auto bootTimeNano = steady_clock::now().time_since_epoch().count();
-    auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
+    int64_t bootTimeNano = static_cast<int64_t>(steady_clock::now().time_since_epoch().count());
+    int64_t bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
     TIME_HILOGI(TIME_MODULE_SERVICE, "nitz update time: %{public}" PRIu64 " currentTime: %{public}" PRId64 "",
         nitzUpdateTimeMilli_, bootTimeMilli);
     return (bootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMilli_)) < DAY_TO_MILLISECOND;
@@ -378,3 +378,4 @@ uint64_t NtpUpdateTime::GetNITZUpdateTime()
 }
 } // namespace MiscServices
 } // namespace OHOS
+
