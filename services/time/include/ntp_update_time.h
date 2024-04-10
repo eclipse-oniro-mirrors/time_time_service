@@ -44,7 +44,6 @@ private:
     NtpUpdateTime();
     static void ChangeNtpServerCallback(const char *key, const char *value, void *context);
     static std::vector<std::string> SplitNtpAddrs(const std::string &ntpStr);
-    void SubscriberNITZTimeChangeCommonEvent();
     void StartTimer();
     void RefreshNextTriggerTime();
     bool CheckStatus();
