@@ -23,6 +23,8 @@
 
 namespace OHOS {
 namespace MiscServices {
+static const uint32_t HALF_SECEND = 2;
+
 class TimerInfo {
 public:
     const uint64_t id;
@@ -37,6 +39,8 @@ public:
     uint64_t count {};
     std::chrono::milliseconds when;
     std::chrono::milliseconds windowLength;
+    std::chrono::steady_clock::time_point originWhenElapsed;
+    std::chrono::steady_clock::time_point originMaxWhenElapsed;
     std::chrono::steady_clock::time_point whenElapsed;
     std::chrono::steady_clock::time_point maxWhenElapsed;
     std::chrono::steady_clock::time_point expectedWhenElapsed;
@@ -60,6 +64,8 @@ public:
     bool operator==(const TimerInfo &other) const;
     bool Matches(const std::string &packageName) const;
     bool UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed, std::chrono::nanoseconds offset);
+    bool AdjustTimer(const std::chrono::steady_clock::time_point &now, const uint32_t interval);
+    bool RestoreAdjustTimer();
 };
 } // MiscService
 } // OHOS

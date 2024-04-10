@@ -316,5 +316,75 @@ HWTEST_F(TimeProxyTest, ProxyTimer003, TestSize.Level1)
     EXPECT_TRUE(retProxy);
     EXPECT_TRUE(TimerProxy::GetInstance().proxyUids_.empty());
 }
+
+/**
+* @tc.name: AdjustTimer001
+* @tc.desc: adjust timer test
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
+{
+    /* The system timers can be aligned to a unified time and recorded in adjustTimers_. */
+    bool isAdjust = true;
+    uint32_t interval = 300;
+    bool ret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
+    EXPECT_TRUE(ret);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
+
+    /* The unified heartbeat can be deleted successfully and deleted from adjustTimers_. */
+    isAdjust = false;
+    interval = 0;
+    ret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
+    EXPECT_TRUE(ret);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
+}
+
+/**
+* @tc.name: AdjustTimer002
+* @tc.desc: set timer exemption
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
+{
+    /* Create a timer with windowLen set to 0. */
+    TimerPara paras{.timerType = 2, .windowLength = 0, .interval = 0, .flag = 0};
+    auto wantAgent = std::make_shared<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int32_t uid = 2000;
+    uint64_t timerId = 1000;
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId, NOT_STORE);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+
+    /* Create a timer */
+    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
+    uint64_t triggerTime = 10000000 + nowElapsed;
+    ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+
+    /* Exempt the timer of the app and update the record to adjustExemptionList_. */
+    std::unordered_set<std::string> nameArr{"time_service"};
+    timerManagerHandler_->SetTimerExemption(nameArr, true);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_NE(TimerProxy::GetInstance().adjustExemptionList_.size(), (const unsigned int)0);
+
+    /* Unified heartbeat is triggered. The heartbeat of exempted applications is not unified. */
+    bool isAdjust = true;
+    uint32_t interval = 300;
+    bool adjustRet = timerManagerHandler_->AdjustTimer(isAdjust, interval);
+    EXPECT_TRUE(adjustRet);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_NE(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
+    bool isExemption = true;
+    for (auto timer : TimerProxy::GetInstance().adjustTimers_) {
+        if (timer->bundleName == "time_service") {
+            isExemption = false;
+        }
+    }
+    EXPECT_TRUE(isExemption);
+}
+
 }  // MiscServices
 }  // OHOS

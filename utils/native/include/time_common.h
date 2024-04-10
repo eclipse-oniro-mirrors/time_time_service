@@ -52,6 +52,7 @@ enum TimeError {
     E_TIME_NULLPTR,
     E_TIME_NO_PERMISSION,
     E_TIME_NOT_SYSTEM_APP,
+    E_TIME_NO_TIMER_ADJUST,
 };
 
 enum DatabaseType {

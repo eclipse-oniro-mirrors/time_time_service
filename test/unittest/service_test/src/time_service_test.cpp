@@ -229,6 +229,35 @@ HWTEST_F(TimeServiceTest, ProxyTimer004, TestSize.Level0)
 }
 
 /**
+* @tc.name: AdjustTimer001.
+* @tc.desc: adjust timer.
+* @tc.type: FUNC
+* @tc.require: AR20240306656104
+*/
+HWTEST_F(TimeServiceTest, AdjustTimer001, TestSize.Level0)
+{
+    auto errCode = TimeServiceClient::GetInstance()->AdjustTimer(true, 5);
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    errCode = TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+}
+
+/**
+* @tc.name: AdjustTimer002.
+* @tc.desc: exemption timer.
+* @tc.type: FUNC
+* @tc.require: AR20240306656104
+*/
+HWTEST_F(TimeServiceTest, AdjustTimer002, TestSize.Level0)
+{
+    std::unordered_set<std::string> nameArr{"timer"};
+    auto errCode = TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, false);
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    errCode = TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, true);
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+}
+
+/**
 * @tc.name: IdleTimer001.
 * @tc.desc: test create idle timer for app.
 * @tc.type: FUNC

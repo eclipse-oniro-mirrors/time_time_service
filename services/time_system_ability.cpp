@@ -152,6 +152,11 @@ void TimeSystemAbility::InitDumpCmd()
         "dump proxy delay time.",
         [this](int fd, const std::vector<std::string> &input) { DumpProxyDelayTime(fd, input); });
     TimeCmdDispatcher::GetInstance().RegisterCommand(cmdShowDelayTimer);
+
+    auto cmdAdjustTimer = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-adjust", "-a" }),
+        "dump adjust time.",
+        [this](int fd, const std::vector<std::string> &input) { DumpAdjustTime(fd, input); });
+    TimeCmdDispatcher::GetInstance().RegisterCommand(cmdAdjustTimer);
 }
 
 void TimeSystemAbility::OnStart()
@@ -587,6 +592,12 @@ void TimeSystemAbility::DumpProxyDelayTime(int fd, const std::vector<std::string
     TimerProxy::GetInstance().ShowProxyDelayTime(fd);
 }
 
+void TimeSystemAbility::DumpAdjustTime(int fd, const std::vector<std::string> &input)
+{
+    dprintf(fd, "\n - dump adjust timer info:\n");
+    TimerProxy::GetInstance().ShowAdjustTimerInfo(fd);
+}
+
 int TimeSystemAbility::SetRtcTime(time_t sec)
 {
     struct rtc_time rtc {};
@@ -820,6 +831,37 @@ bool TimeSystemAbility::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger
         }
     }
     return timerManagerHandler_->ProxyTimer(uid, isProxy, needRetrigger);
+}
+
+int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval)
+{
+    if (timerManagerHandler_ == nullptr) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Adjust Timer manager nullptr.");
+        timerManagerHandler_ = TimerManager::Create();
+        if (timerManagerHandler_ == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Adjust Timer manager init failed.");
+            return E_TIME_NULLPTR;
+        }
+    }
+    if (!timerManagerHandler_->AdjustTimer(isAdjust, interval)) {
+        return E_TIME_NO_TIMER_ADJUST;
+    }
+    return E_TIME_OK;
+}
+
+
+int32_t TimeSystemAbility::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+{
+    if (timerManagerHandler_ == nullptr) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Set Timer Exemption manager nullptr.");
+        timerManagerHandler_ = TimerManager::Create();
+        if (timerManagerHandler_ == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Set Timer Exemption manager init failed.");
+            return E_TIME_NULLPTR;
+        }
+    }
+    timerManagerHandler_->SetTimerExemption(nameArr, isExemption);
+    return E_TIME_OK;
 }
 
 bool TimeSystemAbility::ResetAllProxy()

@@ -24,6 +24,7 @@
 #include <random>
 #include <thread>
 #include <vector>
+#include <unordered_set>
 
 #include "batch.h"
 #include "timer_handler.h"
@@ -53,6 +54,8 @@ public:
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
+    bool AdjustTimer(bool isAdjust, uint32_t interval) override;
+    void SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
     bool ShowTimerEntryMap(int fd);
     bool ShowTimerEntryById(int fd, uint64_t timerId);
@@ -95,6 +98,8 @@ private:
     void ReBatchAllTimers();
     void ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
                           std::chrono::steady_clock::time_point nowElapsed);
+    void ReCalcuOriWhenElapsed(std::shared_ptr<TimerInfo> timer,
+                          std::chrono::steady_clock::time_point nowElapsed);
     void SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool isRebatched);
     void InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm);
     int64_t AttemptCoalesceLocked(std::chrono::steady_clock::time_point whenElapsed,
@@ -124,6 +129,7 @@ private:
     #endif
 
     void UpdateTimersState(std::shared_ptr<TimerInfo> &alarm);
+    bool AdjustSingleTimer(std::shared_ptr<TimerInfo> timer);
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     std::default_random_engine random_;
@@ -143,6 +149,8 @@ private:
     // idle timer
     std::shared_ptr<TimerInfo> mPendingIdleUntil_;
     std::mutex idleTimerMutex_;
+    bool adjustPolicy_ = false;
+    uint32_t adjustInterval_ = 0;
     #ifdef POWER_MANAGER_ENABLE
     uint32_t count_;
     std::mutex countLock_;
