@@ -367,6 +367,42 @@ bool TimeServiceProxy::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
     return true;
 }
 
+bool TimeServiceProxy::ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger)
+{
+    MessageParcel data, reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
+        return false;
+    }
+    if (!data.WriteInt32(pidList.size())) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write pid size");
+        return false;
+    }
+    for (std::set<int>::iterator pid = pidList.begin(); pid != pidList.end(); pid++) {
+        if (!data.WriteInt32(*pid)) {
+            TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write pid");
+            return false;
+        }
+    }
+    if (!data.WriteBool(isProxy)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write isProxy");
+        return false;
+    }
+    if (!data.WriteBool(needRetrigger)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write needRetrigger");
+        return false;
+    }
+
+    int32_t result =
+        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::PID_PROXY_TIMER), data, reply, option);
+    if (result != ERR_NONE) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "ProxyTimer failed, error code is: %{public}d", result);
+        return false;
+    }
+    return true;
+}
+
 int32_t TimeServiceProxy::AdjustTimer(bool isAdjust, uint32_t interval)
 {
     MessageParcel data;

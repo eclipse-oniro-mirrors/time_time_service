@@ -769,7 +769,7 @@ HWTEST_F(TimeClientTest, StartTimer008, TestSize.Level1)
     TimeServiceClient::GetInstance()->StartTimerV9(timerId2, triggerTime2 + 2000);
     pid_t uid2 = IPCSkeleton::GetCallingUid();
     TimeServiceClient::GetInstance()->ProxyTimer(uid2, true, true);
-    
+
     sleep(4);
     TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();

@@ -79,6 +79,7 @@ void TimeDatabase::InnerRecover(std::shared_ptr<OHOS::NativeRdb::ResultSet> resu
             OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(resultSet, 7)),
             // Line 5 is 'uid'
             GetInt(resultSet, 5),
+            0,
             // Line 6 is 'bundleName'
             GetString(resultSet, 6)
         });

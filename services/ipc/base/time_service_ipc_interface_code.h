@@ -36,6 +36,7 @@ enum class TimeServiceIpcInterfaceCode {
     STOP_TIMER,
     DESTROY_TIMER,
     PROXY_TIMER,
+    PID_PROXY_TIMER,
     RESET_ALL_PROXY,
     ADJUST_TIMER,
     SET_TIMER_EXEMPTION,

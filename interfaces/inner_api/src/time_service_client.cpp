@@ -711,6 +711,18 @@ bool TimeServiceClient::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger
     return proxy->ProxyTimer(uid, isProxy, needRetrigger);
 }
 
+bool TimeServiceClient::ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger)
+{
+    if (!ConnectService()) {
+        return false;
+    }
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        return false;
+    }
+    return proxy->ProxyTimer(pidList, isProxy, needRetrigger);
+}
+
 int32_t TimeServiceClient::AdjustTimer(bool isAdjust, uint32_t interval)
 {
     TIME_HILOGD(TIME_MODULE_CLIENT, "Adjust Timer isAdjust: %{public}d", isAdjust);
