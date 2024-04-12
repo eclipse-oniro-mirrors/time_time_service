@@ -710,10 +710,16 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
 
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
+    auto wakeupNums = 0;
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
-            StatisticReporter(IPCSkeleton::GetCallingPid(), timer->uid, timer->type,
-                timer->whenElapsed.time_since_epoch().count(), timer->repeatInterval.count());
+            wakeupNums += 1;
+        }
+    }
+    for (const auto &timer : triggerList) {
+        if (timer->wakeup) {
+            StatisticReporter(IPCSkeleton::GetCallingPid(), timer->uid, timer->bundleName, wakeupNums, timer->type,
+                              timer->whenElapsed.time_since_epoch().count(), timer->repeatInterval.count());
         }
         bool flag = timer->type == ITimerManager::TimerType::RTC_WAKEUP ||
              timer->type == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP;
