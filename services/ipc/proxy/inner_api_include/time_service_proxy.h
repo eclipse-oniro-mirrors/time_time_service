@@ -18,6 +18,7 @@
 
 #include "iremote_proxy.h"
 #include "time_service_interface.h"
+#include <unordered_set>
 
 namespace OHOS {
 namespace MiscServices {
@@ -44,6 +45,8 @@ public:
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
+    int32_t AdjustTimer(bool isAdjust, uint32_t interval) override;
+    int32_t SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
 
 private:

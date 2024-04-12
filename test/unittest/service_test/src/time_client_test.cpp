@@ -20,6 +20,7 @@
 #include <fstream>
 #include <thread>
 #include <sys/timerfd.h>
+#include <unordered_set>
 
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
@@ -945,5 +946,59 @@ HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 5000);
     sleep(5);
     EXPECT_GT(g_data1, 1);
+}
+
+/**
+* @tc.name: AdjustTimer001
+* @tc.desc: adjust timer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, AdjustTimer001, TestSize.Level1)
+{
+    AddPermission();
+    g_data3 = 0;
+    uint64_t timerId1;
+    auto timerInfo1 = std::make_shared<TimerInfoTest>();
+    timerInfo1->SetType(1<<2);
+    timerInfo1->SetRepeat(false);
+    timerInfo1->SetCallbackInfo(TimeOutCallback3);
+    auto errCode1 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo1, timerId1);
+    uint64_t ret1 = 0;
+    EXPECT_TRUE(errCode1 == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, ret1);
+    auto triggerTime1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + 5000);
+    TimeServiceClient::GetInstance()->AdjustTimer(true, 5);
+    TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
+    sleep(7);
+    EXPECT_GT(g_data3, 0);
+}
+ 
+/**
+* @tc.name: AdjustTimer002
+* @tc.desc: adjust timer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, AdjustTimer002, TestSize.Level1)
+{
+    AddPermission();
+    g_data3 = 0;
+    std::unordered_set<std::string> nameArr{"timer"};
+    TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, false);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
+    TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, true);
+    uint64_t timerId1;
+    auto timerInfo1 = std::make_shared<TimerInfoTest>();
+    timerInfo1->SetType(1<<2);
+    timerInfo1->SetRepeat(false);
+    timerInfo1->SetCallbackInfo(TimeOutCallback3);
+    auto errCode1 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo1, timerId1);
+    uint64_t ret1 = 0;
+    EXPECT_TRUE(errCode1 == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, ret1);
+    auto triggerTime1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + 2000);
+    sleep(4);
+    EXPECT_GT(g_data3, 0);
 }
 } // namespace

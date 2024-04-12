@@ -711,6 +711,32 @@ bool TimeServiceClient::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger
     return proxy->ProxyTimer(uid, isProxy, needRetrigger);
 }
 
+int32_t TimeServiceClient::AdjustTimer(bool isAdjust, uint32_t interval)
+{
+    TIME_HILOGD(TIME_MODULE_CLIENT, "Adjust Timer isAdjust: %{public}d", isAdjust);
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    return proxy->AdjustTimer(isAdjust, interval);
+}
+
+int32_t TimeServiceClient::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+{
+    TIME_HILOGD(TIME_MODULE_CLIENT, "set time exemption size: %{public}zu", nameArr.size());
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    return proxy->SetTimerExemption(nameArr, isExemption);
+}
+
 bool TimeServiceClient::ResetAllProxy()
 {
     TIME_HILOGD(TIME_MODULE_CLIENT, "ResetAllProxy");

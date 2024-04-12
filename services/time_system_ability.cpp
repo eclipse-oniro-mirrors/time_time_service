@@ -48,6 +48,7 @@
 #include "common_event_manager.h"
 #include "common_event_support.h"
 #include "power_subscriber.h"
+#include "nitz_subscriber.h"
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
@@ -152,6 +153,11 @@ void TimeSystemAbility::InitDumpCmd()
         "dump proxy delay time.",
         [this](int fd, const std::vector<std::string> &input) { DumpProxyDelayTime(fd, input); });
     TimeCmdDispatcher::GetInstance().RegisterCommand(cmdShowDelayTimer);
+
+    auto cmdAdjustTimer = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-adjust", "-a" }),
+        "dump adjust time.",
+        [this](int fd, const std::vector<std::string> &input) { DumpAdjustTime(fd, input); });
+    TimeCmdDispatcher::GetInstance().RegisterCommand(cmdAdjustTimer);
 }
 
 void TimeSystemAbility::OnStart()
@@ -208,17 +214,26 @@ void TimeSystemAbility::RegisterSubscriber()
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to RegisterSubscriber");
         auto callback = [this]() { TimeServiceNotify::GetInstance().RepublishEvents(); };
         serviceHandler_->PostTask(callback, "time_service_subscriber_retry", INIT_INTERVAL);
-        return;
     }
+
     MatchingSkills matchingSkills;
     matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_SCREEN_ON);
     CommonEventSubscribeInfo subscriberInfo(matchingSkills);
     std::shared_ptr<PowerSubscriber> subscriberPtr = std::make_shared<PowerSubscriber>(subscriberInfo);
     bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
     if (!subscribeResult) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent failed");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent COMMON_EVENT_SCREEN_ON failed");
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber success.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber COMMON_EVENT_SCREEN_ON success.");
+
+    MatchingSkills matchingNITZSkills;
+    matchingNITZSkills.AddEvent(CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED);
+    CommonEventSubscribeInfo subscriberNITZInfo(matchingNITZSkills);
+    std::shared_ptr<NITZSubscriber> subscriberNITZPtr = std::make_shared<NITZSubscriber>(subscriberNITZInfo);
+    bool subscribeNITZResult = CommonEventManager::SubscribeCommonEvent(subscriberNITZPtr);
+    if (!subscribeNITZResult) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent COMMON_EVENT_NITZ_TIME_CHANGED failed");
+    }
 }
 
 int32_t TimeSystemAbility::Init()
@@ -589,6 +604,12 @@ void TimeSystemAbility::DumpProxyDelayTime(int fd, const std::vector<std::string
     TimerProxy::GetInstance().ShowProxyDelayTime(fd);
 }
 
+void TimeSystemAbility::DumpAdjustTime(int fd, const std::vector<std::string> &input)
+{
+    dprintf(fd, "\n - dump adjust timer info:\n");
+    TimerProxy::GetInstance().ShowAdjustTimerInfo(fd);
+}
+
 int TimeSystemAbility::SetRtcTime(time_t sec)
 {
     struct rtc_time rtc {};
@@ -822,6 +843,37 @@ bool TimeSystemAbility::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger
         }
     }
     return timerManagerHandler_->ProxyTimer(uid, isProxy, needRetrigger);
+}
+
+int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval)
+{
+    if (timerManagerHandler_ == nullptr) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Adjust Timer manager nullptr.");
+        timerManagerHandler_ = TimerManager::Create();
+        if (timerManagerHandler_ == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Adjust Timer manager init failed.");
+            return E_TIME_NULLPTR;
+        }
+    }
+    if (!timerManagerHandler_->AdjustTimer(isAdjust, interval)) {
+        return E_TIME_NO_TIMER_ADJUST;
+    }
+    return E_TIME_OK;
+}
+
+
+int32_t TimeSystemAbility::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+{
+    if (timerManagerHandler_ == nullptr) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Set Timer Exemption manager nullptr.");
+        timerManagerHandler_ = TimerManager::Create();
+        if (timerManagerHandler_ == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Set Timer Exemption manager init failed.");
+            return E_TIME_NULLPTR;
+        }
+    }
+    timerManagerHandler_->SetTimerExemption(nameArr, isExemption);
+    return E_TIME_OK;
 }
 
 bool TimeSystemAbility::ResetAllProxy()
