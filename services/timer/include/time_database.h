@@ -35,6 +35,8 @@ constexpr int CHECK_VERSION_FAILED = -1;
 constexpr int WITHOUT_VERSION_TABLE = 0;
 constexpr int API12_5_0_RELEASE = 50;
 constexpr int INVALID_VERSION = -50;
+constexpr int64_t MILLISECOND_TO_NANO = 1000000;
+constexpr int CLOCK_POWEROFF_ALARM = 12;
 
 constexpr const char *CHECK_TIME_VERSION = "SELECT name FROM sqlite_master WHERE type='table' AND "
                                            "name='time_version'";

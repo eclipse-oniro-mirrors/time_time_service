@@ -19,6 +19,7 @@
 #include "iremote_broker.h"
 #include "itimer_info.h"
 #include "want_agent_helper.h"
+#include <unordered_set>
 
 namespace OHOS {
 namespace MiscServices {
@@ -160,6 +161,22 @@ public:
      * @return bool true on success, false on failure.
      */
     virtual bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) = 0;
+
+    /**
+     * AdjustTimer
+     * @param isAdjust true if adjust, false if not adjust.
+     * @param interval adjust period.
+     * @return int32_t return error code.
+     */
+    virtual int32_t AdjustTimer(bool isAdjust, uint32_t interval) = 0;
+
+    /**
+     * SetTimerExemption
+     * @param nameArr list for bundle name or proccess name.
+     * @param isExemption exemption or ctrl.
+     * @return int32_t return error code.
+     */
+    virtual int32_t SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption) = 0;
 
     /**
      * ResetAllProxy

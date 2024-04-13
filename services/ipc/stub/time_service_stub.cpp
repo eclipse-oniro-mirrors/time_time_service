@@ -20,6 +20,10 @@
 namespace OHOS {
 namespace MiscServices {
 using namespace OHOS::HiviewDFX;
+namespace {
+static const uint32_t MAX_EXEMPTION_SIZE = 1000;
+}
+
 
 TimeServiceStub::TimeServiceStub()
 {
@@ -39,6 +43,8 @@ TimeServiceStub::TimeServiceStub()
     memberFuncMap_[TimeServiceIpcInterfaceCode::STOP_TIMER] = &TimeServiceStub::OnStopTimer;
     memberFuncMap_[TimeServiceIpcInterfaceCode::DESTROY_TIMER] = &TimeServiceStub::OnDestroyTimer;
     memberFuncMap_[TimeServiceIpcInterfaceCode::PROXY_TIMER] = &TimeServiceStub::OnTimerProxy;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::ADJUST_TIMER] = &TimeServiceStub::OnAdjustTimer;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::SET_TIMER_EXEMPTION] = &TimeServiceStub::OnSetTimerExemption;
     memberFuncMap_[TimeServiceIpcInterfaceCode::RESET_ALL_PROXY] = &TimeServiceStub::OnAllProxyReset;
 }
 
@@ -62,7 +68,7 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
     TIME_HILOGD(TIME_MODULE_SERVICE, "CallingPid = %{public}d, CallingUid = %{public}d, code = %{public}u", p, p1,
                 code);
     if (code >= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIME) &&
-        code <= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::RESET_ALL_PROXY)) {
+        code <= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIMER_EXEMPTION)) {
         auto itFunc = memberFuncMap_.find(static_cast<TimeServiceIpcInterfaceCode>(code));
         if (itFunc != memberFuncMap_.end()) {
             auto memberFunc = itFunc->second;
@@ -348,6 +354,65 @@ int32_t TimeServiceStub::OnTimerProxy(MessageParcel &data, MessageParcel &reply)
         return E_TIME_DEAL_FAILED;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    return ERR_OK;
+}
+
+int32_t TimeServiceStub::OnAdjustTimer(MessageParcel &data, MessageParcel &reply)
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "on timer adjust start.");
+    if (!TimePermission::CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Adjust Timer permission check failed");
+        return E_TIME_NO_PERMISSION;
+    }
+    bool isAdjust = false;
+    uint32_t interval = 0;
+    if (!data.ReadBool(isAdjust)) {
+        return E_TIME_READ_PARCEL_ERROR;
+    }
+    if (!data.ReadUint32(interval)) {
+        return E_TIME_READ_PARCEL_ERROR;
+    }
+    if (isAdjust && interval == 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid parameter: interval");
+        return E_TIME_READ_PARCEL_ERROR;
+    }
+    if (AdjustTimer(isAdjust, interval) != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error adjust timer.");
+        return E_TIME_DEAL_FAILED;
+    }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "on timer adjust end.");
+    return ERR_OK;
+}
+
+int32_t TimeServiceStub::OnSetTimerExemption(MessageParcel &data, MessageParcel &reply)
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "set timer exemption start.");
+    if (!TimePermission::CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Set Timer Exemption permission check failed");
+        return E_TIME_NO_PERMISSION;
+    }
+    std::unordered_set<std::string> nameArr;
+    uint32_t size;
+    bool isExemption;
+    if (!data.ReadUint32(size)) {
+        return E_TIME_READ_PARCEL_ERROR;
+    }
+    if (size > MAX_EXEMPTION_SIZE) {
+        return E_TIME_PARAMETERS_INVALID;
+    }
+    for (int32_t i = 0; i < size; ++i) {
+        std::string name;
+        if (!data.ReadString(name)) {
+            return E_TIME_READ_PARCEL_ERROR;
+        }
+        nameArr.insert(name);
+    }
+
+    if (!data.ReadBool(isExemption)) {
+        return E_TIME_READ_PARCEL_ERROR;
+    }
+    SetTimerExemption(nameArr, isExemption);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "set timer exemption end.");
     return ERR_OK;
 }
 

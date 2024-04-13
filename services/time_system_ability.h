@@ -18,6 +18,7 @@
 
 #include <cinttypes>
 #include <mutex>
+#include <unordered_set>
 
 #include "event_handler.h"
 #include "securec.h"
@@ -69,6 +70,8 @@ public:
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
+    int32_t AdjustTimer(bool isAdjust, uint32_t interval) override;
+    int32_t SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
     int Dump(int fd, const std::vector<std::u16string> &args) override;
     void DumpAllTimeInfo(int fd, const std::vector<std::string> &input);
@@ -80,6 +83,7 @@ public:
     void DumpUidTimerMapInfo(int fd, const std::vector<std::string> &input);
     void SetProxyDelayTime(int fd, const std::vector<std::string> &input);
     void DumpProxyDelayTime(int fd, const std::vector<std::string> &input);
+    void DumpAdjustTime(int fd, const std::vector<std::string> &input);
     void InitDumpCmd();
     void RegisterSubscriber();
 

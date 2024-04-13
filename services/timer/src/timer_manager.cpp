@@ -132,6 +132,9 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
                 "uid:%{public}d pid:%{public}d", paras.timerType, paras.windowLength, paras.interval, paras.flag,
                 IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
     std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
+    if (bundleName.empty()) {
+        bundleName = TimeFileUtils::GetNameByPid(IPCSkeleton::GetCallingPid());
+    }
     auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
         timerId,
         paras.timerType,
@@ -351,7 +354,8 @@ void TimerManager::SetHandlerLocked(uint64_t id, int type,
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", id);
     auto alarm = std::make_shared<TimerInfo>(id, type, when, whenElapsed, windowLength, maxWhen,
-                                             interval, std::move(callback), wantAgent, flags, callingUid, bundleName);
+                                             interval, std::move(callback), wantAgent, flags, callingUid,
+                                             bundleName);
     SetHandlerLocked(alarm, false, false);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
@@ -422,6 +426,9 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
         pendingDelayTimers_.push_back(alarm);
         return;
     }
+    if (!rebatching) {
+        AdjustSingleTimer(alarm);
+    }
     bool isAdjust = false;
     if (!isRebatched && alarm->flags & static_cast<uint32_t>(IDLE_UNTIL)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Set idle timer, id=%{public}" PRId64 "", alarm->id);
@@ -456,9 +463,9 @@ void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
                                     std::chrono::steady_clock::time_point nowElapsed)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "ReAddTimerLocked start. uid= %{public}d, id=%{public}" PRId64 ""
-        ", timer whenElapsed=%{public}lld, now=%{public}lld",
-        timer->uid, timer->id, timer->whenElapsed.time_since_epoch().count(),
-        GetBootTimeNs().time_since_epoch().count());
+        ", timer originMaxWhenElapsed=%{public}lld, whenElapsed=%{public}lld, now=%{public}lld",
+        timer->uid, timer->id, timer->originWhenElapsed.time_since_epoch().count(),
+        timer->whenElapsed.time_since_epoch().count(), GetBootTimeNs().time_since_epoch().count());
     auto whenElapsed = ConvertToElapsed(timer->when, timer->type);
     steady_clock::time_point maxElapsed;
     if (timer->windowLength == milliseconds::zero()) {
@@ -614,7 +621,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             auto alarm = batch->Get(i);
             ProcTriggerTimer(alarm, triggerList, nowElapsed);
             TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d, id=%{public}" PRId64 " bundleName=%{public}s",
-                        alarm->uid, alarm->id, alarm->bundleName.c_str());
+                alarm->uid, alarm->id, alarm->bundleName.c_str());
 
             if (alarm->wakeup) {
                 hasWakeup = true;
@@ -703,10 +710,16 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
 
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
+    auto wakeupNums = 0;
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
-            StatisticReporter(IPCSkeleton::GetCallingPid(), timer->uid, timer->type,
-                timer->whenElapsed.time_since_epoch().count(), timer->repeatInterval.count());
+            wakeupNums += 1;
+        }
+    }
+    for (const auto &timer : triggerList) {
+        if (timer->wakeup) {
+            StatisticReporter(IPCSkeleton::GetCallingPid(), timer->uid, timer->bundleName, wakeupNums, timer->type,
+                              timer->whenElapsed.time_since_epoch().count(), timer->repeatInterval.count());
         }
         bool flag = timer->type == ITimerManager::TimerType::RTC_WAKEUP ||
              timer->type == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP;
@@ -725,23 +738,23 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             }
             #endif
             NotifyWantAgent(timer->wantAgent, flag);
-        }
-        if (timer->bundleName == NEED_RECOVER_ON_REBOOT) {
-            OHOS::NativeRdb::ValuesBucket values;
-            values.PutInt("state", 0);
-            OHOS::NativeRdb::RdbPredicates rdbPredicates("hold_on_reboot");
-            rdbPredicates.EqualTo("state", 1)
-                ->And()
-                ->EqualTo("timerId", static_cast<int64_t>(timer->id));
-            TimeDatabase::GetInstance().Update(values, rdbPredicates);
-        } else {
-            OHOS::NativeRdb::ValuesBucket values;
-            values.PutInt("state", 0);
-            OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
-            rdbPredicates.EqualTo("state", 1)
-                ->And()
-                ->EqualTo("timerId", static_cast<int64_t>(timer->id));
-            TimeDatabase::GetInstance().Update(values, rdbPredicates);
+            if (timer->bundleName == NEED_RECOVER_ON_REBOOT) {
+                OHOS::NativeRdb::ValuesBucket values;
+                values.PutInt("state", 0);
+                OHOS::NativeRdb::RdbPredicates rdbPredicates("hold_on_reboot");
+                rdbPredicates.EqualTo("state", 1)
+                    ->And()
+                    ->EqualTo("timerId", static_cast<int64_t>(timer->id));
+                TimeDatabase::GetInstance().Update(values, rdbPredicates);
+            } else {
+                OHOS::NativeRdb::ValuesBucket values;
+                values.PutInt("state", 0);
+                OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
+                rdbPredicates.EqualTo("state", 1)
+                    ->And()
+                    ->EqualTo("timerId", static_cast<int64_t>(timer->id));
+                TimeDatabase::GetInstance().Update(values, rdbPredicates);
+            }
         }
     }
 }
@@ -773,6 +786,7 @@ void TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::W
 void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm)
 {
     RemoveLocked(alarm->id);
+    AdjustSingleTimer(alarm);
     InsertAndBatchTimerLocked(alarm);
     RescheduleKernelTimerLocked();
 }
@@ -782,6 +796,76 @@ bool TimerManager::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
     std::lock_guard<std::mutex> lock(mutex_);
     return TimerProxy::GetInstance().ProxyTimer(uid, isProxy, needRetrigger, GetBootTimeNs(),
         [this] (std::shared_ptr<TimerInfo> &alarm) { UpdateTimersState(alarm); });
+}
+
+bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (adjustPolicy_ == isAdjust && adjustInterval_ == interval) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "already deal timer adjust, flag: %{public}d", isAdjust);
+        return false;
+    }
+    std::chrono::steady_clock::time_point now = GetBootTimeNs();
+    adjustPolicy_ = isAdjust;
+    adjustInterval_ = interval;
+    auto callback = [this] (AdjustTimerCallback adjustTimer) {
+        bool isChanged = false;
+        auto nowElapsed = GetBootTimeNs();
+        for (const auto &batch : alarmBatches_) {
+            if (!batch) {
+                continue;
+            }
+            auto n = batch->Size();
+            for (unsigned int i = 0; i < n; i++) {
+                auto timer = batch->Get(i);
+                ReCalcuOriWhenElapsed(timer, nowElapsed);
+                isChanged |= adjustTimer(timer);
+            }
+        }
+        if (isChanged) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "timer adjust executing, policy: %{public}d", adjustPolicy_);
+            ReBatchAllTimers();
+        }
+    };
+
+    return TimerProxy::GetInstance().AdjustTimer(isAdjust, interval, now, callback);
+}
+
+void TimerManager::ReCalcuOriWhenElapsed(std::shared_ptr<TimerInfo> timer,
+                                         std::chrono::steady_clock::time_point nowElapsed)
+{
+    if (adjustPolicy_) {
+        return;
+    }
+    auto whenElapsed = ConvertToElapsed(timer->origWhen, timer->type);
+    steady_clock::time_point maxElapsed;
+    if (timer->windowLength == milliseconds::zero()) {
+        maxElapsed = whenElapsed;
+    } else {
+        maxElapsed = (timer->windowLength > milliseconds::zero()) ?
+                     (whenElapsed + timer->windowLength) :
+                     MaxTriggerTime(nowElapsed, whenElapsed, timer->repeatInterval);
+    }
+    timer->originWhenElapsed = whenElapsed;
+    timer->originMaxWhenElapsed = maxElapsed;
+}
+
+void TimerManager::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    bool isChanged = TimerProxy::GetInstance().SetTimerExemption(nameArr, isExemption);
+    if (isChanged) {
+        ReBatchAllTimers();
+    }
+}
+
+bool TimerManager::AdjustSingleTimer(std::shared_ptr<TimerInfo> timer)
+{
+    if (!adjustPolicy_) {
+        return false;
+    }
+    return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, GetBootTimeNs(),
+        [this, timer] (AdjustTimerCallback adjustTimer) { adjustTimer(timer); });
 }
 
 bool TimerManager::ResetAllProxy()

@@ -18,6 +18,7 @@
 
 #include <mutex>
 #include <sstream>
+#include <unordered_set>
 
 #include "itimer_info.h"
 #include "refbase.h"
@@ -361,6 +362,24 @@ public:
      * @return true on success, false on failure.
      */
     TIME_API bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger);
+
+    /**
+     * @brief AdjustTimer
+     * adjust bundle or system process timer
+     * @param isAdjust true if adjust, false if not adjust.
+     * @param interval adjust period in seconds.
+     * @return int32_t return error code.
+     */
+    TIME_API int32_t AdjustTimer(bool isAdjust, uint32_t interval);
+
+    /**
+     * @brief SetTimerExemption
+     * set exemption list for adjust timer
+     * @param nameArr list for bundle name or proccess name.
+     * @param isExemption exemption or ctrl.
+     * @return int32_t return error code.
+     */
+    TIME_API int32_t SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption);
 
     /**
      * @brief ResetAllProxy

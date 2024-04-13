@@ -24,11 +24,18 @@ namespace {
 using HiSysEventNameSpace = OHOS::HiviewDFX::HiSysEvent;
 } // namespace
 
-void StatisticReporter(int32_t callerPid, int32_t callerUid, int32_t type, int64_t triggerTime, uint64_t interval)
+void StatisticReporter(int32_t callerPid,
+                       int32_t callerUid,
+                       std::string bundleOrProcessName,
+                       int32_t size,
+                       int32_t type,
+                       int64_t triggerTime,
+                       uint64_t interval)
 {
     int ret = HiSysEventWrite(HiSysEventNameSpace::Domain::TIME, "MISC_TIME_STATISTIC_REPORT",
-        HiSysEventNameSpace::EventType::STATISTIC, "CALLER_PID", callerPid, "CALLER_UID", callerUid, "TIMER_TYPE",
-        type, "TRIGGER_TIME", triggerTime, "INTERVAL", interval);
+        HiSysEventNameSpace::EventType::STATISTIC, "CALLER_PID", callerPid, "CALLER_UID", callerUid,
+        "BUNDLE_OR_PROCESS_NAME", bundleOrProcessName, "TIMER_SIZE", size, "TIMER_TYPE", type,
+        "TRIGGER_TIME", triggerTime, "INTERVAL", interval);
     if (ret != 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE,
             "hisysevent Statistic failed! pid %{public}d,uid %{public}d,timer type %{public}d", callerPid, callerUid,

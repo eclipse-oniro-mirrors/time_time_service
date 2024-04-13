@@ -18,6 +18,7 @@
 #include "time_database.h"
 #include "time_hilog.h"
 #include "time_common.h"
+#include "time_system_ability.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -103,7 +104,7 @@ bool TimeDatabase::Recover(std::shared_ptr<TimerManager> timerManagerHandler)
         holdRdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
         "bundleName", "wantAgent", "state", "triggerTime"});
     if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "hold result set is nullptr or go to first row failed");
+        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result set is nullptr or go to first row failed");
     } else {
         InnerRecover(holdResultSet, timerManagerHandler);
     }
@@ -113,7 +114,7 @@ bool TimeDatabase::Recover(std::shared_ptr<TimerManager> timerManagerHandler)
         dropRdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
         "bundleName", "wantAgent", "state", "triggerTime"});
     if (dropResultSet == nullptr || dropResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "drop result set is nullptr or go to first row failed");
+        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result set is nullptr or go to first row failed");
     } else {
         InnerRecover(dropResultSet, timerManagerHandler);
     }
@@ -212,8 +213,13 @@ void TimeDatabase::SetAutoBoot()
     do {
         auto bundleName = GetString(resultSet, 6);
         auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
+        int64_t currentTime = 0;
+        TimeSystemAbility::GetInstance()->GetWallTimeMs(currentTime);
+        if (triggerTime < static_cast<uint64_t>(currentTime)) {
+            continue;
+        }
         if (bundleName == NEED_RECOVER_ON_REBOOT) {
-            int tmfd = timerfd_create(12, TFD_NONBLOCK);
+            int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
             if (tmfd < 0) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error");
             }
