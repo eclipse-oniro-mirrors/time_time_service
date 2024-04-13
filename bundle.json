@@ -30,6 +30,7 @@
         "napi",
         "samgr",
         "common_event_service",
+        "os_account",
         "ipc",
         "eventhandler",
         "netmanager_base",

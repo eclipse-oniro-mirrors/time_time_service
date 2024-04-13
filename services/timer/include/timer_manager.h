@@ -24,6 +24,7 @@
 #include <random>
 #include <thread>
 #include <vector>
+#include <utility>
 #include <unordered_set>
 
 #include "batch.h"
@@ -61,6 +62,7 @@ public:
     bool ShowTimerEntryById(int fd, uint64_t timerId);
     bool ShowTimerTriggerById(int fd, uint64_t timerId);
     bool ShowIdleTimerInfo(int fd);
+    void OnUserSwitched(const int userId);
     ~TimerManager() override;
     void HandleRSSDeath();
     #ifdef POWER_MANAGER_ENABLE
@@ -116,6 +118,7 @@ private:
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
     std::chrono::steady_clock::time_point GetBootTimeNs();
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
+    void NotifyWantAgentBasedOnUser(const std::shared_ptr<TimerInfo> &timer, bool needCallback);
     void NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                          bool needCallback);
     bool CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm);
@@ -143,6 +146,9 @@ private:
     std::chrono::system_clock::time_point lastTimeChangeClockTime_;
     std::chrono::steady_clock::time_point lastTimeChangeRealtime_;
 
+    std::map<int, std::vector<std::pair<const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>, bool>>>
+        userPendingWants_;
+    std::mutex pendingWantsMutex_;
     std::vector<std::shared_ptr<TimerInfo>> pendingDelayTimers_;
     // map<timerId, original trigger time> for delayed timers
     std::map<uint64_t, std::chrono::steady_clock::time_point> delayedTimers_;
