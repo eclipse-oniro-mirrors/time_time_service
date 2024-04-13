@@ -765,7 +765,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
                 IncRunningLockRef();
             }
             #endif
-            NotifyWantAgent(timer->wantAgent, flag);
+            NotifyWantAgentBasedOnUser(timer, flag);
             if (timer->bundleName == NEED_RECOVER_ON_REBOOT) {
                 OHOS::NativeRdb::ValuesBucket values;
                 values.PutInt("state", 0);
@@ -783,7 +783,6 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
                     ->EqualTo("timerId", static_cast<int64_t>(timer->id));
                 TimeDatabase::GetInstance().Update(values, rdbPredicates);
             }
-            NotifyWantAgentBasedOnUser(timer, flag);
         }
     }
 }
