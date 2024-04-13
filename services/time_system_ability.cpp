@@ -190,10 +190,10 @@ void TimeSystemAbility::OnStart()
     }
     InitServiceHandler();
     InitTimerHandler();
-    TimeDatabase::GetInstance().Recover(timerManagerHandler_);
     TimeTickNotify::GetInstance().Init();
     TimeZoneInfo::GetInstance().Init();
     NtpUpdateTime::GetInstance().Init();
+    AddSystemAbilityListener(ABILITY_MGR_SERVICE_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
@@ -219,6 +219,8 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         RegisterPowerStateListener();
     } else if (systemAbilityId == COMM_NET_CONN_MANAGER_SYS_ABILITY_ID) {
         NtpUpdateTime::GetInstance().MonitorNetwork();
+    } else if (systemAbilityId == ABILITY_MGR_SERVICE_ID) {
+        TimeDatabase::GetInstance().Recover(timerManagerHandler_);
     } else if (systemAbilityId == SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN) {
         RegisterOsAccountSubscriber();
     } else {
@@ -240,6 +242,7 @@ void TimeSystemAbility::RegisterSubscriber()
 
     MatchingSkills matchingSkills;
     matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_SCREEN_ON);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_USER_SWITCHED);
     CommonEventSubscribeInfo subscriberInfo(matchingSkills);
     std::shared_ptr<PowerSubscriber> subscriberPtr = std::make_shared<PowerSubscriber>(subscriberInfo);
     bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
@@ -959,6 +962,7 @@ void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
 {
     // Clears `drop_on_reboot` table.
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnSyncShutdown");
+    TimeDatabase::GetInstance().SetAutoBoot();
     TimeDatabase::GetInstance().ClearDropOnReboot();
 }
 
