@@ -38,6 +38,8 @@
 #include "timer_proxy.h"
 #include "time_sysevent.h"
 #include "time_database.h"
+#include "os_account.h"
+#include "os_account_manager.h"
 #ifdef POWER_MANAGER_ENABLE
 #include "time_system_ability.h"
 #endif
@@ -708,6 +710,32 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
     return -1;
 }
 
+void TimerManager::NotifyWantAgentBasedOnUser(const std::shared_ptr<TimerInfo> &timer, bool needCallback)
+{
+    int userIdOfTimer = -1;
+    int foregroundUserId = -1;
+    int getLocalIdErr = AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(timer->uid, userIdOfTimer);
+    if (!getLocalIdErr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get account id from uid failed, errcode: %{public}d", getLocalIdErr);
+        NotifyWantAgent(timer->wantAgent, needCallback);
+        return;
+    }
+    int getForegroundIdErr = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(foregroundUserId);
+    if (!getForegroundIdErr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get foreground account id failed, errcode: %{public}d", getForegroundIdErr);
+        NotifyWantAgent(timer->wantAgent, needCallback);
+        return;
+    }
+    if (userIdOfTimer == foregroundUserId) {
+        NotifyWantAgent(timer->wantAgent, needCallback);
+    } else {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "WantAgent waits for switching user, uid: %{public}d, timerId: %{public}"
+            PRId64, timer->uid, timer->id);
+        std::lock_guard<std::mutex> lock(pendingWantsMutex_);
+        userPendingWants_[userIdOfTimer].push_back(std::make_pair(timer->wantAgent, needCallback));
+    }
+}
+
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
     auto wakeupNums = 0;
@@ -755,6 +783,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
                     ->EqualTo("timerId", static_cast<int64_t>(timer->id));
                 TimeDatabase::GetInstance().Update(values, rdbPredicates);
             }
+            NotifyWantAgentBasedOnUser(timer, flag);
         }
     }
 }
@@ -781,6 +810,19 @@ void TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::W
     auto code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
     #endif
     TIME_HILOGI(TIME_MODULE_SERVICE, "trigger wantAgent result: %{public}d", code);
+}
+
+void TimerManager::OnUserSwitched(const int userId)
+{
+    std::lock_guard<std::mutex> lock(pendingWantsMutex_);
+    auto iter = userPendingWants_.find(userId);
+    if (iter == userPendingWants_.end()) {
+        return;
+    }
+    for (auto pair: iter->second) {
+        NotifyWantAgent(pair.first, pair.second);
+    }
+    iter->second.clear();
 }
 
 void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm)
