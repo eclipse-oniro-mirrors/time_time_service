@@ -181,7 +181,6 @@ ohos_static_library("time_system_ability_static") {
     boundary_sanitize = true
     cfi = true
     cfi_cross_dso = true
-    blocklist = "./time_blocklist.txt"
     debug = time_sanitize_debug
   }
   part_name = "time_service"
