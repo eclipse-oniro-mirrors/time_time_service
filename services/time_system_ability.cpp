@@ -267,7 +267,7 @@ void TimeSystemAbility::RegisterOsAccountSubscriber()
     AccountSA::OsAccountSubscribeInfo subscribeInfo(AccountSA::OS_ACCOUNT_SUBSCRIBE_TYPE::SWITCHED, SUBSCRIBE_NAME);
     auto userSwitchSubscriber = std::make_shared<UserSwitchSubscriber>(subscribeInfo, timerManagerHandler_);
     int err = AccountSA::OsAccountManager::SubscribeOsAccount(userSwitchSubscriber);
-    if (!err) {
+    if (err != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Subscribe user switching event failed, errcode: %{public}d", err);
     }
 }
