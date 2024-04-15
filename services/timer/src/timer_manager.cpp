@@ -715,18 +715,14 @@ void TimerManager::NotifyWantAgentBasedOnUser(const std::shared_ptr<TimerInfo> &
     int userIdOfTimer = -1;
     int foregroundUserId = -1;
     int getLocalIdErr = AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(timer->uid, userIdOfTimer);
-    if (!getLocalIdErr) {
+    if (getLocalIdErr != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Get account id from uid failed, errcode: %{public}d", getLocalIdErr);
-        NotifyWantAgent(timer->wantAgent, needCallback);
-        return;
     }
     int getForegroundIdErr = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(foregroundUserId);
-    if (!getForegroundIdErr) {
+    if (getForegroundIdErr != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Get foreground account id failed, errcode: %{public}d", getForegroundIdErr);
-        NotifyWantAgent(timer->wantAgent, needCallback);
-        return;
     }
-    if (userIdOfTimer == foregroundUserId) {
+    if (getLocalIdErr != ERR_OK || getForegroundIdErr != ERR_OK || userIdOfTimer == foregroundUserId) {
         NotifyWantAgent(timer->wantAgent, needCallback);
     } else {
         TIME_HILOGI(TIME_MODULE_SERVICE, "WantAgent waits for switching user, uid: %{public}d, timerId: %{public}"
