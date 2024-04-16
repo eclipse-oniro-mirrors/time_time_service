@@ -119,7 +119,7 @@ private:
     std::chrono::steady_clock::time_point GetBootTimeNs();
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
     void NotifyWantAgentBasedOnUser(const std::shared_ptr<TimerInfo> &timer, bool needCallback);
-    void NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
+    bool NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                          bool needCallback);
     bool CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
