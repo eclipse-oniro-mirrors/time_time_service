@@ -712,19 +712,23 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
 
 void TimerManager::NotifyWantAgentBasedOnUser(const std::shared_ptr<TimerInfo> &timer, bool needCallback)
 {
+    bool notified = NotifyWantAgent(timer->wantAgent, needCallback);
+    if (notified) {
+        return;
+    }
     int userIdOfTimer = -1;
     int foregroundUserId = -1;
     int getLocalIdErr = AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(timer->uid, userIdOfTimer);
     if (getLocalIdErr != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Get account id from uid failed, errcode: %{public}d", getLocalIdErr);
+        return;
     }
     int getForegroundIdErr = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(foregroundUserId);
     if (getForegroundIdErr != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Get foreground account id failed, errcode: %{public}d", getForegroundIdErr);
+        return;
     }
-    if (getLocalIdErr != ERR_OK || getForegroundIdErr != ERR_OK || userIdOfTimer == foregroundUserId) {
-        NotifyWantAgent(timer->wantAgent, needCallback);
-    } else {
+    if (userIdOfTimer != foregroundUserId) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "WantAgent waits for switching user, uid: %{public}d, timerId: %{public}"
             PRId64, timer->uid, timer->id);
         std::lock_guard<std::mutex> lock(pendingWantsMutex_);
@@ -783,14 +787,14 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
     }
 }
 
-void TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
+bool TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                                    bool needCallback)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "trigger wantAgent.");
     std::shared_ptr<AAFwk::Want> want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
     if (want == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr");
-        return;
+        return false;
     }
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
     #ifdef POWER_MANAGER_ENABLE
@@ -805,6 +809,7 @@ void TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::W
     auto code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
     #endif
     TIME_HILOGI(TIME_MODULE_SERVICE, "trigger wantAgent result: %{public}d", code);
+    return code == ERR_OK;
 }
 
 void TimerManager::OnUserSwitched(const int userId)
