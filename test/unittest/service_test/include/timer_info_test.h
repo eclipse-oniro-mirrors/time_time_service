@@ -59,12 +59,10 @@ TimerInfoTest::~TimerInfoTest()
 
 void TimerInfoTest::OnTrigger()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     if (callBack_ != nullptr) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "call back.");
         callBack_();
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
 void TimerInfoTest::SetCallbackInfo(const std::function<void()> &callBack)

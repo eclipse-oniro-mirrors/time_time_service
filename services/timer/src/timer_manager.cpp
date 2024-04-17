@@ -1032,7 +1032,6 @@ steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
 
 bool TimerManager::ShowTimerEntryMap(int fd)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::lock_guard<std::mutex> lock(showTimerMutex_);
     auto iter = timerEntryMap_.begin();
     for (; iter != timerEntryMap_.end(); iter++) {
@@ -1044,17 +1043,14 @@ bool TimerManager::ShowTimerEntryMap(int fd)
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
 
 bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::lock_guard<std::mutex> lock(showTimerMutex_);
     auto iter = timerEntryMap_.find(timerId);
     if (iter == timerEntryMap_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
         return false;
     } else {
         dprintf(fd, " - dump timer number   = %lu\n", iter->first);
@@ -1064,13 +1060,11 @@ bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
 
 bool TimerManager::ShowTimerTriggerById(int fd, uint64_t timerId)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::lock_guard<std::mutex> lock(showTimerMutex_);
     for (size_t i = 0; i < alarmBatches_.size(); i++) {
         for (size_t j = 0; j < alarmBatches_[i]->Size(); j++) {
@@ -1080,13 +1074,11 @@ bool TimerManager::ShowTimerTriggerById(int fd, uint64_t timerId)
             }
         }
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
 
 bool TimerManager::ShowIdleTimerInfo(int fd)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::lock_guard<std::mutex> lock(showTimerMutex_);
     dprintf(fd, " - dump idle state         = %d\n", (mPendingIdleUntil_ != nullptr));
     if (mPendingIdleUntil_ != nullptr) {
@@ -1111,7 +1103,6 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
         dprintf(fd, " - dump delayed timer id = %lu\n", delayedTimer.first);
         dprintf(fd, " * timer whenElapsed     = %lu\n", delayedTimer.second);
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
 

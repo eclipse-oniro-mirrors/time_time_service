@@ -29,6 +29,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/timerfd.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <climits>
@@ -220,7 +221,7 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
     } else if (systemAbilityId == COMM_NET_CONN_MANAGER_SYS_ABILITY_ID) {
         NtpUpdateTime::GetInstance().MonitorNetwork();
     } else if (systemAbilityId == ABILITY_MGR_SERVICE_ID) {
-        TimeDatabase::GetInstance().Recover(timerManagerHandler_);
+        RegisterUserSwitchSubscriber();
     } else if (systemAbilityId == SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN) {
         RegisterOsAccountSubscriber();
     } else {
@@ -230,19 +231,20 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
     }
 }
 
-void TimeSystemAbility::RegisterSubscriber()
+void TimeSystemAbility::RegisterServiceNotifySubscriber()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber Started");
     bool subRes = TimeServiceNotify::GetInstance().RepublishEvents();
     if (!subRes) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to RegisterSubscriber");
         auto callback = [this]() { TimeServiceNotify::GetInstance().RepublishEvents(); };
         serviceHandler_->PostTask(callback, "time_service_subscriber_retry", INIT_INTERVAL);
     }
+}
 
+void TimeSystemAbility::RegisterScreenOnSubscriber()
+{
     MatchingSkills matchingSkills;
     matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_SCREEN_ON);
-    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_USER_SWITCHED);
     CommonEventSubscribeInfo subscriberInfo(matchingSkills);
     std::shared_ptr<PowerSubscriber> subscriberPtr = std::make_shared<PowerSubscriber>(subscriberInfo);
     bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
@@ -250,7 +252,23 @@ void TimeSystemAbility::RegisterSubscriber()
         TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent COMMON_EVENT_SCREEN_ON failed");
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber COMMON_EVENT_SCREEN_ON success.");
+}
 
+void TimeSystemAbility::RegisterUserSwitchSubscriber()
+{
+    MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_USER_SWITCHED);
+    CommonEventSubscribeInfo subscriberInfo(matchingSkills);
+    std::shared_ptr<PowerSubscriber> subscriberPtr = std::make_shared<PowerSubscriber>(subscriberInfo);
+    bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
+    if (!subscribeResult) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent COMMON_EVENT_USER_SWITCHED failed");
+    }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber COMMON_EVENT_USER_SWITCHED success.");
+}
+
+void TimeSystemAbility::RegisterNitzTimeSubscriber()
+{
     MatchingSkills matchingNITZSkills;
     matchingNITZSkills.AddEvent(CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED);
     CommonEventSubscribeInfo subscriberNITZInfo(matchingNITZSkills);
@@ -259,6 +277,14 @@ void TimeSystemAbility::RegisterSubscriber()
     if (!subscribeNITZResult) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "SubscribeCommonEvent COMMON_EVENT_NITZ_TIME_CHANGED failed");
     }
+}
+
+void TimeSystemAbility::RegisterSubscriber()
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterSubscriber Started");
+    RegisterServiceNotifySubscriber();
+    RegisterScreenOnSubscriber();
+    RegisterNitzTimeSubscriber();
 }
 
 void TimeSystemAbility::RegisterOsAccountSubscriber()
@@ -962,7 +988,7 @@ void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
 {
     // Clears `drop_on_reboot` table.
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnSyncShutdown");
-    TimeDatabase::GetInstance().SetAutoBoot();
+    TimeSystemAbility::GetInstance()->SetAutoBoot();
     TimeDatabase::GetInstance().ClearDropOnReboot();
 }
 
@@ -977,6 +1003,114 @@ void TimeSystemAbility::RegisterPowerStateListener()
     }
     powerManagerClient.RegisterShutdownCallback(syncShutdownCallback, PowerMgr::ShutdownPriority::HIGH);
     TIME_HILOGI(TIME_MODULE_CLIENT, "RegisterPowerStateListener end");
+}
+
+bool TimeSystemAbility::Recover()
+{
+    auto database = TimeDatabase::GetInstance();
+    OHOS::NativeRdb::RdbPredicates holdRdbPredicates("hold_on_reboot");
+    auto holdResultSet = database.Query(
+        holdRdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
+        "bundleName", "wantAgent", "state", "triggerTime"});
+    if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result set is nullptr or go to first row failed");
+    } else {
+        InnerRecover(holdResultSet);
+    }
+
+    OHOS::NativeRdb::RdbPredicates dropRdbPredicates("drop_on_reboot");
+    auto dropResultSet = database.Query(
+        dropRdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
+        "bundleName", "wantAgent", "state", "triggerTime"});
+    if (dropResultSet == nullptr || dropResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result set is nullptr or go to first row failed");
+    } else {
+        InnerRecover(dropResultSet);
+    }
+    return true;
+}
+
+void TimeSystemAbility::InnerRecover(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet)
+{
+    do {
+        auto timerId = static_cast<uint64_t>(GetLong(resultSet, 0));
+        auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
+            // Line 0 is 'timerId'
+            timerId,
+            // Line 1 is 'type'
+            GetInt(resultSet, 1),
+            // Line 3 is 'windowLength'
+            static_cast<uint64_t>(GetLong(resultSet, 3)),
+            // Line 4 is 'interval'
+            static_cast<uint64_t>(GetLong(resultSet, 4)),
+            // Line 2 is 'flag'
+            GetInt(resultSet, 2),
+            // Callback can't recover.
+            nullptr,
+            // Line 7 is 'wantAgent'
+            OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(resultSet, 7)),
+            // Line 5 is 'uid'
+            GetInt(resultSet, 5),
+            // Line 6 is 'bundleName'
+            GetString(resultSet, 6)
+        });
+        timerManagerHandler_->ReCreateTimer(timerId, timerInfo);
+        // Line 8 is 'state'
+        auto state = static_cast<uint8_t>(GetInt(resultSet, 8));
+        if (state == 1) {
+            // Line 9 is 'triggerTime'
+            auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
+            timerManagerHandler_->StartTimer(timerId, triggerTime);
+        }
+    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
+    resultSet->Close();
+}
+
+void TimeSystemAbility::SetAutoBoot()
+{
+    // Find the most recent trigger time to boot on.
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Find the most recent trigger time");
+    auto database = TimeDatabase::GetInstance();
+    OHOS::NativeRdb::RdbPredicates holdRdbPredicates("hold_on_reboot");
+    holdRdbPredicates.EqualTo("state", 1)->OrderByAsc("triggerTime");
+    auto resultSet = database.Query(holdRdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", \
+                                    "uid", "bundleName", "wantAgent", "state", "triggerTime"});
+    if (resultSet == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Find the most recent trigger time failed");
+        return;
+    }
+    do {
+        auto bundleName = GetString(resultSet, 6);
+        auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
+        int64_t currentTime = 0;
+        TimeSystemAbility::GetInstance()->GetWallTimeMs(currentTime);
+        if (triggerTime < static_cast<uint64_t>(currentTime)) {
+            continue;
+        }
+        if (bundleName == NEED_RECOVER_ON_REBOOT) {
+            int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
+            if (tmfd < 0) {
+                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error");
+            }
+
+            struct itimerspec new_value;
+            std::chrono::nanoseconds nsec(triggerTime * MILLISECOND_TO_NANO);
+            auto second = std::chrono::duration_cast<std::chrono::seconds>(nsec);
+            new_value.it_value.tv_sec = second.count();
+            new_value.it_value.tv_nsec = (nsec - second).count();
+            new_value.it_interval.tv_sec = 0;
+            TIME_HILOGI(TIME_MODULE_SERVICE, "second: %{public}lld, nanosecond: %{public}ld",
+                        new_value.it_value.tv_sec, new_value.it_value.tv_nsec);
+            int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
+            if (ret < 0) {
+                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error");
+                close(tmfd);
+            }
+            resultSet->Close();
+            return;
+        }
+    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
+    resultSet->Close();
 }
 } // namespace MiscServices
 } // namespace OHOS

@@ -69,25 +69,22 @@ constexpr const char *CREATE_TIME_TIMER_DROP_ON_REBOOT = "CREATE TABLE IF NOT EX
                                                          "state INTEGER, "
                                                          "triggerTime INTEGER)";
 
+int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
+int64_t GetLong(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
+std::string GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
+
 class TimeDatabase {
 public:
     TimeDatabase();
     static TimeDatabase &GetInstance();
-    bool Recover(std::shared_ptr<TimerManager> timerManagerHandler);
     bool Insert(const std::string &table, const OHOS::NativeRdb::ValuesBucket &insertValues);
     bool Update(const OHOS::NativeRdb::ValuesBucket values, const OHOS::NativeRdb::AbsRdbPredicates &predicates);
     std::shared_ptr<OHOS::NativeRdb::ResultSet> Query(
         const OHOS::NativeRdb::AbsRdbPredicates &predicates, const std::vector<std::string> &columns);
     bool Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates);
     void ClearDropOnReboot();
-    void SetAutoBoot();
-    int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
-    int64_t GetLong(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
-    std::string GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
 
 private:
-    void InnerRecover(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet,
-                       std::shared_ptr<TimerManager> timerManagerHandler);
     std::shared_ptr<OHOS::NativeRdb::RdbStore> store_;
 };
 

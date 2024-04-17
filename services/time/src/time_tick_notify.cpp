@@ -67,7 +67,7 @@ void TimeTickNotify::Callback()
     RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
     timerId_ = timer_.Register(callback, nextTriggerTime_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime_);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime_);
 }
 
 void TimeTickNotify::PowerCallback()
@@ -90,9 +90,7 @@ void TimeTickNotify::RefreshNextTriggerTime()
 
 void TimeTickNotify::Stop()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     timer_.Shutdown();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
 uint64_t TimeTickNotify::GetMillisecondsFromUTC(uint64_t UTCtimeMicro)

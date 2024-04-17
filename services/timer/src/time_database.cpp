@@ -12,13 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <sys/timerfd.h>
-
 #include "time_database.h"
 #include "time_hilog.h"
 #include "time_common.h"
-#include "time_system_ability.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -39,86 +35,25 @@ TimeDatabase &TimeDatabase::GetInstance()
     return timeDatabase;
 }
 
-int TimeDatabase::GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
+int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
 {
     int value = 0;
     resultSet->GetInt(line, value);
     return value;
 }
 
-int64_t TimeDatabase::GetLong(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
+int64_t GetLong(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
 {
     int64_t value = 0;
     resultSet->GetLong(line, value);
     return value;
 }
 
-std::string TimeDatabase::GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
+std::string GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
 {
     std::string value = "";
     resultSet->GetString(line, value);
     return value;
-}
-
-void TimeDatabase::InnerRecover(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet,
-                                std::shared_ptr<TimerManager> timerManagerHandler)
-{
-    do {
-        auto timerId = static_cast<uint64_t>(GetLong(resultSet, 0));
-        auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
-            // Line 0 is 'timerId'
-            timerId,
-            // Line 1 is 'type'
-            GetInt(resultSet, 1),
-            // Line 3 is 'windowLength'
-            static_cast<uint64_t>(GetLong(resultSet, 3)),
-            // Line 4 is 'interval'
-            static_cast<uint64_t>(GetLong(resultSet, 4)),
-            // Line 2 is 'flag'
-            GetInt(resultSet, 2),
-            // Callback can't recover.
-            nullptr,
-            // Line 7 is 'wantAgent'
-            OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(resultSet, 7)),
-            // Line 5 is 'uid'
-            GetInt(resultSet, 5),
-            // Line 6 is 'bundleName'
-            GetString(resultSet, 6)
-        });
-        timerManagerHandler->ReCreateTimer(timerId, timerInfo);
-        // Line 8 is 'state'
-        auto state = static_cast<uint8_t>(GetInt(resultSet, 8));
-        if (state == 1) {
-            // Line 9 is 'triggerTime'
-            auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
-            timerManagerHandler->StartTimer(timerId, triggerTime);
-        }
-    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
-    resultSet->Close();
-}
-
-bool TimeDatabase::Recover(std::shared_ptr<TimerManager> timerManagerHandler)
-{
-    OHOS::NativeRdb::RdbPredicates holdRdbPredicates("hold_on_reboot");
-    auto holdResultSet = Query(
-        holdRdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
-        "bundleName", "wantAgent", "state", "triggerTime"});
-    if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result set is nullptr or go to first row failed");
-    } else {
-        InnerRecover(holdResultSet, timerManagerHandler);
-    }
-
-    OHOS::NativeRdb::RdbPredicates dropRdbPredicates("drop_on_reboot");
-    auto dropResultSet = Query(
-        dropRdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
-        "bundleName", "wantAgent", "state", "triggerTime"});
-    if (dropResultSet == nullptr || dropResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result set is nullptr or go to first row failed");
-    } else {
-        InnerRecover(dropResultSet, timerManagerHandler);
-    }
-    return true;
 }
 
 bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::ValuesBucket &insertValues)
@@ -192,54 +127,6 @@ void TimeDatabase::ClearDropOnReboot()
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Clears drop_on_reboot table failed");
     }
-}
-
-void TimeDatabase::SetAutoBoot()
-{
-    // Find the most recent trigger time to boot on.
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Find the most recent trigger time");
-    if (store_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
-        return;
-    }
-    OHOS::NativeRdb::RdbPredicates holdRdbPredicates("hold_on_reboot");
-    holdRdbPredicates.EqualTo("state", 1)->OrderByDesc("triggerTime");
-    auto resultSet = Query(holdRdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
-        "bundleName", "wantAgent", "state", "triggerTime"});
-    if (resultSet == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Find the most recent trigger time failed");
-        return;
-    }
-    do {
-        auto bundleName = GetString(resultSet, 6);
-        auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
-        int64_t currentTime = 0;
-        TimeSystemAbility::GetInstance()->GetWallTimeMs(currentTime);
-        if (triggerTime < static_cast<uint64_t>(currentTime)) {
-            continue;
-        }
-        if (bundleName == NEED_RECOVER_ON_REBOOT) {
-            int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
-            if (tmfd < 0) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error");
-            }
-
-            struct itimerspec new_value;
-            std::chrono::nanoseconds nsec(triggerTime * MILLISECOND_TO_NANO);
-            auto second = std::chrono::duration_cast<std::chrono::seconds>(nsec);
-            new_value.it_value.tv_sec = second.count();
-            new_value.it_value.tv_nsec = (nsec - second).count();
-            new_value.it_interval.tv_sec = 0;
-            int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
-            if (ret < 0) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error");
-                close(tmfd);
-            }
-            resultSet->Close();
-            return;
-        }
-    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
-    resultSet->Close();
 }
 
 int TimeDBCreateTables(OHOS::NativeRdb::RdbStore &store)

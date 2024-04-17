@@ -41,7 +41,6 @@ NtpTrustedTime &NtpTrustedTime::GetInstance()
 
 bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     SNTPClient client;
     for (int i = 0; i < RETRY_TIMES; i++) {
         if (client.RequestTime(ntpServer)) {
@@ -60,12 +59,10 @@ bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
 
 int64_t NtpTrustedTime::CurrentTimeMillis()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     if (mTimeResult == nullptr) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "Missing authoritative time source");
         return INVALID_MILLIS;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return mTimeResult->CurrentTimeMillis();
 }
 
