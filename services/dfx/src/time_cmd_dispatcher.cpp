@@ -47,6 +47,9 @@ void TimeCmdDispatcher::RegisterCommand(std::shared_ptr<TimeCmdParse> &cmd)
 std::string TimeCmdDispatcher::getCmdTitle(int fd, const std::vector<std::string> &args)
 {
     std::string formatTitle;
+    if (args.size() == 0) {
+        return formatTitle;
+    }
     for (unsigned long i = 0; i < args.size() - 1; i++) {
         formatTitle += args.at(i);
         formatTitle += " ";

@@ -33,9 +33,15 @@ void TimeCmdParse::DoAction(int fd, const std::vector<std::string> &input)
 std::string TimeCmdParse::GetOption()
 {
     std::string formatTitle;
+    if (format.size() == 0) {
+        return formatTitle;
+    }
     for (unsigned long i = 0; i < format.size() - 1; i++) {
         formatTitle += format.at(i);
         formatTitle += " ";
+    }
+    if (formatTitle.length() == 0) {
+        return formatTitle;
     }
     return formatTitle.substr(0, formatTitle.length() - 1);
 }

@@ -742,8 +742,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
     }
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
-            StatisticReporter(IPCSkeleton::GetCallingPid(), timer->uid, timer->bundleName, wakeupNums, timer->type,
-                              timer->whenElapsed.time_since_epoch().count(), timer->repeatInterval.count());
+            StatisticReporter(IPCSkeleton::GetCallingPid(), wakeupNums, timer);
         }
         bool flag = timer->type == ITimerManager::TimerType::RTC_WAKEUP ||
              timer->type == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP;
@@ -856,7 +855,7 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval)
             for (unsigned int i = 0; i < n; i++) {
                 auto timer = batch->Get(i);
                 ReCalcuOriWhenElapsed(timer, nowElapsed);
-                isChanged |= adjustTimer(timer);
+                isChanged = isChanged || adjustTimer(timer);
             }
         }
         if (isChanged) {

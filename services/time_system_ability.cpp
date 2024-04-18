@@ -538,7 +538,11 @@ void TimeSystemAbility::DumpAllTimeInfo(int fd, const std::vector<std::string> &
     struct tm timestr{};
     char date_time[64];
     if (GetTimeByClockId(CLOCK_BOOTTIME, ts)) {
-        strftime(date_time, sizeof(date_time), "%Y-%m-%d %H:%M:%S", localtime_r(&ts.tv_sec, &timestr));
+        auto localTime = localtime_r(&ts.tv_sec, &timestr);
+        if (localTime == nullptr) {
+            return;
+        }
+        strftime(date_time, sizeof(date_time), "%Y-%m-%d %H:%M:%S", localTime);
         dprintf(fd, " * date time = %s\n", date_time);
     } else {
         dprintf(fd, " * dump date time error.\n");
