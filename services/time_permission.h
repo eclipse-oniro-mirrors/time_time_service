@@ -26,8 +26,8 @@ namespace OHOS {
 namespace MiscServices {
 class TimePermission {
 public:
-    static const std::string SET_TIME;
-    static const std::string SET_TIME_ZONE;
+    static const std::string setTime;
+    static const std::string setTimeZone;
 
     static bool CheckCallingPermission(const std::string &permissionName);
     static bool CheckProxyCallingPermission();

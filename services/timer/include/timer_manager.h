@@ -158,7 +158,7 @@ private:
     bool adjustPolicy_ = false;
     uint32_t adjustInterval_ = 0;
     #ifdef POWER_MANAGER_ENABLE
-    uint32_t count_;
+    uint32_t count_ = 0;
     std::mutex countLock_;
     std::shared_ptr<PowerMgr::RunningLock> runningLock_;
     int64_t lockExpiredTime_ = 0;

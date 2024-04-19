@@ -93,7 +93,7 @@ int32_t TimeServiceStub::OnSetTime(MessageParcel &data, MessageParcel &reply)
             return E_TIME_NOT_SYSTEM_APP;
         }
     }
-    if (!TimePermission::CheckCallingPermission(TimePermission::SET_TIME)) {
+    if (!TimePermission::CheckCallingPermission(TimePermission::setTime)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
@@ -113,7 +113,7 @@ int32_t TimeServiceStub::OnSetTimeZone(MessageParcel &data, MessageParcel &reply
             return E_TIME_NOT_SYSTEM_APP;
         }
     }
-    if (!TimePermission::CheckCallingPermission(TimePermission::SET_TIME_ZONE)) {
+    if (!TimePermission::CheckCallingPermission(TimePermission::setTimeZone)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
@@ -400,7 +400,7 @@ int32_t TimeServiceStub::OnSetTimerExemption(MessageParcel &data, MessageParcel 
     if (size > MAX_EXEMPTION_SIZE) {
         return E_TIME_PARAMETERS_INVALID;
     }
-    for (int32_t i = 0; i < size; ++i) {
+    for (uint32_t i = 0; i < size; ++i) {
         std::string name;
         if (!data.ReadString(name)) {
             return E_TIME_READ_PARCEL_ERROR;

@@ -14,7 +14,6 @@
 */
 
 #include "time_zone_info.h"
-
 #include "ipc_skeleton.h"
 #include "time_file_utils.h"
 
@@ -87,6 +86,10 @@ bool TimeZoneInfo::SetTimezoneToKernel()
     time_t t = time(nullptr);
     struct tm *localTime = localtime(&t);
     struct timezone tz {};
+    if (localTime == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "localtime is nullptr errornum: %{public}s.", strerror(errno));
+        return false;
+    }
     tz.tz_minuteswest = -localTime->tm_gmtoff / HOUR_TO_MIN;
     tz.tz_dsttime = 0;
     int result = settimeofday(nullptr, &tz);
