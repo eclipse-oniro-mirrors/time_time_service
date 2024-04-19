@@ -35,6 +35,7 @@ public:
     const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
     const uint32_t flags;
     const int uid;
+    const int pid;
 
     uint64_t count {};
     std::chrono::milliseconds when;
@@ -59,6 +60,7 @@ public:
         std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
         uint32_t flags,
         int uid,
+        int pid,
         const std::string &bundleName);
     virtual ~TimerInfo() = default;
     bool operator==(const TimerInfo &other) const;

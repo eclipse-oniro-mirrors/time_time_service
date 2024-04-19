@@ -362,6 +362,18 @@ public:
      * @return true on success, false on failure.
      */
     TIME_API bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger);
+    
+    /**
+     * @brief ProxyTimer
+     *
+     * Wake up all timers for provided pid by proxy.
+     *
+     * @param pid the pid.
+     * @param true if set proxy, false if remove proxy.
+     * @param true if need retrigger, false if not.
+     * @return true on success, false on failure.
+     */
+    TIME_API bool ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger);
 
     /**
      * @brief AdjustTimer
