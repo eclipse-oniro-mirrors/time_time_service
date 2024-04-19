@@ -54,6 +54,7 @@
           "//base/time/time_service/framework/js/napi/system_time:systemtime",
           "//base/time/time_service/framework/js/napi/system_timer:systemtimer",
           "//base/time/time_service/framework/js/napi/system_date_time:systemdatetime",
+          "//base/time/time_service/framework/cj:cj_system_date_time_ffi",
           "//base/time/time_service/interfaces/inner_api:time_client"
         ],
         "service_group":[
