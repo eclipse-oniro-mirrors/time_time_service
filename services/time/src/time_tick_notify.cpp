@@ -53,37 +53,41 @@ void TimeTickNotify::Init()
         return;
     }
     auto callback = [this]() { this->Callback(); };
-    RefreshNextTriggerTime();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify triggertime: %{public}" PRId64 "", nextTriggerTime_);
-    timerId_ = timer_.Register(callback, nextTriggerTime_);
+    uint64_t nextTriggerTime = RefreshNextTriggerTime();
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify triggertime: %{public}" PRId64 "", nextTriggerTime);
+    timerId_ = timer_.Register(callback, nextTriggerTime);
     TIME_HILOGD(TIME_MODULE_SERVICE, "Tick timer ID: %{public}d", timerId_);
 }
 
 void TimeTickNotify::Callback()
 {
-    auto currentTime = steady_clock::now().time_since_epoch().count();
-    TimeServiceNotify::GetInstance().PublishTimeTickEvents(currentTime);
     timer_.Unregister(timerId_);
-    RefreshNextTriggerTime();
+    uint64_t nextTriggerTime = RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
-    timerId_ = timer_.Register(callback, nextTriggerTime_);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime_);
+    timerId_ = timer_.Register(callback, nextTriggerTime);
+    if (nextTriggerTime < MICRO_TO_MILESECOND || nextTriggerTime > (MINUTE_TO_MILLISECOND - MICRO_TO_MILESECOND)) {
+        auto currentTime = steady_clock::now().time_since_epoch().count();
+        TimeServiceNotify::GetInstance().PublishTimeTickEvents(currentTime);
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime);
 }
 
 void TimeTickNotify::PowerCallback()
 {
     timer_.Unregister(timerId_);
-    RefreshNextTriggerTime();
+    uint64_t nextTriggerTime = RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
-    timerId_ = timer_.Register(callback, nextTriggerTime_);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime_);
+    timerId_ = timer_.Register(callback, nextTriggerTime);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime);
 }
-void TimeTickNotify::RefreshNextTriggerTime()
+
+uint64_t TimeTickNotify::RefreshNextTriggerTime()
 {
     auto UTCTimeMicro = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Time micro: %{public}" PRId64 "", UTCtimeMicro);
-    auto timeMilliseconds = GetMillisecondsFromUTC(UTCTimeMicro);
-    nextTriggerTime_ = MINUTE_TO_MILLISECOND - timeMilliseconds;
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Time micro: %{public}" PRId64 "", UTCTimeMicro);
+    auto timeMilliseconds = (UTCTimeMicro / MICRO_TO_MILESECOND) % MINUTE_TO_MILLISECOND;
+    uint64_t nextTriggerTime = MINUTE_TO_MILLISECOND - timeMilliseconds;
+    return nextTriggerTime;
 }
 
 void TimeTickNotify::Stop()
@@ -91,12 +95,6 @@ void TimeTickNotify::Stop()
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     timer_.Shutdown();
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-}
-
-uint64_t TimeTickNotify::GetMillisecondsFromUTC(uint64_t UTCtimeMicro)
-{
-    auto milliseconds = (UTCtimeMicro / MICRO_TO_MILESECOND) % MINUTE_TO_MILLISECOND;
-    return milliseconds;
 }
 } // namespace MiscServices
 } // namespace OHOS
