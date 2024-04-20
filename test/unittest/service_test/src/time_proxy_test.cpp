@@ -251,7 +251,7 @@ HWTEST_F(TimeProxyTest, PidTimerMap002, TestSize.Level1)
     int pid = 1000;
     uint64_t timerId = 1000;
 
-    /* 清理pidTimersMap_，保证测试前pidTimersMap_内无其他测试中曾记录的pid影响*/
+    /* 清理pidTimersMap_，保证测试前pidTimersMap_内无其他测试中曾记录的pid影响 */
     TimerProxy::GetInstance().pidTimersMap_.clear();
 
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
@@ -571,6 +571,10 @@ HWTEST_F(TimeProxyTest, PidProxyTimer002, TestSize.Level1)
     std::set<int> pidList;
     pidList.insert(pid);
     uint64_t timerId = 1000;
+
+    /* 清理pidTimersMap_，保证测试前pidTimersMap_内无其他测试中曾记录的pid影响 */
+    TimerProxy::GetInstance().pidTimersMap_.clear();
+
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
@@ -618,7 +622,6 @@ HWTEST_F(TimeProxyTest, PidProxyTimer002, TestSize.Level1)
     EXPECT_NE(it6, it5->second.end());
     EXPECT_EQ(it6->second->whenElapsed, time);
     timerManagerHandler_->DestroyTimer(timerId);
-    usleep(BLOCK_TEST_TIME);
 }
 
 /**
