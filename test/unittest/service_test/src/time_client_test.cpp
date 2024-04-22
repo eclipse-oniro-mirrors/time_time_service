@@ -769,8 +769,151 @@ HWTEST_F(TimeClientTest, StartTimer008, TestSize.Level1)
     TimeServiceClient::GetInstance()->StartTimerV9(timerId2, triggerTime2 + 2000);
     pid_t uid2 = IPCSkeleton::GetCallingUid();
     TimeServiceClient::GetInstance()->ProxyTimer(uid2, true, true);
-    
+
     sleep(4);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
+    TimeServiceClient::GetInstance()->ResetAllProxy();
+    EXPECT_GT(g_data3, 0);
+    EXPECT_GT(g_data4, 0);
+}
+
+/**
+* @tc.name: StartTimer009
+* @tc.desc: Start a system time, then use the pid of this timer to start a proxy.
+            Cancel the proxy by this pid.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, StartTimer009, TestSize.Level1)
+{
+    AddPermission();
+    g_data1 = 0;
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(4);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    uint64_t ret = 0;
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, ret);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 2000);
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    std::set<int> pidList;
+    pidList.insert(pid);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
+    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
+    sleep(2);
+    TimeServiceClient::GetInstance()->ProxyTimer(pidList, false, true);
+    EXPECT_GT(g_data1, 0);
+}
+
+/**
+* @tc.name: StartTimer010
+* @tc.desc: Start system timer, then use the pid of this timer to start a proxy.
+            Cancel all the proxy.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, StartTimer010, TestSize.Level1)
+{
+    AddPermission();
+    g_data1 = 0;
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(1<<2);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    uint64_t ret = 0;
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, ret);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 2000);
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    std::set<int> pidList;
+    pidList.insert(pid);
+    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
+    sleep(2);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
+    TimeServiceClient::GetInstance()->ResetAllProxy();
+    EXPECT_GT(g_data1, 0);
+}
+
+/**
+* @tc.name: StartTimer011
+* @tc.desc: Start system timer, then use the pid of this timer to start a proxy.
+            Cancel all the proxy.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, StartTimer011, TestSize.Level1)
+{
+    AddPermission();
+    g_data3 = 0;
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(1<<2);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback3);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    uint64_t ret = 0;
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, ret);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 2000);
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    std::set<int> pidList;
+    pidList.insert(pid);
+    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
+    sleep(4);
+    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
+    TimeServiceClient::GetInstance()->ResetAllProxy();
+    EXPECT_GT(g_data3, 0);
+    EXPECT_GT(g_data4, 0);
+}
+
+/**
+* @tc.name: StartTimer012
+* @tc.desc: Start two system timers, record two pids, then start a proxy by two pids.
+            Cancel all the proxy.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, StartTimer012, TestSize.Level1)
+{
+    AddPermission();
+    g_data3 = 0;
+    g_data4 = 0;
+    uint64_t timerId1;
+    auto timerInfo1 = std::make_shared<TimerInfoTest>();
+    timerInfo1->SetType(1<<2);
+    timerInfo1->SetRepeat(false);
+    timerInfo1->SetCallbackInfo(TimeOutCallback3);
+    auto errCode1 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo1, timerId1);
+    uint64_t ret1 = 0;
+    EXPECT_TRUE(errCode1 == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, ret1);
+    auto triggerTime1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + 2000);
+    pid_t pid1 = IPCSkeleton::GetCallingPid();
+
+    uint64_t timerId2;
+    auto timerInfo2 = std::make_shared<TimerInfoTest>();
+    timerInfo2->SetType(1<<2);
+    timerInfo2->SetRepeat(false);
+    timerInfo2->SetCallbackInfo(TimeOutCallback4);
+    auto errCode2 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo2, timerId2);
+    uint64_t ret2 = 0;
+    EXPECT_TRUE(errCode2 == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, ret2);
+    auto triggerTime2 = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId2, triggerTime2 + 2000);
+    pid_t pid2 = IPCSkeleton::GetCallingUid();
+
+    std::set<int> pidList;
+    pidList.insert(pid1);
+    pidList.insert(pid2);
+    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
+    
+    sleep(5);
     TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
     EXPECT_GT(g_data3, 0);

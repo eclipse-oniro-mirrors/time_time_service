@@ -54,6 +54,7 @@ private:
     int32_t OnNetworkTimeStatusOff(MessageParcel &data, MessageParcel &reply);
     int32_t OnNetworkTimeStatusOn(MessageParcel &data, MessageParcel &reply);
     int32_t OnTimerProxy(MessageParcel &data, MessageParcel &reply);
+    int32_t OnPidTimerProxy(MessageParcel &data, MessageParcel &reply);
     int32_t OnAdjustTimer(MessageParcel &data, MessageParcel &reply);
     int32_t OnSetTimerExemption(MessageParcel &data, MessageParcel &reply);
     int32_t OnAllProxyReset(MessageParcel &data, MessageParcel &reply);

@@ -48,6 +48,7 @@ public:
                         std::function<void (const uint64_t)> callback,
                         std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                         int uid,
+                        int pid,
                         uint64_t &timerId,
                         DatabaseType type) override;
     void ReCreateTimer(uint64_t timerId, std::shared_ptr<TimerEntry> timerInfo);
@@ -55,6 +56,7 @@ public:
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
+    bool ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger) override;
     bool AdjustTimer(bool isAdjust, uint32_t interval) override;
     void SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
@@ -82,6 +84,7 @@ private:
                     std::function<void (const uint64_t)> callback,
                     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                     int uid,
+                    int pid,
                     const std::string &bundleName);
     void SetHandlerLocked(uint64_t id,
                           int type,
@@ -94,6 +97,7 @@ private:
                           const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                           uint32_t flags,
                           uint64_t callingUid,
+                          uint64_t callingPid,
                           const std::string &bundleName);
     void RemoveHandler(uint64_t id);
     void RemoveLocked(uint64_t id);

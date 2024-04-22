@@ -48,6 +48,7 @@ using namespace std::chrono;
 using namespace OHOS::Security::AccessToken;
 
 const int32_t RESERVED_UID = 99999;
+std::set<int> RESERVED_PIDLIST = {1111, 2222};
 const std::string NTP_CN_SERVER = "ntp.aliyun.com";
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NETWORK_TIME_STATUS_ON = "ON";
@@ -225,6 +226,57 @@ HWTEST_F(TimeServiceTest, ProxyTimer004, TestSize.Level0)
     auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, true, false);
     EXPECT_TRUE(ret);
     ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, false, false);
+    EXPECT_TRUE(ret);
+}
+
+/**
+* @tc.name: PidProxyTimer001.
+* @tc.desc: proxy timer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, PidProxyTimer001, TestSize.Level0)
+{
+    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, true, true);
+    EXPECT_TRUE(ret);
+    ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, false, true);
+    EXPECT_TRUE(ret);
+}
+
+/**
+* @tc.name: PidProxyTimer002.
+* @tc.desc: proxy timer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, PidProxyTimer002, TestSize.Level0)
+{
+    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, true, true);
+    EXPECT_TRUE(ret);
+    ret = TimeServiceClient::GetInstance()->ResetAllProxy();
+    EXPECT_TRUE(ret);
+}
+
+/**
+* @tc.name: PidProxyTimer003.
+* @tc.desc: proxy timer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, PidProxyTimer003, TestSize.Level0)
+{
+    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, false, true);
+    EXPECT_FALSE(ret);
+}
+
+/**
+* @tc.name: PidProxyTimer004.
+* @tc.desc: proxy timer.
+* @tc.type: FUNC
+* @tc.require: SR000H0GQ6 AR000H2VTQ
+*/
+HWTEST_F(TimeServiceTest, PidProxyTimer004, TestSize.Level0)
+{
+    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, true, false);
+    EXPECT_TRUE(ret);
+    ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, false, false);
     EXPECT_TRUE(ret);
 }
 
