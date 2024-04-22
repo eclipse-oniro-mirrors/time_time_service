@@ -81,8 +81,10 @@ HWTEST_F(TimeProxyTest, UidTimerMap001, TestSize.Level1)
     paras.flag = 0;
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
+    int pid = 1000;
     uint64_t timerId = 1000;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId, NOT_STORE);
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                    wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
 
@@ -122,8 +124,10 @@ HWTEST_F(TimeProxyTest, UidTimerMap002, TestSize.Level1)
     paras.flag = 0;
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
+    int pid = 1000;
     uint64_t timerId = 1000;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId, NOT_STORE);
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                    wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
 
@@ -158,8 +162,11 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
     paras.flag = 0;
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
+    int pid = 1000;
     uint64_t timerId = 1000;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId, NOT_STORE);
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                    wantAgent, uid, pid, timerId, NOT_STORE);
+    
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
 
@@ -180,6 +187,133 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
     EXPECT_EQ(retTrigger, true);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().uidTimersMap_.size(), (const unsigned int)0);
+    timerManagerHandler_->DestroyTimer(timerId);
+}
+
+/**
+* @tc.name: PidTimerMap001
+* @tc.desc: 启动timer时pid timer map数据更新测试
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, PidTimerMap001, TestSize.Level1)
+{
+    /* 创建一个timer，可以创建成功 */
+    TimerPara paras;
+    paras.timerType = 2;
+    paras.windowLength = -1;
+    paras.interval = 0;
+    paras.flag = 0;
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int32_t uid = 2000;
+    int pid = 1001;
+    uint64_t timerId = 1000;
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                    wantAgent, uid, pid, timerId, NOT_STORE);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+
+    /* 启动一个timer， 可以启动成功，可以记录到PidTimerMap_中 */
+    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
+    uint64_t triggerTime = 10000000 + nowElapsed;
+    ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_.size(), (const unsigned int)1);
+    auto itPidTimerMap = TimerProxy::GetInstance().pidTimersMap_.find(pid);
+    EXPECT_NE(itPidTimerMap, TimerProxy::GetInstance().pidTimersMap_.end());
+    EXPECT_EQ(itPidTimerMap->second.size(), (const unsigned int)1);
+    auto itTimerId = itPidTimerMap->second.find(timerId);
+    EXPECT_NE(itTimerId, itPidTimerMap->second.end());
+    EXPECT_NE(itTimerId->second, nullptr);
+
+    /* 清理pidTimerMap_，可以清理成功 */
+    TimerProxy::GetInstance().pidTimersMap_.clear();
+    EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_.size(), (const unsigned int)0);
+    timerManagerHandler_->DestroyTimer(timerId);
+    usleep(BLOCK_TEST_TIME);
+}
+
+/**
+* @tc.name: PidTimerMap002
+* @tc.desc: 停止timer时pid timer map数据更新测试
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, PidTimerMap002, TestSize.Level1)
+{
+    /* 创建一个timer，可以创建成功 */
+    TimerPara paras;
+    paras.timerType = 2;
+    paras.windowLength = -1;
+    paras.interval = 0;
+    paras.flag = 0;
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int32_t uid = 2000;
+    int pid = 1000;
+    uint64_t timerId = 1000;
+
+    /* 清理pidTimersMap_，保证测试前pidTimersMap_内无其他测试中曾记录的pid影响 */
+    TimerProxy::GetInstance().pidTimersMap_.clear();
+
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                    wantAgent, uid, pid, timerId, NOT_STORE);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+
+    /* 启动一个timer， 可以启动成功，可以记录到pidTimerMap_中 */
+    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
+    uint64_t triggerTime = 10000000 + nowElapsed;
+    ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_.size(), (const unsigned int)1);
+
+    /* 停止一个timer，可以停止成功，可以从pidTimerMap_中删除 */
+    ret = timerManagerHandler_->StopTimerInner(timerId, true);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_.size(), (const unsigned int)0);
+    timerManagerHandler_->DestroyTimer(timerId);
+}
+
+/**
+* @tc.name: PidTimerMap003
+* @tc.desc: 触发timer时pid timer map数据更新测试
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, PidTimerMap003, TestSize.Level1)
+{
+    /* 创建一个timer，可以创建成功 */
+    TimerPara paras;
+    paras.timerType = 2;
+    paras.windowLength = -1;
+    paras.interval = 0;
+    paras.flag = 0;
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int32_t uid = 2000;
+    int pid = 1002;
+    uint64_t timerId = 1000;
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                    wantAgent, uid, pid, timerId, NOT_STORE);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+
+    /* 启动一个timer， 可以启动成功，可以记录到pidTimerMap_中 */
+    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
+    uint64_t triggerTime = 10000000 + nowElapsed;
+    ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_.size(), (const unsigned int)1);
+
+    /* 触发一个timer，可以触发成功，可以从pidTimerMap_中删除 */
+    std::vector<std::shared_ptr<TimerInfo>> triggerList;
+    std::shared_ptr<Batch> batch = timerManagerHandler_->alarmBatches_.at(0);
+    std::chrono::steady_clock::time_point tpRpoch(nanoseconds(1000000000));
+    batch->start_ = tpRpoch;
+    auto retTrigger = timerManagerHandler_->TriggerTimersLocked(triggerList, timerManagerHandler_->GetBootTimeNs());
+    EXPECT_EQ(retTrigger, true);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_.size(), (const unsigned int)0);
     timerManagerHandler_->DestroyTimer(timerId);
 }
 
@@ -225,8 +359,10 @@ HWTEST_F(TimeProxyTest, ProxyTimer002, TestSize.Level1)
     paras.flag = 0;
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
+    int pid = 1000;
     uint64_t timerId = 1000;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId, NOT_STORE);
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                    wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
 
@@ -352,8 +488,10 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
     TimerPara paras{.timerType = 2, .windowLength = 0, .interval = 0, .flag = 0};
     auto wantAgent = std::make_shared<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
+    int32_t pid = 1000;
     uint64_t timerId = 1000;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {}, wantAgent, uid, timerId, NOT_STORE);
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
 
@@ -384,6 +522,142 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
         }
     }
     EXPECT_TRUE(isExemption);
+}
+
+/**
+* @tc.name: PidProxyTimer001
+* @tc.desc: 代理解代理基本功能测试
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, PidProxyTimer001, TestSize.Level1)
+{
+    /* 代理一个timer，可以代理成功，可以记录到proxyUid_中 */
+    int pid = 1003;
+    std::set<int> pidList;
+    pidList.insert(pid);
+    bool isProxy = true;
+    bool needRetrigger = true;
+    bool ret = timerManagerHandler_->ProxyTimer(pidList, isProxy, needRetrigger);
+    EXPECT_TRUE(ret);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
+    auto it = TimerProxy::GetInstance().proxyPids_.find(pid);
+    EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
+    EXPECT_EQ(it->second.size(), (const unsigned int)0);
+
+    /* 解代理一个timer，可以解代理成功，可以从proxyPid_中删除 */
+    isProxy = false;
+    ret = timerManagerHandler_->ProxyTimer(pidList, isProxy, needRetrigger);
+    EXPECT_TRUE(ret);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)0);
+}
+
+/**
+* @tc.name: PidProxyTimer002
+* @tc.desc: 代理解代理时proxy timer map数据更新测试
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, PidProxyTimer002, TestSize.Level1)
+{
+    TimerPara paras;
+    paras.timerType = 2;
+    paras.windowLength = -1;
+    paras.interval = 0;
+    paras.flag = 0;
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int32_t uid = 2000;
+    int pid = 1004;
+    std::set<int> pidList;
+    pidList.insert(pid);
+    uint64_t timerId = 1000;
+
+    /* 清理pidTimersMap_，保证测试前pidTimersMap_内无其他测试中曾记录的pid影响 */
+    TimerProxy::GetInstance().pidTimersMap_.clear();
+
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                    wantAgent, uid, pid, timerId, NOT_STORE);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    
+    /* 启动一个timer， 可以启动成功，可以记录到pidTimerMap_中 */
+    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
+    uint64_t triggerTime = 10000000 + nowElapsed;
+    ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_.size(), (const unsigned int)1);
+    std::chrono::steady_clock::time_point time = TimerProxy::GetInstance().pidTimersMap_[pid][timerId]->whenElapsed;
+
+    /* 代理一个timer，可以代理成功，可以记录到proxyPid_中 */
+    bool retProxy = timerManagerHandler_->ProxyTimer(pidList, true, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
+    auto it = TimerProxy::GetInstance().proxyPids_.find(pid);
+    EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
+    EXPECT_EQ(it->second.size(), (const unsigned int)1);
+
+    /* pidTimerMap_中的触发时间成功更新，proxyPid_中可以记录老的触发时间 */
+    it = TimerProxy::GetInstance().proxyPids_.find(pid);
+    auto it2 = it->second.find(timerId);
+    EXPECT_NE(it2, it->second.end());
+    EXPECT_EQ(it2->second, time);
+
+    auto it3 = TimerProxy::GetInstance().pidTimersMap_.find(pid);
+    EXPECT_NE(it3, TimerProxy::GetInstance().pidTimersMap_.end());
+    auto it4 = it3->second.find(timerId);
+    EXPECT_NE(it4, it3->second.end());
+    EXPECT_NE(it4->second->whenElapsed, time);
+
+    /* 解代理一个timer，可以解代理成功，可以更新proxyPid_表 */
+    ret = timerManagerHandler_->ProxyTimer(pidList, false, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)0);
+
+    /* pidTimerMap_中的触发时间被恢复回老的触发时间 */
+    auto it5 = TimerProxy::GetInstance().pidTimersMap_.find(pid);
+    EXPECT_NE(it5, TimerProxy::GetInstance().pidTimersMap_.end());
+    auto it6 = it5->second.find(timerId);
+    EXPECT_NE(it6, it5->second.end());
+    EXPECT_EQ(it6->second->whenElapsed, time);
+    timerManagerHandler_->DestroyTimer(timerId);
+}
+
+/**
+* @tc.name: PidProxyTimer003
+* @tc.desc: reset all proxy测试
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
+{
+    /* 代理三个timer，可以代理成功，可以记录到proxyPid_中 */
+    int pid1 = 2000;
+    std::set<int> pidList;
+    pidList.insert(pid1);
+
+    int pid2 = 3000;
+    pidList.insert(pid2);
+
+    int pid3 = 4000;
+    pidList.insert(pid3);
+
+    bool retProxy = timerManagerHandler_->ProxyTimer(pidList, true, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)3);
+    auto it = TimerProxy::GetInstance().proxyPids_.find(pid1);
+    EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
+    it = TimerProxy::GetInstance().proxyPids_.find(pid2);
+    EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
+    it = TimerProxy::GetInstance().proxyPids_.find(pid3);
+    EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
+    EXPECT_EQ(it->second.size(), (const unsigned int)0);
+
+    /* 可以正常reset，且map会清空 */
+    retProxy = timerManagerHandler_->ResetAllProxy();
+    EXPECT_TRUE(retProxy);
+    EXPECT_TRUE(TimerProxy::GetInstance().proxyPids_.empty());
 }
 
 }  // MiscServices

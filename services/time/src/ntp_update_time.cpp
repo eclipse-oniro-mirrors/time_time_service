@@ -148,6 +148,9 @@ std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
             break;
         }
         size_t end = ntpStr.find(',', start);
+        if (end < start) {
+            break;
+        }
         std::string temp = ntpStr.substr(start, end - start);
         if (temp.empty()) {
             ++start;
@@ -201,7 +204,8 @@ void NtpUpdateTime::SetSystemTime()
         isRequesting_ = false;
         return;
     }
-    if (curBootTime - NtpUpdateTime::GetInstance().GetNITZUpdateTime() <= TWO_SECONDS) {
+    uint64_t bootTime = static_cast<uint64_t>(curBootTime);
+    if (bootTime - NtpUpdateTime::GetInstance().GetNITZUpdateTime() <= TWO_SECONDS) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "nitz updated time");
         isRequesting_ = false;
         return;

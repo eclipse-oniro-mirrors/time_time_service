@@ -24,14 +24,13 @@ namespace {
 using HiSysEventNameSpace = OHOS::HiviewDFX::HiSysEvent;
 } // namespace
 
-void StatisticReporter(int32_t callerPid,
-                       int32_t callerUid,
-                       std::string bundleOrProcessName,
-                       int32_t size,
-                       int32_t type,
-                       int64_t triggerTime,
-                       uint64_t interval)
+void StatisticReporter(int32_t callerPid, int32_t size, std::shared_ptr<TimerInfo> timer)
 {
+    int32_t callerUid = timer->uid;
+    std::string bundleOrProcessName = timer->bundleName;
+    int32_t type = timer->type;
+    int64_t triggerTime = timer->whenElapsed.time_since_epoch().count();
+    uint64_t interval = timer->repeatInterval.count();
     int ret = HiSysEventWrite(HiSysEventNameSpace::Domain::TIME, "MISC_TIME_STATISTIC_REPORT",
         HiSysEventNameSpace::EventType::STATISTIC, "CALLER_PID", callerPid, "CALLER_UID", callerUid,
         "BUNDLE_OR_PROCESS_NAME", bundleOrProcessName, "TIMER_SIZE", size, "TIMER_TYPE", type,

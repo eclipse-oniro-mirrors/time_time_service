@@ -21,8 +21,8 @@
 
 namespace OHOS {
 namespace MiscServices {
-const std::string TimePermission::SET_TIME = "ohos.permission.SET_TIME";
-const std::string TimePermission::SET_TIME_ZONE = "ohos.permission.SET_TIME_ZONE";
+const std::string TimePermission::setTime = "ohos.permission.SET_TIME";
+const std::string TimePermission::setTimeZone = "ohos.permission.SET_TIME_ZONE";
 bool TimePermission::CheckCallingPermission(const std::string &permissionName)
 {
     if (permissionName.empty()) {

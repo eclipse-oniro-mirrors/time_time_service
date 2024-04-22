@@ -32,6 +32,7 @@ struct TimerEntry {
     std::function<void (const uint64_t)> callback;
     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
     int uid;
+    int pid;
     std::string bundleName;
 };
 
@@ -56,13 +57,14 @@ public:
     virtual int32_t CreateTimer(TimerPara &paras,
                                 std::function<void (const uint64_t)> callback,
                                 std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-                                int uid, uint64_t &timerId, DatabaseType type) = 0;
+                                int uid, int pid, uint64_t &timerId, DatabaseType type) = 0;
 
     virtual int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) = 0;
     virtual int32_t StopTimer(uint64_t timerId) = 0;
     virtual int32_t DestroyTimer(uint64_t timerId) = 0;
     virtual ~ITimerManager() = default;
     virtual bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) = 0;
+    virtual bool ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger) = 0;
     virtual bool AdjustTimer(bool isAdjust, uint32_t interval) = 0;
     virtual void SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption) = 0;
     virtual bool ResetAllProxy() = 0;

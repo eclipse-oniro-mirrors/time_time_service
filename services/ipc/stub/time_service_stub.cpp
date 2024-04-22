@@ -43,6 +43,7 @@ TimeServiceStub::TimeServiceStub()
     memberFuncMap_[TimeServiceIpcInterfaceCode::STOP_TIMER] = &TimeServiceStub::OnStopTimer;
     memberFuncMap_[TimeServiceIpcInterfaceCode::DESTROY_TIMER] = &TimeServiceStub::OnDestroyTimer;
     memberFuncMap_[TimeServiceIpcInterfaceCode::PROXY_TIMER] = &TimeServiceStub::OnTimerProxy;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::PID_PROXY_TIMER] = &TimeServiceStub::OnPidTimerProxy;
     memberFuncMap_[TimeServiceIpcInterfaceCode::ADJUST_TIMER] = &TimeServiceStub::OnAdjustTimer;
     memberFuncMap_[TimeServiceIpcInterfaceCode::SET_TIMER_EXEMPTION] = &TimeServiceStub::OnSetTimerExemption;
     memberFuncMap_[TimeServiceIpcInterfaceCode::RESET_ALL_PROXY] = &TimeServiceStub::OnAllProxyReset;
@@ -93,7 +94,7 @@ int32_t TimeServiceStub::OnSetTime(MessageParcel &data, MessageParcel &reply)
             return E_TIME_NOT_SYSTEM_APP;
         }
     }
-    if (!TimePermission::CheckCallingPermission(TimePermission::SET_TIME)) {
+    if (!TimePermission::CheckCallingPermission(TimePermission::setTime)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
@@ -113,7 +114,7 @@ int32_t TimeServiceStub::OnSetTimeZone(MessageParcel &data, MessageParcel &reply
             return E_TIME_NOT_SYSTEM_APP;
         }
     }
-    if (!TimePermission::CheckCallingPermission(TimePermission::SET_TIME_ZONE)) {
+    if (!TimePermission::CheckCallingPermission(TimePermission::setTimeZone)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
@@ -357,6 +358,32 @@ int32_t TimeServiceStub::OnTimerProxy(MessageParcel &data, MessageParcel &reply)
     return ERR_OK;
 }
 
+int32_t TimeServiceStub::OnPidTimerProxy(MessageParcel &data, MessageParcel &reply)
+{
+    auto pidListSize = data.ReadInt32();
+    std::set<int> pidList;
+    if (pidListSize == 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error pid list size.");
+        return E_TIME_READ_PARCEL_ERROR;
+    }
+    for (int i = 0; i < pidListSize; i++) {
+        auto pid = data.ReadInt32();
+        if (pid != 0) {
+            pidList.insert(pid);
+        }
+    }
+    if (pidList.size() == 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error pidList.");
+        return E_TIME_READ_PARCEL_ERROR;
+    }
+    auto isProxy = data.ReadBool();
+    auto needRetrigger = data.ReadBool();
+    if (!ProxyTimer(pidList, isProxy, needRetrigger)) {
+        return E_TIME_DEAL_FAILED;
+    }
+    return ERR_OK;
+}
+
 int32_t TimeServiceStub::OnAdjustTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "on timer adjust start.");
@@ -400,7 +427,7 @@ int32_t TimeServiceStub::OnSetTimerExemption(MessageParcel &data, MessageParcel 
     if (size > MAX_EXEMPTION_SIZE) {
         return E_TIME_PARAMETERS_INVALID;
     }
-    for (int32_t i = 0; i < size; ++i) {
+    for (uint32_t i = 0; i < size; ++i) {
         std::string name;
         if (!data.ReadString(name)) {
             return E_TIME_READ_PARCEL_ERROR;

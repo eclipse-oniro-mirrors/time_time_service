@@ -160,6 +160,11 @@ void TimeSystemAbility::InitDumpCmd()
         [this](int fd, const std::vector<std::string> &input) { DumpProxyTimerInfo(fd, input); });
     TimeCmdDispatcher::GetInstance().RegisterCommand(cmdProxyTimer);
 
+    auto cmdPidTimer = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-PidTimer", "-l" }),
+        "dump pid timer map.",
+        [this](int fd, const std::vector<std::string> &input) { DumpPidTimerMapInfo(fd, input); });
+    TimeCmdDispatcher::GetInstance().RegisterCommand(cmdPidTimer);
+
     auto cmdUidTimer = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-UidTimer", "-l" }),
         "dump uid timer map.",
         [this](int fd, const std::vector<std::string> &input) { DumpUidTimerMapInfo(fd, input); });
@@ -414,8 +419,10 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     if (timerOptions->wantAgent != nullptr) {
         type = DatabaseType::STORE;
     }
+    int uid = IPCSkeleton::GetCallingUid();
+    int pid = IPCSkeleton::GetCallingPid();
     return timerManagerHandler_->CreateTimer(paras, callbackFunc, timerOptions->wantAgent,
-                                             IPCSkeleton::GetCallingUid(), timerId, type);
+                                             uid, pid, timerId, type);
 }
 
 int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> callback,
@@ -429,7 +436,7 @@ int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(cons
             return E_TIME_NULLPTR;
         }
     }
-    return timerManagerHandler_->CreateTimer(paras, std::move(callback), nullptr, 0, timerId, NOT_STORE);
+    return timerManagerHandler_->CreateTimer(paras, std::move(callback), nullptr, 0, 0, timerId, NOT_STORE);
 }
 
 int32_t TimeSystemAbility::StartTimer(uint64_t timerId, uint64_t triggerTime)
@@ -564,7 +571,11 @@ void TimeSystemAbility::DumpAllTimeInfo(int fd, const std::vector<std::string> &
     struct tm timestr{};
     char date_time[64];
     if (GetTimeByClockId(CLOCK_BOOTTIME, ts)) {
-        strftime(date_time, sizeof(date_time), "%Y-%m-%d %H:%M:%S", localtime_r(&ts.tv_sec, &timestr));
+        auto localTime = localtime_r(&ts.tv_sec, &timestr);
+        if (localTime == nullptr) {
+            return;
+        }
+        strftime(date_time, sizeof(date_time), "%Y-%m-%d %H:%M:%S", localTime);
         dprintf(fd, " * date time = %s\n", date_time);
     } else {
         dprintf(fd, " * dump date time error.\n");
@@ -664,6 +675,14 @@ void TimeSystemAbility::DumpProxyDelayTime(int fd, const std::vector<std::string
 {
     dprintf(fd, "\n - dump proxy delay time:\n");
     TimerProxy::GetInstance().ShowProxyDelayTime(fd);
+}
+
+void TimeSystemAbility::DumpPidTimerMapInfo(int fd, const std::vector<std::string> &input)
+{
+    dprintf(fd, "\n - dump pid timer map:\n");
+    int64_t times;
+    GetBootTimeNs(times);
+    TimerProxy::GetInstance().ShowPidTimerMapInfo(fd, times);
 }
 
 void TimeSystemAbility::DumpAdjustTime(int fd, const std::vector<std::string> &input)
@@ -923,6 +942,23 @@ int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval)
     return E_TIME_OK;
 }
 
+bool TimeSystemAbility::ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger)
+{
+    if (!TimePermission::CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
+        return E_TIME_NO_PERMISSION;
+    }
+    
+    if (timerManagerHandler_ == nullptr) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "ProxyTimer manager nullptr.");
+        timerManagerHandler_ = TimerManager::Create();
+        if (timerManagerHandler_ == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Proxytimer manager init failed.");
+            return false;
+        }
+    }
+    return timerManagerHandler_->ProxyTimer(pidList, isProxy, needRetrigger);
+}
 
 int32_t TimeSystemAbility::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
 {
