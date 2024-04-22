@@ -687,6 +687,7 @@ void TimerProxy::ResetAllPidProxyWhenElapsed(const std::chrono::steady_clock::ti
 
 bool TimerProxy::ShowProxyTimerInfo(int fd, const int64_t now)
 {
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::lock_guard<std::mutex> lockProxy(proxyMutex_);
     dprintf(fd, "current time %lld\n", now);
     for (auto itProxyUids = proxyUids_.begin(); itProxyUids != proxyUids_.end(); ++itProxyUids) {
@@ -713,6 +714,7 @@ bool TimerProxy::ShowProxyTimerInfo(int fd, const int64_t now)
 
 bool TimerProxy::ShowUidTimerMapInfo(int fd, const int64_t now)
 {
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::lock_guard<std::mutex> lockProxy(uidTimersMutex_);
     dprintf(fd, "current time %lld\n", now);
     for (auto itTimerInfoMap = uidTimersMap_.begin(); itTimerInfoMap != uidTimersMap_.end(); ++itTimerInfoMap) {
@@ -723,6 +725,7 @@ bool TimerProxy::ShowUidTimerMapInfo(int fd, const int64_t now)
             dprintf(fd, "   * timer whenElapsed = %lld\n", itTimerInfo->second->whenElapsed.time_since_epoch().count());
         }
     }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
 
@@ -761,6 +764,7 @@ void TimerProxy::ShowAdjustTimerInfo(int fd)
 
 bool TimerProxy::SetProxyDelayTime(int fd, const int64_t proxyDelayTime)
 {
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     if (proxyDelayTime < 0) {
         dprintf(fd, "set proxy delay time err: %lld\n", proxyDelayTime);
         TIME_HILOGD(TIME_MODULE_SERVICE, "err.");
@@ -774,12 +778,15 @@ bool TimerProxy::SetProxyDelayTime(int fd, const int64_t proxyDelayTime)
     }
     dprintf(fd, "proxy delay time is set to %lld ms\n", proxyDelayTime_);
 
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
 
 bool TimerProxy::ShowProxyDelayTime(int fd)
 {
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     dprintf(fd, "proxy delay time: %lld ms\n", proxyDelayTime_);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
 

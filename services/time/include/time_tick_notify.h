@@ -31,11 +31,9 @@ public:
     void PowerCallback();
 
 private:
-    void RefreshNextTriggerTime();
-    uint64_t GetMillisecondsFromUTC(uint64_t UTCtimeNano);
+    uint64_t RefreshNextTriggerTime();
     Utils::Timer timer_;
     uint32_t timerId_;
-    uint64_t nextTriggerTime_;
 };
 } // namespace MiscServices
 } // namespace OHOS

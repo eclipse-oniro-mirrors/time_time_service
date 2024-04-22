@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef TIME_DATABASE_H
-#define TIME_DATABASE_H
+#ifndef TIMER_DATABASE_H
+#define TIMER_DATABASE_H
 
 #include "rdb_errno.h"
 #include "rdb_helper.h"
@@ -29,7 +29,7 @@
 namespace OHOS {
 namespace MiscServices {
 constexpr const char *DB_NAME = "/data/service/el1/public/database/time/time.db";
-constexpr const char *TIME_DATABASE_VERSION = "API12_5.0-release";
+constexpr const char *TIMER_DATABASE_VERSION = "API12_5.0-release";
 constexpr int DATABASE_OPEN_VERSION = 1;
 constexpr int CHECK_VERSION_FAILED = -1;
 constexpr int WITHOUT_VERSION_TABLE = 0;
@@ -37,6 +37,9 @@ constexpr int API12_5_0_RELEASE = 50;
 constexpr int INVALID_VERSION = -50;
 constexpr int64_t MILLISECOND_TO_NANO = 1000000;
 constexpr int CLOCK_POWEROFF_ALARM = 12;
+constexpr const char *TIME_VERSION = "time_version";
+constexpr const char *HOLD_ON_REBOOT = "hold_on_reboot";
+constexpr const char *DROP_ON_REBOOT = "drop_on_reboot";
 
 constexpr const char *CHECK_TIME_VERSION = "SELECT name FROM sqlite_master WHERE type='table' AND "
                                            "name='time_version'";
@@ -97,4 +100,4 @@ public:
 };
 } // namespace MiscServices
 } // namespace OHOS
-#endif // TIME_DATABASE_H
+#endif // TIMER_DATABASE_H

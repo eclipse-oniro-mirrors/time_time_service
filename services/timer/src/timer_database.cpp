@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "time_database.h"
+#include "timer_database.h"
 #include "time_hilog.h"
 #include "time_common.h"
 
@@ -54,68 +54,6 @@ std::string GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int
     std::string value = "";
     resultSet->GetString(line, value);
     return value;
-}
-
-void TimeDatabase::InnerRecover(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet,
-                                std::shared_ptr<TimerManager> timerManagerHandler)
-{
-    do {
-        auto timerId = static_cast<uint64_t>(GetLong(resultSet, 0));
-        auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
-            // Line 0 is 'timerId'
-            timerId,
-            // Line 1 is 'type'
-            GetInt(resultSet, 1),
-            // Line 3 is 'windowLength'
-            static_cast<uint64_t>(GetLong(resultSet, 3)),
-            // Line 4 is 'interval'
-            static_cast<uint64_t>(GetLong(resultSet, 4)),
-            // Line 2 is 'flag'
-            GetInt(resultSet, 2),
-            // Callback can't recover.
-            nullptr,
-            // Line 7 is 'wantAgent'
-            OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(resultSet, 7)),
-            // Line 5 is 'uid'
-            GetInt(resultSet, 5),
-            0,
-            // Line 6 is 'bundleName'
-            GetString(resultSet, 6)
-        });
-        timerManagerHandler->ReCreateTimer(timerId, timerInfo);
-        // Line 8 is 'state'
-        auto state = static_cast<uint8_t>(GetInt(resultSet, 8));
-        if (state == 1) {
-            // Line 9 is 'triggerTime'
-            auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
-            timerManagerHandler->StartTimer(timerId, triggerTime);
-        }
-    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
-    resultSet->Close();
-}
-
-bool TimeDatabase::Recover(std::shared_ptr<TimerManager> timerManagerHandler)
-{
-    OHOS::NativeRdb::RdbPredicates holdRdbPredicates("hold_on_reboot");
-    auto holdResultSet = Query(
-        holdRdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
-        "bundleName", "wantAgent", "state", "triggerTime"});
-    if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result set is nullptr or go to first row failed");
-    } else {
-        InnerRecover(holdResultSet, timerManagerHandler);
-    }
-
-    OHOS::NativeRdb::RdbPredicates dropRdbPredicates("drop_on_reboot");
-    auto dropResultSet = Query(
-        dropRdbPredicates, { "timerId", "type" , "flag", "windowLength", "interval", "uid", \
-        "bundleName", "wantAgent", "state", "triggerTime"});
-    if (dropResultSet == nullptr || dropResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result set is nullptr or go to first row failed");
-    } else {
-        InnerRecover(dropResultSet, timerManagerHandler);
-    }
-    return true;
 }
 
 bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::ValuesBucket &insertValues)
@@ -241,8 +179,8 @@ int TimeDBInitVersionTable(OHOS::NativeRdb::RdbStore &store)
 
     int64_t outRowId = 0;
     OHOS::NativeRdb::ValuesBucket insertValues;
-    insertValues.PutString("version", std::string(TIME_DATABASE_VERSION));
-    ret = store.Insert(outRowId, std::string("time_version"), insertValues);
+    insertValues.PutString("version", std::string(TIMER_DATABASE_VERSION));
+    ret = store.Insert(outRowId, std::string(TIME_VERSION), insertValues);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Inits time_version table failed");
         return ret;

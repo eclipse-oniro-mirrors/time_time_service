@@ -88,8 +88,8 @@ public:
     void DumpProxyDelayTime(int fd, const std::vector<std::string> &input);
     void DumpAdjustTime(int fd, const std::vector<std::string> &input);
     void InitDumpCmd();
-    void RegisterSubscriber();
-    bool Recover();
+    void RegisterCommonEventSubscriber();
+    bool RecoverTimer();
 
 protected:
     void OnStart() override;
@@ -115,13 +115,11 @@ private:
     void RegisterOsAccountSubscriber();
     void RegisterRSSDeathCallback();
     void RegisterPowerStateListener();
-    void RegisterServiceNotifySubscriber();
     void RegisterScreenOnSubscriber();
-    void RegisterUserSwitchSubscriber();
     void RegisterNitzTimeSubscriber();
     bool IsValidTime(int64_t time);
-    void InnerRecover(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet);
-    void SetAutoBoot();
+    void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet);
+    void SetAutoReboot();
 
     ServiceRunningState state_;
     static std::mutex instanceLock_;

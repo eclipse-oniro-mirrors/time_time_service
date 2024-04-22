@@ -55,12 +55,11 @@ ohos_shared_library("time_system_ability") {
     "time/src/time_zone_info.cpp",
     "time/src/timer_notify_callback.cpp",
     "timer/src/batch.cpp",
-    "timer/src/time_database.cpp",
+    "timer/src/timer_database.cpp",
     "timer/src/timer_handler.cpp",
     "timer/src/timer_info.cpp",
     "timer/src/timer_manager.cpp",
     "timer/src/timer_proxy.cpp",
-    "timer/src/user_switch_subscriber.cpp",
   ]
 
   deps = [ "${time_utils_path}:time_utils" ]
@@ -135,12 +134,11 @@ ohos_static_library("time_system_ability_static") {
     "time/src/time_zone_info.cpp",
     "time/src/timer_notify_callback.cpp",
     "timer/src/batch.cpp",
-    "timer/src/time_database.cpp",
+    "timer/src/timer_database.cpp",
     "timer/src/timer_handler.cpp",
     "timer/src/timer_info.cpp",
     "timer/src/timer_manager.cpp",
     "timer/src/timer_proxy.cpp",
-    "timer/src/user_switch_subscriber.cpp",
   ]
 
   deps = [ "${time_utils_path}:time_utils" ]
