@@ -65,7 +65,7 @@ void TimeTickNotify::Callback()
     uint64_t nextTriggerTime = RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
     timerId_ = timer_.Register(callback, nextTriggerTime);
-    if (nextTriggerTime < MICRO_TO_MILESECOND || nextTriggerTime > (MINUTE_TO_MILLISECOND - MICRO_TO_MILESECOND)) {
+    if (nextTriggerTime > (MINUTE_TO_MILLISECOND - MICRO_TO_MILESECOND)) {
         auto currentTime = steady_clock::now().time_since_epoch().count();
         TimeServiceNotify::GetInstance().PublishTimeTickEvents(currentTime);
     }
