@@ -32,7 +32,8 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr uint64_t MINUTE_TO_MILLISECOND = 60000;
-constexpr uint64_t MICRO_TO_MILESECOND = 1000;
+constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
+constexpr uint64_t MILLISECOND_TO_SECOND = 1000;
 } // namespace
 
 TimeTickNotify &TimeTickNotify::GetInstance()
@@ -65,7 +66,7 @@ void TimeTickNotify::Callback()
     uint64_t nextTriggerTime = RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
     timerId_ = timer_.Register(callback, nextTriggerTime);
-    if (nextTriggerTime > (MINUTE_TO_MILLISECOND - MICRO_TO_MILESECOND)) {
+    if (nextTriggerTime > (MINUTE_TO_MILLISECOND - MILLISECOND_TO_SECOND)) {
         auto currentTime = steady_clock::now().time_since_epoch().count();
         TimeServiceNotify::GetInstance().PublishTimeTickEvents(currentTime);
     }
@@ -83,9 +84,9 @@ void TimeTickNotify::PowerCallback()
 
 uint64_t TimeTickNotify::RefreshNextTriggerTime()
 {
-    auto UTCTimeMicro = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Time micro: %{public}" PRId64 "", UTCTimeMicro);
-    auto timeMilliseconds = (UTCTimeMicro / MICRO_TO_MILESECOND) % MINUTE_TO_MILLISECOND;
+    uint64_t UTCTimeMicro = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Time micro: %{public}" PRIu64 "", UTCTimeMicro);
+    uint64_t timeMilliseconds = (UTCTimeMicro / MICRO_TO_MILLISECOND) % MINUTE_TO_MILLISECOND;
     uint64_t nextTriggerTime = MINUTE_TO_MILLISECOND - timeMilliseconds;
     return nextTriggerTime;
 }
