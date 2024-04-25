@@ -31,6 +31,7 @@
 #include "timer_manager.h"
 #include "shutdown/sync_shutdown_callback_stub.h"
 #include "shutdown/shutdown_client.h"
+#include "rdb_helper.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -87,7 +88,8 @@ public:
     void DumpProxyDelayTime(int fd, const std::vector<std::string> &input);
     void DumpAdjustTime(int fd, const std::vector<std::string> &input);
     void InitDumpCmd();
-    void RegisterSubscriber();
+    void RegisterCommonEventSubscriber();
+    bool RecoverTimer();
 
 protected:
     void OnStart() override;
@@ -113,7 +115,11 @@ private:
     void RegisterOsAccountSubscriber();
     void RegisterRSSDeathCallback();
     void RegisterPowerStateListener();
+    void RegisterScreenOnSubscriber();
+    void RegisterNitzTimeSubscriber();
     bool IsValidTime(int64_t time);
+    void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet);
+    void SetAutoReboot();
 
     ServiceRunningState state_;
     static std::mutex instanceLock_;

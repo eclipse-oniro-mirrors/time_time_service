@@ -37,7 +37,7 @@
 #include "time_permission.h"
 #include "timer_proxy.h"
 #include "time_sysevent.h"
-#include "time_database.h"
+#include "timer_database.h"
 #include "os_account.h"
 #include "os_account_manager.h"
 #ifdef POWER_MANAGER_ENABLE
@@ -61,6 +61,8 @@ const auto INTERVAL_HALF_DAY = hours(12);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
 const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
+static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
+                                                   "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 
 #ifdef POWER_MANAGER_ENABLE
 constexpr int64_t USE_LOCK_TIME_IN_NANO = 2 * NANO_TO_SECOND;
@@ -157,10 +159,10 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
         return E_TIME_OK;
     } else if (bundleName == NEED_RECOVER_ON_REBOOT) {
         OHOS::NativeRdb::ValuesBucket insertValues = GetInsertValues(timerId, paras, uid, bundleName, wantAgent);
-        TimeDatabase::GetInstance().Insert(std::string("hold_on_reboot"), insertValues);
+        TimeDatabase::GetInstance().Insert(std::string(HOLD_ON_REBOOT), insertValues);
     } else {
         OHOS::NativeRdb::ValuesBucket insertValues = GetInsertValues(timerId, paras, uid, bundleName, wantAgent);
-        TimeDatabase::GetInstance().Insert(std::string("drop_on_reboot"), insertValues);
+        TimeDatabase::GetInstance().Insert(std::string(DROP_ON_REBOOT), insertValues);
     }
     return E_TIME_OK;
 }
@@ -209,14 +211,14 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 1);
         values.PutLong("triggerTime", static_cast<int64_t>(triggerTime));
-        OHOS::NativeRdb::RdbPredicates rdbPredicates("hold_on_reboot");
+        OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
         rdbPredicates.EqualTo("state", 0)->And()->EqualTo("timerId", static_cast<int64_t>(timerId));
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
     } else {
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 1);
         values.PutLong("triggerTime", static_cast<int64_t>(triggerTime));
-        OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
+        OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
         rdbPredicates.EqualTo("state", 0)->And()->EqualTo("timerId", static_cast<int64_t>(timerId));
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
     }
@@ -256,28 +258,28 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
     if (bundleName == NEED_RECOVER_ON_REBOOT) {
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 0);
-        OHOS::NativeRdb::RdbPredicates rdbPredicates("hold_on_reboot");
+        OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
         rdbPredicates.EqualTo("state", 1)
             ->And()
             ->EqualTo("timerId", static_cast<int64_t>(timerNumber));
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
         if (needDestroy) {
             timerEntryMap_.erase(it);
-            OHOS::NativeRdb::RdbPredicates rdbPredicates("hold_on_reboot");
+            OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
             rdbPredicates.EqualTo("timerId", static_cast<int64_t>(timerNumber));
             TimeDatabase::GetInstance().Delete(rdbPredicates);
         }
     } else {
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 0);
-        OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
+        OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
         rdbPredicates.EqualTo("state", 1)
             ->And()
             ->EqualTo("timerId", static_cast<int64_t>(timerNumber));
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
         if (needDestroy) {
             timerEntryMap_.erase(it);
-            OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
+            OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
             rdbPredicates.EqualTo("timerId", static_cast<int64_t>(timerNumber));
             TimeDatabase::GetInstance().Delete(rdbPredicates);
         }
@@ -730,7 +732,7 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
 
 void TimerManager::NotifyWantAgentBasedOnUser(const std::shared_ptr<TimerInfo> &timer, bool needCallback)
 {
-    bool notified = NotifyWantAgent(timer->wantAgent, needCallback);
+    bool notified = NotifyWantAgent(timer, needCallback);
     if (notified) {
         return;
     }
@@ -750,7 +752,7 @@ void TimerManager::NotifyWantAgentBasedOnUser(const std::shared_ptr<TimerInfo> &
         TIME_HILOGI(TIME_MODULE_SERVICE, "WantAgent waits for switching user, uid: %{public}d, timerId: %{public}"
             PRId64, timer->uid, timer->id);
         std::lock_guard<std::mutex> lock(pendingWantsMutex_);
-        userPendingWants_[userIdOfTimer].push_back(std::make_pair(timer->wantAgent, needCallback));
+        userPendingWants_[userIdOfTimer].push_back(std::make_pair(timer, needCallback));
     }
 }
 
@@ -786,7 +788,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             if (timer->bundleName == NEED_RECOVER_ON_REBOOT) {
                 OHOS::NativeRdb::ValuesBucket values;
                 values.PutInt("state", 0);
-                OHOS::NativeRdb::RdbPredicates rdbPredicates("hold_on_reboot");
+                OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
                 rdbPredicates.EqualTo("state", 1)
                     ->And()
                     ->EqualTo("timerId", static_cast<int64_t>(timer->id));
@@ -794,7 +796,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             } else {
                 OHOS::NativeRdb::ValuesBucket values;
                 values.PutInt("state", 0);
-                OHOS::NativeRdb::RdbPredicates rdbPredicates("drop_on_reboot");
+                OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
                 rdbPredicates.EqualTo("state", 1)
                     ->And()
                     ->EqualTo("timerId", static_cast<int64_t>(timer->id));
@@ -804,14 +806,23 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
     }
 }
 
-bool TimerManager::NotifyWantAgent(const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
-                                   bool needCallback)
+bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer, bool needCallback)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "trigger wantAgent.");
+    auto wantAgent = timer->wantAgent;
     std::shared_ptr<AAFwk::Want> want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
     if (want == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr");
-        return false;
+        auto database = TimeDatabase::GetInstance();
+        OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
+        holdRdbPredicates.EqualTo("timerId", static_cast<int64_t>(timer->id));
+        auto holdResultSet = database.Query(holdRdbPredicates, ALL_DATA);
+        if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr");
+            return false;
+        }
+        // Line 7 is 'wantAgent'
+        wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(holdResultSet, 7));
+        want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
     }
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
     #ifdef POWER_MANAGER_ENABLE
