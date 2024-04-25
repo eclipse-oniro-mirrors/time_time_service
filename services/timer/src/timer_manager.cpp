@@ -628,14 +628,14 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
 {
     bool hasWakeup = false;
     TIME_HILOGD(TIME_MODULE_SERVICE, "current time %{public}lld", GetBootTimeNs().time_since_epoch().count());
-    while (!alarmBatches_.empty()) {
-        auto batch = alarmBatches_.at(0);
-        TIME_HILOGD(TIME_MODULE_SERVICE, "first batch trigger time %{public}lld",
-            batch->GetStart().time_since_epoch().count());
-        if (batch->GetStart() > nowElapsed) {
-            break;
+
+    for (auto iter = alarmBatches_.begin(); iter != alarmBatches_.end();) {
+        if ((*iter)->GetStart() > nowElapsed) {
+            ++iter;
+            continue;
         }
-        alarmBatches_.erase(alarmBatches_.begin());
+        auto batch = *iter;
+        iter = alarmBatches_.erase(iter);
         TIME_HILOGI(
             TIME_MODULE_SERVICE, "after erase alarmBatches_.size= %{public}d", static_cast<int>(alarmBatches_.size()));
         const auto n = batch->Size();
@@ -650,6 +650,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             }
         }
     }
+
     std::sort(triggerList.begin(), triggerList.end(),
         [](const std::shared_ptr<TimerInfo> &l, const std::shared_ptr<TimerInfo> &r) {
             return l->whenElapsed < r->whenElapsed;
