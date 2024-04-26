@@ -443,7 +443,6 @@ napi_value NapiSystemDateTime::GetTimezoneSync(napi_env env, napi_callback_info 
     auto complete = [env, getTimezoneContext](napi_value &output) {
         getTimezoneContext->status = napi_create_string_utf8(env, getTimezoneContext->timezone.c_str(),
             getTimezoneContext->timezone.size(), &output);
-        TIME_HILOGI(TIME_MODULE_JS_NAPI, "current timezone %{public}s, ", getTimezoneContext->timezone.c_str());
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getTimezoneContext,
             "convert native object to javascript object failed", JsErrorCode::ERROR);
     };
