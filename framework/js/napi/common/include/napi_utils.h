@@ -27,7 +27,7 @@
 namespace OHOS {
 namespace MiscServices {
 namespace Time {
-#define NAPI_ASSERTS_BASE(env, assertion, code, message, retVal) \
+#define NAPI_ASSERTS_BASE_RETURN(env, assertion, code, message, retVal) \
     do {                                                         \
         if (!(assertion)) {                                      \
             NapiUtils::ThrowError(env, message, code);           \
@@ -35,8 +35,8 @@ namespace Time {
         }                                                        \
     } while (0)
 
-#define NAPI_ASSERTP(env, assertion, message) \
-    NAPI_ASSERTS_BASE(env, assertion, ERROR, message, nullptr)
+#define NAPI_ASSERTP_RETURN(env, assertion, message) \
+    NAPI_ASSERTS_BASE_RETURN(env, assertion, ERROR, message, nullptr)
 
 /* check condition related to argc/argv, return and logging. */
 #define CHECK_ARGS_RETURN_VOID(module, context, condition, message, code)  \

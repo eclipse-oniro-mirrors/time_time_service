@@ -172,34 +172,34 @@ napi_value NapiUtils::JSParaError(napi_env env, napi_ref callback)
 napi_value NapiUtils::ParseParametersBySetTime(napi_env env, const napi_value (&argv)[SET_TIME_MAX_PARA], size_t argc,
     int64_t &times, napi_ref &callback)
 {
-    NAPI_ASSERTP(env, argc >= SET_TIME_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTP_RETURN(env, argc >= SET_TIME_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valueType = napi_undefined;
 
     // argv[0]: times or date object
     NAPI_CALL(env, napi_typeof(env, argv[0], &valueType));
-    NAPI_ASSERTP(env, valueType == napi_number || valueType == napi_object,
-        "Parameter error. The type of time must be number or date.");
+    NAPI_ASSERTP_RETURN(env, valueType == napi_number || valueType == napi_object,
+                        "Parameter error. The type of time must be number or date.");
     if (valueType == napi_number) {
         napi_get_value_int64(env, argv[0], &times);
-        NAPI_ASSERTP(env, times >= 0, "Wrong argument timer. Positive number expected.");
+        NAPI_ASSERTP_RETURN(env, times >= 0, "Wrong argument timer. Positive number expected.");
     } else {
         bool hasProperty = false;
         napi_valuetype resValueType = napi_undefined;
         NAPI_CALL(env, napi_has_named_property(env, argv[0], "getTime", &hasProperty));
-        NAPI_ASSERTP(env, hasProperty, "type expected.");
+        NAPI_ASSERTP_RETURN(env, hasProperty, "type expected.");
         napi_value getTimeFunc = nullptr;
         napi_get_named_property(env, argv[0], "getTime", &getTimeFunc);
         napi_value getTimeResult = nullptr;
         napi_call_function(env, argv[0], getTimeFunc, 0, nullptr, &getTimeResult);
         NAPI_CALL(env, napi_typeof(env, getTimeResult, &resValueType));
-        NAPI_ASSERTP(env, resValueType == napi_number, "type mismatch");
+        NAPI_ASSERTP_RETURN(env, resValueType == napi_number, "type mismatch");
         napi_get_value_int64(env, getTimeResult, &times);
     }
 
     // argv[1]:callback
     if (argc >= SET_TIME_MAX_PARA) {
         NAPI_CALL(env, napi_typeof(env, argv[1], &valueType));
-        NAPI_ASSERTP(env, valueType == napi_function, "Parameter error. The type of callback must be function.");
+        NAPI_ASSERTP_RETURN(env, valueType == napi_function, "Parameter error. The type of callback must be function.");
         napi_create_reference(env, argv[1], 1, &callback);
     }
     return NapiGetNull(env);
@@ -208,12 +208,12 @@ napi_value NapiUtils::ParseParametersBySetTime(napi_env env, const napi_value (&
 napi_value NapiUtils::ParseParametersBySetTimezone(napi_env env, const napi_value (&argv)[SET_TIMEZONE_MAX_PARA],
     size_t argc, std::string &timezoneId, napi_ref &callback)
 {
-    NAPI_ASSERTP(env, argc >= SET_TIMEZONE_MAX_PARA - 1, "Wrong number of arguments");
+    NAPI_ASSERTP_RETURN(env, argc >= SET_TIMEZONE_MAX_PARA - 1, "Wrong number of arguments");
     napi_valuetype valueType = napi_undefined;
 
     // argv[0]: timezoneid
     NAPI_CALL(env, napi_typeof(env, argv[0], &valueType));
-    NAPI_ASSERTP(env, valueType == napi_string, "Parameter error. The type of timezone must be string.");
+    NAPI_ASSERTP_RETURN(env, valueType == napi_string, "Parameter error. The type of timezone must be string.");
     char timeZoneChars[MAX_TIME_ZONE_ID];
     size_t copied;
     napi_get_value_string_utf8(env, argv[0], timeZoneChars, MAX_TIME_ZONE_ID - 1, &copied);
@@ -224,7 +224,7 @@ napi_value NapiUtils::ParseParametersBySetTimezone(napi_env env, const napi_valu
     // argv[1]:callback
     if (argc >= SET_TIMEZONE_MAX_PARA) {
         NAPI_CALL(env, napi_typeof(env, argv[1], &valueType));
-        NAPI_ASSERTP(env, valueType == napi_function, "Parameter error. The type of callback must be function.");
+        NAPI_ASSERTP_RETURN(env, valueType == napi_function, "Parameter error. The type of callback must be function.");
         napi_create_reference(env, argv[1], 1, &callback);
     }
     return NapiGetNull(env);
@@ -236,7 +236,7 @@ napi_value NapiUtils::ParseParametersGet(napi_env env, const napi_value (&argv)[
     napi_valuetype valueType = napi_undefined;
     if (argc == 1) {
         NAPI_CALL(env, napi_typeof(env, argv[0], &valueType));
-        NAPI_ASSERTP(env, valueType == napi_function, "Parameter error. The type of callback must be function.");
+        NAPI_ASSERTP_RETURN(env, valueType == napi_function, "Parameter error. The type of callback must be function.");
         napi_create_reference(env, argv[0], 1, &callback);
     }
     return NapiGetNull(env);

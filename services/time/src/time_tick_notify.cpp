@@ -84,7 +84,8 @@ void TimeTickNotify::PowerCallback()
 
 uint64_t TimeTickNotify::RefreshNextTriggerTime()
 {
-    uint64_t UTCTimeMicro = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
+    auto UTCTimeMicro = static_cast<uint64_t>(duration_cast<microseconds>(system_clock::now()
+        .time_since_epoch()).count());
     TIME_HILOGI(TIME_MODULE_SERVICE, "Time micro: %{public}" PRIu64 "", UTCTimeMicro);
     uint64_t timeMilliseconds = (UTCTimeMicro / MICRO_TO_MILLISECOND) % MINUTE_TO_MILLISECOND;
     uint64_t nextTriggerTime = MINUTE_TO_MILLISECOND - timeMilliseconds;

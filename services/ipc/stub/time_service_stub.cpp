@@ -22,6 +22,7 @@ namespace MiscServices {
 using namespace OHOS::HiviewDFX;
 namespace {
 static const uint32_t MAX_EXEMPTION_SIZE = 1000;
+static const int MAX_PID_LIST_SIZE = 1024;
 }
 
 
@@ -362,7 +363,7 @@ int32_t TimeServiceStub::OnPidTimerProxy(MessageParcel &data, MessageParcel &rep
 {
     auto pidListSize = data.ReadInt32();
     std::set<int> pidList;
-    if (pidListSize == 0) {
+    if (pidListSize == 0 || pidListSize > MAX_PID_LIST_SIZE) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Error pid list size.");
         return E_TIME_READ_PARCEL_ERROR;
     }
