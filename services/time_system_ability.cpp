@@ -1102,10 +1102,10 @@ void TimeSystemAbility::SetAutoReboot()
     TimeSystemAbility::GetInstance()->GetWallTimeMs(currentTime);
     do {
         auto bundleName = GetString(resultSet, 6);
-        auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
+        uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
         if (triggerTime < static_cast<uint64_t>(currentTime)) {
             TIME_HILOGI(TIME_MODULE_SERVICE,
-                        "triggerTime: %{public}lld currentTime: %{public}lld", triggerTime, currentTime);
+                        "triggerTime: %{public}" PRIu64" currentTime: %{public}" PRId64"", triggerTime, currentTime);
             continue;
         }
         if (bundleName == NEED_RECOVER_ON_REBOOT) {
@@ -1122,8 +1122,10 @@ void TimeSystemAbility::SetAutoReboot()
             new_value.it_value.tv_sec = second.count();
             new_value.it_value.tv_nsec = (nsec - second).count();
             new_value.it_interval.tv_sec = 0;
-            TIME_HILOGI(TIME_MODULE_SERVICE, "currentTime:%{public}lld, second:%{public}lld, nanosecond:%{public}ld",
-                        currentTime, new_value.it_value.tv_sec, new_value.it_value.tv_nsec);
+            TIME_HILOGI(TIME_MODULE_SERVICE, "currentTime:%{public}" PRId64 ", second:%{public}" PRId64 ","
+                        "nanosecond:%{public}" PRId64"", currentTime,
+                        static_cast<int64_t>(new_value.it_value.tv_sec),
+                        static_cast<int64_t>(new_value.it_value.tv_nsec));
             int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
             if (ret < 0) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error: %{public}s", strerror(errno));
