@@ -379,6 +379,7 @@ void TimerManager::RemoveHandler(uint64_t id)
     TimerProxy::GetInstance().RemovePidTimerMap(id);
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 void TimerManager::RemoveLocked(uint64_t id)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start id: %{public}" PRIu64 "", id);
@@ -426,6 +427,7 @@ void TimerManager::RemoveLocked(uint64_t id)
     }
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool isRebatched)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d", rebatching);
@@ -458,6 +460,7 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
     }
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 void TimerManager::ReBatchAllTimers()
 {
     auto oldSet = alarmBatches_;
@@ -571,10 +574,10 @@ steady_clock::time_point TimerManager::GetBootTimeNs()
     return tp_epoch;
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 void TimerManager::TriggerIdleTimer()
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers.");
-    std::lock_guard<std::mutex> lock(idleTimerMutex_);
     mPendingIdleUntil_ = nullptr;
     delayedTimers_.clear();
     std::for_each(pendingDelayTimers_.begin(), pendingDelayTimers_.end(),
@@ -592,6 +595,7 @@ void TimerManager::TriggerIdleTimer()
     ReBatchAllTimers();
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 void TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
     std::vector<std::shared_ptr<TimerInfo>> &triggerList, const std::chrono::steady_clock::time_point &nowElapsed)
 {
@@ -623,6 +627,7 @@ void TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
     }
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &triggerList,
                                        std::chrono::steady_clock::time_point nowElapsed)
 {
@@ -659,6 +664,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
     return hasWakeup;
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 void TimerManager::RescheduleKernelTimerLocked()
 {
     auto nextNonWakeup = std::chrono::steady_clock::time_point::min();
@@ -683,6 +689,7 @@ void TimerManager::RescheduleKernelTimerLocked()
     }
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 std::shared_ptr<Batch> TimerManager::FindFirstWakeupBatchLocked()
 {
     auto it = std::find_if(alarmBatches_.begin(),
@@ -699,6 +706,7 @@ void TimerManager::SetLocked(int type, std::chrono::nanoseconds when)
     handler_->Set(static_cast<uint32_t>(type), when);
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
 {
     int64_t whichBatch = (alarm->flags & static_cast<uint32_t>(STANDALONE)) ?
@@ -716,6 +724,7 @@ void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
     }
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_point whenElapsed,
                                             std::chrono::steady_clock::time_point maxWhen)
 {
@@ -853,6 +862,7 @@ void TimerManager::OnUserSwitched(const int userId)
     iter->second.clear();
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm)
 {
     RemoveLocked(alarm->id);
@@ -991,6 +1001,7 @@ bool TimerManager::CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm)
     return true;
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start adjust timer, uid=%{public}d, id=%{public}" PRId64 "",
@@ -1032,6 +1043,7 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<Tim
     }
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 bool TimerManager::AdjustTimersBasedOnDeviceIdle()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start adjust alarmBatches_.size=%{public}d",
@@ -1047,6 +1059,7 @@ bool TimerManager::AdjustTimersBasedOnDeviceIdle()
     return isAdjust;
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &newBatch)
 {
     auto it = std::upper_bound(list.begin(),
@@ -1074,7 +1087,7 @@ steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
 bool TimerManager::ShowTimerEntryMap(int fd)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::lock_guard<std::mutex> lock(showTimerMutex_);
+    std::lock_guard<std::mutex> lock(entryMapMutex_);
     auto iter = timerEntryMap_.begin();
     for (; iter != timerEntryMap_.end(); iter++) {
         dprintf(fd, " - dump timer number   = %lu\n", iter->first);
@@ -1092,7 +1105,7 @@ bool TimerManager::ShowTimerEntryMap(int fd)
 bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::lock_guard<std::mutex> lock(showTimerMutex_);
+    std::lock_guard<std::mutex> lock(entryMapMutex_);
     auto iter = timerEntryMap_.find(timerId);
     if (iter == timerEntryMap_.end()) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
@@ -1112,7 +1125,7 @@ bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
 bool TimerManager::ShowTimerTriggerById(int fd, uint64_t timerId)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::lock_guard<std::mutex> lock(showTimerMutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     for (size_t i = 0; i < alarmBatches_.size(); i++) {
         for (size_t j = 0; j < alarmBatches_[i]->Size(); j++) {
             if (alarmBatches_[i]->Get(j)->id == timerId) {
@@ -1128,7 +1141,7 @@ bool TimerManager::ShowTimerTriggerById(int fd, uint64_t timerId)
 bool TimerManager::ShowIdleTimerInfo(int fd)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    std::lock_guard<std::mutex> lock(showTimerMutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     dprintf(fd, " - dump idle state         = %d\n", (mPendingIdleUntil_ != nullptr));
     if (mPendingIdleUntil_ != nullptr) {
         dprintf(fd, " - dump idle timer id  = %lu\n", mPendingIdleUntil_->id);
@@ -1159,10 +1172,16 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
 void TimerManager::HandleRSSDeath()
 {
     TIME_HILOGI(TIME_MODULE_CLIENT, "RSSSaDeathRecipient died.");
-    std::lock_guard<std::mutex> idleTimerLock(idleTimerMutex_);
-    if (mPendingIdleUntil_ != nullptr) {
-        StopTimerInner(mPendingIdleUntil_->id, true);
+    uint64_t id = 0;
+    {
+        std::lock_guard <std::mutex> lock(mutex_);
+        if (mPendingIdleUntil_ != nullptr) {
+            id = mPendingIdleUntil_->id;
+        } else {
+            return;
+        }
     }
+    StopTimerInner(id, true);
 }
 
 void TimerManager::HandleRepeatTimer(
@@ -1207,6 +1226,7 @@ void TimerManager::DecRunningLockRef()
     countLock_.unlock();
 }
 
+// needs to acquire the lock `mutex_` before calling this method
 void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
 {
     auto currentTime = duration_cast<nanoseconds>(GetBootTimeNs().time_since_epoch()).count();

@@ -123,6 +123,7 @@ bool TimerProxy::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger,
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start. uid=%{public}d, isProxy=%{public}u, needRetrigger=%{public}u",
         uid, isProxy, needRetrigger);
+    std::lock_guard<std::mutex> lockProxy(proxyMutex_);
     if (isProxy) {
         UpdateProxyWhenElapsedForProxyUidMap(uid, now, insertAlarmCallback);
         return true;
@@ -162,6 +163,7 @@ bool TimerProxy::PidProxyTimer(int pid, bool isProxy, bool needRetrigger,
     TIME_HILOGD(TIME_MODULE_SERVICE, "start. pid=%{public}d, isProxy=%{public}u, needRetrigger=%{public}u",
         pid, isProxy, needRetrigger);
 
+    std::lock_guard<std::mutex> lockProxy(proxyPidMutex_);
     if (isProxy) {
         UpdateProxyWhenElapsedForProxyPidMap(pid, now, insertAlarmCallback);
         return true;
@@ -500,11 +502,11 @@ bool TimerProxy::IsPidProxy(const int32_t pid)
     return true;
 }
 
+// needs to acquire the lock `proxyMutex_` before calling this method
 void TimerProxy::UpdateProxyWhenElapsedForProxyUidMap(const int32_t uid,
     const std::chrono::steady_clock::time_point &now,
     std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback)
 {
-    std::lock_guard<std::mutex> lockProxy(proxyMutex_);
     auto it = proxyUids_.find(uid);
     if (it != proxyUids_.end()) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "uid is already proxy, uid: %{public}d", uid);
@@ -538,7 +540,6 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyPidMap(int pid,
     const std::chrono::steady_clock::time_point &now,
     std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback)
 {
-    std::lock_guard<std::mutex> lockProxy(proxyPidMutex_);
     auto it = proxyPids_.find(pid);
     if (it != proxyPids_.end()) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "pid is already proxy, pid: %{public}d", pid);
@@ -640,11 +641,11 @@ bool TimerProxy::RestoreProxyWhenElapsedByPid(const int pid,
     return true;
 }
 
+// needs to acquire the lock `proxyMutex_` before calling this method
 bool TimerProxy::RestoreProxyWhenElapsedForProxyUidMap(const int32_t uid,
     const std::chrono::steady_clock::time_point &now,
     std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback)
 {
-    std::lock_guard<std::mutex> lockProxy(proxyMutex_);
     bool ret = RestoreProxyWhenElapsedByUid(uid, now, insertAlarmCallback);
     if (ret) {
         proxyUids_.erase(uid);
@@ -656,7 +657,6 @@ bool TimerProxy::RestoreProxyWhenElapsedForProxyPidMap(const int pid,
     const std::chrono::steady_clock::time_point &now,
     std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback)
 {
-    std::lock_guard<std::mutex> lockProxy(proxyPidMutex_);
     bool ret = RestoreProxyWhenElapsedByPid(pid, now, insertAlarmCallback);
     if (ret) {
         proxyPids_.erase(pid);

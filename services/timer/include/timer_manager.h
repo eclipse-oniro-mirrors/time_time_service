@@ -145,7 +145,6 @@ private:
     std::vector<std::shared_ptr<Batch>> alarmBatches_;
     std::mutex mutex_;
     std::mutex entryMapMutex_;
-    std::mutex showTimerMutex_;
     std::chrono::system_clock::time_point lastTimeChangeClockTime_;
     std::chrono::steady_clock::time_point lastTimeChangeRealtime_;
 
@@ -156,7 +155,6 @@ private:
     std::map<uint64_t, std::chrono::steady_clock::time_point> delayedTimers_;
     // idle timer
     std::shared_ptr<TimerInfo> mPendingIdleUntil_;
-    std::mutex idleTimerMutex_;
     bool adjustPolicy_ = false;
     uint32_t adjustInterval_ = 0;
     #ifdef POWER_MANAGER_ENABLE
