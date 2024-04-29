@@ -696,8 +696,7 @@ std::shared_ptr<Batch> TimerManager::FindFirstWakeupBatchLocked()
 void TimerManager::SetLocked(int type, std::chrono::nanoseconds when)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "current bootTime: %{public}lld", GetBootTimeNs().time_since_epoch().count());
-    int ret = handler_->Set(static_cast<uint32_t>(type), when);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer to kernel. ret: %{public}d", ret);
+    handler_->Set(static_cast<uint32_t>(type), when);
 }
 
 void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)

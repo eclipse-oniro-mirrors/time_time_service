@@ -110,7 +110,12 @@ int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when)
         second.count(), (when - second).count());
     timespec ts {second.count(), (when - second).count()};
     itimerspec spec {timespec {}, ts};
-    return timerfd_settime(fds_[type], TFD_TIMER_ABSTIME, &spec, nullptr);
+    int ret = timerfd_settime(fds_[type], TFD_TIMER_ABSTIME, &spec, nullptr);
+    if (ret != 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Set timer to kernel. ret: %{public}d. error: %{public}s.",
+                    ret, strerror(errno));
+    }
+    return ret;
 }
 
 uint32_t TimerHandler::WaitForAlarm()

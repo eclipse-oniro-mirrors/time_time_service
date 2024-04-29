@@ -48,7 +48,6 @@ std::string TimeFileUtils::GetBundleNameByTokenID(uint32_t tokenID)
 {
     auto tokenType = AccessTokenKit::GetTokenTypeFlag(tokenID);
     if (tokenType != TypeATokenTypeEnum::TOKEN_HAP) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "not hap token");
         return "";
     }
     HapTokenInfo hapTokenInfo;
