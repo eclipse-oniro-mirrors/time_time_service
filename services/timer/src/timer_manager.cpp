@@ -396,6 +396,9 @@ void TimerManager::RemoveLocked(uint64_t id)
         } else {
             ++it;
         }
+        if (didRemove) {
+            break;
+        }
     }
     pendingDelayTimers_.erase(remove_if(pendingDelayTimers_.begin(), pendingDelayTimers_.end(),
         [id](const std::shared_ptr<TimerInfo> &timer) {
