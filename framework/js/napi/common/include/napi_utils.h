@@ -115,7 +115,7 @@ struct CallbackPromiseInfo {
 
 const std::map<int32_t, std::string> CODE_TO_MESSAGE = {
     { JsErrorCode::SYSTEM_APP_ERROR, "not system app" },
-    { JsErrorCode::PARAMETER_ERROR, "parameter invalid" },
+    { JsErrorCode::PARAMETER_ERROR, "parameter error" },
     { JsErrorCode::PERMISSION_ERROR, "permission denied" },
     { JsErrorCode::ERROR, "system error" },
 };

@@ -234,7 +234,7 @@ napi_value NapiSystemTimer::CreateTimer(napi_env env, napi_callback_info info)
     };
     CreateTimerContext *createTimerContext = new CreateTimerContext();
     auto inputParser = [env, createTimerContext](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, createTimerContext, argc >= ARGC_ONE, "invalid arguments",
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, createTimerContext, argc >= ARGC_ONE, "invalid number of arguments",
             JsErrorCode::PARAMETER_ERROR);
         GetTimerOptions(env, createTimerContext, argv[ARGV_FIRST], createTimerContext->iTimerInfoInstance);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, createTimerContext, createTimerContext->status == napi_ok,
@@ -267,7 +267,7 @@ napi_value NapiSystemTimer::StartTimer(napi_env env, napi_callback_info info)
     };
     StartTimerContext *startTimerContext = new StartTimerContext();
     auto inputParser = [env, startTimerContext](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, startTimerContext, argc >= ARGC_TWO, "invalid arguments",
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, startTimerContext, argc >= ARGC_TWO, "invalid number of arguments",
             JsErrorCode::PARAMETER_ERROR);
         int64_t timerId = 0;
         startTimerContext->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
@@ -301,7 +301,7 @@ napi_value NapiSystemTimer::StopTimer(napi_env env, napi_callback_info info)
     };
     StopTimerContext *stopTimerContext = new StopTimerContext();
     auto inputParser = [env, stopTimerContext](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, stopTimerContext, argc >= ARGC_ONE, "invalid arguments",
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, stopTimerContext, argc >= ARGC_ONE, "invalid number of arguments",
             JsErrorCode::PARAMETER_ERROR);
         int64_t timerId = 0;
         stopTimerContext->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
@@ -329,8 +329,8 @@ napi_value NapiSystemTimer::DestroyTimer(napi_env env, napi_callback_info info)
     };
     DestroyTimerContext *destroyTimerContext = new DestroyTimerContext();
     auto inputParser = [env, destroyTimerContext](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, destroyTimerContext, argc == ARGC_ONE, "invalid arguments",
-            JsErrorCode::PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, destroyTimerContext, argc == ARGC_ONE,
+                               "invalid number of arguments", JsErrorCode::PARAMETER_ERROR);
         int64_t timerId = 0;
         destroyTimerContext->status = napi_get_value_int64(env, argv[ARGV_FIRST], &timerId);
         destroyTimerContext->timerId = static_cast<uint64_t>(timerId);

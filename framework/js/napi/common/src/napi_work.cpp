@@ -75,7 +75,8 @@ napi_value NapiWork::AsyncEnqueue(napi_env env, ContextBase *ctxt, const std::st
     NapiExecute execute, NapiComplete complete)
 {
     if (ctxt->status != napi_ok) {
-        NapiUtils::ThrowError(env, CODE_TO_MESSAGE.find(ctxt->errCode)->second.c_str(), ctxt->errCode);
+        auto message = CODE_TO_MESSAGE.find(ctxt->errCode)->second + ". Error message: " + ctxt->errMessage;
+        NapiUtils::ThrowError(env, message.c_str(), ctxt->errCode);
         delete ctxt;
         return NapiUtils::GetUndefinedValue(env);
     }
@@ -166,7 +167,8 @@ napi_value NapiWork::SyncEnqueue(napi_env env, ContextBase *ctxt, const std::str
     NapiExecute execute, NapiComplete complete)
 {
     if (ctxt->status != napi_ok) {
-        NapiUtils::ThrowError(env, CODE_TO_MESSAGE.find(ctxt->errCode)->second.c_str(), ctxt->errCode);
+        auto message = CODE_TO_MESSAGE.find(ctxt->errCode)->second + ". Error message: " + ctxt->errMessage;
+        NapiUtils::ThrowError(env, message.c_str(), ctxt->errCode);
         delete ctxt;
         return NapiUtils::GetUndefinedValue(env);
     }
