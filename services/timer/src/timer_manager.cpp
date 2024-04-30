@@ -902,7 +902,7 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval)
             for (unsigned int i = 0; i < n; i++) {
                 auto timer = batch->Get(i);
                 ReCalcuOriWhenElapsed(timer, nowElapsed);
-                isChanged = isChanged || adjustTimer(timer);
+                isChanged = adjustTimer(timer) || isChanged;
             }
         }
         if (isChanged) {
