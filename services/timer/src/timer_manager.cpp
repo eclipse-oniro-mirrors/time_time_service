@@ -1222,7 +1222,7 @@ void TimerManager::DecRunningLockRef()
         count_ -= 1;
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "count_=%{public}d", count_);
-    if (count_ == 0) {
+    if (count_ == 0 && runningLock_ != nullptr) {
         runningLock_->UnLock();
         TIME_HILOGI(TIME_MODULE_SERVICE, "runninglock unlock");
     }
