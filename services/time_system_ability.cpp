@@ -49,8 +49,6 @@
 #include "common_event_manager.h"
 #include "common_event_support.h"
 #include "power_subscriber.h"
-#include "os_account.h"
-#include "os_account_manager.h"
 #include "nitz_subscriber.h"
 
 using namespace std::chrono;
@@ -72,28 +70,9 @@ static const uint32_t TIMER_TYPE_INEXACT_REMINDER_MASK = 1 << 4;
 constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t ONE_MILLI = 1000;
-const std::string SUBSCRIBE_NAME = "TimerWantAgent";
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 } // namespace
-
-class UserSwitchSubscriber : public AccountSA::OsAccountSubscriber {
-public:
-    UserSwitchSubscriber(const AccountSA::OsAccountSubscribeInfo &subscribeInfo, std::shared_ptr<TimerManager> manager)
-        : AccountSA::OsAccountSubscriber(subscribeInfo), timerManager_(manager)
-    {}
-
-    void OnAccountsChanged(const int &id) {}
-
-    void OnAccountsSwitch(const int &newId, const int &oldId)
-    {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "User switched, trigger WantAgents.");
-        timerManager_->OnUserSwitched(newId);
-    }
-
-private:
-    std::shared_ptr<TimerManager> timerManager_ = nullptr;
-};
 
 REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
 
@@ -206,7 +185,6 @@ void TimeSystemAbility::OnStart()
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
-    AddSystemAbilityListener(SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN);
     InitDumpCmd();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
     if (Init() != ERR_OK) {
@@ -229,8 +207,6 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         NtpUpdateTime::GetInstance().MonitorNetwork();
     } else if (systemAbilityId == ABILITY_MGR_SERVICE_ID) {
         RecoverTimer();
-    } else if (systemAbilityId == SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN) {
-        RegisterOsAccountSubscriber();
     } else {
         TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not valid, id is %{public}d",
             systemAbilityId);
@@ -277,17 +253,6 @@ void TimeSystemAbility::RegisterCommonEventSubscriber()
     }
     RegisterScreenOnSubscriber();
     RegisterNitzTimeSubscriber();
-}
-
-void TimeSystemAbility::RegisterOsAccountSubscriber()
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterOsAccountSubscriber Started");
-    AccountSA::OsAccountSubscribeInfo subscribeInfo(AccountSA::OS_ACCOUNT_SUBSCRIBE_TYPE::SWITCHED, SUBSCRIBE_NAME);
-    auto userSwitchSubscriber = std::make_shared<UserSwitchSubscriber>(subscribeInfo, timerManagerHandler_);
-    int err = AccountSA::OsAccountManager::SubscribeOsAccount(userSwitchSubscriber);
-    if (err != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Subscribe user switching event failed, errcode: %{public}d", err);
-    }
 }
 
 int32_t TimeSystemAbility::Init()
