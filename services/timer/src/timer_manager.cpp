@@ -38,8 +38,6 @@
 #include "timer_proxy.h"
 #include "time_sysevent.h"
 #include "timer_database.h"
-#include "os_account.h"
-#include "os_account_manager.h"
 #ifdef POWER_MANAGER_ENABLE
 #include "time_system_ability.h"
 #endif
@@ -742,32 +740,6 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
     return -1;
 }
 
-void TimerManager::NotifyWantAgentBasedOnUser(const std::shared_ptr<TimerInfo> &timer, bool needCallback)
-{
-    bool notified = NotifyWantAgent(timer, needCallback);
-    if (notified) {
-        return;
-    }
-    int userIdOfTimer = -1;
-    int foregroundUserId = -1;
-    int getLocalIdErr = AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(timer->uid, userIdOfTimer);
-    if (getLocalIdErr != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Get account id from uid failed, errcode: %{public}d", getLocalIdErr);
-        return;
-    }
-    int getForegroundIdErr = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(foregroundUserId);
-    if (getForegroundIdErr != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Get foreground account id failed, errcode: %{public}d", getForegroundIdErr);
-        return;
-    }
-    if (userIdOfTimer != foregroundUserId) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "WantAgent waits for switching user, uid: %{public}d, timerId: %{public}"
-            PRId64, timer->uid, timer->id);
-        std::lock_guard<std::mutex> lock(pendingWantsMutex_);
-        userPendingWants_[userIdOfTimer].push_back(std::make_pair(timer, needCallback));
-    }
-}
-
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
     auto wakeupNums = 0;
@@ -796,7 +768,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
                 IncRunningLockRef();
             }
             #endif
-            NotifyWantAgentBasedOnUser(timer, flag);
+            NotifyWantAgent(timer, flag);
             if (timer->bundleName == NEED_RECOVER_ON_REBOOT) {
                 OHOS::NativeRdb::ValuesBucket values;
                 values.PutInt("state", 0);
@@ -850,19 +822,6 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer, bool
     #endif
     TIME_HILOGI(TIME_MODULE_SERVICE, "trigger wantAgent result: %{public}d", code);
     return code == ERR_OK;
-}
-
-void TimerManager::OnUserSwitched(const int userId)
-{
-    std::lock_guard<std::mutex> lock(pendingWantsMutex_);
-    auto iter = userPendingWants_.find(userId);
-    if (iter == userPendingWants_.end()) {
-        return;
-    }
-    for (auto pair: iter->second) {
-        NotifyWantAgent(pair.first, pair.second);
-    }
-    iter->second.clear();
 }
 
 // needs to acquire the lock `mutex_` before calling this method

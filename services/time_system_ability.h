@@ -112,7 +112,6 @@ private:
     int SetRtcTime(time_t sec);
     bool CheckRtc(const std::string &rtcPath, uint64_t rtcId);
     int GetWallClockRtcId();
-    void RegisterOsAccountSubscriber();
     void RegisterRSSDeathCallback();
     void RegisterPowerStateListener();
     void RegisterScreenOnSubscriber();
