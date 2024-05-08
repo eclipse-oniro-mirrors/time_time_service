@@ -947,7 +947,7 @@ bool TimeSystemAbility::ProxyTimer(std::set<int> pidList, bool isProxy, bool nee
     return timerManagerHandler_->ProxyTimer(pidList, isProxy, needRetrigger);
 }
 
-int32_t TimeSystemAbility::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+int32_t TimeSystemAbility::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)
 {
     if (timerManagerHandler_ == nullptr) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Set Timer Exemption manager nullptr.");

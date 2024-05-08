@@ -379,7 +379,7 @@ bool TimeServiceProxy::ProxyTimer(std::set<int> pidList, bool isProxy, bool need
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write pid size");
         return false;
     }
-    for (std::set<int>::iterator pid = pidList.begin(); pid != pidList.end(); pid++) {
+    for (std::set<int>::iterator pid = pidList.begin(); pid != pidList.end(); ++pid) {
         if (!data.WriteInt32(*pid)) {
             TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write pid");
             return false;
@@ -429,7 +429,7 @@ int32_t TimeServiceProxy::AdjustTimer(bool isAdjust, uint32_t interval)
     return result;
 }
 
-int32_t TimeServiceProxy::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+int32_t TimeServiceProxy::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)
 {
     MessageParcel data;
     MessageParcel reply;

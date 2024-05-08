@@ -246,7 +246,7 @@ bool TimerProxy::RestoreAdjustWhenElapsed(std::shared_ptr<TimerInfo> &timer)
     return timer->RestoreAdjustTimer();
 }
 
-bool TimerProxy::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+bool TimerProxy::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)
 {
     std::lock_guard<std::mutex> lockProxy(adjustMutex_);
     bool isChanged = false;

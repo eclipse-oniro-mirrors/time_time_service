@@ -185,7 +185,7 @@ public:
      * @param isExemption exemption or ctrl.
      * @return int32_t return error code.
      */
-    virtual int32_t SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption) = 0;
+    virtual int32_t SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) = 0;
 
     /**
      * ResetAllProxy

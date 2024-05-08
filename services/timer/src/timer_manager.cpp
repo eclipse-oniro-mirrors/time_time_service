@@ -265,9 +265,9 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
         if (needDestroy) {
             timerEntryMap_.erase(it);
-            OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
-            rdbPredicates.EqualTo("timerId", static_cast<int64_t>(timerNumber));
-            TimeDatabase::GetInstance().Delete(rdbPredicates);
+            OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(HOLD_ON_REBOOT);
+            rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
+            TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
         }
     } else {
         OHOS::NativeRdb::ValuesBucket values;
@@ -279,9 +279,9 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
         if (needDestroy) {
             timerEntryMap_.erase(it);
-            OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
-            rdbPredicates.EqualTo("timerId", static_cast<int64_t>(timerNumber));
-            TimeDatabase::GetInstance().Delete(rdbPredicates);
+            OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(DROP_ON_REBOOT);
+            rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
+            TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
         }
     }
     return E_TIME_OK;
@@ -770,12 +770,7 @@ void TimerManager::NotifyWantAgentBasedOnUser(const std::shared_ptr<TimerInfo> &
 
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
-    auto wakeupNums = 0;
-    for (const auto &timer : triggerList) {
-        if (timer->wakeup) {
-            wakeupNums += 1;
-        }
-    }
+    auto wakeupNums = std::count_if(triggerList.begin(), triggerList.end(), [](auto timer) {return timer->wakeup;});
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
             StatisticReporter(IPCSkeleton::GetCallingPid(), wakeupNums, timer);
@@ -918,7 +913,7 @@ bool TimerManager::ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetr
 {
     std::set<int> failurePid;
     std::lock_guard<std::mutex> lock(mutex_);
-    for (std::set<int>::iterator pid = pidList.begin(); pid != pidList.end(); pid++) {
+    for (std::set<int>::iterator pid = pidList.begin(); pid != pidList.end(); ++pid) {
         if (!TimerProxy::GetInstance().PidProxyTimer(*pid, isProxy, needRetrigger, GetBootTimeNs(),
             [this] (std::shared_ptr<TimerInfo> &alarm) { UpdateTimersState(alarm); })) {
             failurePid.insert(*pid);
@@ -946,7 +941,7 @@ void TimerManager::ReCalcuOriWhenElapsed(std::shared_ptr<TimerInfo> timer,
     timer->originMaxWhenElapsed = maxElapsed;
 }
 
-void TimerManager::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+void TimerManager::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     bool isChanged = TimerProxy::GetInstance().SetTimerExemption(nameArr, isExemption);

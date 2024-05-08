@@ -58,7 +58,7 @@ public:
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
     bool ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger) override;
     bool AdjustTimer(bool isAdjust, uint32_t interval) override;
-    void SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption) override;
+    void SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
     bool ShowTimerEntryMap(int fd);
     bool ShowTimerEntryById(int fd, uint64_t timerId);
