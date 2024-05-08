@@ -759,7 +759,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
     }
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
-            StatisticReporter(IPCSkeleton::GetCallingPid(), wakeupNums, timer);
+            StatisticReporter(wakeupNums, timer);
         }
         bool flag = timer->type == ITimerManager::TimerType::RTC_WAKEUP ||
              timer->type == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP;
