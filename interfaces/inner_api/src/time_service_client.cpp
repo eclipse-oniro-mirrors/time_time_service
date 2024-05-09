@@ -736,7 +736,7 @@ int32_t TimeServiceClient::AdjustTimer(bool isAdjust, uint32_t interval)
     return proxy->AdjustTimer(isAdjust, interval);
 }
 
-int32_t TimeServiceClient::SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption)
+int32_t TimeServiceClient::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)
 {
     TIME_HILOGD(TIME_MODULE_CLIENT, "set time exemption size: %{public}zu", nameArr.size());
     if (!ConnectService()) {

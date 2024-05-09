@@ -44,7 +44,7 @@ public:
     bool AdjustTimer(bool isAdjust, uint32_t interval,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(AdjustTimerCallback adjustTimer)> updateTimerDeliveries);
-    bool SetTimerExemption(const std::unordered_set<std::string> nameArr, bool isExemption);
+    bool SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption);
     bool IsTimerExemption(std::shared_ptr<TimerInfo> time);
     bool ResetAllProxy(const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
