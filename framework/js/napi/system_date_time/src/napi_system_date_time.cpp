@@ -76,11 +76,11 @@ napi_value NapiSystemDateTime::SetTime(napi_env env, napi_callback_info info)
     };
     auto *setTimeContext = new SetTimeContext();
     auto inputParser = [env, setTimeContext](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimeContext, argc >= ARGC_ONE, "invalid number of arguments",
-            JsErrorCode::PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimeContext, argc >= ARGC_ONE,
+            "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
         setTimeContext->status = napi_get_value_int64(env, argv[ARGV_FIRST], &setTimeContext->time);
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimeContext, setTimeContext->status == napi_ok, "invalid time",
-            JsErrorCode::PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimeContext, setTimeContext->status == napi_ok,
+            "The type of 'time' must be number", JsErrorCode::PARAMETER_ERROR);
         setTimeContext->status = napi_ok;
     };
     setTimeContext->GetCbInfo(env, info, inputParser);
@@ -102,31 +102,31 @@ napi_value NapiSystemDateTime::SetDate(napi_env env, napi_callback_info info)
     };
     auto *setDateContext = new SetDateContext();
     auto inputParser = [env, setDateContext](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, argc >= ARGC_ONE, "invalid number of arguments",
-            JsErrorCode::PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, argc >= ARGC_ONE,
+            "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
         napi_valuetype valueType = napi_undefined;
         napi_typeof(env, argv[ARGV_FIRST], &valueType);
         if (valueType == napi_number) {
             napi_get_value_int64(env, argv[ARGV_FIRST], &setDateContext->time);
-            CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, setDateContext->time >= 0, "time must >= 0",
-                JsErrorCode::PARAMETER_ERROR);
+            CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, setDateContext->time >= 0,
+                "date number must >= 0", JsErrorCode::PARAMETER_ERROR);
         } else {
             bool hasProperty = false;
             napi_valuetype resValueType = napi_undefined;
             napi_has_named_property(env, argv[ARGV_FIRST], "getTime", &hasProperty);
-            CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, hasProperty, "getTime failed",
-                JsErrorCode::PARAMETER_ERROR);
+            CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, hasProperty,
+                "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
             napi_value getTimeFunc = nullptr;
             napi_get_named_property(env, argv[0], "getTime", &getTimeFunc);
             napi_value getTimeResult = nullptr;
             napi_call_function(env, argv[0], getTimeFunc, 0, nullptr, &getTimeResult);
             napi_typeof(env, getTimeResult, &resValueType);
             CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, resValueType == napi_number,
-                                   "time type mismatch", JsErrorCode::PARAMETER_ERROR);
+                "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
             setDateContext->status = napi_get_value_int64(env, getTimeResult, &setDateContext->time);
         }
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, setDateContext->status == napi_ok, "invalid time",
-            JsErrorCode::PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, setDateContext->status == napi_ok,
+            "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
         setDateContext->status = napi_ok;
     };
     setDateContext->GetCbInfo(env, info, inputParser);
@@ -309,10 +309,10 @@ napi_value NapiSystemDateTime::GetUptime(napi_env env, napi_callback_info info)
     auto inputParser = [env, getUpTimeContext](size_t argc, napi_value *argv) {
         getUpTimeContext->status = napi_get_value_int32(env, argv[ARGV_FIRST], &getUpTimeContext->timeType);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext, getUpTimeContext->status == napi_ok,
-                               "invalid timeType", JsErrorCode::PARAMETER_ERROR);
+            "The type of 'timeType' must be number or enum", JsErrorCode::PARAMETER_ERROR);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext,
-            (getUpTimeContext->timeType >= STARTUP && getUpTimeContext->timeType <= ACTIVE), "invalid timeType",
-            JsErrorCode::PARAMETER_ERROR);
+            (getUpTimeContext->timeType >= STARTUP && getUpTimeContext->timeType <= ACTIVE),
+            "The 'timeType' must be 'STARTUP' or 'ACTIVE' or 0 or 1", JsErrorCode::PARAMETER_ERROR);
         if (argc >= ARGC_TWO) {
             napi_valuetype valueType = napi_undefined;
             napi_typeof(env, argv[ARGV_SECOND], &valueType);
@@ -377,11 +377,11 @@ napi_value NapiSystemDateTime::SetTimezone(napi_env env, napi_callback_info info
     };
     auto *setTimezoneContext = new SetTimezoneContext();
     auto inputParser = [env, setTimezoneContext](size_t argc, napi_value *argv) {
-        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimezoneContext, argc >= ARGC_ONE, "invalid number of arguments",
-            JsErrorCode::PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimezoneContext, argc >= ARGC_ONE,
+            "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
         setTimezoneContext->status = NapiUtils::GetValue(env, argv[ARGV_FIRST], setTimezoneContext->timezone);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimezoneContext, setTimezoneContext->status == napi_ok,
-            "invalid timezone", JsErrorCode::PARAMETER_ERROR);
+            "The type of 'timezone' must be string", JsErrorCode::PARAMETER_ERROR);
         setTimezoneContext->status = napi_ok;
     };
     setTimezoneContext->GetCbInfo(env, info, inputParser);
