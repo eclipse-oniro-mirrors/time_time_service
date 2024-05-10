@@ -50,6 +50,9 @@
 #include "common_event_support.h"
 #include "power_subscriber.h"
 #include "nitz_subscriber.h"
+#include "mem_mgr_client.h"
+#include "mem_mgr_proxy.h"
+
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
@@ -186,12 +189,14 @@ void TimeSystemAbility::OnStart()
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
     InitDumpCmd();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
     if (Init() != ERR_OK) {
         auto callback = [this]() { Init(); };
         serviceHandler_->PostTask(callback, "time_service_init_retry", INIT_INTERVAL);
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init failed. Try again 10s later.");
     }
+    // Notify memmgr module.
+    int pid = getpid();
+    Memory::MemMgrClient::GetInstance().NotifyProcessStatus(pid, 1, 1, TIME_SERVICE_ID);
 }
 
 void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
@@ -262,7 +267,7 @@ int32_t TimeSystemAbility::Init()
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init Failed.");
         return E_TIME_PUBLISH_FAIL;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Init Success.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
     state_ = ServiceRunningState::STATE_RUNNING;
     return ERR_OK;
 }
@@ -277,7 +282,9 @@ void TimeSystemAbility::OnStop()
     serviceHandler_ = nullptr;
     TimeTickNotify::GetInstance().Stop();
     state_ = ServiceRunningState::STATE_NOT_START;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "OnStop End.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End.");
+    int pid = getpid();
+    Memory::MemMgrClient::GetInstance().NotifyProcessStatus(pid, 1, 0, TIME_SERVICE_ID);
 }
 
 void TimeSystemAbility::InitServiceHandler()
