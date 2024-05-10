@@ -39,25 +39,26 @@ namespace Time {
     NAPI_ASSERTS_BASE_RETURN(env, assertion, ERROR, message, nullptr)
 
 /* check condition related to argc/argv, return and logging. */
-#define CHECK_ARGS_RETURN_VOID(module, context, condition, message, code)  \
-    do {                                                                   \
-        if (!(condition)) {                                                \
-            (context)->status = napi_invalid_arg;                          \
-            (context)->errMessage = std::string(message);                  \
-            (context)->errCode = code;                                     \
-            TIME_HILOGE(module, "test (" #condition ") failed: " message); \
-            return;                                                        \
-        }                                                                  \
+#define CHECK_ARGS_RETURN_VOID(module, context, condition, message, code)                                   \
+    do {                                                                                                    \
+        if (!(condition)) {                                                                                 \
+            (context)->status = napi_invalid_arg;                                                           \
+            (context)->errMessage = std::string(message);                                                   \
+            (context)->errCode = code;                                                                      \
+            TIME_HILOGE(module, "test (" #condition ") failed: %{public}s", (context)->errMessage.c_str()); \
+            return;                                                                                         \
+        }                                                                                                   \
     } while (0)
 
-#define CHECK_STATUS_RETURN_VOID(module, context, message, code)                       \
-    do {                                                                               \
-        if ((context)->status != napi_ok) {                                            \
-            (context)->errMessage = std::string(message);                              \
-            (context)->errCode = code;                                                 \
-            TIME_HILOGE(module, "test (context->status == napi_ok) failed: " message); \
-            return;                                                                    \
-        }                                                                              \
+#define CHECK_STATUS_RETURN_VOID(module, context, message, code)                        \
+    do {                                                                                \
+        if ((context)->status != napi_ok) {                                             \
+            (context)->errMessage = std::string(message);                               \
+            (context)->errCode = code;                                                  \
+            TIME_HILOGE(module, "test (context->status == napi_ok) failed: %{public}s", \
+                (context)->errMessage.c_str());                                         \
+            return;                                                                     \
+        }                                                                               \
     } while (0)
 
 /* check condition, return and logging if condition not true. */
