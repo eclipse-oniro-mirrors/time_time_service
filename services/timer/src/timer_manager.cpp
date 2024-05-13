@@ -678,7 +678,7 @@ void TimerManager::RescheduleKernelTimerLocked()
             #endif
             auto alarmPtr = firstWakeup->Get(0);
             TIME_HILOGI(TIME_MODULE_SERVICE, "wakeup: next trigger timer id: %{public}" PRIu64 ""
-                        "uid: %{public}d, trigger time  %{public}" PRId64 "", alarmPtr->id,
+                        "uid: %{public}d, trigger time  %{public}lld", alarmPtr->id,
                         alarmPtr->uid, alarmPtr->whenElapsed.time_since_epoch().count());
             SetLocked(ELAPSED_REALTIME_WAKEUP, firstWakeup->GetStart().time_since_epoch());
         }
@@ -686,7 +686,7 @@ void TimerManager::RescheduleKernelTimerLocked()
             auto alarmPtr = firstBatch->Get(0);
             nextNonWakeup = firstBatch->GetStart();
             TIME_HILOGI(TIME_MODULE_SERVICE, "nonwakeup: next trigger timer id: %{public}" PRIu64 ""
-                        "uid: %{public}d, trigger time  %{public}" PRId64 "", alarmPtr->id,
+                        "uid: %{public}d, trigger time  %{public}lld", alarmPtr->id,
                         alarmPtr->uid, alarmPtr->whenElapsed.time_since_epoch().count());
         }
     }
@@ -720,7 +720,7 @@ void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
                          -1 :
                          AttemptCoalesceLocked(alarm->whenElapsed, alarm->maxWhenElapsed);
     TIME_HILOGI(TIME_MODULE_SERVICE, "whichBatch= %{public}" PRId64 ", id=%{public}" PRIu64 ","
-                "whenElapsed=%{public}" PRId64 ", maxWhenElapsed=%{public}" PRId64 "",
+                "whenElapsed=%{public}lld , maxWhenElapsed=%{public}lld",
                 whichBatch, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
                 alarm->maxWhenElapsed.time_since_epoch().count());
     if (whichBatch < 0) {
