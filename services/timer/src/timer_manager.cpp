@@ -414,9 +414,9 @@ void TimerManager::RemoveLocked(uint64_t id)
             TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", pendingTimer->id);
             if (pendingTimer->whenElapsed <= GetBootTimeNs()) {
                 // 2 means the time of performing task.
-                pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), milliseconds(2));
+                pendingTimer->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(2));
             } else {
-                pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), pendingTimer->offset);
+                pendingTimer->UpdateWhenElapsedFromNow(GetBootTimeNs(), pendingTimer->offset);
             }
             SetHandlerLocked(pendingTimer, false, false);
         }
@@ -585,10 +585,10 @@ void TimerManager::TriggerIdleTimer()
         [this](const std::shared_ptr<TimerInfo> &pendingTimer) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", pendingTimer->id);
             if (pendingTimer->whenElapsed > GetBootTimeNs()) {
-                pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), pendingTimer->offset);
+                pendingTimer->UpdateWhenElapsedFromNow(GetBootTimeNs(), pendingTimer->offset);
             } else {
                 // 2 means the time of performing task.
-                pendingTimer->UpdateWhenElapsed(GetBootTimeNs(), milliseconds(2));
+                pendingTimer->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(2));
             }
             SetHandlerLocked(pendingTimer, false, false);
         });
@@ -605,7 +605,7 @@ void TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
         TriggerIdleTimer();
     }
     if (TimerProxy::GetInstance().IsUidProxy(alarm->uid)) {
-        alarm->UpdateWhenElapsed(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
+        alarm->UpdateWhenElapsedFromNow(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
         TIME_HILOGD(TIME_MODULE_SERVICE, "UpdateWhenElapsed for proxy timer trigger. "
             "uid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
             alarm->uid, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
@@ -614,7 +614,7 @@ void TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
             alarm->maxWhenElapsed, alarm->repeatInterval, alarm->callback,
             alarm->wantAgent, alarm->flags, alarm->uid, alarm->pid, alarm->bundleName);
     } else if (TimerProxy::GetInstance().IsPidProxy(alarm->pid)) {
-        alarm->UpdateWhenElapsed(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
+        alarm->UpdateWhenElapsedFromNow(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
         TIME_HILOGD(TIME_MODULE_SERVICE, "UpdateWhenElapsed for proxy timer trigger. "
             "pid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
             alarm->pid, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
@@ -987,10 +987,10 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<Tim
 
             if (alarm->origWhen > currentTime) {
                 auto offset = alarm->origWhen - currentTime;
-                return alarm->UpdateWhenElapsed(GetBootTimeNs(), offset);
+                return alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), offset);
             }
             // 2 means the time of performing task.
-            return alarm->UpdateWhenElapsed(GetBootTimeNs(), milliseconds(2));
+            return alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(2));
         }
         return false;
     }
@@ -1005,7 +1005,7 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<Tim
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, id=%{public}" PRId64 "", alarm->id);
         delayedTimers_[alarm->id] = alarm->whenElapsed;
         auto offset = ConvertToElapsed(mPendingIdleUntil_->when, mPendingIdleUntil_->type) - GetBootTimeNs();
-        return alarm->UpdateWhenElapsed(GetBootTimeNs(), offset);
+        return alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), offset);
     }
 }
 
