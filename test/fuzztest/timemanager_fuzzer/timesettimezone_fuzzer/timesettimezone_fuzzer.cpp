@@ -31,6 +31,54 @@ bool FuzzTimeSetTimezone(const uint8_t *rawData, size_t size)
     TimeServiceClient::GetInstance()->SetTimeZone(timeZone);
     TimeServiceClient::GetInstance()->SetTimeZone(timeZone);
     TimeServiceClient::GetInstance()->SetTimeZoneV9(timeZone);
+    int32_t code;
+    TimeServiceClient::GetInstance()->SetTimeZone(timeZone, code);
+    return true;
+}
+
+bool FuzzTimeGetTimezone(const uint8_t *rawData, size_t size)
+{
+    std::string timeZone(reinterpret_cast<const char *>(rawData), size);
+    TimeServiceClient::GetInstance()->GetTimeZone();
+    std::string timezoneId;
+    TimeServiceClient::GetInstance()->GetTimeZone(timezoneId);
+    return true;
+}
+
+bool FuzzTimeSetTime(const uint8_t *rawData, size_t size)
+{
+    int64_t time = static_cast<int64_t>(*rawData);
+    TimeServiceClient::GetInstance()->SetTime(time);
+    TimeServiceClient::GetInstance()->SetTime(time);
+    TimeServiceClient::GetInstance()->SetTimeV9(time);
+    TimeServiceClient::GetInstance()->SetTimeV9(time);
+    int32_t code;
+    TimeServiceClient::GetInstance()->SetTime(time, code);
+    return true;
+}
+
+bool FuzzTimeGetTime(const uint8_t *rawData, size_t size)
+{
+    int64_t time;
+    TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->GetWallTimeMs(time);
+    TimeServiceClient::GetInstance()->GetWallTimeNs();
+    TimeServiceClient::GetInstance()->GetWallTimeNs(time);
+
+    TimeServiceClient::GetInstance()->GetBootTimeMs();
+    TimeServiceClient::GetInstance()->GetBootTimeMs(time);
+    TimeServiceClient::GetInstance()->GetBootTimeNs();
+    TimeServiceClient::GetInstance()->GetBootTimeNs(time);
+
+    TimeServiceClient::GetInstance()->GetMonotonicTimeMs();
+    TimeServiceClient::GetInstance()->GetMonotonicTimeMs(time);
+    TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
+    TimeServiceClient::GetInstance()->GetMonotonicTimeNs(time);
+
+    TimeServiceClient::GetInstance()->GetThreadTimeMs();
+    TimeServiceClient::GetInstance()->GetThreadTimeMs(time);
+    TimeServiceClient::GetInstance()->GetThreadTimeNs();
+    TimeServiceClient::GetInstance()->GetThreadTimeNs(time);
     return true;
 }
 
@@ -44,5 +92,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
 
     OHOS::FuzzTimeSetTimezone(data, size);
+    OHOS::FuzzTimeGetTimezone(data, size);
+    OHOS::FuzzTimeSetTime(data, size);
+    OHOS::FuzzTimeGetTime(data, size);
     return 0;
 }

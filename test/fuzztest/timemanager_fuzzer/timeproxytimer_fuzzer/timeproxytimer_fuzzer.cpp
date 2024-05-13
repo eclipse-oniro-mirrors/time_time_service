@@ -35,6 +35,14 @@ bool FuzzTimeProxyTimer(const uint8_t *rawData, size_t size)
     TimeServiceClient::GetInstance()->ProxyTimer(uid, true, false);
     TimeServiceClient::GetInstance()->ProxyTimer(uid, false, false);
     TimeServiceClient::GetInstance()->ProxyTimer(uid, false, true);
+
+    std::set<int> pidList;
+    pidList.insert(uid);
+    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
+    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, false);
+    TimeServiceClient::GetInstance()->ProxyTimer(pidList, false, false);
+    TimeServiceClient::GetInstance()->ProxyTimer(pidList, false, true);
+
     return true;
 }
 
@@ -42,6 +50,15 @@ bool FuzzTimeAdjustTimer(const uint8_t *rawData, size_t size)
 {
     TimeServiceClient::GetInstance()->AdjustTimer(true, ADJUST_TIMER_INTERVAL);
     TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
+    return true;
+}
+
+bool FuzzTimeSetTimerExemption(const uint8_t *rawData, size_t size)
+{
+    std::string name(reinterpret_cast<const char *>(rawData), size);
+    std::unordered_set<std::string> nameArr{name};
+    TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, false);
+    TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, true);
     return true;
 }
 
@@ -59,6 +76,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
     OHOS::FuzzTimeProxyTimer(data, size);
     OHOS::FuzzTimeAdjustTimer(data, size);
+    OHOS::FuzzTimeSetTimerExemption(data, size);
     return 0;
 }
 }
