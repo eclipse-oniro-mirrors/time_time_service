@@ -132,8 +132,8 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     }
     TIME_HILOGI(TIME_MODULE_SERVICE,
                 "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}d"
-                "uid:%{public}d pid:%{public}d", paras.timerType, paras.windowLength, paras.interval, paras.flag,
-                IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
+                "uid:%{public}d pid:%{public}d timerId:%{public}" PRId64 "", paras.timerType, paras.windowLength,
+                paras.interval, paras.flag, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid(), timerId);
     std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
     if (bundleName.empty()) {
         bundleName = TimeFileUtils::GetNameByPid(IPCSkeleton::GetCallingPid());
@@ -297,9 +297,6 @@ void TimerManager::SetHandler(uint64_t id,
                               int pid,
                               const std::string &bundleName)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE,
-                "start type:%{public}d windowLength:%{public}" PRIu64"interval:%{public}" PRIu64"flag:%{public}d",
-        type, windowLength, interval, flag);
     auto windowLengthDuration = milliseconds(windowLength);
     if (windowLengthDuration > INTERVAL_HALF_DAY) {
         windowLengthDuration = INTERVAL_HOUR;
@@ -372,13 +369,13 @@ void TimerManager::SetHandlerLocked(uint64_t id, int type,
 void TimerManager::RemoveHandler(uint64_t id)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    RemoveLocked(id);
+    RemoveLocked(id, true);
     TimerProxy::GetInstance().RemoveUidTimerMap(id);
     TimerProxy::GetInstance().RemovePidTimerMap(id);
 }
 
 // needs to acquire the lock `mutex_` before calling this method
-void TimerManager::RemoveLocked(uint64_t id)
+void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start id: %{public}" PRIu64 "", id);
     auto whichAlarms = [id](const TimerInfo &timer) {
@@ -404,11 +401,10 @@ void TimerManager::RemoveLocked(uint64_t id)
             return timer->id == id;
         }), pendingDelayTimers_.end());
     delayedTimers_.erase(id);
-    bool isAdjust = false;
     if (mPendingIdleUntil_ != nullptr && id == mPendingIdleUntil_->id) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm removed.");
         mPendingIdleUntil_ = nullptr;
-        isAdjust = AdjustTimersBasedOnDeviceIdle();
+        bool isAdjust = AdjustTimersBasedOnDeviceIdle();
         delayedTimers_.clear();
         for (const auto &pendingTimer : pendingDelayTimers_) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", pendingTimer->id);
@@ -421,10 +417,14 @@ void TimerManager::RemoveLocked(uint64_t id)
             SetHandlerLocked(pendingTimer, false, false);
         }
         pendingDelayTimers_.clear();
+        if (isAdjust) {
+            ReBatchAllTimers();
+            return;
+        }
     }
 
-    if (didRemove || isAdjust) {
-        ReBatchAllTimers();
+    if (needReschedule && didRemove) {
+        RescheduleKernelTimerLocked();
     }
 }
 
@@ -831,7 +831,7 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer, bool
 // needs to acquire the lock `mutex_` before calling this method
 void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm)
 {
-    RemoveLocked(alarm->id);
+    RemoveLocked(alarm->id, false);
     AdjustSingleTimer(alarm);
     InsertAndBatchTimerLocked(alarm);
     RescheduleKernelTimerLocked();

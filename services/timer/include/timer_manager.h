@@ -98,7 +98,7 @@ private:
                           uint64_t callingPid,
                           const std::string &bundleName);
     void RemoveHandler(uint64_t id);
-    void RemoveLocked(uint64_t id);
+    void RemoveLocked(uint64_t id, bool needReschedule);
     void ReBatchAllTimers();
     void ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
                           std::chrono::steady_clock::time_point nowElapsed);
