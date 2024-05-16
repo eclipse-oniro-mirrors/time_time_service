@@ -314,10 +314,6 @@ void TimerManager::SetHandler(uint64_t id,
 
     auto nowElapsed = GetBootTimeNs();
     auto nominalTrigger = ConvertToElapsed(milliseconds(triggerAtTime), type);
-    if (nominalTrigger < nowElapsed) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "invalid trigger time.");
-        return;
-    }
     auto minTrigger = nowElapsed + ZERO_FUTURITY;
     auto triggerElapsed = (nominalTrigger > minTrigger) ? nominalTrigger : minTrigger;
 

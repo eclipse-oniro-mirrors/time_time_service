@@ -70,6 +70,7 @@ static const uint32_t TIMER_TYPE_INEXACT_REMINDER_MASK = 1 << 4;
 constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t ONE_MILLI = 1000;
+constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 } // namespace
@@ -1053,7 +1054,6 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
 
 void TimeSystemAbility::SetAutoReboot()
 {
-    // Find the most recent trigger time to boot on.
     TIME_HILOGI(TIME_MODULE_SERVICE, "Find the most recent trigger time");
     auto database = TimeDatabase::GetInstance();
     OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
@@ -1080,16 +1080,17 @@ void TimeSystemAbility::SetAutoReboot()
                 resultSet->Close();
                 return;
             }
-
+            if (static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > triggerTime) {
+                TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
+                triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
+            }
             struct itimerspec new_value;
             std::chrono::nanoseconds nsec(triggerTime * MILLISECOND_TO_NANO);
             auto second = std::chrono::duration_cast<std::chrono::seconds>(nsec);
             new_value.it_value.tv_sec = second.count();
             new_value.it_value.tv_nsec = (nsec - second).count();
-            new_value.it_interval.tv_sec = 0;
             TIME_HILOGI(TIME_MODULE_SERVICE, "currentTime:%{public}" PRId64 ", second:%{public}" PRId64 ","
-                        "nanosecond:%{public}" PRId64"", currentTime,
-                        static_cast<int64_t>(new_value.it_value.tv_sec),
+                        "nanosecond:%{public}" PRId64"", currentTime, static_cast<int64_t>(new_value.it_value.tv_sec),
                         static_cast<int64_t>(new_value.it_value.tv_nsec));
             int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
             if (ret < 0) {
