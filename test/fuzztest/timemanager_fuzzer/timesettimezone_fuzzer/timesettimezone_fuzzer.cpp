@@ -38,7 +38,6 @@ bool FuzzTimeSetTimezone(const uint8_t *rawData, size_t size)
 
 bool FuzzTimeGetTimezone(const uint8_t *rawData, size_t size)
 {
-    std::string timeZone(reinterpret_cast<const char *>(rawData), size);
     TimeServiceClient::GetInstance()->GetTimeZone();
     std::string timezoneId;
     TimeServiceClient::GetInstance()->GetTimeZone(timezoneId);
