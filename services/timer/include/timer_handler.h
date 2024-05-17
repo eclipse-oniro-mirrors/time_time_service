@@ -33,7 +33,7 @@ typedef std::array<int, N_TIMER_FDS> TimerFds;
 class TimerHandler {
 public:
     static std::shared_ptr<TimerHandler> Create();
-    int Set(uint32_t type, std::chrono::nanoseconds when);
+    int Set(uint32_t type, std::chrono::nanoseconds when, std::chrono::steady_clock::time_point bootTime);
     uint32_t WaitForAlarm();
     ~TimerHandler();
 private:

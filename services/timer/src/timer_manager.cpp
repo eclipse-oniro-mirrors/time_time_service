@@ -709,8 +709,7 @@ std::shared_ptr<Batch> TimerManager::FindFirstWakeupBatchLocked()
 
 void TimerManager::SetLocked(int type, std::chrono::nanoseconds when)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "current bootTime: %{public}lld", GetBootTimeNs().time_since_epoch().count());
-    handler_->Set(static_cast<uint32_t>(type), when);
+    handler_->Set(static_cast<uint32_t>(type), when, GetBootTimeNs());
 }
 
 // needs to acquire the lock `mutex_` before calling this method
