@@ -505,13 +505,21 @@ std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono
         auto offset = when - systemTimeNow;
         TIME_HILOGD(TIME_MODULE_SERVICE, "systemTimeNow : %{public}lld offset : %{public}lld",
                     systemTimeNow.count(), offset.count());
-        return bootTimePoint + offset;
+        if (offset.count() <= 0) {
+            return bootTimePoint;
+        } else {
+            return bootTimePoint + offset;
+        }
     }
     auto bootTimeNow = bootTimePoint.time_since_epoch();
     auto offset = when - bootTimeNow;
     TIME_HILOGD(TIME_MODULE_SERVICE, "bootTimeNow : %{public}lld offset : %{public}lld",
                 bootTimeNow.count(), offset.count());
-    return bootTimePoint + offset;
+    if (offset.count() <= 0) {
+        return bootTimePoint;
+    } else {
+        return bootTimePoint + offset;
+    }
 }
 
 void TimerManager::TimerLooper()
