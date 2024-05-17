@@ -37,6 +37,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
     /* Run your code on data */
     OHOS::TimeServiceFuzzUtils::OnRemoteRequestTest(
-        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::RESET_ALL_PROXY) + 1U, data, size);
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIMER_EXEMPTION) + 1U, data, size);
     return 0;
 }
