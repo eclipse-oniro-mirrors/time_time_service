@@ -131,17 +131,9 @@ void TimeDatabase::ClearDropOnReboot()
 
 int TimeDBCreateTables(OHOS::NativeRdb::RdbStore &store)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Creates time_version table");
-    // Creates time_version table.
-    int ret = store.ExecuteSql(CREATE_TIME_VERSION_TABLE);
-    if (ret != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Creates time_version table failed, ret: %{public}d", ret);
-        return ret;
-    }
-
     TIME_HILOGI(TIME_MODULE_SERVICE, "Creates hold_on_reboot table");
     // Creates hold_on_reboot table.
-    ret = store.ExecuteSql(CREATE_TIME_TIMER_HOLD_ON_REBOOT);
+    int ret = store.ExecuteSql(CREATE_TIME_TIMER_HOLD_ON_REBOOT);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Creates hold_on_reboot table failed, ret: %{public}d", ret);
         return ret;
@@ -162,41 +154,15 @@ int TimeDBOpenCallback::OnCreate(OHOS::NativeRdb::RdbStore &store)
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnCreate");
     auto initRet = TimeDBCreateTables(store);
     if (initRet != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Init database failed");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Init database failed: %{public}d", initRet);
         return initRet;
     }
-    return initRet;
-}
-
-int TimeDBInitVersionTable(OHOS::NativeRdb::RdbStore &store)
-{
-    // Clears `time_version` table.
-    int ret = store.ExecuteSql("DELETE FROM time_version");
-    if (ret != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Clears time_version table failed");
-        return ret;
-    }
-
-    int64_t outRowId = 0;
-    OHOS::NativeRdb::ValuesBucket insertValues;
-    insertValues.PutString("version", std::string(TIMER_DATABASE_VERSION));
-    ret = store.Insert(outRowId, std::string(TIME_VERSION), insertValues);
-    if (ret != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Inits time_version table failed");
-        return ret;
-    }
-    return ret;
+    return OHOS::NativeRdb::E_OK;
 }
 
 int TimeDBOpenCallback::OnOpen(OHOS::NativeRdb::RdbStore &store)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "OnOpen");
-    auto ret = TimeDBInitVersionTable(store);
-    if (ret != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Init time_version table failed");
-        return ret;
-    }
-    return ret;
+    return OHOS::NativeRdb::E_OK;
 }
 
 int TimeDBOpenCallback::OnUpgrade(OHOS::NativeRdb::RdbStore &store, int oldVersion, int newVersion)

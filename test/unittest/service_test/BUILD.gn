@@ -28,6 +28,8 @@ config("module_private_config") {
     "${time_service_path}/ipc/base",
     "${time_service_path}/timer/include",
   ]
+  cflags = [ "-fvisibility=hidden" ]
+  cflags_cc = [ "-fvisibility-inlines-hidden" ]
 }
 
 module_output_path = "time_service/native"
@@ -63,7 +65,6 @@ ohos_unittest("TimeServiceTest") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "power_manager:powermgr_client",
-    "relational_store:native_appdatafwk",
     "relational_store:native_dataability",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
@@ -101,7 +102,6 @@ ohos_unittest("TimeClientTest") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "power_manager:powermgr_client",
-    "relational_store:native_appdatafwk",
     "relational_store:native_dataability",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
@@ -140,7 +140,6 @@ ohos_unittest("TimeDfxTest") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "power_manager:powermgr_client",
-    "relational_store:native_appdatafwk",
     "relational_store:native_dataability",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",

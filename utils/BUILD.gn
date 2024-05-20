@@ -18,6 +18,8 @@ config("utils_config") {
     "native/include",
     "${time_service_path}",
   ]
+  cflags = [ "-fvisibility=hidden" ]
+  cflags_cc = [ "-fvisibility-inlines-hidden" ]
 }
 
 ohos_source_set("time_utils") {

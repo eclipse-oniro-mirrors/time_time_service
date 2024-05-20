@@ -27,8 +27,6 @@ using namespace OHOS::AppExecFwk;
 
 namespace {
 constexpr int MILLI_TO_SECOND =  1000;
-/* ms for 3 days */
-constexpr int64_t PROXY_DELAY_TIME_IN_MILLI = 3 * 24 * 60 * 60 * 1000;
 }
 
 IMPLEMENT_SINGLE_INSTANCE(TimerProxy)
@@ -762,26 +760,6 @@ void TimerProxy::ShowAdjustTimerInfo(int fd)
         dprintf(fd, " * timer originMaxWhenElapsed           = %lld\n\n", timer->originMaxWhenElapsed);
         dprintf(fd, " * timer maxWhenElapsed           = %lld\n\n", timer->maxWhenElapsed);
     }
-}
-
-bool TimerProxy::SetProxyDelayTime(int fd, const int64_t proxyDelayTime)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    if (proxyDelayTime < 0) {
-        dprintf(fd, "set proxy delay time err: %lld\n", proxyDelayTime);
-        TIME_HILOGD(TIME_MODULE_SERVICE, "err.");
-        return true;
-    }
-
-    if (proxyDelayTime == 0) {
-        proxyDelayTime_ = PROXY_DELAY_TIME_IN_MILLI;
-    } else {
-        proxyDelayTime_ = proxyDelayTime;
-    }
-    dprintf(fd, "proxy delay time is set to %lld ms\n", proxyDelayTime_);
-
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-    return true;
 }
 
 bool TimerProxy::ShowProxyDelayTime(int fd)

@@ -23,7 +23,6 @@
 #include "event_handler.h"
 #include "securec.h"
 #include "system_ability.h"
-#include "ctime"
 #include "time_cmd_dispatcher.h"
 #include "time_cmd_parse.h"
 #include "time_service_notify.h"
@@ -84,7 +83,6 @@ public:
     void DumpProxyTimerInfo(int fd, const std::vector<std::string> &input);
     void DumpUidTimerMapInfo(int fd, const std::vector<std::string> &input);
     void DumpPidTimerMapInfo(int fd, const std::vector<std::string> &input);
-    void SetProxyDelayTime(int fd, const std::vector<std::string> &input);
     void DumpProxyDelayTime(int fd, const std::vector<std::string> &input);
     void DumpAdjustTime(int fd, const std::vector<std::string> &input);
     void InitDumpCmd();
