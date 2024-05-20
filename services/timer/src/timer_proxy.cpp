@@ -205,10 +205,6 @@ bool TimerProxy::AdjustTimer(bool isAdjust, uint32_t interval,
     std::lock_guard<std::mutex> lockProxy(adjustMutex_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "adjust timer state: %{public}d, interval: %{public}d", isAdjust, interval);
     auto callback = [this, isAdjust, interval, now] (std::shared_ptr<TimerInfo> timer) {
-        if (proxyUids_.find(timer->uid) != proxyUids_.end()) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "already proxy uid %{public}d", timer->uid);
-            return false;
-        }
         return isAdjust ? UpdateAdjustWhenElapsed(now, interval, timer) : RestoreAdjustWhenElapsed(timer);
     };
     updateTimerDeliveries(callback);

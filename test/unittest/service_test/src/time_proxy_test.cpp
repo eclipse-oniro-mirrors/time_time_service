@@ -660,5 +660,62 @@ HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
     EXPECT_TRUE(TimerProxy::GetInstance().proxyPids_.empty());
 }
 
+/**
+* @tc.name: AdjustTimerProxy001
+* @tc.desc: Determine whether to unify the heartbeat when the timer proxy is disabled.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
+{
+    TimerPara paras;
+    paras.timerType = 2;
+    paras.windowLength = -1;
+    paras.interval = 0;
+    paras.flag = 0;
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int32_t uid = 2001;
+    int pid = 1111;
+    std::set<int> pidList;
+    pidList.insert(pid);
+    uint64_t timerId = 10001;
+
+    /* clear pidTimersMap_ */
+    TimerProxy::GetInstance().pidTimersMap_.clear();
+
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                    wantAgent, uid, pid, timerId, NOT_STORE);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    
+    /* Start a timer. The timer can be started successfully and can be recorded in pidTimerMap_. */
+    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
+    uint64_t triggerTime = 10000000 + nowElapsed;
+    ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_.size(), (const unsigned int)1);
+
+    /* The proxy of a timer is successful and can be recorded in proxyPid_. */
+    bool retProxy = timerManagerHandler_->ProxyTimer(pidList, true, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
+    auto it = TimerProxy::GetInstance().proxyPids_.find(pid);
+    EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
+    EXPECT_EQ(it->second.size(), (const unsigned int)1);
+
+    /* Cancel a proxy timer. The proxy is canceled successfully, and the proxyPid_ table is updated. */
+    ret = timerManagerHandler_->ProxyTimer(pidList, false, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)0);
+
+    /* After the proxy is disabled, determine whether unified heartbeat is required again. */
+    bool isAdjust = true;
+    uint32_t interval = 300;
+    bool adjret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
+    EXPECT_TRUE(adjret);
+    EXPECT_NE(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
+}
+
 }  // MiscServices
 }  // OHOS
