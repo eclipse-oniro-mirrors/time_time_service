@@ -899,10 +899,7 @@ void TimerManager::ReCalcuOriWhenElapsed(std::shared_ptr<TimerInfo> timer,
 void TimerManager::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    bool isChanged = TimerProxy::GetInstance().SetTimerExemption(nameArr, isExemption);
-    if (isChanged) {
-        ReBatchAllTimers();
-    }
+    TimerProxy::GetInstance().SetTimerExemption(nameArr, isExemption);
 }
 
 bool TimerManager::AdjustSingleTimer(std::shared_ptr<TimerInfo> timer)
