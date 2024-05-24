@@ -16,6 +16,8 @@
 #ifndef TIME_TICK_NOTIFY_H
 #define TIME_TICK_NOTIFY_H
 
+#include <mutex>
+
 #include "timer.h"
 
 namespace OHOS {
@@ -34,6 +36,7 @@ private:
     uint64_t RefreshNextTriggerTime();
     Utils::Timer timer_;
     uint32_t timerId_;
+    std::mutex timeridMutex_;
 };
 } // namespace MiscServices
 } // namespace OHOS
