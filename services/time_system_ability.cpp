@@ -50,6 +50,8 @@
 #include "common_event_support.h"
 #include "power_subscriber.h"
 #include "nitz_subscriber.h"
+#include "init_param.h"
+#include "parameters.h"
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
@@ -73,6 +75,7 @@ constexpr int32_t ONE_MILLI = 1000;
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
+const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
 } // namespace
 
 REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
@@ -181,6 +184,13 @@ void TimeSystemAbility::OnStart()
     TimeTickNotify::GetInstance().Init();
     TimeZoneInfo::GetInstance().Init();
     NtpUpdateTime::GetInstance().Init();
+    // This parameter is set to true by init only after all services have been started,
+    // and is automatically set to false after shutdown. Otherwise it will not be modified.
+    std::string bootCompleted = system::GetParameter(BOOTEVENT_PARAMETER, "");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "bootCompleted: %{public}s", bootCompleted.c_str());
+    if (bootCompleted != "true") {
+        TimeDatabase::GetInstance().ClearDropOnReboot();
+    }
     AddSystemAbilityListener(ABILITY_MGR_SERVICE_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
