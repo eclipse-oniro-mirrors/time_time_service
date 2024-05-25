@@ -117,7 +117,6 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
 
 void TimeDatabase::ClearDropOnReboot()
 {
-    // Clears `drop_on_reboot` table.
     TIME_HILOGI(TIME_MODULE_SERVICE, "Clears drop_on_reboot table");
     if (store_ == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
