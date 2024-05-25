@@ -206,6 +206,7 @@ void TimeSystemAbility::OnStart()
     }
     // Notify memmgr module.
     int pid = getpid();
+    // 1: sa service, 1: start.
     Memory::MemMgrClient::GetInstance().NotifyProcessStatus(pid, 1, 1, TIME_SERVICE_ID);
 }
 
@@ -277,7 +278,7 @@ int32_t TimeSystemAbility::Init()
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init Failed.");
         return E_TIME_PUBLISH_FAIL;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Init success.");
     state_ = ServiceRunningState::STATE_RUNNING;
     return ERR_OK;
 }
@@ -294,6 +295,7 @@ void TimeSystemAbility::OnStop()
     state_ = ServiceRunningState::STATE_NOT_START;
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End.");
     int pid = getpid();
+    // 1: sa service, 0: died.
     Memory::MemMgrClient::GetInstance().NotifyProcessStatus(pid, 1, 0, TIME_SERVICE_ID);
 }
 
