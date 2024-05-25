@@ -65,12 +65,12 @@ TimerInfo::TimerInfo(uint64_t _id, int _type,
     originMaxWhenElapsed = _maxWhen;
 }
 
-bool TimerInfo::UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed, std::chrono::nanoseconds offset)
+/* Please make sure that the first param is current boottime */
+bool TimerInfo::UpdateWhenElapsedFromNow(std::chrono::steady_clock::time_point now, std::chrono::nanoseconds offset)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Update whenElapsed, id=%{public}" PRId64 "", id);
     auto oldWhenElapsed = whenElapsed;
-    auto offsetMill = std::chrono::duration_cast<std::chrono::milliseconds>(offset);
-    whenElapsed = policyElapsed + offsetMill;
+    whenElapsed = now + offset;
     auto oldMaxWhenElapsed = maxWhenElapsed;
     maxWhenElapsed = whenElapsed + windowLength;
     expectedWhenElapsed = whenElapsed;
@@ -80,8 +80,9 @@ bool TimerInfo::UpdateWhenElapsed(std::chrono::steady_clock::time_point policyEl
         currentTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     } else {
-        currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(policyElapsed.time_since_epoch());
+        currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
     }
+    auto offsetMill = std::chrono::duration_cast<std::chrono::milliseconds>(offset);
     when = currentTime + offsetMill;
     return (oldWhenElapsed != whenElapsed) || (oldMaxWhenElapsed != maxWhenElapsed);
 }

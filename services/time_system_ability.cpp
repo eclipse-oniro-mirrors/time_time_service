@@ -52,7 +52,8 @@
 #include "nitz_subscriber.h"
 #include "mem_mgr_client.h"
 #include "mem_mgr_proxy.h"
-
+#include "init_param.h"
+#include "parameters.h"
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
@@ -73,8 +74,10 @@ static const uint32_t TIMER_TYPE_INEXACT_REMINDER_MASK = 1 << 4;
 constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t ONE_MILLI = 1000;
+constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
+const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
 } // namespace
 
 REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
@@ -183,6 +186,13 @@ void TimeSystemAbility::OnStart()
     TimeTickNotify::GetInstance().Init();
     TimeZoneInfo::GetInstance().Init();
     NtpUpdateTime::GetInstance().Init();
+    // This parameter is set to true by init only after all services have been started,
+    // and is automatically set to false after shutdown. Otherwise it will not be modified.
+    std::string bootCompleted = system::GetParameter(BOOTEVENT_PARAMETER, "");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "bootCompleted: %{public}s", bootCompleted.c_str());
+    if (bootCompleted != "true") {
+        TimeDatabase::GetInstance().ClearDropOnReboot();
+    }
     AddSystemAbilityListener(ABILITY_MGR_SERVICE_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
@@ -1060,7 +1070,6 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
 
 void TimeSystemAbility::SetAutoReboot()
 {
-    // Find the most recent trigger time to boot on.
     TIME_HILOGI(TIME_MODULE_SERVICE, "Find the most recent trigger time");
     auto database = TimeDatabase::GetInstance();
     OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
@@ -1087,16 +1096,17 @@ void TimeSystemAbility::SetAutoReboot()
                 resultSet->Close();
                 return;
             }
-
+            if (static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > triggerTime) {
+                TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
+                triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
+            }
             struct itimerspec new_value;
             std::chrono::nanoseconds nsec(triggerTime * MILLISECOND_TO_NANO);
             auto second = std::chrono::duration_cast<std::chrono::seconds>(nsec);
             new_value.it_value.tv_sec = second.count();
             new_value.it_value.tv_nsec = (nsec - second).count();
-            new_value.it_interval.tv_sec = 0;
             TIME_HILOGI(TIME_MODULE_SERVICE, "currentTime:%{public}" PRId64 ", second:%{public}" PRId64 ","
-                        "nanosecond:%{public}" PRId64"", currentTime,
-                        static_cast<int64_t>(new_value.it_value.tv_sec),
+                        "nanosecond:%{public}" PRId64"", currentTime, static_cast<int64_t>(new_value.it_value.tv_sec),
                         static_cast<int64_t>(new_value.it_value.tv_nsec));
             int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
             if (ret < 0) {

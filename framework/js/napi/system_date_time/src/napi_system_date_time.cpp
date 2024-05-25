@@ -307,6 +307,8 @@ napi_value NapiSystemDateTime::GetUptime(napi_env env, napi_callback_info info)
     };
     auto *getUpTimeContext = new GetUpTimeContext();
     auto inputParser = [env, getUpTimeContext](size_t argc, napi_value *argv) {
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext, argc >= ARGC_ONE,
+            "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
         getUpTimeContext->status = napi_get_value_int32(env, argv[ARGV_FIRST], &getUpTimeContext->timeType);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext, getUpTimeContext->status == napi_ok,
             "The type of 'timeType' must be number or enum", JsErrorCode::PARAMETER_ERROR);
