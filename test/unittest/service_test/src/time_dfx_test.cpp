@@ -335,28 +335,6 @@ HWTEST_F(TimeDfxTest, DumpProxyDelayTime001, TestSize.Level0)
 }
 
 /**
-* @tc.name: SetProxyDelayTime001
-* @tc.desc: set proxy delay time
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeDfxTest, SetProxyDelayTime001, TestSize.Level0)
-{
-    std::string result;
-    auto CMD1 = std::string(CMD).append(" \"-ProxyDelayTime -s 3000").append(" \"");
-
-    auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
-    EXPECT_TRUE(ret);
-    EXPECT_NE(result.find("3000"), std::string::npos);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyDelayTime -s: %{public}s", result.c_str());
-
-    CMD1 = std::string(CMD).append(" \"-ProxyDelayTime -s 0").append(" \"");
-    ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
-    EXPECT_TRUE(ret);
-    EXPECT_NE(result.find("259200000"), std::string::npos);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyDelayTime -s 0: %{public}s", result.c_str());
-}
-
-/**
 * @tc.name: DumpPeoxyTimerMapInfo001
 * @tc.desc: dump proxy timer map info
 * @tc.type: FUNC

@@ -14,25 +14,16 @@
  */
 #include "time_system_ability.h"
 
-#include <cerrno>
 #include <chrono>
-#include <cstdio>
-#include <cstring>
-#include <ctime>
 #include <dirent.h>
-#include <fcntl.h>
 #include <fstream>
 #include <linux/rtc.h>
 #include <mutex>
 #include <sstream>
 #include <string>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/timerfd.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <climits>
 
 #include "iservice_registry.h"
 #include "ntp_update_time.h"
@@ -154,12 +145,6 @@ void TimeSystemAbility::InitDumpCmd()
         "dump uid timer map.",
         [this](int fd, const std::vector<std::string> &input) { DumpUidTimerMapInfo(fd, input); });
     TimeCmdDispatcher::GetInstance().RegisterCommand(cmdUidTimer);
-
-    auto cmdSetDelayTimer = std::make_shared<TimeCmdParse>(
-        std::vector<std::string>({ "-ProxyDelayTime", "-s", "[n]" }),
-        "set proxy delay time.",
-        [this](int fd, const std::vector<std::string> &input) { SetProxyDelayTime(fd, input); });
-    TimeCmdDispatcher::GetInstance().RegisterCommand(cmdSetDelayTimer);
 
     auto cmdShowDelayTimer = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-ProxyDelayTime", "-l" }),
         "dump proxy delay time.",
@@ -627,13 +612,6 @@ void TimeSystemAbility::DumpUidTimerMapInfo(int fd, const std::vector<std::strin
     TimerProxy::GetInstance().ShowUidTimerMapInfo(fd, times);
 }
 
-void TimeSystemAbility::SetProxyDelayTime(int fd, const std::vector<std::string> &input)
-{
-    dprintf(fd, "\n - set proxy delay time:\n");
-    int paramNumPos = 2;
-    TimerProxy::GetInstance().SetProxyDelayTime(fd, std::atoi(input.at(paramNumPos).c_str()));
-}
-
 void TimeSystemAbility::DumpProxyDelayTime(int fd, const std::vector<std::string> &input)
 {
     dprintf(fd, "\n - dump proxy delay time:\n");
@@ -1068,7 +1046,7 @@ void TimeSystemAbility::SetAutoReboot()
     auto database = TimeDatabase::GetInstance();
     OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
     holdRdbPredicates.EqualTo("state", 1)->OrderByAsc("triggerTime");
-    auto resultSet = database.Query(holdRdbPredicates, ALL_DATA);
+    auto resultSet = database.Query(holdRdbPredicates, { "bundleName", "triggerTime" });
     if (resultSet == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Find the most recent trigger time failed");
         return;
@@ -1076,8 +1054,8 @@ void TimeSystemAbility::SetAutoReboot()
     int64_t currentTime = 0;
     TimeSystemAbility::GetInstance()->GetWallTimeMs(currentTime);
     do {
-        auto bundleName = GetString(resultSet, 6);
-        uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
+        auto bundleName = GetString(resultSet, 0);
+        uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 1));
         if (triggerTime < static_cast<uint64_t>(currentTime)) {
             TIME_HILOGI(TIME_MODULE_SERVICE,
                         "triggerTime: %{public}" PRIu64" currentTime: %{public}" PRId64"", triggerTime, currentTime);

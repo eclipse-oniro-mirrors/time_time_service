@@ -99,15 +99,6 @@ bool FuzzTimerIsProxy(const uint8_t *data, size_t size)
     return true;
 }
 
-bool FuzzTimerDelayTime(const uint8_t *data, size_t size)
-{
-    auto fd = static_cast<int>(*data);
-    auto delay = static_cast<int64_t>(*data);
-    TimerProxy::GetInstance().SetProxyDelayTime(fd, delay);
-    TimerProxy::GetInstance().GetProxyDelayTime();
-    return true;
-}
-
 } // namespace OHOS
 
 /* Fuzzer entry point */
@@ -125,6 +116,5 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     OHOS::FuzzTimerEraseTimer(data, size);
     OHOS::FuzzTimerRemoveTimerMap(data, size);
     OHOS::FuzzTimerIsProxy(data, size);
-    OHOS::FuzzTimerDelayTime(data, size);
     return 0;
 }

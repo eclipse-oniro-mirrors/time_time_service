@@ -62,7 +62,6 @@ public:
     bool ShowPidProxyTimerInfo(int fd, const int64_t now);
     bool ShowUidTimerMapInfo(int fd, const int64_t now);
     bool ShowPidTimerMapInfo(int fd, const int64_t now);
-    bool SetProxyDelayTime(int fd, const int64_t proxyDelayTime);
     bool ShowProxyDelayTime(int fd);
     void ShowAdjustTimerInfo(int fd);
     int64_t GetProxyDelayTime() const;

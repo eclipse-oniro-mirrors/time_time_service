@@ -156,11 +156,11 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     if (type == NOT_STORE) {
         return E_TIME_OK;
     } else if (bundleName == NEED_RECOVER_ON_REBOOT) {
-        OHOS::NativeRdb::ValuesBucket insertValues = GetInsertValues(timerId, paras, uid, bundleName, wantAgent);
-        TimeDatabase::GetInstance().Insert(std::string(HOLD_ON_REBOOT), insertValues);
+        TimeDatabase::GetInstance().Insert(std::string(HOLD_ON_REBOOT),
+                                           GetInsertValues(timerId, paras, uid, bundleName, wantAgent));
     } else {
-        OHOS::NativeRdb::ValuesBucket insertValues = GetInsertValues(timerId, paras, uid, bundleName, wantAgent);
-        TimeDatabase::GetInstance().Insert(std::string(DROP_ON_REBOOT), insertValues);
+        TimeDatabase::GetInstance().Insert(std::string(DROP_ON_REBOOT),
+                                           GetInsertValues(timerId, paras, uid, bundleName, wantAgent));
     }
     return E_TIME_OK;
 }
