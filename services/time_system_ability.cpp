@@ -198,16 +198,13 @@ void TimeSystemAbility::OnStart()
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
+    AddSystemAbilityListener(MEMORY_MANAGER_SA_ID);
     InitDumpCmd();
     if (Init() != ERR_OK) {
         auto callback = [this]() { Init(); };
         serviceHandler_->PostTask(callback, "time_service_init_retry", INIT_INTERVAL);
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init failed. Try again 10s later.");
     }
-    // Notify memmgr module.
-    int pid = getpid();
-    // 1: sa service, 1: start.
-    Memory::MemMgrClient::GetInstance().NotifyProcessStatus(pid, 1, 1, TIME_SERVICE_ID);
 }
 
 void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
@@ -223,6 +220,11 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         NtpUpdateTime::GetInstance().MonitorNetwork();
     } else if (systemAbilityId == ABILITY_MGR_SERVICE_ID) {
         RecoverTimer();
+    } else if (systemAbilityId == MEMORY_MANAGER_SA_ID) {
+        // Notify memmgr module.
+        int pid = getpid();
+        // 1: sa service, 1: start.
+        Memory::MemMgrClient::GetInstance().NotifyProcessStatus(pid, 1, 1, TIME_SERVICE_ID);
     } else {
         TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not valid, id is %{public}d",
             systemAbilityId);
