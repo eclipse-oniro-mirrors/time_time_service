@@ -21,7 +21,7 @@
 
 namespace OHOS {
 namespace MiscServices {
-void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer);
+void StatisticReporter(int32_t callerPid, int32_t size, std::shared_ptr<TimerInfo> timer);
 } // namespace MiscServices
 } // namespace OHOS
 #endif // TIME_SYSEVENT_H
