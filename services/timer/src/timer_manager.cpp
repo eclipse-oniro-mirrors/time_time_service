@@ -194,6 +194,12 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
             timerInfo->id, timerInfo->pid);
         return E_TIME_DEAL_FAILED;
     }
+    {
+        // To prevent the same ID from being started repeatedly,
+        // the later start overwrites the earlier start.
+        std::lock_guard<std::mutex> lock(mutex_);
+        RemoveLocked(timerId, false);
+    }
     SetHandler(timerInfo->id,
                timerInfo->type,
                triggerTime,
@@ -205,21 +211,13 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
                timerInfo->uid,
                timerInfo->pid,
                timerInfo->bundleName);
-    if (timerInfo->bundleName == NEED_RECOVER_ON_REBOOT) {
-        OHOS::NativeRdb::ValuesBucket values;
-        values.PutInt("state", 1);
-        values.PutLong("triggerTime", static_cast<int64_t>(triggerTime));
-        OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
-        rdbPredicates.EqualTo("state", 0)->And()->EqualTo("timerId", static_cast<int64_t>(timerId));
-        TimeDatabase::GetInstance().Update(values, rdbPredicates);
-    } else {
-        OHOS::NativeRdb::ValuesBucket values;
-        values.PutInt("state", 1);
-        values.PutLong("triggerTime", static_cast<int64_t>(triggerTime));
-        OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
-        rdbPredicates.EqualTo("state", 0)->And()->EqualTo("timerId", static_cast<int64_t>(timerId));
-        TimeDatabase::GetInstance().Update(values, rdbPredicates);
-    }
+    auto tableName = (timerInfo->bundleName == NEED_RECOVER_ON_REBOOT ? HOLD_ON_REBOOT : DROP_ON_REBOOT);
+    OHOS::NativeRdb::ValuesBucket values;
+    values.PutInt("state", 1);
+    values.PutLong("triggerTime", static_cast<int64_t>(triggerTime));
+    OHOS::NativeRdb::RdbPredicates rdbPredicates(tableName);
+    rdbPredicates.EqualTo("state", 0)->And()->EqualTo("timerId", static_cast<int64_t>(timerId));
+    TimeDatabase::GetInstance().Update(values, rdbPredicates);
     return E_TIME_OK;
 }
 
