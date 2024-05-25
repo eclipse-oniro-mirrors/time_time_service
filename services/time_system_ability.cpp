@@ -41,6 +41,8 @@
 #include "common_event_support.h"
 #include "power_subscriber.h"
 #include "nitz_subscriber.h"
+#include "mem_mgr_client.h"
+#include "mem_mgr_proxy.h"
 #include "init_param.h"
 #include "parameters.h"
 
@@ -181,8 +183,8 @@ void TimeSystemAbility::OnStart()
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
+    AddSystemAbilityListener(MEMORY_MANAGER_SA_ID);
     InitDumpCmd();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Start TimeSystemAbility success.");
     if (Init() != ERR_OK) {
         auto callback = [this]() { Init(); };
         serviceHandler_->PostTask(callback, "time_service_init_retry", INIT_INTERVAL);
@@ -203,6 +205,11 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         NtpUpdateTime::GetInstance().MonitorNetwork();
     } else if (systemAbilityId == ABILITY_MGR_SERVICE_ID) {
         RecoverTimer();
+    } else if (systemAbilityId == MEMORY_MANAGER_SA_ID) {
+        // Notify memmgr module.
+        int pid = getpid();
+        // 1: sa service, 1: start.
+        Memory::MemMgrClient::GetInstance().NotifyProcessStatus(pid, 1, 1, TIME_SERVICE_ID);
     } else {
         TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not valid, id is %{public}d",
             systemAbilityId);
@@ -258,7 +265,7 @@ int32_t TimeSystemAbility::Init()
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init Failed.");
         return E_TIME_PUBLISH_FAIL;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Init Success.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Init success.");
     state_ = ServiceRunningState::STATE_RUNNING;
     return ERR_OK;
 }
@@ -273,7 +280,10 @@ void TimeSystemAbility::OnStop()
     serviceHandler_ = nullptr;
     TimeTickNotify::GetInstance().Stop();
     state_ = ServiceRunningState::STATE_NOT_START;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "OnStop End.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End.");
+    int pid = getpid();
+    // 1: sa service, 0: died.
+    Memory::MemMgrClient::GetInstance().NotifyProcessStatus(pid, 1, 0, TIME_SERVICE_ID);
 }
 
 void TimeSystemAbility::InitServiceHandler()

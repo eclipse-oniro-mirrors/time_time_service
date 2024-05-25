@@ -41,6 +41,7 @@
         "c_utils",
         "access_token",
         "hisysevent",
+        "memmgr",
         "device_standby",
         "init",
         "power_manager"
