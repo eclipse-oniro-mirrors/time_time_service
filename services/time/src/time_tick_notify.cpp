@@ -62,10 +62,12 @@ void TimeTickNotify::Init()
 
 void TimeTickNotify::Callback()
 {
+    std::lock_guard<std::mutex> lock(timeridMutex_);
     timer_.Unregister(timerId_);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Unregister id: %{public}d", timerId_);
     uint64_t nextTriggerTime = RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
-    timerId_ = timer_.Register(callback, nextTriggerTime);
+    timerId_ = timer_.Register(callback, nextTriggerTime, true);
     if (nextTriggerTime > (MINUTE_TO_MILLISECOND - MILLISECOND_TO_SECOND)) {
         auto currentTime = steady_clock::now().time_since_epoch().count();
         TimeServiceNotify::GetInstance().PublishTimeTickEvents(currentTime);
@@ -75,10 +77,12 @@ void TimeTickNotify::Callback()
 
 void TimeTickNotify::PowerCallback()
 {
+    std::lock_guard<std::mutex> lock(timeridMutex_);
     timer_.Unregister(timerId_);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Unregister id: %{public}d", timerId_);
     uint64_t nextTriggerTime = RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
-    timerId_ = timer_.Register(callback, nextTriggerTime);
+    timerId_ = timer_.Register(callback, nextTriggerTime, true);
     TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime);
 }
 
