@@ -1052,13 +1052,12 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
 
 void TimeSystemAbility::SetAutoReboot()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Find the most recent trigger time");
     auto database = TimeDatabase::GetInstance();
     OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
     holdRdbPredicates.EqualTo("state", 1)->OrderByAsc("triggerTime");
     auto resultSet = database.Query(holdRdbPredicates, { "bundleName", "triggerTime" });
     if (resultSet == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Find the most recent trigger time failed");
+        TIME_HILOGI(TIME_MODULE_SERVICE, "no need to set RTC");
         return;
     }
     int64_t currentTime = 0;
