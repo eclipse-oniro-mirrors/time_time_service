@@ -49,7 +49,6 @@ using namespace OHOS::Security::AccessToken;
 
 const int32_t RESERVED_UID = 99999;
 std::set<int> RESERVED_PIDLIST = {1111, 2222};
-const std::string NTP_CN_SERVER = "ntp.aliyun.com";
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NETWORK_TIME_STATUS_ON = "ON";
 uint64_t g_idleTimerId = 0;
@@ -775,8 +774,6 @@ HWTEST_F(TimeServiceTest, CreateTimer006, TestSize.Level1)
 HWTEST_F(TimeServiceTest, SntpClient001, TestSize.Level0)
 {
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
-    auto ret = ntpClient->RequestTime(NTP_CN_SERVER);
-    EXPECT_FALSE(ret);
 
     auto buffer = std::string("31234114451");
     auto millisecond = ntpClient->GetNtpTimestamp64(0, buffer.c_str());

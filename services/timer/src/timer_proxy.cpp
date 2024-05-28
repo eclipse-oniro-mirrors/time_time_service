@@ -525,7 +525,7 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyUidMap(const int32_t uid,
     for (auto itUidTimersMap = uidTimersMap_.at(uid).begin(); itUidTimersMap!= uidTimersMap_.at(uid).end();
         ++itUidTimersMap) {
         timePointMap.insert(std::make_pair(itUidTimersMap->first, itUidTimersMap->second->whenElapsed));
-        itUidTimersMap->second->UpdateWhenElapsed(now, milliseconds(proxyDelayTime_));
+        itUidTimersMap->second->UpdateWhenElapsedFromNow(now, milliseconds(proxyDelayTime_));
         TIME_HILOGD(TIME_MODULE_SERVICE, "Update proxy WhenElapsed for proxy uid map. "
             "uid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
             itUidTimersMap->second->uid, itUidTimersMap->second->id,
@@ -558,7 +558,7 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyPidMap(int pid,
     for (auto itPidTimersMap = pidTimersMap_.at(pid).begin(); itPidTimersMap!= pidTimersMap_.at(pid).end();
         ++itPidTimersMap) {
         timePointMap.insert(std::make_pair(itPidTimersMap->first, itPidTimersMap->second->whenElapsed));
-        itPidTimersMap->second->UpdateWhenElapsed(now, milliseconds(proxyDelayTime_));
+        itPidTimersMap->second->UpdateWhenElapsedFromNow(now, milliseconds(proxyDelayTime_));
         TIME_HILOGD(TIME_MODULE_SERVICE, "Update proxy WhenElapsed for proxy pid map. "
             "pid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
             itPidTimersMap->second->pid, itPidTimersMap->second->id,
@@ -591,9 +591,10 @@ bool TimerProxy::RestoreProxyWhenElapsedByUid(const int32_t uid,
             continue;
         }
         if (itProxyUids->second > now + milliseconds(MILLI_TO_SECOND)) {
-            itTimerInfo->second->UpdateWhenElapsed(itProxyUids->second, milliseconds(0));
+            auto interval = std::chrono::duration_cast<std::chrono::nanoseconds>(itProxyUids->second - now);
+            itTimerInfo->second->UpdateWhenElapsedFromNow(now, interval);
         } else {
-            itTimerInfo->second->UpdateWhenElapsed(now, milliseconds(MILLI_TO_SECOND));
+            itTimerInfo->second->UpdateWhenElapsedFromNow(now, milliseconds(MILLI_TO_SECOND));
         }
         TIME_HILOGD(TIME_MODULE_SERVICE, "Restore proxy WhenElapsed by uid. "
             "uid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
@@ -626,9 +627,10 @@ bool TimerProxy::RestoreProxyWhenElapsedByPid(const int pid,
             continue;
         }
         if (itProxyPids->second > now + milliseconds(MILLI_TO_SECOND)) {
-            itTimerInfo->second->UpdateWhenElapsed(itProxyPids->second, milliseconds(0));
+            auto interval = std::chrono::duration_cast<std::chrono::nanoseconds>(itProxyPids->second - now);
+            itTimerInfo->second->UpdateWhenElapsedFromNow(now, interval);
         } else {
-            itTimerInfo->second->UpdateWhenElapsed(now, milliseconds(MILLI_TO_SECOND));
+            itTimerInfo->second->UpdateWhenElapsedFromNow(now, milliseconds(MILLI_TO_SECOND));
         }
         TIME_HILOGD(TIME_MODULE_SERVICE, "Restore proxy WhenElapsed by pid. "
             "pid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",

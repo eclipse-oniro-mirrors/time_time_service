@@ -65,7 +65,7 @@ public:
     virtual ~TimerInfo() = default;
     bool operator==(const TimerInfo &other) const;
     bool Matches(const std::string &packageName) const;
-    bool UpdateWhenElapsed(std::chrono::steady_clock::time_point policyElapsed, std::chrono::nanoseconds offset);
+    bool UpdateWhenElapsedFromNow(std::chrono::steady_clock::time_point now, std::chrono::nanoseconds offset);
     bool AdjustTimer(const std::chrono::steady_clock::time_point &now, const uint32_t interval);
     bool RestoreAdjustTimer();
 };
