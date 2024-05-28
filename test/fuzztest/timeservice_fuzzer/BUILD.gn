@@ -98,6 +98,11 @@ timestoptimer_test = {
   configFuzzer = "timestoptimer_fuzzer"
   source = "timestoptimer_fuzzer/timestoptimer_fuzzer.cpp"
 }
+timerproxy_test = {
+  targetName = "TimerProxyFuzzTest"
+  configFuzzer = "timerproxy_fuzzer"
+  source = "timerproxy_fuzzer/timerproxy_fuzzer.cpp"
+}
 
 time_fuzztests = [
   timeboundarycode_test,
@@ -116,6 +121,7 @@ time_fuzztests = [
   timeservicesettimezone_test,
   timestarttimer_test,
   timestoptimer_test,
+  timerproxy_test,
 ]
 
 foreach(item, time_fuzztests) {
@@ -194,6 +200,7 @@ group("fuzztest") {
     ":TimeServiceSetTimeZoneFuzzTest",
     ":TimeStartTimerFuzzTest",
     ":TimeStopTimerFuzzTest",
+    ":TimerProxyFuzzTest",
   ]
 }
 ###############################################################################

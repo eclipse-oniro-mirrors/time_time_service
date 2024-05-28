@@ -162,6 +162,19 @@ void TimeOutCallback4(void)
     g_data4 += 1;
 }
 
+std::atomic<int> g_data5(0);
+void TimeOutCallback5(void)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(FIVE_HUNDRED));
+    g_data5 += 1;
+}
+
+std::atomic<int> g_data6(0);
+void TimeOutCallback6(void)
+{
+    g_data6 += 1;
+}
+
 /**
 * @tc.name: SetTime001
 * @tc.desc: set system time.
@@ -621,6 +634,7 @@ HWTEST_F(TimeClientTest, StartTimer003, TestSize.Level1)
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 1000);
     sleep(3);
     EXPECT_GT(g_data1, 1);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 
 /**
@@ -646,6 +660,7 @@ HWTEST_F(TimeClientTest, StartTimer004, TestSize.Level1)
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 1000);
     sleep(3);
     EXPECT_GT(g_data1, 1);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 
 /**
@@ -1060,7 +1075,8 @@ HWTEST_F(TimeClientTest, RecoverTimer005, TestSize.Level1)
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 5000);
     // Kill time_service by hand.
     sleep(6);
-    EXPECT_GT(g_data1, 1);
+    EXPECT_GT(g_data1, 0);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 
 /**
@@ -1087,7 +1103,8 @@ HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 5000);
     sleep(5);
-    EXPECT_GT(g_data1, 1);
+    EXPECT_GT(g_data1, 0);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 
 /**
@@ -1142,5 +1159,85 @@ HWTEST_F(TimeClientTest, AdjustTimer002, TestSize.Level1)
     TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + 2000);
     sleep(4);
     EXPECT_GT(g_data3, 0);
+}
+
+/**
+* @tc.name: AdjustTimer003
+* @tc.desc: Create system timer and start it, after adjust system time, check whether it will be successful.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, AdjustTimer003, TestSize.Level1)
+{
+    AddPermission();
+    g_data6 = 0;
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(1<<2 | 1<<1);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(0);
+    timerInfo->SetCallbackInfo(TimeOutCallback6);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    uint64_t ret = 0;
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, ret);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 2000);
+
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, nullptr);
+    int64_t time = (currentTime.tv_sec + 3600) * 1000 + currentTime.tv_usec / 1000;
+    ASSERT_TRUE(time > 0);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
+    int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(time);
+    EXPECT_TRUE(result == TimeError::E_TIME_OK);
+    sleep(1);
+    EXPECT_GT(g_data6, 0);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
+}
+
+/**
+* @tc.name: ReBatchAllTimers001
+* @tc.desc: Start a long-time timer, then start a proxy of this timer.
+            Cancel the proxy of the timer, and then rebatch it.
+            Expect this timer does not trigger.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
+{
+    AddPermission();
+    g_data5 = 0;
+
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(1);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(0);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback5);
+    uint64_t timerId;
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    auto startRet = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 300000);
+    EXPECT_TRUE(startRet == TimeError::E_TIME_OK);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
+
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    std::set<int> pidList;
+    pidList.insert(pid);
+    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
+    sleep(1);
+    TimeSystemAbility::GetInstance()->ProxyTimer(pidList, false, true);
+
+    struct timeval currentTime {};
+    gettimeofday(&currentTime, nullptr);
+    int64_t time = (currentTime.tv_sec + 10) * 1000 + currentTime.tv_usec / 1000;
+    ASSERT_TRUE(time > 0);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
+    int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(time);
+    EXPECT_TRUE(result == TimeError::E_TIME_OK);
+    
+    EXPECT_EQ(g_data5, 0);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 } // namespace

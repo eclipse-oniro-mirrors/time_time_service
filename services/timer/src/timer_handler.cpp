@@ -98,7 +98,7 @@ TimerHandler::~TimerHandler()
     close(epollFd_);
 }
 
-int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when)
+int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when, std::chrono::steady_clock::time_point bootTime)
 {
     if (static_cast<size_t>(type) > ALARM_TYPE_COUNT) {
         errno = EINVAL;
@@ -106,8 +106,8 @@ int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when)
     }
 
     auto second = std::chrono::duration_cast<std::chrono::seconds>(when);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "triggerTime second: %{public}lld, triggerTime nanosecond: %{public}lld",
-        second.count(), (when - second).count());
+    TIME_HILOGI(TIME_MODULE_SERVICE, "triggerTime second: %{public}lld, triggerTime nanosecond: %{public}lld, current"
+        " bootTime: %{public}lld", second.count(), (when - second).count(), bootTime.time_since_epoch().count());
     timespec ts {second.count(), (when - second).count()};
     itimerspec spec {timespec {}, ts};
     int ret = timerfd_settime(fds_[type], TFD_TIMER_ABSTIME, &spec, nullptr);
