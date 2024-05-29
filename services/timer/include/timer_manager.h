@@ -65,9 +65,6 @@ public:
     bool ShowIdleTimerInfo(int fd);
     ~TimerManager() override;
     void HandleRSSDeath();
-    #ifdef POWER_MANAGER_ENABLE
-    void DecRunningLockRef();
-    #endif
 
 private:
     explicit TimerManager(std::shared_ptr<TimerHandler> impl);
@@ -120,13 +117,12 @@ private:
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
     std::chrono::steady_clock::time_point GetBootTimeNs();
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
-    bool NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer, bool needCallback);
+    bool NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer);
     bool CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustTimersBasedOnDeviceIdle();
     void HandleRepeatTimer(const std::shared_ptr<TimerInfo> &timer, std::chrono::steady_clock::time_point nowElapsed);
     #ifdef POWER_MANAGER_ENABLE
-    void IncRunningLockRef();
     void HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup);
     void AddRunningLock(long long holdLockTime);
     #endif
@@ -153,20 +149,10 @@ private:
     bool adjustPolicy_ = false;
     uint32_t adjustInterval_ = 0;
     #ifdef POWER_MANAGER_ENABLE
-    uint32_t count_ = 0;
-    std::mutex countLock_;
     std::shared_ptr<PowerMgr::RunningLock> runningLock_;
     int64_t lockExpiredTime_ = 0;
     #endif
 }; // timer_manager
-
-#ifdef POWER_MANAGER_ENABLE
-class WantAgentCompleteCallBack : public AbilityRuntime::WantAgent::CompletedCallback {
-public:
-    void OnSendFinished(const AAFwk::Want &want, int resultCode, const std::string &resultData,
-        const AAFwk::WantParams &resultExtras) override;
-};
-#endif
 } // MiscServices
 } // OHOS
 

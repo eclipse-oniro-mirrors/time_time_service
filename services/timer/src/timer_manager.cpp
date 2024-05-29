@@ -63,6 +63,7 @@ static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "w
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 
 #ifdef POWER_MANAGER_ENABLE
+constexpr int64_t USE_LOCK_ONE_SEC_IN_NANO = 1 * NANO_TO_SECOND;
 constexpr int64_t USE_LOCK_TIME_IN_NANO = 2 * NANO_TO_SECOND;
 constexpr int32_t USE_LOCK_DELAY_TIME_IN_MICRO = 10000;
 constexpr int32_t MAX_RETRY_LOCK_TIMES = 3;
@@ -754,25 +755,18 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
     auto wakeupNums = std::count_if(triggerList.begin(), triggerList.end(), [](auto timer) {return timer->wakeup;});
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
+            #ifdef POWER_MANAGER_ENABLE
+            TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}lld, uid: %{public}d bundleName: %{public}s",
+                        timer->id, timer->uid, timer->bundleName.c_str());
+            AddRunningLock(USE_LOCK_ONE_SEC_IN_NANO);
+            #endif
             StatisticReporter(IPCSkeleton::GetCallingPid(), wakeupNums, timer);
         }
-        bool flag = timer->type == ITimerManager::TimerType::RTC_WAKEUP ||
-             timer->type == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP;
         if (timer->callback) {
-            #ifdef POWER_MANAGER_ENABLE
-            if (flag) {
-                IncRunningLockRef();
-            }
-            #endif
             TimerProxy::GetInstance().CallbackAlarmIfNeed(timer);
         }
         if (timer->wantAgent) {
-            #ifdef POWER_MANAGER_ENABLE
-            if (flag) {
-                IncRunningLockRef();
-            }
-            #endif
-            NotifyWantAgent(timer, flag);
+            NotifyWantAgent(timer);
             if (timer->bundleName == NEED_RECOVER_ON_REBOOT) {
                 OHOS::NativeRdb::ValuesBucket values;
                 values.PutInt("state", 0);
@@ -794,7 +788,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
     }
 }
 
-bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer, bool needCallback)
+bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "trigger wantAgent.");
     auto wantAgent = timer->wantAgent;
@@ -813,17 +807,7 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer, bool
         want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
     }
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
-    #ifdef POWER_MANAGER_ENABLE
-    auto code = 0;
-    if (needCallback) {
-        auto callback = std::make_shared<WantAgentCompleteCallBack>();
-        code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, callback, paramsInfo);
-    } else {
-        code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
-    }
-    #else
     auto code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
-    #endif
     TIME_HILOGI(TIME_MODULE_SERVICE, "trigger wantAgent result: %{public}d", code);
     return code == ERR_OK;
 }
@@ -1168,30 +1152,6 @@ void TimerManager::HandleRepeatTimer(
 }
 
 #ifdef POWER_MANAGER_ENABLE
-void TimerManager::IncRunningLockRef()
-{
-    countLock_.lock();
-    if (count_ == 0) {
-        AddRunningLock(USE_LOCK_TIME_IN_NANO);
-    }
-    count_ += 1;
-    countLock_.unlock();
-}
-
-void TimerManager::DecRunningLockRef()
-{
-    countLock_.lock();
-    if (count_ >= 1) {
-        count_ -= 1;
-    }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "count_=%{public}d", count_);
-    if (count_ == 0 && runningLock_ != nullptr) {
-        runningLock_->UnLock();
-        TIME_HILOGI(TIME_MODULE_SERVICE, "runninglock unlock");
-    }
-    countLock_.unlock();
-}
-
 // needs to acquire the lock `mutex_` before calling this method
 void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
 {
@@ -1232,21 +1192,9 @@ void TimerManager::AddRunningLock(long long holdLockTime)
             PowerMgr::RunningLockType::RUNNINGLOCK_BACKGROUND_NOTIFICATION);
     }
     if (runningLock_ != nullptr) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "runningLock is not nullptr");
         runningLock_->UnLock();
         runningLock_->Lock(static_cast<int32_t>(holdLockTime / NANO_TO_MILLI));
     }
-}
-
-void WantAgentCompleteCallBack::OnSendFinished(
-    const AAFwk::Want &want, int resultCode, const std::string &resultData, const AAFwk::WantParams &resultExtras)
-{
-    auto handler = TimeSystemAbility::GetInstance()->GetManagerHandler();
-    if (handler == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "timermanager is nullptr");
-        return;
-    }
-    handler->DecRunningLockRef();
 }
 #endif
 } // MiscServices
