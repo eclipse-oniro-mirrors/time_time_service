@@ -142,6 +142,8 @@ void TimeClientTest::TearDownTestCase(void)
 
 void TimeClientTest::SetUp(void)
 {
+    // Prevent timers are adjusted before.
+    TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
 }
 
 void TimeClientTest::TearDown(void)
@@ -688,6 +690,12 @@ HWTEST_F(TimeClientTest, StartTimer005, TestSize.Level1)
     TimeServiceClient::GetInstance()->ProxyTimer(uid, true, true);
     sleep(2);
     TimeServiceClient::GetInstance()->ProxyTimer(uid, false, true);
+    int i = 0;
+    while (g_data1 == 0 && i < 100)
+    {
+        ++i;
+        usleep(100);
+    }
     EXPECT_GT(g_data1, 0);
 }
 
@@ -716,6 +724,12 @@ HWTEST_F(TimeClientTest, StartTimer006, TestSize.Level1)
     sleep(2);
     TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
+    int i = 0;
+    while (g_data1 == 0 && i < 100)
+    {
+        ++i;
+        usleep(100);
+    }
     EXPECT_GT(g_data1, 0);
 }
 
@@ -820,6 +834,12 @@ HWTEST_F(TimeClientTest, StartTimer009, TestSize.Level1)
     TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
     sleep(2);
     TimeServiceClient::GetInstance()->ProxyTimer(pidList, false, true);
+    int i = 0;
+    while (g_data1 == 0 && i < 100)
+    {
+        ++i;
+        usleep(100);
+    }
     EXPECT_GT(g_data1, 0);
 }
 
@@ -851,6 +871,12 @@ HWTEST_F(TimeClientTest, StartTimer010, TestSize.Level1)
     sleep(2);
     TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
+    int i = 0;
+    while (g_data1 == 0 && i < 100)
+    {
+        ++i;
+        usleep(100);
+    }
     EXPECT_GT(g_data1, 0);
 }
 
