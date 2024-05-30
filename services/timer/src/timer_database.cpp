@@ -24,6 +24,7 @@ TimeDatabase::TimeDatabase()
     OHOS::NativeRdb::RdbStoreConfig config(DB_NAME);
     config.SetSecurityLevel(NativeRdb::SecurityLevel::S1);
     config.SetEncryptStatus(false);
+    config.SetReadConSize(1);
     TimeDBOpenCallback timeDBOpenCallback;
     store_ = OHOS::NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_OPEN_VERSION, timeDBOpenCallback, errCode);
     TIME_HILOGI(TIME_MODULE_SERVICE, "Gets time database, ret: %{public}d", errCode);
