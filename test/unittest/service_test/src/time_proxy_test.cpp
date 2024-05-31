@@ -717,5 +717,41 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     EXPECT_NE(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
 }
 
+
+/**
+* @tc.name: IsTimerExemption001
+* @tc.desc: Check whether the timer is exempted.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, IsTimerExemption001, TestSize.Level1)
+{
+    /* Create a timer */
+    TimerPara paras;
+    paras.timerType = 2;
+    paras.windowLength = -1;
+    paras.interval = 0;
+    paras.flag = 0;
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int32_t uid = 2000;
+    int pid = 1002;
+    uint64_t timerId = 1004;
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+                                                    wantAgent, uid, pid, timerId, NOT_STORE);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+
+    /* Start a timer */
+    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
+    uint64_t triggerTime = 10000000 + nowElapsed;
+    ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+
+    timerManagerHandler_->alarmBatches_.at(0)->alarms_.at(0) = nullptr;
+    bool isAdjust = true;
+    uint32_t interval = 300;
+    EXPECT_TRUE(timerManagerHandler_->AdjustTimer(isAdjust, interval));
+}
+
 }  // MiscServices
 }  // OHOS
