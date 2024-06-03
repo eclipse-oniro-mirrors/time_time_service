@@ -115,10 +115,10 @@ struct CallbackPromiseInfo {
 };
 
 const std::map<int32_t, std::string> CODE_TO_MESSAGE = {
-    { JsErrorCode::SYSTEM_APP_ERROR, "not system app" },
-    { JsErrorCode::PARAMETER_ERROR, "parameter error" },
-    { JsErrorCode::PERMISSION_ERROR, "permission denied" },
-    { JsErrorCode::ERROR, "system error" },
+    { JsErrorCode::SYSTEM_APP_ERROR, "Permission verification failed. A non-system application calls a system API" },
+    { JsErrorCode::PARAMETER_ERROR, "Parameter error" },
+    { JsErrorCode::PERMISSION_ERROR, "Permission denied" },
+    { JsErrorCode::ERROR, "Parameter check failed, permission denied, or system error." },
 };
 
 class NapiUtils {
