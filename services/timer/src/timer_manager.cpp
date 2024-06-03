@@ -756,7 +756,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
             #ifdef POWER_MANAGER_ENABLE
-            TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}lld, uid: %{public}d bundleName: %{public}s",
+            TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", uid: %{public}d bundleName: %{public}s",
                         timer->id, timer->uid, timer->bundleName.c_str());
             AddRunningLock(USE_LOCK_ONE_SEC_IN_NANO);
             #endif
