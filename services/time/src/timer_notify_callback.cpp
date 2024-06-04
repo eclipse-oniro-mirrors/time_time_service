@@ -40,13 +40,6 @@ sptr<TimerNotifyCallback> TimerNotifyCallback::GetInstance(std::shared_ptr<Timer
 
 void TimerNotifyCallback::Finish(uint64_t timerId)
 {
-    #ifdef POWER_MANAGER_ENABLE
-    if (managerHandler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "timermanager is nullptr");
-        return;
-    }
-    managerHandler_->DecRunningLockRef();
-    #endif
 }
 } // namespace MiscServices
 } // namespace OHOS
