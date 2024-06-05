@@ -205,8 +205,8 @@ bool TimerProxy::AdjustTimer(bool isAdjust, uint32_t interval,
     std::lock_guard<std::mutex> lockProxy(adjustMutex_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "adjust timer state: %{public}d, interval: %{public}d", isAdjust, interval);
     auto callback = [this, isAdjust, interval, now] (std::shared_ptr<TimerInfo> timer) {
-        if (proxyUids_.find(timer->uid) != proxyUids_.end()) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "already proxy uid %{public}d", timer->uid);
+        if (timer == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "adjust timer is nullptr!");
             return false;
         }
         return isAdjust ? UpdateAdjustWhenElapsed(now, interval, timer) : RestoreAdjustWhenElapsed(timer);
@@ -257,16 +257,6 @@ bool TimerProxy::SetTimerExemption(const std::unordered_set<std::string> &nameAr
         return isChanged;
     }
     adjustExemptionList_.insert(nameArr.begin(), nameArr.end());
-
-    for (auto it = adjustTimers_.begin(); it != adjustTimers_.end(); it++) {
-        if (!IsTimerExemption(*it)) {
-            continue;
-        }
-        if ((*it)->RestoreAdjustTimer()) {
-            isChanged = true;
-            adjustTimers_.erase(it);
-        }
-    }
     return isChanged;
 }
 
