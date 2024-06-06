@@ -197,6 +197,7 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
     TIME_HILOGD(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId:%{public}d added!", systemAbilityId);
     if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
         RegisterCommonEventSubscriber();
+        RemoveSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     } else if (systemAbilityId == DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID) {
         RegisterRSSDeathCallback();
     } else if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
