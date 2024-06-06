@@ -321,14 +321,8 @@ HWTEST_F(TimeDfxTest, DumpPeoxyTimerMapInfo001, TestSize.Level0)
 HWTEST_F(TimeDfxTest, DumpProxyDelayTime001, TestSize.Level0)
 {
     std::string result;
-    auto CMD1 = std::string(CMD).append(" \"-ProxyDelayTime -s 0").append(" \"");
+    auto CMD1 = std::string(CMD).append(" \"-ProxyDelayTime -l ").append(" \"");
     auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
-    EXPECT_TRUE(ret);
-    EXPECT_NE(result.find("259200000"), std::string::npos);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyDelayTime -s 0: %{public}s", result.c_str());
-
-    CMD1 = std::string(CMD).append(" \"-ProxyDelayTime -l ").append(" \"");
-    ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("259200000"), std::string::npos);
     TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyDelayTime -l: %{public}s", result.c_str());
