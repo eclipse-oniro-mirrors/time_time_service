@@ -124,7 +124,8 @@ void NtpUpdateTime::RefreshNetworkTimeByTimer(uint64_t timerId)
         return;
     }
 
-    SetSystemTime();
+    std::thread setSystemTime(SetSystemTime);
+    setSystemTime.detach();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp next triggertime: %{public}" PRId64 "", nextTriggerTime_);
 }
 
