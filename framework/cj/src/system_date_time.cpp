@@ -24,6 +24,7 @@ namespace CJSystemapi {
 namespace SystemDateTime {
 
 using namespace MiscServices;
+const std::string TIMEZONE_KEY = "persist.time.timezone";
 
 int SystemDateTimeImpl::SetTime(int64_t time)
 {
@@ -151,11 +152,20 @@ char* MallocCString(const std::string& origin)
     return std::char_traits<char>::copy(res, origin.c_str(), len);
 }
 
+int32_t GetTimezone(std::string &timezone)
+{
+    timezone = OHOS::system::GetParameter(TIMEZONE_KEY, "Asia/Shanghai");
+    if (timezone.empty()) {
+        return ERROR;
+    }
+    return ERROR_OK;
+}
+
 std::tuple<int32_t, char*> SystemDateTimeImpl::getTimezone()
 {
     int32_t innerCode;
     std::string time;
-    innerCode = TimeServiceClient::GetInstance()->GetTimeZone(time);
+    innerCode = GetTimezone(time);
     if (innerCode != CjErrorCode::ERROR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "failed innerCode is %{public}d", innerCode);
         return {innerCode, nullptr};
