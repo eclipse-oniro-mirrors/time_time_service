@@ -39,9 +39,10 @@ void TimerProxy::RemoveProxy(uint64_t timerNumber, int32_t uid)
         auto alarms = itMap->second;
         for (auto itAlarm = alarms.begin(); itAlarm != alarms.end();) {
             if ((*itAlarm)->id == timerNumber) {
-                alarms.erase(itAlarm);
+                itAlarm = alarms.erase(itAlarm);
+            } else {
+                itAlarm++;
             }
-            itAlarm++;
         }
         if (alarms.empty()) {
             proxyMap_.erase(uid);
@@ -57,9 +58,10 @@ void TimerProxy::RemovePidProxy(uint64_t timerNumber, int pid)
         auto alarms = itMap->second;
         for (auto itAlarm = alarms.begin(); itAlarm != alarms.end();) {
             if ((*itAlarm)->id == timerNumber) {
-                alarms.erase(itAlarm);
+                itAlarm = alarms.erase(itAlarm);
+            } else {
+                itAlarm++;
             }
-            itAlarm++;
         }
         if (alarms.empty()) {
             proxyPidMap_.erase(pid);
