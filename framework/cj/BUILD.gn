@@ -22,23 +22,24 @@ ohos_shared_library("cj_system_date_time_ffi") {
   ]
 
   if (!build_ohos_sdk) {
-    defines += [ "PREVIEWER" ]
-    sources = [ "src/system_date_mock.cpp" ]
-  } else {
     sources = [
       "src/system_date_time.cpp",
       "src/system_date_time_ffi.cpp",
     ]
+    deps = [ "${api_path}:time_client" ]
+    external_deps = [
+      "ability_runtime:abilitykit_native",
+      "ability_runtime:wantagent_innerkits",
+      "c_utils:utils",
+      "hilog:libhilog",
+      "init:libbegetutil",
+      "napi:cj_bind_ffi",
+    ]
+  } else {
+    defines += [ "PREVIEWER" ]
+    sources = [ "src/system_date_mock.cpp" ]
+    external_deps = [ "napi:cj_bind_ffi" ]
   }
-
-  deps = [ "${api_path}:time_client" ]
-
-  external_deps = [
-    "ability_runtime:abilitykit_native",
-    "ability_runtime:wantagent_innerkits",
-    "hilog:libhilog",
-    "napi:cj_bind_ffi",
-  ]
 
   branch_protector_ret = "pac_ret"
   sanitize = {
