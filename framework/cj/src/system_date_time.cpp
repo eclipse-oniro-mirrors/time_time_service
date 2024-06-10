@@ -18,6 +18,7 @@
 #include "cj_ffi/cj_common_ffi.h"
 #include "time_service_client.h"
 #include "utils.h"
+#include "parameters.h"
 
 namespace OHOS {
 namespace CJSystemapi {
