@@ -36,6 +36,7 @@ static const clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
     CLOCK_REALTIME,
 };
 }
+
 std::shared_ptr<TimerHandler> TimerHandler::Create()
 {
     int epollfd;

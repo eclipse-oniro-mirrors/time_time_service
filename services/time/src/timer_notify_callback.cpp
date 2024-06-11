@@ -20,13 +20,13 @@ namespace OHOS {
 namespace MiscServices {
 std::mutex TimerNotifyCallback::instanceLock_;
 sptr<TimerNotifyCallback> TimerNotifyCallback::instance_;
-std::shared_ptr<TimerManager> TimerNotifyCallback::managerHandler_;
+TimerManager* TimerNotifyCallback::managerHandler_;
 
 TimerNotifyCallback::TimerNotifyCallback() = default;
 
 TimerNotifyCallback::~TimerNotifyCallback() = default;
 
-sptr<TimerNotifyCallback> TimerNotifyCallback::GetInstance(std::shared_ptr<TimerManager> &timerManager)
+sptr<TimerNotifyCallback> TimerNotifyCallback::GetInstance(TimerManager* timerManager)
 {
     if (instance_ == nullptr) {
         std::lock_guard<std::mutex> autoLock(instanceLock_);

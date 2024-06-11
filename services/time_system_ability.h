@@ -50,7 +50,6 @@ public:
     TimeSystemAbility();
     ~TimeSystemAbility();
     static sptr<TimeSystemAbility> GetInstance();
-    static std::shared_ptr<TimerManager> GetManagerHandler();
     int32_t SetTime(int64_t time, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
     bool SetRealTime(int64_t time);
     int32_t SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
@@ -104,7 +103,6 @@ private:
 
     int32_t Init();
     void InitServiceHandler();
-    void InitTimerHandler();
     void ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras);
     bool GetTimeByClockId(clockid_t clockId, struct timespec &tv);
     int SetRtcTime(time_t sec);
@@ -123,7 +121,6 @@ private:
     static sptr<TimeSystemAbility> instance_;
     const int rtcId;
     static std::shared_ptr<AppExecFwk::EventHandler> serviceHandler_;
-    static std::shared_ptr<TimerManager> timerManagerHandler_;
     sptr<RSSSaDeathRecipient> deathRecipient_ {};
 };
 } // namespace MiscServices

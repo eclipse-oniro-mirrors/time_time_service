@@ -105,7 +105,6 @@ HWTEST_F(TimeDfxTest, DumpAllTimeInfo001, TestSize.Level0)
 HWTEST_F(TimeDfxTest, DumpTimerInfo001, TestSize.Level0)
 {
     std::string result;
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     auto ret = TimeDfxTest::ExecuteCmd(std::string(CMD).append(" \"-timer -a\"").c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("dump all timer info"), std::string::npos);
@@ -127,7 +126,6 @@ HWTEST_F(TimeDfxTest, DumpTimerInfoById001, TestSize.Level0)
     auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
     EXPECT_TRUE(timerId1 > 0);
     std::string result;
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     auto CMD1 = std::string(CMD).append(" \"-timer -i ").append(std::to_string(timerId1)).append(" \"");
     auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);
@@ -153,7 +151,6 @@ HWTEST_F(TimeDfxTest, DumpTimerTriggerById001, TestSize.Level0)
     auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
     EXPECT_TRUE(timerId1 > 0);
     std::string result;
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     auto CMD1 = std::string(CMD).append(" \"-timer -s ").append(std::to_string(timerId1)).append(" \"");
     auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);

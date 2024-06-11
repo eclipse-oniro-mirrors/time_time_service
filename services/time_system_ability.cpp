@@ -76,7 +76,6 @@ REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
 std::mutex TimeSystemAbility::instanceLock_;
 sptr<TimeSystemAbility> TimeSystemAbility::instance_;
 std::shared_ptr<AppExecFwk::EventHandler> TimeSystemAbility::serviceHandler_ = nullptr;
-std::shared_ptr<TimerManager> TimeSystemAbility::timerManagerHandler_ = nullptr;
 
 TimeSystemAbility::TimeSystemAbility(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), state_(ServiceRunningState::STATE_NOT_START),
@@ -100,11 +99,6 @@ sptr<TimeSystemAbility> TimeSystemAbility::GetInstance()
         }
     }
     return instance_;
-}
-
-std::shared_ptr<TimerManager> TimeSystemAbility::GetManagerHandler()
-{
-    return timerManagerHandler_;
 }
 
 void TimeSystemAbility::InitDumpCmd()
@@ -167,7 +161,7 @@ void TimeSystemAbility::OnStart()
         return;
     }
     InitServiceHandler();
-    InitTimerHandler();
+    TimerManager::GetInstance();
     TimeTickNotify::GetInstance().Init();
     TimeZoneInfo::GetInstance().Init();
     NtpUpdateTime::GetInstance().Init();
@@ -299,16 +293,6 @@ void TimeSystemAbility::InitServiceHandler()
     TIME_HILOGD(TIME_MODULE_SERVICE, "InitServiceHandler Succeeded.");
 }
 
-void TimeSystemAbility::InitTimerHandler()
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Init Timer started.");
-    if (timerManagerHandler_ != nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, " Already init.");
-        return;
-    }
-    timerManagerHandler_ = TimerManager::Create();
-}
-
 void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras)
 {
     auto uIntType = static_cast<uint32_t>(timerOptions->type);
@@ -348,19 +332,15 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     }
     struct TimerPara paras {};
     ParseTimerPara(timerOptions, paras);
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return E_TIME_NULLPTR;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return E_TIME_NULLPTR;
     }
-    auto callbackFunc = [timerCallback, timerOptions](uint64_t id) {
+    auto callbackFunc = [timerCallback, timerOptions, timerManager](uint64_t id) {
         #ifdef POWER_MANAGER_ENABLE
         if (timerOptions->type == ITimerManager::TimerType::RTC_WAKEUP ||
             timerOptions->type == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP) {
-            auto notifyCallback = TimerNotifyCallback::GetInstance(timerManagerHandler_);
+            auto notifyCallback = TimerNotifyCallback::GetInstance(timerManager);
             timerCallback->NotifyTimer(id, notifyCallback->AsObject());
         } else {
             timerCallback->NotifyTimer(id, nullptr);
@@ -380,63 +360,47 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     }
     int uid = IPCSkeleton::GetCallingUid();
     int pid = IPCSkeleton::GetCallingPid();
-    return timerManagerHandler_->CreateTimer(paras, callbackFunc, timerOptions->wantAgent,
-                                             uid, pid, timerId, type);
+    return timerManager->CreateTimer(paras, callbackFunc, timerOptions->wantAgent,
+                                     uid, pid, timerId, type);
 }
 
 int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> callback,
     uint64_t &timerId)
 {
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return E_TIME_NULLPTR;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return E_TIME_NULLPTR;
     }
-    return timerManagerHandler_->CreateTimer(paras, std::move(callback), nullptr, 0, 0, timerId, NOT_STORE);
+    return timerManager->CreateTimer(paras, std::move(callback), nullptr, 0, 0, timerId, NOT_STORE);
 }
 
 int32_t TimeSystemAbility::StartTimer(uint64_t timerId, uint64_t triggerTime)
 {
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return false;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return E_TIME_NULLPTR;
     }
-    auto ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
+    auto ret = timerManager->StartTimer(timerId, triggerTime);
     return ret;
 }
 
 int32_t TimeSystemAbility::StopTimer(uint64_t timerId)
 {
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return false;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return E_TIME_NULLPTR;
     }
-    auto ret = timerManagerHandler_->StopTimer(timerId);
+    auto ret = timerManager->StopTimer(timerId);
     return ret;
 }
 
 int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId)
 {
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return false;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return E_TIME_NULLPTR;
     }
-    auto ret = timerManagerHandler_->DestroyTimer(timerId);
+    auto ret = timerManager->DestroyTimer(timerId);
     return ret;
 }
 
@@ -552,59 +516,43 @@ void TimeSystemAbility::DumpAllTimeInfo(int fd, const std::vector<std::string> &
 void TimeSystemAbility::DumpTimerInfo(int fd, const std::vector<std::string> &input)
 {
     dprintf(fd, "\n - dump all timer info :\n");
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return;
     }
-    timerManagerHandler_->ShowTimerEntryMap(fd);
+    timerManager->ShowTimerEntryMap(fd);
 }
 
 void TimeSystemAbility::DumpTimerInfoById(int fd, const std::vector<std::string> &input)
 {
     dprintf(fd, "\n - dump the timer info with timer id:\n");
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return;
-        }
-    }
     int paramNumPos = 2;
-    timerManagerHandler_->ShowTimerEntryById(fd, std::atoi(input.at(paramNumPos).c_str()));
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return;
+    }
+    timerManager->ShowTimerEntryById(fd, std::atoi(input.at(paramNumPos).c_str()));
 }
 
 void TimeSystemAbility::DumpTimerTriggerById(int fd, const std::vector<std::string> &input)
 {
     dprintf(fd, "\n - dump timer trigger statics with timer id:\n");
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return;
-        }
-    }
     int paramNumPos = 2;
-    timerManagerHandler_->ShowTimerTriggerById(fd, std::atoi(input.at(paramNumPos).c_str()));
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return;
+    }
+    timerManager->ShowTimerTriggerById(fd, std::atoi(input.at(paramNumPos).c_str()));
 }
 
 void TimeSystemAbility::DumpIdleTimerInfo(int fd, const std::vector<std::string> &input)
 {
     dprintf(fd, "\n - dump idle timer info :\n");
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Redo Timer manager Init Failed.");
-            return;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return;
     }
-    timerManagerHandler_->ShowIdleTimerInfo(fd);
+    timerManager->ShowIdleTimerInfo(fd);
 }
 
 void TimeSystemAbility::DumpProxyTimerInfo(int fd, const std::vector<std::string> &input)
@@ -867,28 +815,20 @@ bool TimeSystemAbility::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger
         return E_TIME_NO_PERMISSION;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "ProxyTimer service start uid: %{public}d, isProxy: %{public}d", uid, isProxy);
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "ProxyTimer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Proxytimer manager init failed.");
-            return false;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return false;
     }
-    return timerManagerHandler_->ProxyTimer(uid, isProxy, needRetrigger);
+    return timerManager->ProxyTimer(uid, isProxy, needRetrigger);
 }
 
 int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval)
 {
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Adjust Timer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Adjust Timer manager init failed.");
-            return E_TIME_NULLPTR;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return E_TIME_NULLPTR;
     }
-    if (!timerManagerHandler_->AdjustTimer(isAdjust, interval)) {
+    if (!timerManager->AdjustTimer(isAdjust, interval)) {
         return E_TIME_NO_TIMER_ADJUST;
     }
     return E_TIME_OK;
@@ -900,29 +840,20 @@ bool TimeSystemAbility::ProxyTimer(std::set<int> pidList, bool isProxy, bool nee
         TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
         return E_TIME_NO_PERMISSION;
     }
-    
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "ProxyTimer manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Proxytimer manager init failed.");
-            return false;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return false;
     }
-    return timerManagerHandler_->ProxyTimer(pidList, isProxy, needRetrigger);
+    return timerManager->ProxyTimer(pidList, isProxy, needRetrigger);
 }
 
 int32_t TimeSystemAbility::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)
 {
-    if (timerManagerHandler_ == nullptr) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Set Timer Exemption manager nullptr.");
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Set Timer Exemption manager init failed.");
-            return E_TIME_NULLPTR;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return E_TIME_NULLPTR;
     }
-    timerManagerHandler_->SetTimerExemption(nameArr, isExemption);
+    timerManager->SetTimerExemption(nameArr, isExemption);
     return E_TIME_OK;
 }
 
@@ -933,21 +864,20 @@ bool TimeSystemAbility::ResetAllProxy()
         return E_TIME_NO_PERMISSION;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "ResetAllProxy service");
-    if (timerManagerHandler_ == nullptr) {
-        timerManagerHandler_ = TimerManager::Create();
-        if (timerManagerHandler_ == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "ResetAllProxy timer manager init failed");
-            return false;
-        }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return false;
     }
-    return timerManagerHandler_->ResetAllProxy();
+    return timerManager->ResetAllProxy();
 }
 
 void TimeSystemAbility::RSSSaDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &object)
 {
-    if (timerManagerHandler_ != nullptr) {
-        timerManagerHandler_->HandleRSSDeath();
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return;
     }
+    timerManager->HandleRSSDeath();
 }
 
 void TimeSystemAbility::RegisterRSSDeathCallback()
@@ -1039,13 +969,17 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             // Line 6 is 'bundleName'
             GetString(resultSet, 6)
         });
-        timerManagerHandler_->ReCreateTimer(timerId, timerInfo);
+        auto timerManager = TimerManager::GetInstance();
+        if (timerManager == nullptr) {
+            return;
+        }
+        timerManager->ReCreateTimer(timerId, timerInfo);
         // Line 8 is 'state'
         auto state = static_cast<uint8_t>(GetInt(resultSet, 8));
         if (state == 1) {
             // Line 9 is 'triggerTime'
             auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
-            timerManagerHandler_->StartTimer(timerId, triggerTime);
+            timerManager->StartTimer(timerId, triggerTime);
         }
     } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
     resultSet->Close();
