@@ -103,6 +103,11 @@ timerproxy_test = {
   configFuzzer = "timerproxy_fuzzer"
   source = "timerproxy_fuzzer/timerproxy_fuzzer.cpp"
 }
+timesntp_test = {
+  targetName = "TimeSntpFuzzTest"
+  configFuzzer = "timesntp_fuzzer"
+  source = "timesntp_fuzzer/timesntp_fuzzer.cpp"
+}
 
 time_fuzztests = [
   timeboundarycode_test,
@@ -122,6 +127,7 @@ time_fuzztests = [
   timestarttimer_test,
   timestoptimer_test,
   timerproxy_test,
+  timesntp_test,
 ]
 
 foreach(item, time_fuzztests) {
@@ -197,6 +203,7 @@ group("fuzztest") {
     ":TimeGetWallTimeNanoFuzzTest",
     ":TimeReceivedMessageFuzzTest",
     ":TimeServiceSetTimeZoneFuzzTest",
+    ":TimeSntpFuzzTest",
     ":TimeStartTimerFuzzTest",
     ":TimeStopTimerFuzzTest",
     ":TimerProxyFuzzTest",
