@@ -42,7 +42,6 @@ constexpr const char *NEED_RECOVER_ON_REBOOT = "not_support";
 
 class TimerManager : public ITimerManager {
 public:
-    static std::shared_ptr<TimerManager> Create();
     int32_t CreateTimer(TimerPara &paras,
                         std::function<void (const uint64_t)> callback,
                         std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
@@ -65,6 +64,7 @@ public:
     bool ShowIdleTimerInfo(int fd);
     ~TimerManager() override;
     void HandleRSSDeath();
+    static TimerManager* GetInstance();
 
 private:
     explicit TimerManager(std::shared_ptr<TimerHandler> impl);
@@ -140,6 +140,8 @@ private:
     std::mutex entryMapMutex_;
     std::chrono::system_clock::time_point lastTimeChangeClockTime_;
     std::chrono::steady_clock::time_point lastTimeChangeRealtime_;
+    static std::mutex instanceLock_;
+    static TimerManager* instance_;
 
     std::vector<std::shared_ptr<TimerInfo>> pendingDelayTimers_;
     // map<timerId, original trigger time> for delayed timers

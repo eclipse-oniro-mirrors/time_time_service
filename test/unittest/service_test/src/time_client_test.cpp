@@ -385,7 +385,6 @@ HWTEST_F(TimeClientTest, CreateTimer001, TestSize.Level1)
 {
     AddPermission();
     uint64_t timerId = 0;
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     auto ret = TimeServiceClient::GetInstance()->StartTimerV9(timerId, 5);
     EXPECT_TRUE(ret != TimeError::E_TIME_OK);
     ret = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
@@ -414,7 +413,6 @@ HWTEST_F(TimeClientTest, CreateTimer002, TestSize.Level1)
     EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
     auto ret = TimeServiceClient::GetInstance()->StartTimerV9(timerId, 2000);
     EXPECT_TRUE(ret == TimeError::E_TIME_OK);
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     ret = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
     EXPECT_TRUE(ret == TimeError::E_TIME_OK);
     ret = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
@@ -437,7 +435,6 @@ HWTEST_F(TimeClientTest, CreateTimer003, TestSize.Level1)
     timerInfo->SetWantAgent(ability);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     uint64_t timerId;
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
@@ -465,7 +462,6 @@ HWTEST_F(TimeClientTest, CreateTimer004, TestSize.Level1)
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILESECOND;
     errCode = TimeServiceClient::GetInstance()->StartTimerV9(timerId, bootTimeMilli + 2000);
     EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
     EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
     EXPECT_TRUE(g_data1 == 0);
@@ -679,7 +675,6 @@ HWTEST_F(TimeClientTest, StartTimer005, TestSize.Level1)
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     pid_t uid = IPCSkeleton::GetCallingUid();
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ProxyTimer(uid, true, true);
     usleep(FIVE_HUNDRED * MICRO_TO_MILLISECOND);
     TimeServiceClient::GetInstance()->ProxyTimer(uid, false, true);
@@ -711,7 +706,6 @@ HWTEST_F(TimeClientTest, StartTimer006, TestSize.Level1)
     pid_t uid = IPCSkeleton::GetCallingUid();
     TimeServiceClient::GetInstance()->ProxyTimer(uid, true, true);
     usleep(FIVE_HUNDRED * MICRO_TO_MILLISECOND);
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
     WaitForAlarm(&g_data1, 0);
     EXPECT_EQ(g_data1, 1);
@@ -741,7 +735,6 @@ HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
     pid_t uid = IPCSkeleton::GetCallingUid();
     TimeServiceClient::GetInstance()->ProxyTimer(uid, true, true);
     sleep(1);
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
     WaitForAlarm(&g_data1, 0);
     EXPECT_EQ(g_data1, 1);
@@ -786,7 +779,6 @@ HWTEST_F(TimeClientTest, StartTimer008, TestSize.Level1)
     pid_t uid2 = IPCSkeleton::GetCallingUid();
     TimeServiceClient::GetInstance()->ProxyTimer(uid2, true, true);
     sleep(1);
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
     WaitForAlarm(&g_data1, 0);
     WaitForAlarm(&g_data2, 0);
@@ -820,7 +812,6 @@ HWTEST_F(TimeClientTest, StartTimer009, TestSize.Level1)
     pid_t pid = IPCSkeleton::GetCallingPid();
     std::set<int> pidList;
     pidList.insert(pid);
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
     usleep(FIVE_HUNDRED * MICRO_TO_MILLISECOND);
     TimeServiceClient::GetInstance()->ProxyTimer(pidList, false, true);
@@ -855,7 +846,6 @@ HWTEST_F(TimeClientTest, StartTimer010, TestSize.Level1)
     pidList.insert(pid);
     TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
     usleep(FIVE_HUNDRED * MICRO_TO_MILLISECOND);
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
     WaitForAlarm(&g_data1, 0);
     EXPECT_EQ(g_data1, 1);
@@ -888,7 +878,6 @@ HWTEST_F(TimeClientTest, StartTimer011, TestSize.Level1)
     pidList.insert(pid);
     TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
     sleep(1);
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
     WaitForAlarm(&g_data1, 0);
     EXPECT_EQ(g_data1, 1);
@@ -938,7 +927,6 @@ HWTEST_F(TimeClientTest, StartTimer012, TestSize.Level1)
     TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
     
     sleep(1);
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->ResetAllProxy();
     WaitForAlarm(&g_data1, 0);
     WaitForAlarm(&g_data2, 0);
@@ -1171,7 +1159,6 @@ HWTEST_F(TimeClientTest, AdjustTimer002, TestSize.Level1)
     g_data1 = 0;
     std::unordered_set<std::string> nameArr{"timer"};
     TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, false);
-    TimeSystemAbility::GetInstance()->timerManagerHandler_ = nullptr;
     TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, true);
     uint64_t timerId1;
     auto timerInfo1 = std::make_shared<TimerInfoTest>();

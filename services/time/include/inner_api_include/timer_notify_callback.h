@@ -27,13 +27,13 @@ public:
     TimerNotifyCallback();
     ~TimerNotifyCallback();
     DISALLOW_COPY_AND_MOVE(TimerNotifyCallback);
-    static sptr<TimerNotifyCallback> GetInstance(std::shared_ptr<TimerManager> &timerManager);
+    static sptr<TimerNotifyCallback> GetInstance(TimerManager* timerManager);
     void Finish(uint64_t timerId) override;
 
 private:
     static std::mutex instanceLock_;
     static sptr<TimerNotifyCallback> instance_;
-    static std::shared_ptr<TimerManager> managerHandler_;
+    static TimerManager* managerHandler_;
 };
 }  // namespace MiscServices
 }  // namespace OHOS

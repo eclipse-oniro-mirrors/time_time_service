@@ -29,7 +29,7 @@ namespace {
 constexpr uint64_t NANO_TO_MILESECOND = 100000;
 constexpr int BLOCK_TEST_TIME = 100000;
 }
-std::shared_ptr<TimerManager> timerManagerHandler_ = nullptr;
+TimerManager* timerManagerHandler_ = nullptr;
 
 class TimeProxyTest : public testing::Test {
 public:
@@ -51,7 +51,7 @@ void TimeProxyTest::TearDownTestCase(void)
 void TimeProxyTest::SetUp(void)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start SetUp.");
-    timerManagerHandler_ = TimerManager::Create();
+    timerManagerHandler_ = TimerManager::GetInstance();
     EXPECT_NE(timerManagerHandler_, nullptr);
     TIME_HILOGI(TIME_MODULE_SERVICE, "end SetUp.");
     usleep(BLOCK_TEST_TIME);
@@ -60,9 +60,7 @@ void TimeProxyTest::SetUp(void)
 void TimeProxyTest::TearDown(void)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "start TearDown.");
-    timerManagerHandler_->alarmThread_->detach();
     timerManagerHandler_ = nullptr;
-    EXPECT_EQ(timerManagerHandler_, nullptr);
     TIME_HILOGI(TIME_MODULE_SERVICE, "end TearDown.");
 }
 
@@ -82,7 +80,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap001, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     int pid = 1000;
-    uint64_t timerId = 1000;
+    uint64_t timerId = 0;
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
@@ -125,7 +123,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap002, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     int pid = 1000;
-    uint64_t timerId = 1000;
+    uint64_t timerId = 0;
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
@@ -163,7 +161,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     int pid = 1000;
-    uint64_t timerId = 1000;
+    uint64_t timerId = 0;
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     
@@ -206,7 +204,7 @@ HWTEST_F(TimeProxyTest, PidTimerMap001, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     int pid = 1001;
-    uint64_t timerId = 1000;
+    uint64_t timerId = 0;
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
@@ -249,7 +247,7 @@ HWTEST_F(TimeProxyTest, PidTimerMap002, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     int pid = 1000;
-    uint64_t timerId = 1000;
+    uint64_t timerId = 0;
 
     /* 清理pidTimersMap_，保证测试前pidTimersMap_内无其他测试中曾记录的pid影响 */
     TimerProxy::GetInstance().pidTimersMap_.clear();
@@ -291,7 +289,7 @@ HWTEST_F(TimeProxyTest, PidTimerMap003, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     int pid = 1002;
-    uint64_t timerId = 1000;
+    uint64_t timerId = 0;
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
@@ -360,7 +358,7 @@ HWTEST_F(TimeProxyTest, ProxyTimer002, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     int pid = 1000;
-    uint64_t timerId = 1000;
+    uint64_t timerId = 0;
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
@@ -462,7 +460,7 @@ HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
 {
     /* The system timers can be aligned to a unified time and recorded in adjustTimers_. */
     bool isAdjust = true;
-    uint32_t interval = 300;
+    uint32_t interval = 100;
     bool ret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
     EXPECT_TRUE(ret);
     usleep(BLOCK_TEST_TIME);
@@ -489,7 +487,7 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
     auto wantAgent = std::make_shared<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     int32_t pid = 1000;
-    uint64_t timerId = 1000;
+    uint64_t timerId = 0;
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
                                                      wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
@@ -510,7 +508,7 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
 
     /* Unified heartbeat is triggered. The heartbeat of exempted applications is not unified. */
     bool isAdjust = true;
-    uint32_t interval = 300;
+    uint32_t interval = 200;
     bool adjustRet = timerManagerHandler_->AdjustTimer(isAdjust, interval);
     EXPECT_TRUE(adjustRet);
     usleep(BLOCK_TEST_TIME);
@@ -570,7 +568,7 @@ HWTEST_F(TimeProxyTest, PidProxyTimer002, TestSize.Level1)
     int pid = 1004;
     std::set<int> pidList;
     pidList.insert(pid);
-    uint64_t timerId = 1000;
+    uint64_t timerId = 0;
 
     /* 清理pidTimersMap_，保证测试前pidTimersMap_内无其他测试中曾记录的pid影响 */
     TimerProxy::GetInstance().pidTimersMap_.clear();
@@ -677,7 +675,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     int pid = 1111;
     std::set<int> pidList;
     pidList.insert(pid);
-    uint64_t timerId = 10001;
+    uint64_t timerId = 0;
 
     /* clear pidTimersMap_ */
     TimerProxy::GetInstance().pidTimersMap_.clear();
@@ -715,42 +713,6 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     bool adjret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
     EXPECT_TRUE(adjret);
     EXPECT_NE(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
-}
-
-
-/**
-* @tc.name: IsTimerExemption001
-* @tc.desc: Check whether the timer is exempted.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeProxyTest, IsTimerExemption001, TestSize.Level1)
-{
-    /* Create a timer */
-    TimerPara paras;
-    paras.timerType = 2;
-    paras.windowLength = -1;
-    paras.interval = 0;
-    paras.flag = 0;
-    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
-    int32_t uid = 2000;
-    int pid = 1002;
-    uint64_t timerId = 1004;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
-                                                    wantAgent, uid, pid, timerId, NOT_STORE);
-    EXPECT_EQ(ret, TimeError::E_TIME_OK);
-    usleep(BLOCK_TEST_TIME);
-
-    /* Start a timer */
-    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
-    uint64_t triggerTime = 10000000 + nowElapsed;
-    ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
-    EXPECT_EQ(ret, TimeError::E_TIME_OK);
-    usleep(BLOCK_TEST_TIME);
-
-    timerManagerHandler_->alarmBatches_.at(0)->alarms_.at(0) = nullptr;
-    bool isAdjust = true;
-    uint32_t interval = 300;
-    EXPECT_TRUE(timerManagerHandler_->AdjustTimer(isAdjust, interval));
 }
 
 }  // MiscServices

@@ -77,20 +77,13 @@ const int REASON_APP_API = 1;
 #endif
 }
 
+std::mutex TimerManager::instanceLock_;
+TimerManager* TimerManager::instance_ = nullptr;
+
 extern bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &batch);
 extern steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
                                                steady_clock::time_point triggerAtTime,
                                                milliseconds interval);
-
-std::shared_ptr<TimerManager> TimerManager::Create()
-{
-    auto impl = TimerHandler::Create();
-    if (impl == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Create Timer handle failed.");
-        return nullptr;
-    }
-    return std::shared_ptr<TimerManager>(new TimerManager(impl));
-}
 
 TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
     : random_ {static_cast<uint64_t>(time(nullptr))},
@@ -100,6 +93,25 @@ TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
       lastTimeChangeRealtime_ {steady_clock::time_point::min()}
 {
     alarmThread_.reset(new std::thread(&TimerManager::TimerLooper, this));
+}
+
+TimerManager* TimerManager::GetInstance()
+{
+    if (instance_ == nullptr) {
+        std::lock_guard<std::mutex> autoLock(instanceLock_);
+        if (instance_ == nullptr) {
+            auto impl = TimerHandler::Create();
+            if (impl == nullptr) {
+                TIME_HILOGE(TIME_MODULE_SERVICE, "Create Timer handle failed.");
+                return nullptr;
+            }
+            instance_ = new TimerManager(impl);
+        }
+    }
+    if (instance_ == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Create Timer manager failed.");
+    }
+    return instance_;
 }
 
 OHOS::NativeRdb::ValuesBucket GetInsertValues(uint64_t &timerId, TimerPara &paras,
