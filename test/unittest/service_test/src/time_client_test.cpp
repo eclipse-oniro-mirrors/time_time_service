@@ -89,9 +89,11 @@ static HapPolicyParams g_policyA = {
     }
 };
 
+/* push_managere_service is in the exemption list of adjust timer */
+/* use push_manager_service to prevent timers from being adjusted */
 static HapInfoParams g_systemInfoParams = {
     .userID = 1,
-    .bundleName = "timer",
+    .bundleName = "push_manager_service",
     .instIndex = 0,
     .appIDDesc = "test",
     .apiVersion = 8,
@@ -102,7 +104,7 @@ static HapPolicyParams g_policyB = { .apl = APL_NORMAL, .domain = "test.domain" 
 
 static HapInfoParams g_notSystemInfoParams = {
     .userID = 100,
-    .bundleName = "timer",
+    .bundleName = "push_manager_service",
     .instIndex = 0,
     .appIDDesc = "test",
     .apiVersion = 9,
@@ -115,7 +117,7 @@ public:
     static void TearDownTestCase(void);
     void SetUp();
     void TearDown();
-    void AddPermission();
+    static void AddPermission();
     void DeletePermission();
 };
 
@@ -143,9 +145,7 @@ void TimeClientTest::TearDownTestCase(void)
 
 void TimeClientTest::SetUp(void)
 {
-    // Prevent timers are adjusted before.
     AddPermission();
-    TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
 }
 
 void TimeClientTest::TearDown(void)
@@ -176,7 +176,6 @@ void WaitForAlarm(std::atomic<int> * data, int interval)
 */
 HWTEST_F(TimeClientTest, SetTime001, TestSize.Level1)
 {
-    AddPermission();
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
@@ -193,7 +192,6 @@ HWTEST_F(TimeClientTest, SetTime001, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, SetTime002, TestSize.Level1)
 {
-    AddPermission();
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(-1);
     EXPECT_TRUE(result != TimeError::E_TIME_OK);
 }
@@ -205,7 +203,6 @@ HWTEST_F(TimeClientTest, SetTime002, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, SetTime003, TestSize.Level1)
 {
-    AddPermission();
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(LLONG_MAX);
     EXPECT_TRUE(result != TimeError::E_TIME_OK);
 }
@@ -237,7 +234,6 @@ HWTEST_F(TimeClientTest, SetTime004, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, SetTimeZone001, TestSize.Level1)
 {
-    AddPermission();
     time_t t;
     (void)time(&t);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time before: %{public}s", asctime(localtime(&t)));
@@ -261,7 +257,6 @@ HWTEST_F(TimeClientTest, SetTimeZone001, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, SetTimeZone002, TestSize.Level1)
 {
-    AddPermission();
     int32_t result = TimeServiceClient::GetInstance()->SetTimeZoneV9("123");
     EXPECT_TRUE(result != TimeError::E_TIME_OK);
 }
@@ -383,7 +378,6 @@ HWTEST_F(TimeClientTest, GetThreadTimeNs001, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, CreateTimer001, TestSize.Level1)
 {
-    AddPermission();
     uint64_t timerId = 0;
     auto ret = TimeServiceClient::GetInstance()->StartTimerV9(timerId, 5);
     EXPECT_TRUE(ret != TimeError::E_TIME_OK);
@@ -400,7 +394,6 @@ HWTEST_F(TimeClientTest, CreateTimer001, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, CreateTimer002, TestSize.Level1)
 {
-    AddPermission();
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(1);
     timerInfo->SetRepeat(false);
@@ -426,7 +419,6 @@ HWTEST_F(TimeClientTest, CreateTimer002, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, CreateTimer003, TestSize.Level1)
 {
-    AddPermission();
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(1);
     timerInfo->SetRepeat(false);
@@ -447,7 +439,6 @@ HWTEST_F(TimeClientTest, CreateTimer003, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, CreateTimer004, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(1);
@@ -476,7 +467,6 @@ HWTEST_F(TimeClientTest, CreateTimer004, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, CreateTimer005, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 1;
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(0);
@@ -511,7 +501,6 @@ HWTEST_F(TimeClientTest, CreateTimer005, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, CreateTimer006, TestSize.Level1)
 {
-    AddPermission();
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(nullptr, timerId);
     uint64_t ret = 0;
@@ -558,7 +547,6 @@ HWTEST_F(TimeClientTest, CreateTimer007, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer001, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -585,7 +573,6 @@ HWTEST_F(TimeClientTest, StartTimer001, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer002, TestSize.Level1)
 {
-    AddPermission();
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(1<<2);
@@ -609,7 +596,6 @@ HWTEST_F(TimeClientTest, StartTimer002, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer003, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -635,7 +621,6 @@ HWTEST_F(TimeClientTest, StartTimer003, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer004, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -661,7 +646,6 @@ HWTEST_F(TimeClientTest, StartTimer004, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer005, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -690,7 +674,6 @@ HWTEST_F(TimeClientTest, StartTimer005, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer006, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -719,7 +702,6 @@ HWTEST_F(TimeClientTest, StartTimer006, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -748,7 +730,6 @@ HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer008, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     g_data2 = 0;
     uint64_t timerId1;
@@ -796,7 +777,6 @@ HWTEST_F(TimeClientTest, StartTimer008, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer009, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -828,7 +808,6 @@ HWTEST_F(TimeClientTest, StartTimer009, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer010, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -860,7 +839,6 @@ HWTEST_F(TimeClientTest, StartTimer010, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer011, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -892,7 +870,6 @@ HWTEST_F(TimeClientTest, StartTimer011, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, StartTimer012, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     g_data2 = 0;
     uint64_t timerId1;
@@ -943,7 +920,6 @@ HWTEST_F(TimeClientTest, StartTimer012, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, RecoverTimer001, TestSize.Level1)
 {
-    AddPermission();
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(1);
     timerInfo->SetRepeat(false);
@@ -973,7 +949,6 @@ HWTEST_F(TimeClientTest, RecoverTimer001, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, RecoverTimer002, TestSize.Level1)
 {
-    AddPermission();
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(1);
     timerInfo->SetRepeat(false);
@@ -1006,7 +981,6 @@ HWTEST_F(TimeClientTest, RecoverTimer002, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, RecoverTimer003, TestSize.Level1)
 {
-    AddPermission();
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(1);
     timerInfo->SetRepeat(false);
@@ -1041,7 +1015,6 @@ HWTEST_F(TimeClientTest, RecoverTimer003, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, RecoverTimer004, TestSize.Level1)
 {
-    AddPermission();
     auto timerInfo = std::make_shared<TimerInfoTest>();
     timerInfo->SetType(1);
     timerInfo->SetRepeat(false);
@@ -1072,7 +1045,6 @@ HWTEST_F(TimeClientTest, RecoverTimer004, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, RecoverTimer005, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -1100,7 +1072,6 @@ HWTEST_F(TimeClientTest, RecoverTimer005, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -1128,7 +1099,6 @@ HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, AdjustTimer001, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId1;
     auto timerInfo1 = std::make_shared<TimerInfoTest>();
@@ -1155,7 +1125,6 @@ HWTEST_F(TimeClientTest, AdjustTimer001, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, AdjustTimer002, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     std::unordered_set<std::string> nameArr{"timer"};
     TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, false);
@@ -1183,7 +1152,6 @@ HWTEST_F(TimeClientTest, AdjustTimer002, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, AdjustTimer003, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -1219,7 +1187,6 @@ HWTEST_F(TimeClientTest, AdjustTimer003, TestSize.Level1)
 */
 HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
 {
-    AddPermission();
     g_data1 = 0;
 
     auto timerInfo = std::make_shared<TimerInfoTest>();
