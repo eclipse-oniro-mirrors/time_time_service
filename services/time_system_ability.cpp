@@ -27,6 +27,7 @@
 
 #include "iservice_registry.h"
 #include "ntp_update_time.h"
+#include "ntp_trusted_time.h"
 #include "pthread.h"
 #include "system_ability.h"
 #include "system_ability_definition.h"
@@ -869,6 +870,16 @@ bool TimeSystemAbility::ResetAllProxy()
         return false;
     }
     return timerManager->ResetAllProxy();
+}
+
+int32_t TimeSystemAbility::GetNtpTimeMs(int64_t &time)
+{
+    auto ret = NtpUpdateTime::GetInstance().GetNtpTime(time);
+    if (!ret) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "GetNtpTimeMs failed");
+        return E_TIME_NTP_UPDATE_FAILED;
+    }
+    return E_TIME_OK;
 }
 
 void TimeSystemAbility::RSSSaDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &object)

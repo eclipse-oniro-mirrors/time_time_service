@@ -19,6 +19,7 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "init_param.h"
 #include "net_conn_callback_observer.h"
@@ -44,11 +45,12 @@ const std::string AUTO_TIME_SYSTEM_PARAMETER = "persist.time.auto_time";
 const std::string AUTO_TIME_STATUS_ON = "ON";
 const std::string AUTO_TIME_STATUS_OFF = "OFF";
 constexpr uint64_t TWO_SECONDS = 2000;
+constexpr uint64_t ONE_MINUTES = 60000;
 const std::string DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
-std::atomic<bool> NtpUpdateTime::isRequesting_ = false;
+std::mutex NtpUpdateTime::requestMutex_;
 
 NtpUpdateTime::NtpUpdateTime() : timerId_(0), nitzUpdateTimeMilli_(0), nextTriggerTime_(0), lastNITZUpdateTime_(0){};
 
@@ -167,16 +169,8 @@ std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
     return ntpList;
 }
 
-void NtpUpdateTime::SetSystemTime()
+bool NtpUpdateTime::GetNtpTimeInner()
 {
-    if (autoTimeInfo_.status != AUTO_TIME_STATUS_ON) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "auto sync switch off");
-        return;
-    }
-    if (isRequesting_.exchange(true)) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "The NTP request is in progress.");
-        return;
-    }
     bool ret = false;
     std::vector<std::string> ntpSpecList = SplitNtpAddrs(autoTimeInfo_.ntpServerSpec);
     std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.ntpServer);
@@ -188,31 +182,80 @@ void NtpUpdateTime::SetSystemTime()
             break;
         }
     }
-    if (!ret) {
+    return ret;
+}
+
+bool NtpUpdateTime::GetNtpTime(int64_t &time)
+{
+    std::lock_guard<std::mutex> autoLock(requestMutex_);
+
+    int64_t curBootTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    uint64_t bootTime = static_cast<uint64_t>(curBootTime);
+    auto lastBootTime = NtpTrustedTime::GetInstance().ElapsedRealtimeMillis();
+    if ((lastBootTime > 0) && (bootTime - lastBootTime <= ONE_MINUTES)) {
+        TIME_HILOGI(TIME_MODULE_SERVICE,
+                    "ntp updated in 1min, bootTime: %{public}" PRId64 ", lastBootTime: %{public}" PRId64 "",
+                    bootTime, lastBootTime);
+        time = NtpTrustedTime::GetInstance().CurrentTimeMillis();
+        return true;
+    }
+    
+    if (!GetNtpTimeInner()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed.");
-        isRequesting_ = false;
+        return false;
+    }
+    
+    time = NtpTrustedTime::GetInstance().CurrentTimeMillis();
+    if (time <= 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "current time is invalid: %{public}" PRId64 "", time);
+        return false;
+    }
+    if (autoTimeInfo_.status == AUTO_TIME_STATUS_ON) {
+        TimeSystemAbility::GetInstance()->SetTime(time);
+    }
+    return true;
+}
+
+void NtpUpdateTime::SetSystemTime()
+{
+    if (autoTimeInfo_.status != AUTO_TIME_STATUS_ON) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "auto sync switch off");
         return;
     }
+
+    if (!requestMutex_.try_lock()) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "The NTP request is in progress.");
+        return;
+    }
+
+    if (!GetNtpTimeInner()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed.");
+        requestMutex_.unlock();
+        return;
+    }
+
     int64_t currentTime = NtpTrustedTime::GetInstance().CurrentTimeMillis();
     if (currentTime <= 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "current time is invalid: %{public}" PRIu64 "", currentTime);
-        isRequesting_ = false;
+        requestMutex_.unlock();
         return;
     }
     int64_t curBootTime = 0;
     if (TimeSystemAbility::GetInstance()->GetBootTimeMs(curBootTime) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail.");
-        isRequesting_ = false;
+        requestMutex_.unlock();
         return;
     }
     uint64_t bootTime = static_cast<uint64_t>(curBootTime);
     if (bootTime - NtpUpdateTime::GetInstance().GetNITZUpdateTime() <= TWO_SECONDS) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "nitz updated time");
-        isRequesting_ = false;
+        requestMutex_.unlock();
         return;
     }
+
     TimeSystemAbility::GetInstance()->SetTime(currentTime);
-    isRequesting_ = false;
+    requestMutex_.unlock();
 }
 
 void NtpUpdateTime::RefreshNextTriggerTime()

@@ -49,6 +49,7 @@ public:
     int32_t AdjustTimer(bool isAdjust, uint32_t interval) override;
     int32_t SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
+    int32_t GetNtpTimeMs(int64_t &time) override;
 
 private:
     static inline BrokerDelegator<TimeServiceProxy> delegator_;

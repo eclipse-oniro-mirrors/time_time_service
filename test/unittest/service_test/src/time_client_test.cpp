@@ -29,6 +29,7 @@
 #include "token_setproc.h"
 #include "want_agent.h"
 #include "time_service_test.h"
+#include "ntp_trusted_time.h"
 
 #define private public
 #include "time_system_ability.h"
@@ -152,6 +153,13 @@ void TimeClientTest::TearDown(void)
 {
 }
 
+void TestNtpThread(const char *name)
+{
+    int64_t time;
+    auto errCode = TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+}
+
 /**
  * @brief Wait for timer trigger
  * @param data the global variable that callback function changes
@@ -167,6 +175,36 @@ void WaitForAlarm(std::atomic<int> * data, int interval)
         ++i;
         usleep(ONE_HUNDRED);
     }
+}
+
+/**
+* @tc.name: GetNtpTimeMs001
+* @tc.desc: get ntp time.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, GetNtpTimeMs001, TestSize.Level1)
+{
+    int64_t time;
+    auto errCode = TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "time now : %{public}" PRId64 "", time);
+    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+}
+
+/**
+* @tc.name: GetNtpTimeMs002
+* @tc.desc: get ntp time.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, GetNtpTimeMs002, TestSize.Level1)
+{
+    std::thread thread1(TestNtpThread, "thread1");
+    std::thread thread2(TestNtpThread, "thread2");
+    std::thread thread3(TestNtpThread, "thread3");
+    std::thread thread4(TestNtpThread, "thread4");
+    thread1.detach();
+    thread2.detach();
+    thread3.detach();
+    thread4.detach();
 }
 
 /**
