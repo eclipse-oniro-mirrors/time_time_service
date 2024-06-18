@@ -38,7 +38,6 @@ TimeServiceClient::TimeServiceListener::TimeServiceListener ()
 void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
     int32_t saId, const std::string &deviceId)
 {
-    TIME_HILOGI(TIME_MODULE_CLIENT, "OnAddSystemAbility");
     if (saId == TIME_SERVICE_ID) {
         auto proxy = TimeServiceClient::GetInstance()->GetProxy();
         if (proxy == nullptr) {
