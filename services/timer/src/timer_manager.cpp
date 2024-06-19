@@ -610,8 +610,8 @@ void TimerManager::TriggerIdleTimer()
 }
 
 // needs to acquire the lock `mutex_` before calling this method
-void TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
-    std::vector<std::shared_ptr<TimerInfo>> &triggerList, const std::chrono::steady_clock::time_point &nowElapsed)
+bool TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
+                                    const std::chrono::steady_clock::time_point &nowElapsed)
 {
     alarm->count = 1;
     if (mPendingIdleUntil_ != nullptr && mPendingIdleUntil_->id == alarm->id) {
@@ -626,6 +626,7 @@ void TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
         SetHandlerLocked(alarm->id, alarm->type, alarm->when, alarm->whenElapsed, alarm->windowLength,
             alarm->maxWhenElapsed, alarm->repeatInterval, alarm->callback,
             alarm->wantAgent, alarm->flags, alarm->uid, alarm->pid, alarm->bundleName);
+        return false;
     } else if (TimerProxy::GetInstance().IsPidProxy(alarm->pid)) {
         alarm->UpdateWhenElapsedFromNow(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
         TIME_HILOGD(TIME_MODULE_SERVICE, "UpdateWhenElapsed for proxy timer trigger. "
@@ -635,9 +636,10 @@ void TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
         SetHandlerLocked(alarm->id, alarm->type, alarm->when, alarm->whenElapsed, alarm->windowLength,
             alarm->maxWhenElapsed, alarm->repeatInterval, alarm->callback,
             alarm->wantAgent, alarm->flags, alarm->uid, alarm->pid, alarm->bundleName);
+        return false;
     } else {
-        triggerList.push_back(alarm);
         HandleRepeatTimer(alarm, nowElapsed);
+        return true;
     }
 }
 
@@ -649,6 +651,11 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
     TIME_HILOGD(TIME_MODULE_SERVICE, "current time %{public}lld", GetBootTimeNs().time_since_epoch().count());
 
     for (auto iter = alarmBatches_.begin(); iter != alarmBatches_.end();) {
+        if (*iter == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "alarmBatches_ has nullptr");
+            iter = alarmBatches_.erase(iter);
+            continue;
+        }
         if ((*iter)->GetStart() > nowElapsed) {
             ++iter;
             continue;
@@ -660,13 +667,21 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         const auto n = batch->Size();
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
-            ProcTriggerTimer(alarm, triggerList, nowElapsed);
+            triggerList.push_back(alarm);
             TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d, id=%{public}" PRId64 " bundleName=%{public}s",
                 alarm->uid, alarm->id, alarm->bundleName.c_str());
 
             if (alarm->wakeup) {
                 hasWakeup = true;
             }
+        }
+    }
+    for (auto iter = triggerList.begin(); iter != triggerList.end();) {
+        auto alarm = *iter;
+        if (!ProcTriggerTimer(alarm, nowElapsed)) {
+            iter = triggerList.erase(iter);
+        } else {
+            ++iter;
         }
     }
 
