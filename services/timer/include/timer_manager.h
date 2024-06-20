@@ -106,8 +106,8 @@ private:
     int64_t AttemptCoalesceLocked(std::chrono::steady_clock::time_point whenElapsed,
                                   std::chrono::steady_clock::time_point maxWhen);
     void TriggerIdleTimer();
-    void ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
-        std::vector<std::shared_ptr<TimerInfo>> &triggerList, const std::chrono::steady_clock::time_point &nowElapsed);
+    bool ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
+                          const std::chrono::steady_clock::time_point &nowElapsed);
     bool TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &triggerList,
                              std::chrono::steady_clock::time_point nowElapsed);
     void RescheduleKernelTimerLocked();
