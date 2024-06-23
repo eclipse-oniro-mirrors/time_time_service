@@ -92,7 +92,7 @@ TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
       lastTimeChangeClockTime_ {system_clock::time_point::min()},
       lastTimeChangeRealtime_ {steady_clock::time_point::min()}
 {
-    alarmThread_.reset(new std::thread(&TimerManager::TimerLooper, this));
+    alarmThread_.reset(new std::thread([this] { this->TimerLooper(); }));
 }
 
 TimerManager* TimerManager::GetInstance()
