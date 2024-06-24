@@ -40,6 +40,7 @@ enum class TimeServiceIpcInterfaceCode {
     RESET_ALL_PROXY,
     ADJUST_TIMER,
     SET_TIMER_EXEMPTION,
+    GET_NTP_TIME_MILLI,
 };
 } // namespace MiscServices
 } // namespace OHOS

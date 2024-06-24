@@ -401,6 +401,16 @@ public:
      * @return bool true on success, false on failure.
      */
     TIME_API bool ResetAllProxy();
+
+    /**
+     * @brief GetNtpTimeMs
+     *
+     * Obtain the wall time through ntp.
+     *
+     * @param time the wall time(the UTC time from 1970 0H:0M:0S) in milliseconds.
+     * @return int32_t return error code.
+     */
+    TIME_API int32_t GetNtpTimeMs(int64_t &time);
 private:
     class TimeSaDeathRecipient : public IRemoteObject::DeathRecipient {
     public:

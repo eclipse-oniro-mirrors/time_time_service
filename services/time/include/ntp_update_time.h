@@ -16,6 +16,7 @@
 #ifndef NTP_UPDATE_TIME_H
 #define NTP_UPDATE_TIME_H
 
+#include <mutex>
 #include <string>
 #include <atomic>
 
@@ -31,6 +32,7 @@ struct AutoTimeInfo {
 class NtpUpdateTime {
 public:
     static NtpUpdateTime &GetInstance();
+    static bool GetNtpTime(int64_t &time);
     static void SetSystemTime();
     void RefreshNetworkTimeByTimer(uint64_t timerId);
     void UpdateNITZSetTime();
@@ -42,6 +44,7 @@ public:
 
 private:
     NtpUpdateTime();
+    static bool GetNtpTimeInner();
     static void ChangeNtpServerCallback(const char *key, const char *value, void *context);
     static std::vector<std::string> SplitNtpAddrs(const std::string &ntpStr);
     void StartTimer();
@@ -54,7 +57,7 @@ private:
     uint64_t timerId_;
     uint64_t nitzUpdateTimeMilli_;
     uint64_t nextTriggerTime_;
-    static std::atomic<bool> isRequesting_;
+    static std::mutex requestMutex_;
     int64_t lastNITZUpdateTime_;
 };
 } // namespace MiscServices

@@ -289,10 +289,6 @@ void SNTPClient::ReceivedMessage(char *buffer)
     int64_t _receiveServer = ConvertNtpToStamp(_sntpMsg._receiveTimestamp);
     int64_t _transmitServer = ConvertNtpToStamp(_sntpMsg._transmitTimestamp);
     int64_t _receiveClient = ConvertNtpToStamp(_ntpTs);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "_originClient:%{public}s, _receiveServer:%{public}s, _transmitServer:%{public}s,"
-                "_receiveClient:%{public}s", std::to_string(_originClient).c_str(),
-                std::to_string(_receiveServer).c_str(), std::to_string(_transmitServer).c_str(),
-                std::to_string(_receiveClient).c_str());
     int64_t _clockOffset = (((_receiveServer - _originClient) + (_transmitServer - _receiveClient)) / INDEX_TWO);
     int64_t _roundTripDelay = (_receiveClient - _originClient) - (_transmitServer - _receiveServer);
     mRoundTripTime = _roundTripDelay;
@@ -301,6 +297,10 @@ void SNTPClient::ReceivedMessage(char *buffer)
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
             .count();
     SetClockOffset(_clockOffset);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "_originClient:%{public}s, _receiveServer:%{public}s, _transmitServer:%{public}s,"
+                "_receiveClient:%{public}s", std::to_string(_originClient).c_str(),
+                std::to_string(_receiveServer).c_str(), std::to_string(_transmitServer).c_str(),
+                std::to_string(_receiveClient).c_str());
 }
 
 unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer)

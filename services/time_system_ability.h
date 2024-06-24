@@ -73,6 +73,7 @@ public:
     int32_t AdjustTimer(bool isAdjust, uint32_t interval) override;
     int32_t SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
+    int32_t GetNtpTimeMs(int64_t &time) override;
     int Dump(int fd, const std::vector<std::u16string> &args) override;
     void DumpAllTimeInfo(int fd, const std::vector<std::string> &input);
     void DumpTimerInfo(int fd, const std::vector<std::string> &input);

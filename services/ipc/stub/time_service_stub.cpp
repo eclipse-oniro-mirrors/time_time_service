@@ -16,6 +16,8 @@
 #include "simple_timer_info.h"
 #include "time_common.h"
 #include "time_service_stub.h"
+#include "ntp_update_time.h"
+#include "ntp_trusted_time.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -48,6 +50,7 @@ TimeServiceStub::TimeServiceStub()
     memberFuncMap_[TimeServiceIpcInterfaceCode::ADJUST_TIMER] = &TimeServiceStub::OnAdjustTimer;
     memberFuncMap_[TimeServiceIpcInterfaceCode::SET_TIMER_EXEMPTION] = &TimeServiceStub::OnSetTimerExemption;
     memberFuncMap_[TimeServiceIpcInterfaceCode::RESET_ALL_PROXY] = &TimeServiceStub::OnAllProxyReset;
+    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_NTP_TIME_MILLI] = &TimeServiceStub::OnGetNtpTimeMs;
 }
 
 TimeServiceStub::~TimeServiceStub()
@@ -70,7 +73,7 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
     TIME_HILOGD(TIME_MODULE_SERVICE, "CallingPid = %{public}d, CallingUid = %{public}d, code = %{public}u", p, p1,
                 code);
     if (code >= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIME) &&
-        code <= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIMER_EXEMPTION)) {
+        code <= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_NTP_TIME_MILLI)) {
         auto itFunc = memberFuncMap_.find(static_cast<TimeServiceIpcInterfaceCode>(code));
         if (itFunc != memberFuncMap_.end()) {
             auto memberFunc = itFunc->second;
@@ -449,6 +452,26 @@ int32_t TimeServiceStub::OnAllProxyReset(MessageParcel &data, MessageParcel &rep
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     if (!ResetAllProxy()) {
         return E_TIME_DEAL_FAILED;
+    }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    return ERR_OK;
+}
+
+int32_t TimeServiceStub::OnGetNtpTimeMs(MessageParcel &data, MessageParcel &reply)
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
+    int64_t time = 0;
+    auto ret = GetNtpTimeMs(time);
+    if (ret != E_TIME_OK) {
+        return ret;
+    }
+    if (!reply.WriteUint64(time)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to write timerId");
+        return E_TIME_WRITE_PARCEL_ERROR;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return ERR_OK;

@@ -34,6 +34,7 @@ public:
     bool ForceRefresh(const std::string &ntpServer);
     int64_t GetCacheAge();
     int64_t CurrentTimeMillis();
+    int64_t ElapsedRealtimeMillis();
     class TimeResult : std::enable_shared_from_this<TimeResult> {
     public:
         TimeResult();
