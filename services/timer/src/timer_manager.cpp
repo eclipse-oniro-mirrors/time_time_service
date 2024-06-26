@@ -49,6 +49,7 @@ using namespace OHOS::AppExecFwk;
 namespace {
 constexpr uint32_t TIME_CHANGED_BITS = 16;
 constexpr uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
+constexpr int64_t MAX_MILLISECOND = std::numeric_limits<int64_t>::max() / 1000000;
 const int ONE_THOUSAND = 1000;
 const float_t BATCH_WINDOW_COE = 0.75;
 const auto ZERO_FUTURITY = seconds(0);
@@ -321,7 +322,8 @@ void TimerManager::SetHandler(uint64_t id,
     }
 
     auto nowElapsed = GetBootTimeNs();
-    auto nominalTrigger = ConvertToElapsed(milliseconds(triggerAtTime), type);
+    auto when = milliseconds(triggerAtTime > MAX_MILLISECOND ? MAX_MILLISECOND : triggerAtTime);
+    auto nominalTrigger = ConvertToElapsed(when, type);
     auto minTrigger = nowElapsed + ZERO_FUTURITY;
     auto triggerElapsed = (nominalTrigger > minTrigger) ? nominalTrigger : minTrigger;
 
@@ -337,7 +339,7 @@ void TimerManager::SetHandler(uint64_t id,
     std::lock_guard<std::mutex> lockGuard(mutex_);
     SetHandlerLocked(id,
                      type,
-                     milliseconds(triggerAtTime),
+                     when,
                      triggerElapsed,
                      windowLengthDuration,
                      maxElapsed,
