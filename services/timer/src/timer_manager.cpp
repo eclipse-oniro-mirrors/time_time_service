@@ -1214,9 +1214,12 @@ void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
 void TimerManager::AddRunningLock(long long holdLockTime)
 {
     if (runningLock_ == nullptr) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "runningLock is nullptr, create runningLock");
-        runningLock_ = PowerMgr::PowerMgrClient::GetInstance().CreateRunningLock("timeServiceRunningLock",
-            PowerMgr::RunningLockType::RUNNINGLOCK_BACKGROUND_NOTIFICATION);
+        std::lock_guard<std::mutex> lock(runningLockMutex_);
+        if (runningLock_ == nullptr) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "runningLock is nullptr, create runningLock");
+            runningLock_ = PowerMgr::PowerMgrClient::GetInstance().CreateRunningLock("timeServiceRunningLock",
+                PowerMgr::RunningLockType::RUNNINGLOCK_BACKGROUND_NOTIFICATION);
+        }
     }
     if (runningLock_ != nullptr) {
         runningLock_->UnLock();
