@@ -766,6 +766,64 @@ HWTEST_F(TimeServiceTest, CreateTimer006, TestSize.Level1)
 }
 
 /**
+* @tc.name: CreateTimer007
+* @tc.desc: Create system timer with TIMER_TYPE_EXACT, then start timer with uint64_t::max.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, CreateTimer007, TestSize.Level1)
+{
+    AddPermission();
+    g_data1 = 0;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(0);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_TRUE(timerId1 > 0);
+    uint64_t max = std::numeric_limits<uint64_t>::max();
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, max);
+    sleep(1);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(g_data1, 0);
+    ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
+    EXPECT_TRUE(ret);
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    EXPECT_TRUE(ret);
+    DeletePermission();
+}
+
+/**
+* @tc.name: CreateTimer008
+* @tc.desc: Create system timer with TIMER_TYPE_REALTIME and TIMER_TYPE_EXACT, then start timer with uint64_t::max.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, CreateTimer008, TestSize.Level1)
+{
+    AddPermission();
+    g_data1 = 0;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME | timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(0);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_TRUE(timerId1 > 0);
+    uint64_t max = std::numeric_limits<uint64_t>::max();
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, max);
+    sleep(1);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(g_data1, 0);
+    ret = TimeServiceClient::GetInstance()->StopTimer(timerId1);
+    EXPECT_TRUE(ret);
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    EXPECT_TRUE(ret);
+    DeletePermission();
+}
+
+/**
 * @tc.name: SntpClient001.
 * @tc.desc: test SntpClient.
 * @tc.type: FUNC
