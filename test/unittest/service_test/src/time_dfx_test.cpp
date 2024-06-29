@@ -118,20 +118,20 @@ HWTEST_F(TimeDfxTest, DumpTimerInfo001, TestSize.Level0)
 HWTEST_F(TimeDfxTest, DumpTimerInfoById001, TestSize.Level0)
 {
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(0);
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
-    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
+    auto timerId = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_GT(timerId, 0);
     std::string result;
-    auto CMD1 = std::string(CMD).append(" \"-timer -i ").append(std::to_string(timerId1)).append(" \"");
+    auto CMD1 = std::string(CMD).append(" \"-timer -i ").append(std::to_string(timerId)).append(" \"");
     auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("timer id"), std::string::npos);
     EXPECT_NE(result.find("timer type"), std::string::npos);
-    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId);
     EXPECT_TRUE(ret);
 }
 
@@ -143,20 +143,20 @@ HWTEST_F(TimeDfxTest, DumpTimerInfoById001, TestSize.Level0)
 HWTEST_F(TimeDfxTest, DumpTimerTriggerById001, TestSize.Level0)
 {
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(5);
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
-    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
+    auto timerId = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_GT(timerId, 0);
     std::string result;
-    auto CMD1 = std::string(CMD).append(" \"-timer -s ").append(std::to_string(timerId1)).append(" \"");
+    auto CMD1 = std::string(CMD).append(" \"-timer -s ").append(std::to_string(timerId)).append(" \"");
     auto ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("timer id"), std::string::npos);
     EXPECT_NE(result.find("timer trigger"), std::string::npos);
-    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId);
     EXPECT_TRUE(ret);
 }
 
@@ -224,17 +224,17 @@ HWTEST_F(TimeDfxTest, DumpUidTimerMapInfo001, TestSize.Level0)
     auto CMD1 = std::string(CMD).append(" \"-UidTimer -l ").append(" \"");
 
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(5);
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
-    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
+    auto timerId = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_GT(timerId, 0);
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
-    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, time + 3000);
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId, time + 3000);
     EXPECT_TRUE(ret);
 
     ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
@@ -242,7 +242,7 @@ HWTEST_F(TimeDfxTest, DumpUidTimerMapInfo001, TestSize.Level0)
     EXPECT_NE(result.find("* timer id"), std::string::npos);
     EXPECT_NE(result.find("* timer whenElapsed"), std::string::npos);
     TIME_HILOGD(TIME_MODULE_SERVICE, "-UidTimer -l: %{public}s", result.c_str());
-    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId);
     EXPECT_TRUE(ret);
 }
 
@@ -257,24 +257,24 @@ HWTEST_F(TimeDfxTest, DumpPidTimerMapInfo001, TestSize.Level0)
     auto CMD1 = std::string(CMD).append(" \"-PidTimer -l ").append(" \"");
 
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(5);
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
-    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
+    auto timerId = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_GT(timerId, 0);
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
-    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, time + 3000);
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId, time + 3000);
     EXPECT_TRUE(ret);
 
     ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_NE(result.find("* timer id"), std::string::npos);
     EXPECT_NE(result.find("* timer whenElapsed"), std::string::npos);
     TIME_HILOGD(TIME_MODULE_SERVICE, "-PidTimer -l: %{public}s", result.c_str());
-    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId);
     EXPECT_TRUE(ret);
 }
 
@@ -289,24 +289,24 @@ HWTEST_F(TimeDfxTest, DumpPeoxyTimerMapInfo001, TestSize.Level0)
     auto CMD1 = std::string(CMD).append(" \"-ProxyTimer -l ").append(" \"");
 
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(5);
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
-    auto timerId1 = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    EXPECT_TRUE(timerId1 > 0);
+    auto timerId = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_GT(timerId, 0);
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
-    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId1, time + 3000);
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId, time + 3000);
     EXPECT_TRUE(ret);
 
     ret = TimeDfxTest::ExecuteCmd(CMD1.c_str(), result);
     EXPECT_TRUE(ret);
     EXPECT_NE(result.find("dump proxy map"), std::string::npos);
     TIME_HILOGD(TIME_MODULE_SERVICE, "-ProxyTimer -l: %{public}s", result.c_str());
-    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId1);
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId);
     EXPECT_TRUE(ret);
 }
 
