@@ -30,27 +30,52 @@ static const int MAX_PID_LIST_SIZE = 1024;
 
 TimeServiceStub::TimeServiceStub()
 {
-    memberFuncMap_[TimeServiceIpcInterfaceCode::SET_TIME] = &TimeServiceStub::OnSetTime;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::SET_TIME_ZONE] = &TimeServiceStub::OnSetTimeZone;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_TIME_ZONE] = &TimeServiceStub::OnGetTimeZone;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_WALL_TIME_MILLI] = &TimeServiceStub::OnGetWallTimeMs;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_WALL_TIME_NANO] = &TimeServiceStub::OnGetWallTimeNs;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_BOOT_TIME_MILLI] = &TimeServiceStub::OnGetBootTimeMs;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_BOOT_TIME_NANO] = &TimeServiceStub::OnGetBootTimeNs;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_MONO_TIME_MILLI] = &TimeServiceStub::OnGetMonotonicTimeMs;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_MONO_TIME_NANO] = &TimeServiceStub::OnGetMonotonicTimeNs;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_THREAD_TIME_MILLI] = &TimeServiceStub::OnGetThreadTimeMs;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_THREAD_TIME_NANO] = &TimeServiceStub::OnGetThreadTimeNs;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::CREATE_TIMER] = &TimeServiceStub::OnCreateTimer;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::START_TIMER] = &TimeServiceStub::OnStartTimer;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::STOP_TIMER] = &TimeServiceStub::OnStopTimer;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::DESTROY_TIMER] = &TimeServiceStub::OnDestroyTimer;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::PROXY_TIMER] = &TimeServiceStub::OnTimerProxy;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::PID_PROXY_TIMER] = &TimeServiceStub::OnPidTimerProxy;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::ADJUST_TIMER] = &TimeServiceStub::OnAdjustTimer;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::SET_TIMER_EXEMPTION] = &TimeServiceStub::OnSetTimerExemption;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::RESET_ALL_PROXY] = &TimeServiceStub::OnAllProxyReset;
-    memberFuncMap_[TimeServiceIpcInterfaceCode::GET_NTP_TIME_MILLI] = &TimeServiceStub::OnGetNtpTimeMs;
+    memberFuncMap_ = {
+        { TimeServiceIpcInterfaceCode::SET_TIME,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnSetTime(data, reply); } },
+        { TimeServiceIpcInterfaceCode::SET_TIME_ZONE,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnSetTimeZone(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_TIME_ZONE,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetTimeZone(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_WALL_TIME_MILLI,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetWallTimeMs(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_WALL_TIME_NANO,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetWallTimeNs(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_BOOT_TIME_MILLI,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetBootTimeMs(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_BOOT_TIME_NANO,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetBootTimeNs(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_MONO_TIME_MILLI,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t {
+                return OnGetMonotonicTimeMs(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_MONO_TIME_NANO,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetBootTimeNs(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_THREAD_TIME_MILLI,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetThreadTimeMs(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_THREAD_TIME_NANO,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetThreadTimeNs(data, reply); } },
+        { TimeServiceIpcInterfaceCode::CREATE_TIMER,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnCreateTimer(data, reply); } },
+        { TimeServiceIpcInterfaceCode::START_TIMER,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnStartTimer(data, reply); } },
+        { TimeServiceIpcInterfaceCode::STOP_TIMER,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnStopTimer(data, reply); } },
+        { TimeServiceIpcInterfaceCode::DESTROY_TIMER,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnDestroyTimer(data, reply); } },
+        { TimeServiceIpcInterfaceCode::PROXY_TIMER,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnTimerProxy(data, reply); } },
+        { TimeServiceIpcInterfaceCode::PID_PROXY_TIMER,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnPidTimerProxy(data, reply); } },
+        { TimeServiceIpcInterfaceCode::ADJUST_TIMER,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnAdjustTimer(data, reply); } },
+        { TimeServiceIpcInterfaceCode::SET_TIMER_EXEMPTION,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t {
+                return OnSetTimerExemption(data, reply); } },
+        { TimeServiceIpcInterfaceCode::RESET_ALL_PROXY,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnAllProxyReset(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_NTP_TIME_MILLI,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetNtpTimeMs(data, reply); } },
+    };
 }
 
 TimeServiceStub::~TimeServiceStub()
@@ -78,7 +103,7 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
         if (itFunc != memberFuncMap_.end()) {
             auto memberFunc = itFunc->second;
             if (memberFunc != nullptr) {
-                return (this->*memberFunc)(data, reply);
+                return memberFunc(data, reply);
             }
         }
     }

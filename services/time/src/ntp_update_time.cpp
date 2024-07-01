@@ -194,7 +194,7 @@ bool NtpUpdateTime::GetNtpTime(int64_t &time)
         std::chrono::steady_clock::now().time_since_epoch()).count();
     uint64_t bootTime = static_cast<uint64_t>(curBootTime);
     auto lastBootTime = NtpTrustedTime::GetInstance().ElapsedRealtimeMillis();
-    if ((lastBootTime > 0) && (bootTime - lastBootTime <= ONE_MINUTES)) {
+    if ((lastBootTime > 0) && (bootTime - static_cast<uint64_t>(lastBootTime) <= ONE_MINUTES)) {
         TIME_HILOGI(TIME_MODULE_SERVICE,
                     "ntp updated in 1min, bootTime: %{public}" PRId64 ", lastBootTime: %{public}" PRId64 "",
                     bootTime, lastBootTime);

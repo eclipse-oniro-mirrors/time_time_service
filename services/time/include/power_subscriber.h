@@ -40,7 +40,7 @@ private:
         UNKNOWN_BROADCAST_EVENT = 0,
         POWER_BROADCAST_EVENT,
     };
-    using broadcastSubscriberFunc = void (PowerSubscriber::*)(const CommonEventData &data);
+    using broadcastSubscriberFunc = std::function<void(const CommonEventData &data)>;
 
     void PowerBroadcast(const CommonEventData &data);
     std::map<uint32_t, broadcastSubscriberFunc> memberFuncMap_;

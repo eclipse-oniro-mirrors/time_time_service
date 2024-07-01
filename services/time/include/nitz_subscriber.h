@@ -41,7 +41,7 @@ private:
         NITZ_TIME_CHANGED_BROADCAST_EVENT,
         NITZ_TIMEZONE_CHANGED_BROADCAST_EVENT
     };
-    using broadcastSubscriberFunc = void (NITZSubscriber::*)(const CommonEventData &data);
+    using broadcastSubscriberFunc = std::function<void(const CommonEventData &data)>;
 
     void NITZTimeChangeBroadcast(const CommonEventData &data);
     void NITZTimezoneChangeBroadcast(const CommonEventData &data);
