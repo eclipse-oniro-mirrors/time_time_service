@@ -157,7 +157,7 @@ void TestNtpThread(const char *name)
 {
     int64_t time;
     auto errCode = TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -187,7 +187,7 @@ HWTEST_F(TimeClientTest, GetNtpTimeMs001, TestSize.Level1)
     int64_t time;
     auto errCode = TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
     TIME_HILOGI(TIME_MODULE_CLIENT, "time now : %{public}" PRId64 "", time);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -201,10 +201,10 @@ HWTEST_F(TimeClientTest, GetNtpTimeMs002, TestSize.Level1)
     std::thread thread2(TestNtpThread, "thread2");
     std::thread thread3(TestNtpThread, "thread3");
     std::thread thread4(TestNtpThread, "thread4");
-    thread1.detach();
-    thread2.detach();
-    thread3.detach();
-    thread4.detach();
+    thread1.join();
+    thread2.join();
+    thread3.join();
+    thread4.join();
 }
 
 /**
@@ -217,10 +217,10 @@ HWTEST_F(TimeClientTest, SetTime001, TestSize.Level1)
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
-    ASSERT_TRUE(time > 0);
+    ASSERT_GT(time, 0);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(time);
-    EXPECT_TRUE(result == TimeError::E_TIME_OK);
+    EXPECT_EQ(result, TimeError::E_TIME_OK);
 }
 
 /**
@@ -231,7 +231,7 @@ HWTEST_F(TimeClientTest, SetTime001, TestSize.Level1)
 HWTEST_F(TimeClientTest, SetTime002, TestSize.Level1)
 {
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(-1);
-    EXPECT_TRUE(result != TimeError::E_TIME_OK);
+    EXPECT_NE(result, TimeError::E_TIME_OK);
 }
 
 /**
@@ -242,7 +242,7 @@ HWTEST_F(TimeClientTest, SetTime002, TestSize.Level1)
 HWTEST_F(TimeClientTest, SetTime003, TestSize.Level1)
 {
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(LLONG_MAX);
-    EXPECT_TRUE(result != TimeError::E_TIME_OK);
+    EXPECT_NE(result, TimeError::E_TIME_OK);
 }
 
 /**
@@ -256,13 +256,13 @@ HWTEST_F(TimeClientTest, SetTime004, TestSize.Level1)
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
-    ASSERT_TRUE(time > 0);
+    ASSERT_GT(time, 0);
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(time);
-    EXPECT_TRUE(result != TimeError::E_TIME_OK);
+    EXPECT_NE(result, TimeError::E_TIME_OK);
     int32_t code;
     bool ret = TimeServiceClient::GetInstance()->SetTime(time, code);
     EXPECT_EQ(ret, false);
-    EXPECT_TRUE(code != TimeError::E_TIME_OK);
+    EXPECT_NE(code, TimeError::E_TIME_OK);
 }
 
 /**
@@ -279,13 +279,13 @@ HWTEST_F(TimeClientTest, SetTimeZone001, TestSize.Level1)
     EXPECT_FALSE(getCurrentTimeZone.empty());
     std::string timeZoneNicosia("Asia/Nicosia");
     int32_t result = TimeServiceClient::GetInstance()->SetTimeZoneV9(timeZoneNicosia);
-    EXPECT_TRUE(result == TimeError::E_TIME_OK);
+    EXPECT_EQ(result, TimeError::E_TIME_OK);
     std::string getTimeZoneNicosia;
     int32_t getTimeZoneResult = TimeServiceClient::GetInstance()->GetTimeZone(getTimeZoneNicosia);
-    EXPECT_TRUE(getTimeZoneResult == TimeError::E_TIME_OK);;
+    EXPECT_EQ(getTimeZoneResult, TimeError::E_TIME_OK);;
     EXPECT_EQ(timeZoneNicosia, getTimeZoneNicosia);
     int32_t ret = TimeServiceClient::GetInstance()->SetTimeZoneV9(getCurrentTimeZone);
-    EXPECT_TRUE(ret == TimeError::E_TIME_OK);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
 }
 
 /**
@@ -296,7 +296,7 @@ HWTEST_F(TimeClientTest, SetTimeZone001, TestSize.Level1)
 HWTEST_F(TimeClientTest, SetTimeZone002, TestSize.Level1)
 {
     int32_t result = TimeServiceClient::GetInstance()->SetTimeZoneV9("123");
-    EXPECT_TRUE(result != TimeError::E_TIME_OK);
+    EXPECT_NE(result, TimeError::E_TIME_OK);
 }
 
 /**
@@ -308,7 +308,7 @@ HWTEST_F(TimeClientTest, SetTimeZone003, TestSize.Level1)
 {
     DeletePermission();
     int32_t result = TimeServiceClient::GetInstance()->SetTimeZoneV9("Asia/Shanghai");
-    EXPECT_TRUE(result != TimeError::E_TIME_OK);
+    EXPECT_NE(result, TimeError::E_TIME_OK);
     bool ret = TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
     EXPECT_FALSE(ret);
 }
@@ -322,7 +322,7 @@ HWTEST_F(TimeClientTest, GetWallTimeMs001, TestSize.Level1)
 {
     int64_t time;
     auto errCode = TimeServiceClient::GetInstance()->GetWallTimeMs(time);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -334,7 +334,7 @@ HWTEST_F(TimeClientTest, GetWallTimeNs001, TestSize.Level1)
 {
     int64_t time;
     auto errCode = TimeServiceClient::GetInstance()->GetWallTimeNs(time);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -346,7 +346,7 @@ HWTEST_F(TimeClientTest, GetBootTimeNs001, TestSize.Level1)
 {
     int64_t time;
     auto errCode = TimeServiceClient::GetInstance()->GetBootTimeNs(time);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -358,7 +358,7 @@ HWTEST_F(TimeClientTest, GetBootTimeMs001, TestSize.Level1)
 {
     int64_t time;
     auto errCode = TimeServiceClient::GetInstance()->GetBootTimeMs(time);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -370,7 +370,7 @@ HWTEST_F(TimeClientTest, GetMonotonicTimeMs001, TestSize.Level1)
 {
     int64_t time;
     auto errCode = TimeServiceClient::GetInstance()->GetMonotonicTimeMs(time);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -382,7 +382,7 @@ HWTEST_F(TimeClientTest, GetMonotonicTimeNs001, TestSize.Level1)
 {
     int64_t time;
     auto errCode = TimeServiceClient::GetInstance()->GetMonotonicTimeNs(time);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -394,7 +394,7 @@ HWTEST_F(TimeClientTest, GetThreadTimeMs001, TestSize.Level1)
 {
     int64_t time;
     auto errCode = TimeServiceClient::GetInstance()->GetThreadTimeMs(time);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -406,7 +406,7 @@ HWTEST_F(TimeClientTest, GetThreadTimeNs001, TestSize.Level1)
 {
     int64_t time;
     auto errCode = TimeServiceClient::GetInstance()->GetThreadTimeNs(time);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -418,11 +418,11 @@ HWTEST_F(TimeClientTest, CreateTimer001, TestSize.Level1)
 {
     uint64_t timerId = 0;
     auto ret = TimeServiceClient::GetInstance()->StartTimerV9(timerId, 5);
-    EXPECT_TRUE(ret != TimeError::E_TIME_OK);
+    EXPECT_NE(ret, TimeError::E_TIME_OK);
     ret = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
-    EXPECT_TRUE(ret != TimeError::E_TIME_OK);
+    EXPECT_NE(ret, TimeError::E_TIME_OK);
     ret = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_TRUE(ret != TimeError::E_TIME_OK);
+    EXPECT_NE(ret, TimeError::E_TIME_OK);
 }
 
 /**
@@ -433,7 +433,7 @@ HWTEST_F(TimeClientTest, CreateTimer001, TestSize.Level1)
 HWTEST_F(TimeClientTest, CreateTimer002, TestSize.Level1)
 {
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(0);
     timerInfo->SetWantAgent(nullptr);
@@ -441,13 +441,13 @@ HWTEST_F(TimeClientTest, CreateTimer002, TestSize.Level1)
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     auto ret = TimeServiceClient::GetInstance()->StartTimerV9(timerId, 2000);
-    EXPECT_TRUE(ret == TimeError::E_TIME_OK);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
     ret = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
-    EXPECT_TRUE(ret == TimeError::E_TIME_OK);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
     ret = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_TRUE(ret == TimeError::E_TIME_OK);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
 }
 
 /**
@@ -458,7 +458,7 @@ HWTEST_F(TimeClientTest, CreateTimer002, TestSize.Level1)
 HWTEST_F(TimeClientTest, CreateTimer003, TestSize.Level1)
 {
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(0);
     auto ability = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
@@ -466,7 +466,7 @@ HWTEST_F(TimeClientTest, CreateTimer003, TestSize.Level1)
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 
@@ -479,23 +479,23 @@ HWTEST_F(TimeClientTest, CreateTimer004, TestSize.Level1)
 {
     g_data1 = 0;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(0);
     timerInfo->SetWantAgent(nullptr);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     auto bootTimeNano = system_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILESECOND;
     errCode = TimeServiceClient::GetInstance()->StartTimerV9(timerId, bootTimeMilli + 2000);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_TRUE(g_data1 == 0);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_EQ(g_data1, 0);
     errCode = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
-    EXPECT_TRUE(errCode != TimeError::E_TIME_OK);
+    EXPECT_NE(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -521,15 +521,15 @@ HWTEST_F(TimeClientTest, CreateTimer005, TestSize.Level1)
     }
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 
     errCode = TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(currentTime));
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_TRUE(g_data1 == 1);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_EQ(g_data1, 1);
     errCode = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
-    EXPECT_TRUE(errCode != TimeError::E_TIME_OK);
+    EXPECT_NE(errCode, TimeError::E_TIME_OK);
 }
 
 /**
@@ -541,9 +541,8 @@ HWTEST_F(TimeClientTest, CreateTimer006, TestSize.Level1)
 {
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(nullptr, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode != TimeError::E_TIME_OK);
-    EXPECT_EQ(timerId, ret);
+    EXPECT_NE(errCode, TimeError::E_TIME_OK);
+    EXPECT_EQ(timerId, 0);
 }
 
 /**
@@ -566,16 +565,15 @@ HWTEST_F(TimeClientTest, CreateTimer007, TestSize.Level1)
         currentTime = 0;
     }
     uint64_t timerId = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
-    uint64_t ret = 0;
-    EXPECT_EQ(timerId, ret);
+    EXPECT_EQ(timerId, 0);
     auto codeCreateTimer = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_TRUE(codeCreateTimer != TimeError::E_TIME_OK);
+    EXPECT_NE(codeCreateTimer, TimeError::E_TIME_OK);
     auto codeStartTimer = TimeServiceClient::GetInstance()->StartTimerV9(timerId, currentTime + 1000);
-    EXPECT_TRUE(codeStartTimer != TimeError::E_TIME_OK);
+    EXPECT_NE(codeStartTimer, TimeError::E_TIME_OK);
     auto codeStopTimer = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
-    EXPECT_TRUE(codeStopTimer != TimeError::E_TIME_OK);
+    EXPECT_NE(codeStopTimer, TimeError::E_TIME_OK);
     auto codeDestroyTimer = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_TRUE(codeDestroyTimer != TimeError::E_TIME_OK);
+    EXPECT_NE(codeDestroyTimer, TimeError::E_TIME_OK);
 }
 
 /**
@@ -588,15 +586,14 @@ HWTEST_F(TimeClientTest, StartTimer001, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1<<2);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     timerInfo->SetWantAgent(wantAgent);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     WaitForAlarm(&g_data1, FIVE_HUNDRED * MICRO_TO_MILLISECOND);
@@ -613,14 +610,13 @@ HWTEST_F(TimeClientTest, StartTimer002, TestSize.Level1)
 {
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1<<2);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(false);
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     timerInfo->SetWantAgent(wantAgent);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     auto result = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 1000);
     EXPECT_EQ(result, TimeError::E_TIME_OK);
@@ -637,14 +633,13 @@ HWTEST_F(TimeClientTest, StartTimer003, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1<<2 | 1<<1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT | timerInfo->TIMER_TYPE_WAKEUP);
     timerInfo->SetRepeat(true);
     timerInfo->SetInterval(1000);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     sleep(2);
@@ -662,14 +657,13 @@ HWTEST_F(TimeClientTest, StartTimer004, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(4);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(true);
     timerInfo->SetInterval(1000);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     sleep(2);
@@ -687,13 +681,12 @@ HWTEST_F(TimeClientTest, StartTimer005, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(4);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     pid_t uid = IPCSkeleton::GetCallingUid();
@@ -715,13 +708,12 @@ HWTEST_F(TimeClientTest, StartTimer006, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1<<2);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     pid_t uid = IPCSkeleton::GetCallingUid();
@@ -743,13 +735,12 @@ HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1<<2);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     pid_t uid = IPCSkeleton::GetCallingUid();
@@ -772,13 +763,12 @@ HWTEST_F(TimeClientTest, StartTimer008, TestSize.Level1)
     g_data2 = 0;
     uint64_t timerId1;
     auto timerInfo1 = std::make_shared<TimerInfoTest>();
-    timerInfo1->SetType(1<<2);
+    timerInfo1->SetType(timerInfo1->TIMER_TYPE_EXACT);
     timerInfo1->SetRepeat(false);
     timerInfo1->SetCallbackInfo(TimeOutCallback1);
     auto errCode1 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo1, timerId1);
-    uint64_t ret1 = 0;
-    EXPECT_TRUE(errCode1 == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId1, ret1);
+    EXPECT_EQ(errCode1, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, 0);
     auto triggerTime1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + FIVE_HUNDRED);
     pid_t uid1 = IPCSkeleton::GetCallingUid();
@@ -786,13 +776,12 @@ HWTEST_F(TimeClientTest, StartTimer008, TestSize.Level1)
 
     uint64_t timerId2;
     auto timerInfo2 = std::make_shared<TimerInfoTest>();
-    timerInfo2->SetType(1<<2);
+    timerInfo2->SetType(timerInfo2->TIMER_TYPE_EXACT);
     timerInfo2->SetRepeat(false);
     timerInfo2->SetCallbackInfo(TimeOutCallback2);
     auto errCode2 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo2, timerId2);
-    uint64_t ret2 = 0;
-    EXPECT_TRUE(errCode2 == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId1, ret2);
+    EXPECT_EQ(errCode2, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, 0);
     auto triggerTime2 = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId2, triggerTime2 + FIVE_HUNDRED);
     pid_t uid2 = IPCSkeleton::GetCallingUid();
@@ -818,13 +807,12 @@ HWTEST_F(TimeClientTest, StartTimer009, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(4);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     pid_t pid = IPCSkeleton::GetCallingPid();
@@ -849,13 +837,12 @@ HWTEST_F(TimeClientTest, StartTimer010, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1<<2);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     pid_t pid = IPCSkeleton::GetCallingPid();
@@ -880,13 +867,12 @@ HWTEST_F(TimeClientTest, StartTimer011, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1<<2);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     pid_t pid = IPCSkeleton::GetCallingPid();
@@ -912,26 +898,24 @@ HWTEST_F(TimeClientTest, StartTimer012, TestSize.Level1)
     g_data2 = 0;
     uint64_t timerId1;
     auto timerInfo1 = std::make_shared<TimerInfoTest>();
-    timerInfo1->SetType(1<<2);
+    timerInfo1->SetType(timerInfo1->TIMER_TYPE_EXACT);
     timerInfo1->SetRepeat(false);
     timerInfo1->SetCallbackInfo(TimeOutCallback1);
     auto errCode1 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo1, timerId1);
-    uint64_t ret1 = 0;
-    EXPECT_TRUE(errCode1 == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId1, ret1);
+    EXPECT_EQ(errCode1, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, 0);
     auto triggerTime1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + FIVE_HUNDRED);
     pid_t pid1 = IPCSkeleton::GetCallingPid();
 
     uint64_t timerId2;
     auto timerInfo2 = std::make_shared<TimerInfoTest>();
-    timerInfo2->SetType(1<<2);
+    timerInfo2->SetType(timerInfo2->TIMER_TYPE_EXACT);
     timerInfo2->SetRepeat(false);
     timerInfo2->SetCallbackInfo(TimeOutCallback2);
     auto errCode2 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo2, timerId2);
-    uint64_t ret2 = 0;
-    EXPECT_TRUE(errCode2 == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId1, ret2);
+    EXPECT_EQ(errCode2, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId2, 0);
     auto triggerTime2 = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId2, triggerTime2 + FIVE_HUNDRED);
     pid_t pid2 = IPCSkeleton::GetCallingUid();
@@ -959,7 +943,7 @@ HWTEST_F(TimeClientTest, StartTimer012, TestSize.Level1)
 HWTEST_F(TimeClientTest, RecoverTimer001, TestSize.Level1)
 {
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(0);
     timerInfo->SetWantAgent(nullptr);
@@ -967,14 +951,14 @@ HWTEST_F(TimeClientTest, RecoverTimer001, TestSize.Level1)
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     {
         std::lock_guard<std::mutex> lock(TimeServiceClient::GetInstance()->recoverTimerInfoLock_);
         auto info = TimeServiceClient::GetInstance()->recoverTimerInfoMap_.find(timerId);
-        EXPECT_TRUE(info != TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
-        EXPECT_TRUE(info->second->timerInfo != nullptr);
-        EXPECT_TRUE(info->second->state == 0);
-        EXPECT_TRUE(info->second->triggerTime == 0);
+        EXPECT_NE(info, TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
+        EXPECT_NE(info->second->timerInfo, nullptr);
+        EXPECT_EQ(info->second->state, 0);
+        EXPECT_EQ(info->second->triggerTime, 0);
     }
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
@@ -988,7 +972,7 @@ HWTEST_F(TimeClientTest, RecoverTimer001, TestSize.Level1)
 HWTEST_F(TimeClientTest, RecoverTimer002, TestSize.Level1)
 {
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(0);
     timerInfo->SetWantAgent(nullptr);
@@ -996,17 +980,17 @@ HWTEST_F(TimeClientTest, RecoverTimer002, TestSize.Level1)
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     auto startRet = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime);
-    EXPECT_TRUE(startRet == TimeError::E_TIME_OK);
+    EXPECT_EQ(startRet, TimeError::E_TIME_OK);
     {
         std::lock_guard<std::mutex> lock(TimeServiceClient::GetInstance()->recoverTimerInfoLock_);
         auto info = TimeServiceClient::GetInstance()->recoverTimerInfoMap_.find(timerId);
-        EXPECT_TRUE(info != TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
-        EXPECT_TRUE(info->second->timerInfo != nullptr);
-        EXPECT_TRUE(info->second->state == 1);
-        EXPECT_TRUE(info->second->triggerTime == triggerTime);
+        EXPECT_NE(info, TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
+        EXPECT_NE(info->second->timerInfo, nullptr);
+        EXPECT_EQ(info->second->state, 1);
+        EXPECT_EQ(info->second->triggerTime, triggerTime);
     }
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
@@ -1020,7 +1004,7 @@ HWTEST_F(TimeClientTest, RecoverTimer002, TestSize.Level1)
 HWTEST_F(TimeClientTest, RecoverTimer003, TestSize.Level1)
 {
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(0);
     timerInfo->SetWantAgent(nullptr);
@@ -1028,19 +1012,19 @@ HWTEST_F(TimeClientTest, RecoverTimer003, TestSize.Level1)
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     auto startRet = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
-    EXPECT_TRUE(startRet == TimeError::E_TIME_OK);
+    EXPECT_EQ(startRet, TimeError::E_TIME_OK);
     auto stopRet = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
-    EXPECT_TRUE(stopRet == TimeError::E_TIME_OK);
+    EXPECT_EQ(stopRet, TimeError::E_TIME_OK);
     {
         std::lock_guard<std::mutex> lock(TimeServiceClient::GetInstance()->recoverTimerInfoLock_);
         auto info = TimeServiceClient::GetInstance()->recoverTimerInfoMap_.find(timerId);
-        EXPECT_TRUE(info != TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
-        EXPECT_TRUE(info->second->timerInfo != nullptr);
-        EXPECT_TRUE(info->second->state == 0);
-        EXPECT_TRUE(info->second->triggerTime == triggerTime + FIVE_HUNDRED);
+        EXPECT_NE(info, TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
+        EXPECT_NE(info->second->timerInfo, nullptr);
+        EXPECT_EQ(info->second->state, 0);
+        EXPECT_EQ(info->second->triggerTime, triggerTime + FIVE_HUNDRED);
     }
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
@@ -1054,7 +1038,7 @@ HWTEST_F(TimeClientTest, RecoverTimer003, TestSize.Level1)
 HWTEST_F(TimeClientTest, RecoverTimer004, TestSize.Level1)
 {
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(0);
     timerInfo->SetWantAgent(nullptr);
@@ -1062,16 +1046,16 @@ HWTEST_F(TimeClientTest, RecoverTimer004, TestSize.Level1)
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     auto startRet = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
-    EXPECT_TRUE(startRet == TimeError::E_TIME_OK);
+    EXPECT_EQ(startRet, TimeError::E_TIME_OK);
     auto destroyRet = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_TRUE(destroyRet == TimeError::E_TIME_OK);
+    EXPECT_EQ(destroyRet, TimeError::E_TIME_OK);
     {
         std::lock_guard<std::mutex> lock(TimeServiceClient::GetInstance()->recoverTimerInfoLock_);
         auto info = TimeServiceClient::GetInstance()->recoverTimerInfoMap_.find(timerId);
-        EXPECT_TRUE(info == TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
+        EXPECT_EQ(info, TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
     }
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
@@ -1086,14 +1070,13 @@ HWTEST_F(TimeClientTest, RecoverTimer005, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1<<2 | 1<<1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT | timerInfo->TIMER_TYPE_WAKEUP);
     timerInfo->SetRepeat(true);
     timerInfo->SetInterval(1000);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     // Kill time_service by hand.
@@ -1113,14 +1096,13 @@ HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1<<2 | 1<<1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT | timerInfo->TIMER_TYPE_WAKEUP);
     timerInfo->SetRepeat(true);
     timerInfo->SetInterval(1000);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     // Kill time_service by hand.
     sleep(5);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
@@ -1138,22 +1120,21 @@ HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
 HWTEST_F(TimeClientTest, AdjustTimer001, TestSize.Level1)
 {
     g_data1 = 0;
-    uint64_t timerId1;
-    auto timerInfo1 = std::make_shared<TimerInfoTest>();
-    timerInfo1->SetType(1<<2);
-    timerInfo1->SetRepeat(false);
-    timerInfo1->SetCallbackInfo(TimeOutCallback1);
-    auto errCode1 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo1, timerId1);
-    uint64_t ret1 = 0;
-    EXPECT_TRUE(errCode1 == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId1, ret1);
-    auto triggerTime1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
-    TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + FIVE_HUNDRED);
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     TimeServiceClient::GetInstance()->AdjustTimer(true, 5);
     TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
     WaitForAlarm(&g_data1, FIVE_HUNDRED * MICRO_TO_MILLISECOND);
     EXPECT_EQ(g_data1, 1);
-    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId1);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
  
 /**
@@ -1167,20 +1148,19 @@ HWTEST_F(TimeClientTest, AdjustTimer002, TestSize.Level1)
     std::unordered_set<std::string> nameArr{"timer"};
     TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, false);
     TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, true);
-    uint64_t timerId1;
-    auto timerInfo1 = std::make_shared<TimerInfoTest>();
-    timerInfo1->SetType(1<<2);
-    timerInfo1->SetRepeat(false);
-    timerInfo1->SetCallbackInfo(TimeOutCallback1);
-    auto errCode1 = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo1, timerId1);
-    uint64_t ret1 = 0;
-    EXPECT_TRUE(errCode1 == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId1, ret1);
-    auto triggerTime1 = TimeServiceClient::GetInstance()->GetWallTimeMs();
-    TimeServiceClient::GetInstance()->StartTimerV9(timerId1, triggerTime1 + FIVE_HUNDRED);
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     WaitForAlarm(&g_data1, FIVE_HUNDRED * MICRO_TO_MILLISECOND);
     EXPECT_EQ(g_data1, 1);
-    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId1);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 
 /**
@@ -1193,24 +1173,23 @@ HWTEST_F(TimeClientTest, AdjustTimer003, TestSize.Level1)
     g_data1 = 0;
     uint64_t timerId;
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1<<2 | 1<<1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT | timerInfo->TIMER_TYPE_WAKEUP);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(0);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    uint64_t ret = 0;
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
-    EXPECT_NE(timerId, ret);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
 
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = (currentTime.tv_sec + 3600) * 1000 + currentTime.tv_usec / 1000;
-    ASSERT_TRUE(time > 0);
+    ASSERT_GT(time, 0);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(time);
-    EXPECT_TRUE(result == TimeError::E_TIME_OK);
+    EXPECT_EQ(result, TimeError::E_TIME_OK);
     WaitForAlarm(&g_data1, 0);
     EXPECT_EQ(g_data1, 1);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
@@ -1228,7 +1207,7 @@ HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
     g_data1 = 0;
 
     auto timerInfo = std::make_shared<TimerInfoTest>();
-    timerInfo->SetType(1);
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
     timerInfo->SetRepeat(false);
     timerInfo->SetInterval(0);
     timerInfo->SetWantAgent(nullptr);
@@ -1236,10 +1215,10 @@ HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
-    EXPECT_TRUE(errCode == TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     auto startRet = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + 300000);
-    EXPECT_TRUE(startRet == TimeError::E_TIME_OK);
+    EXPECT_EQ(startRet, TimeError::E_TIME_OK);
     TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
 
     pid_t pid = IPCSkeleton::GetCallingPid();
@@ -1251,10 +1230,10 @@ HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = (currentTime.tv_sec + 10) * 1000 + currentTime.tv_usec / 1000;
-    ASSERT_TRUE(time > 0);
+    ASSERT_GT(time, 0);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(time);
-    EXPECT_TRUE(result == TimeError::E_TIME_OK);
+    EXPECT_EQ(result, TimeError::E_TIME_OK);
     WaitForAlarm(&g_data1, 0);
     EXPECT_EQ(g_data1, 0);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
