@@ -24,8 +24,12 @@ using namespace OHOS::AAFwk;
 NITZSubscriber::NITZSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo)
     : CommonEventSubscriber(subscriberInfo)
 {
-    memberFuncMap_[NITZ_TIME_CHANGED_BROADCAST_EVENT] = &NITZSubscriber::NITZTimeChangeBroadcast;
-    memberFuncMap_[NITZ_TIMEZONE_CHANGED_BROADCAST_EVENT] = &NITZSubscriber::NITZTimezoneChangeBroadcast;
+    memberFuncMap_ = {
+        { NITZ_TIME_CHANGED_BROADCAST_EVENT,
+            [this] (const CommonEventData &data) { NITZTimeChangeBroadcast(data); } },
+        { NITZ_TIMEZONE_CHANGED_BROADCAST_EVENT,
+            [this] (const CommonEventData &data) { NITZTimezoneChangeBroadcast(data); } },
+    };
 }
 
 void NITZSubscriber::OnReceiveEvent(const CommonEventData &data)
@@ -45,7 +49,7 @@ void NITZSubscriber::OnReceiveEvent(const CommonEventData &data)
     if (itFunc != memberFuncMap_.end()) {
         auto memberFunc = itFunc->second;
         if (memberFunc != nullptr) {
-            return (this->*memberFunc)(data);
+            return memberFunc(data);
         }
     }
 }

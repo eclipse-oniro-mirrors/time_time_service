@@ -34,7 +34,7 @@ public:
     int32_t OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
 
 private:
-    using TimeServiceFunc = int32_t (TimeServiceStub::*)(MessageParcel &data, MessageParcel &reply);
+    using TimeServiceFunc = std::function<int32_t(MessageParcel &data, MessageParcel &reply)>;
     int32_t OnSetTime(MessageParcel &data, MessageParcel &reply);
     int32_t OnSetTimeZone(MessageParcel &data, MessageParcel &reply);
     int32_t OnGetTimeZone(MessageParcel &data, MessageParcel &reply);

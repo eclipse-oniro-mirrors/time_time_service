@@ -24,7 +24,9 @@ using namespace OHOS::AAFwk;
 PowerSubscriber::PowerSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo)
     : CommonEventSubscriber(subscriberInfo)
 {
-    memberFuncMap_[POWER_BROADCAST_EVENT] = &PowerSubscriber::PowerBroadcast;
+    memberFuncMap_ = {
+        { POWER_BROADCAST_EVENT, [this] (const CommonEventData &data) { PowerBroadcast(data); } },
+    };
 }
 
 void PowerSubscriber::OnReceiveEvent(const CommonEventData &data)
@@ -40,7 +42,7 @@ void PowerSubscriber::OnReceiveEvent(const CommonEventData &data)
     if (itFunc != memberFuncMap_.end()) {
         auto memberFunc = itFunc->second;
         if (memberFunc != nullptr) {
-            return (this->*memberFunc)(data);
+            return memberFunc(data);
         }
     }
 }
