@@ -32,8 +32,8 @@ bool TimePermission::CheckCallingPermission(const std::string &permissionName)
     auto callerToken = IPCSkeleton::GetCallingTokenID();
     int result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
     if (result != Security::AccessToken::PERMISSION_GRANTED) {
-        TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, result:%{public}d, permission:%{public}s, \
-            callerToken:%{public}u", result, permissionName.c_str(), callerToken);
+        TIME_HILOGE(TIME_MODULE_COMMON, "permission check failed, result:%{public}d, permission:%{public}s",
+            result, permissionName.c_str());
         return false;
     }
     return true;

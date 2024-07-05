@@ -841,6 +841,48 @@ HWTEST_F(TimeServiceTest, CreateTimer008, TestSize.Level1)
 }
 
 /**
+* @tc.name: CreateTimer009
+* @tc.desc: Create system timer start with one day later, then setTime to one day later.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, CreateTimer009, TestSize.Level1)
+{
+    AddPermission();
+    g_data1 = 0;
+    struct timeval currentTime {
+    };
+    gettimeofday(&currentTime, NULL);
+    // Set the time to one day later
+    int64_t time = (currentTime.tv_sec + 86400) * 1000 + currentTime.tv_usec / 1000;
+    TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
+    ASSERT_GT(time, 0);
+
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(true);
+    timerInfo->SetInterval(1000);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto timerId = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_GT(timerId, 0);
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId, time);
+    EXPECT_TRUE(ret);
+
+    ret = TimeServiceClient::GetInstance()->SetTime(time);
+    EXPECT_TRUE(ret);
+
+    // wait for the second trigger success
+    while (g_data1 < 1) {
+        usleep(100000);
+    }
+    ret = TimeServiceClient::GetInstance()->StopTimer(timerId);
+    EXPECT_TRUE(ret);
+    ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId);
+    EXPECT_TRUE(ret);
+    DeletePermission();
+}
+
+/**
 * @tc.name: SntpClient001.
 * @tc.desc: test SntpClient.
 * @tc.type: FUNC

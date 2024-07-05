@@ -615,7 +615,6 @@ void TimerManager::TriggerIdleTimer()
 bool TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
                                     const std::chrono::steady_clock::time_point &nowElapsed)
 {
-    alarm->count = 1;
     if (mPendingIdleUntil_ != nullptr && mPendingIdleUntil_->id == alarm->id) {
         TriggerIdleTimer();
     }
@@ -1164,9 +1163,9 @@ void TimerManager::HandleRepeatTimer(
     const std::shared_ptr<TimerInfo> &timer, std::chrono::steady_clock::time_point nowElapsed)
 {
     if (timer->repeatInterval > milliseconds::zero()) {
-        timer->count += static_cast<uint64_t>(
-            duration_cast<milliseconds>(nowElapsed - timer->expectedWhenElapsed) / timer->repeatInterval);
-        auto delta = timer->count * timer->repeatInterval;
+        uint64_t count = 1 + static_cast<uint64_t>(
+            duration_cast<milliseconds>(nowElapsed - timer->whenElapsed) / timer->repeatInterval);
+        auto delta = count * timer->repeatInterval;
         auto nextElapsed = timer->whenElapsed + delta;
         TIME_HILOGI(TIME_MODULE_SERVICE, "timerId: %{public}" PRIu64 ", repeatInterval: %{public}lld, "
             "nextElapsed: %{public}lld", timer->id, timer->repeatInterval.count(),
