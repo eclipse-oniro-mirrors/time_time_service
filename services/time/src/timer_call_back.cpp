@@ -31,6 +31,7 @@ TimerCallback::TimerCallback()
 
 TimerCallback::~TimerCallback()
 {
+    std::lock_guard<std::mutex> lock(timerInfoMutex_);
     timerInfoMap_.clear();
 }
 
