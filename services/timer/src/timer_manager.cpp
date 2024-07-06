@@ -559,10 +559,18 @@ void TimerManager::TimerLooper()
         }
 
         if (result != TIME_CHANGED_MASK) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            TriggerTimersLocked(triggerList, nowElapsed);
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                TriggerTimersLocked(triggerList, nowElapsed);
+            }
+            // in this function, timeservice apply a runninglock from powermanager
+            // release mutex to prevent powermanager from using the interface of timeservice
+            // which may cause deadlock
             DeliverTimersLocked(triggerList);
-            RescheduleKernelTimerLocked();
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                RescheduleKernelTimerLocked();
+            }
         } else {
             std::lock_guard<std::mutex> lock(mutex_);
             RescheduleKernelTimerLocked();
