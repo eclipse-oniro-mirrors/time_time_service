@@ -535,7 +535,7 @@ void TimerManager::TimerLooper()
                 (duration_cast<milliseconds>(nowElapsed.time_since_epoch()) -
                 duration_cast<milliseconds>(lastTimeChangeRealtime_.time_since_epoch()));
             if (lastTimeChangeClockTime == system_clock::time_point::min()
-                || nowRtc < (expectedClockTime - milliseconds(ONE_THOUSAND))
+                || nowRtc < expectedClockTime
                 || nowRtc > (expectedClockTime + milliseconds(ONE_THOUSAND))) {
                 ReBatchAllTimers();
                 lastTimeChangeClockTime_ = nowRtc;
