@@ -69,9 +69,9 @@ bool SNTPClient::RequestTime(const std::string &host)
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
-    int status = getaddrinfo(host.c_str(), NTP_PORT, &hints, &addrs);
-    if (status != 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "getaddrinfo failed status %{public}d", status);
+    int error = getaddrinfo(host.c_str(), NTP_PORT, &hints, &addrs);
+    if (error != 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "getaddrinfo failed error %{public}d", error);
         return false;
     }
 

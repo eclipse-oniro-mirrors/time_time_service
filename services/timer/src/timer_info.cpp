@@ -56,8 +56,6 @@ TimerInfo::TimerInfo(uint64_t _id, int _type,
       windowLength {_windowLength},
       whenElapsed {_whenElapsed},
       maxWhenElapsed {_maxWhen},
-      expectedWhenElapsed {_whenElapsed},
-      expectedMaxWhenElapsed {_maxWhen},
       repeatInterval {_interval},
       bundleName {_bundleName}
 {
@@ -73,8 +71,6 @@ bool TimerInfo::UpdateWhenElapsedFromNow(std::chrono::steady_clock::time_point n
     whenElapsed = now + offset;
     auto oldMaxWhenElapsed = maxWhenElapsed;
     maxWhenElapsed = whenElapsed + windowLength;
-    expectedWhenElapsed = whenElapsed;
-    expectedMaxWhenElapsed = maxWhenElapsed;
     std::chrono::milliseconds currentTime;
     if (type == ITimerManager::RTC || type == ITimerManager::RTC_WAKEUP) {
         currentTime =

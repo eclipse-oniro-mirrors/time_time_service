@@ -37,15 +37,12 @@ public:
     const int uid;
     const int pid;
 
-    uint64_t count {};
     std::chrono::milliseconds when;
     std::chrono::milliseconds windowLength;
     std::chrono::steady_clock::time_point originWhenElapsed;
     std::chrono::steady_clock::time_point originMaxWhenElapsed;
     std::chrono::steady_clock::time_point whenElapsed;
     std::chrono::steady_clock::time_point maxWhenElapsed;
-    std::chrono::steady_clock::time_point expectedWhenElapsed;
-    std::chrono::steady_clock::time_point expectedMaxWhenElapsed;
     std::chrono::milliseconds repeatInterval;
     std::chrono::milliseconds offset;
     std::string bundleName;
