@@ -18,7 +18,6 @@
 
 #include <functional>
 
-#include "event_handler.h"
 #include "uv.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -48,10 +47,8 @@ private:
         napi_ref ref = nullptr;
     };
 
-    void Call(napi_env env, void *data, uv_after_work_cb afterCallback);
-    static void UvDelete(uv_work_t *work, int status);
+    void Call(napi_env env, void *data);
     CallbackInfo callbackInfo_;
-    std::shared_ptr<EventHandler> handler_;
 };
 
 class NapiSystemTimer {

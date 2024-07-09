@@ -27,7 +27,6 @@ namespace MiscServices {
 namespace Time {
 ITimerInfoInstance::ITimerInfoInstance() : callbackInfo_{}
 {
-    handler_ = std::make_shared<EventHandler>(EventRunner::GetMainEventRunner());
 }
 
 ITimerInfoInstance::~ITimerInfoInstance()
@@ -36,39 +35,23 @@ ITimerInfoInstance::~ITimerInfoInstance()
     if (callback == nullptr) {
         return;
     }
-    ITimerInfoInstance::Call(callbackInfo_.env, reinterpret_cast<void *>(callback), UvDelete);
+    ITimerInfoInstance::Call(callbackInfo_.env, reinterpret_cast<void *>(callback));
 }
 
-void ITimerInfoInstance::Call(napi_env env, void *data, uv_after_work_cb afterCallback)
+void ITimerInfoInstance::Call(napi_env env, void *data)
 {
-    uv_loop_s *loop = nullptr;
-    napi_get_uv_event_loop(env, &loop);
-    if (loop == nullptr) {
-        delete static_cast<CallbackInfo *>(data);
-        return;
-    }
-    auto *work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        delete static_cast<CallbackInfo *>(data);
-        return;
-    }
-    work->data = data;
-    auto ret = uv_queue_work(loop, work, [](uv_work_t *work) {}, afterCallback);
+    auto task = [data]() {
+        auto *callback = reinterpret_cast<CallbackInfo *>(data);
+        if (callback != nullptr) {
+            napi_delete_reference(callback->env, callback->ref);
+            delete callback;
+        }
+    };
+    auto ret = napi_send_event(env, task, napi_eprio_immediate);
     if (ret != 0) {
         delete static_cast<CallbackInfo *>(data);
-        delete work;
-        TIME_HILOGE(TIME_MODULE_JS_NAPI, "uv_queue_work failed retCode:%{public}d", ret);
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "napi_send_event failed retCode:%{public}d", ret);
     }
-}
-
-void ITimerInfoInstance::UvDelete(uv_work_t *work, int status)
-{
-    auto *callback = reinterpret_cast<CallbackInfo *>(work->data);
-    if (callback != nullptr) {
-        napi_delete_reference(callback->env, callback->ref);
-        delete callback;
-    }
-    delete work;
 }
 
 void ITimerInfoInstance::OnTrigger()
@@ -77,7 +60,8 @@ void ITimerInfoInstance::OnTrigger()
         return;
     }
     auto callbackInfo = callbackInfo_;
-    auto callback = [callbackInfo]() {
+
+    auto task = [callbackInfo]() {
         TIME_HILOGD(TIME_MODULE_JS_NAPI, "timerCallback success");
         napi_value undefined = nullptr;
         napi_get_undefined(callbackInfo.env, &undefined);
@@ -85,11 +69,10 @@ void ITimerInfoInstance::OnTrigger()
         napi_get_reference_value(callbackInfo.env, callbackInfo.ref, &callback);
         napi_call_function(callbackInfo.env, undefined, callback, ARGC_ZERO, &undefined, &undefined);
     };
-    if (handler_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_JS_NAPI, "handler is nullptr");
-        return;
+    auto ret = napi_send_event(callbackInfo.env, task, napi_eprio_immediate);
+    if (ret != 0) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "napi_send_event failed retCode:%{public}d", ret);
     }
-    handler_->PostSyncTask(callback, "TimerCallbackHandler", AppExecFwk::EventQueue::Priority::IMMEDIATE);
 }
 
 void ITimerInfoInstance::SetCallbackInfo(const napi_env &env, const napi_ref &ref)
