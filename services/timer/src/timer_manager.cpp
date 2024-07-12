@@ -536,7 +536,7 @@ void TimerManager::TimerLooper()
     std::vector<std::shared_ptr<TimerInfo>> triggerList;
     while (runFlag_) {
         uint32_t result = handler_->WaitForAlarm();
-        TIME_HILOGI(TIME_MODULE_SERVICE, "result: %{public}u", result);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "res: %{public}u", result);
         auto nowRtc = std::chrono::system_clock::now();
         auto nowElapsed = GetBootTimeNs();
         triggerList.clear();
@@ -672,7 +672,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         auto batch = *iter;
         iter = alarmBatches_.erase(iter);
         TIME_HILOGI(
-            TIME_MODULE_SERVICE, "after erase alarmBatches_.size= %{public}d", static_cast<int>(alarmBatches_.size()));
+            TIME_MODULE_SERVICE, "batch size= %{public}d", static_cast<int>(alarmBatches_.size()));
         const auto n = batch->Size();
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
@@ -716,16 +716,16 @@ void TimerManager::RescheduleKernelTimerLocked()
             #endif
             auto alarmPtr = firstWakeup->Get(0);
             TIME_HILOGI(TIME_MODULE_SERVICE, "timer id: %{public}" PRIu64 "uid: %{public}d, "
-                        "trigger time  %{public}lld, bootTime: %{public}lld", alarmPtr->id, alarmPtr->uid,
-                        alarmPtr->whenElapsed.time_since_epoch().count(), bootTime.time_since_epoch().count());
+                        "bootTime: %{public}lld", alarmPtr->id, alarmPtr->uid,
+                        bootTime.time_since_epoch().count());
             SetLocked(ELAPSED_REALTIME_WAKEUP, firstWakeup->GetStart().time_since_epoch(), bootTime);
         }
         if (firstBatch != firstWakeup) {
             auto alarmPtr = firstBatch->Get(0);
             nextNonWakeup = firstBatch->GetStart();
             TIME_HILOGI(TIME_MODULE_SERVICE, "timer id: %{public}" PRIu64 "uid: %{public}d, "
-                        "trigger time  %{public}lld, bootTime: %{public}lld", alarmPtr->id, alarmPtr->uid,
-                        alarmPtr->whenElapsed.time_since_epoch().count(), bootTime.time_since_epoch().count());
+                        "bootTime: %{public}lld", alarmPtr->id, alarmPtr->uid,
+                        bootTime.time_since_epoch().count());
         }
     }
 
@@ -792,7 +792,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
             #ifdef POWER_MANAGER_ENABLE
-            TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", uid: %{public}d bundleName: %{public}s",
+            TIME_HILOGD(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", uid: %{public}d bundleName: %{public}s",
                         timer->id, timer->uid, timer->bundleName.c_str());
             AddRunningLock(USE_LOCK_ONE_SEC_IN_NANO);
             #endif
@@ -1175,9 +1175,6 @@ void TimerManager::HandleRepeatTimer(
             duration_cast<milliseconds>(nowElapsed - timer->whenElapsed) / timer->repeatInterval);
         auto delta = count * timer->repeatInterval;
         auto nextElapsed = timer->whenElapsed + delta;
-        TIME_HILOGI(TIME_MODULE_SERVICE, "timerId: %{public}" PRIu64 ", repeatInterval: %{public}lld, "
-            "nextElapsed: %{public}lld", timer->id, timer->repeatInterval.count(),
-            nextElapsed.time_since_epoch().count());
         SetHandlerLocked(timer->id, timer->type, timer->when + delta, nextElapsed, timer->windowLength,
             MaxTriggerTime(nowElapsed, nextElapsed, timer->repeatInterval), timer->repeatInterval, timer->callback,
             timer->wantAgent, timer->flags, timer->uid, timer->pid, timer->bundleName);
