@@ -172,7 +172,7 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
 
     if (type == NOT_STORE) {
         return E_TIME_OK;
-    } else if (bundleName == NEED_RECOVER_ON_REBOOT) {
+    } else if (CheckNeedRecoverOnReboot(bundleName)) {
         TimeDatabase::GetInstance().Insert(std::string(HOLD_ON_REBOOT),
                                            GetInsertValues(timerId, paras, uid, bundleName, wantAgent));
     } else {
@@ -230,7 +230,7 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
                timerInfo->uid,
                timerInfo->pid,
                timerInfo->bundleName);
-    auto tableName = (timerInfo->bundleName == NEED_RECOVER_ON_REBOOT ? HOLD_ON_REBOOT : DROP_ON_REBOOT);
+    auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName) ? HOLD_ON_REBOOT : DROP_ON_REBOOT);
     OHOS::NativeRdb::ValuesBucket values;
     values.PutInt("state", 1);
     values.PutLong("triggerTime", static_cast<int64_t>(triggerTime));
@@ -252,8 +252,7 @@ int32_t TimerManager::DestroyTimer(uint64_t timerId)
 
 int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", needDestroy: %{public}d",
-        timerNumber, needDestroy);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", needDestroy: %{public}d", timerNumber, needDestroy);
     std::lock_guard<std::mutex> lock(entryMapMutex_);
     auto it = timerEntryMap_.find(timerNumber);
     if (it == timerEntryMap_.end()) {
@@ -270,7 +269,7 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         TimerProxy::GetInstance().EraseTimerFromProxyPidMap(timerNumber, pid);
     }
     std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
-    if (bundleName == NEED_RECOVER_ON_REBOOT) {
+    if (CheckNeedRecoverOnReboot(bundleName)) {
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 0);
         OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
@@ -813,10 +812,10 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             TimerProxy::GetInstance().CallbackAlarmIfNeed(timer);
         }
         if (timer->wantAgent) {
-            if (!NotifyWantAgent(timer) && timer->bundleName == NEED_RECOVER_ON_REBOOT) {
+            if (!NotifyWantAgent(timer) && CheckNeedRecoverOnReboot(timer->bundleName)) {
                 NotifyWantAgentRetry(timer);
             }
-            if (timer->bundleName == NEED_RECOVER_ON_REBOOT) {
+            if (CheckNeedRecoverOnReboot(timer->bundleName)) {
                 OHOS::NativeRdb::ValuesBucket values;
                 values.PutInt("state", 0);
                 OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
@@ -1199,6 +1198,12 @@ void TimerManager::HandleRepeatTimer(
         TimerProxy::GetInstance().RemoveUidTimerMap(timer);
         TimerProxy::GetInstance().RemovePidTimerMap(timer);
     }
+}
+
+inline bool TimerManager::CheckNeedRecoverOnReboot(std::string bundleName)
+{
+    return std::find(NEED_RECOVER_ON_REBOOT.begin(), NEED_RECOVER_ON_REBOOT.end(), bundleName) !=
+        NEED_RECOVER_ON_REBOOT.end();
 }
 
 #ifdef POWER_MANAGER_ENABLE

@@ -38,7 +38,7 @@
 
 namespace OHOS {
 namespace MiscServices {
-constexpr const char *NEED_RECOVER_ON_REBOOT = "not_support";
+static const std::vector<std::string> NEED_RECOVER_ON_REBOOT = { "not_support" };
 
 class TimerManager : public ITimerManager {
 public:
@@ -123,6 +123,7 @@ private:
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustTimersBasedOnDeviceIdle();
     void HandleRepeatTimer(const std::shared_ptr<TimerInfo> &timer, std::chrono::steady_clock::time_point nowElapsed);
+    inline bool CheckNeedRecoverOnReboot(std::string bundleName);
     #ifdef POWER_MANAGER_ENABLE
     void HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup);
     void AddRunningLock(long long holdLockTime);
