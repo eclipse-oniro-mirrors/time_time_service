@@ -113,7 +113,7 @@ void TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
     }
 
     alarm->callback(alarm->id);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Trigger id: %{public}" PRId64 "", alarm->id);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "callback: %{public}" PRId64 "", alarm->id);
     return;
 }
 
@@ -185,7 +185,7 @@ bool TimerProxy::PidProxyTimer(int pid, bool isProxy, bool needRetrigger,
         auto timeInfoVec = itMap->second;
         for (const auto& alarm : timeInfoVec) {
             if (!alarm->callback) {
-                TIME_HILOGI(TIME_MODULE_SERVICE, "ProxyTimer Callback is nullptr!");
+                TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer Callback is nullptr!");
                 continue;
             }
             alarm->callback(alarm->id);
@@ -499,13 +499,13 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyUidMap(const int32_t uid,
 {
     auto it = proxyUids_.find(uid);
     if (it != proxyUids_.end()) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "uid is already proxy, uid: %{public}d", uid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "uid is already proxy, uid: %{public}d", uid);
         return;
     }
 
     std::lock_guard<std::mutex> lockUidTimers(uidTimersMutex_);
     if (uidTimersMap_.find(uid) == uidTimersMap_.end()) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "uid timer info map not found, uid: %{public}d", uid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "uid timer info map not found, uid: %{public}d", uid);
         std::unordered_map<uint64_t, std::chrono::steady_clock::time_point> timePointMap {};
         proxyUids_.insert(std::make_pair(uid, timePointMap));
         return;
@@ -532,13 +532,13 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyPidMap(int pid,
 {
     auto it = proxyPids_.find(pid);
     if (it != proxyPids_.end()) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "pid is already proxy, pid: %{public}d", pid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "pid is already proxy, pid: %{public}d", pid);
         return;
     }
 
     std::lock_guard<std::mutex> lockUidTimers(pidTimersMutex_);
     if (pidTimersMap_.find(pid) == pidTimersMap_.end()) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "pid timer info map not found, pid: %{public}d", pid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "pid timer info map not found, pid: %{public}d", pid);
         std::unordered_map<uint64_t, std::chrono::steady_clock::time_point> timePointMap {};
         proxyPids_.insert(std::make_pair(pid, timePointMap));
         return;
@@ -565,13 +565,13 @@ bool TimerProxy::RestoreProxyWhenElapsedByUid(const int32_t uid,
 {
     auto it = proxyUids_.find(uid);
     if (it == proxyUids_.end()) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Uid: %{public}d doesn't exist in the proxy list.", uid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Uid: %{public}d doesn't exist in the proxy list.", uid);
         return false;
     }
 
     std::lock_guard<std::mutex> lockUidTimers(uidTimersMutex_);
     if (uidTimersMap_.find(uid) == uidTimersMap_.end()) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "uid timer info map not found, just erase proxy map. uid: %{public}d", uid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "uid timer info map not found, just erase proxy map. uid: %{public}d", uid);
         return true;
     }
 
@@ -603,12 +603,12 @@ bool TimerProxy::RestoreProxyWhenElapsedByPid(const int pid,
 {
     auto it = proxyPids_.find(pid);
     if (it == proxyPids_.end()) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Pid: %{public}d doesn't exist in the proxy list.", pid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Pid: %{public}d doesn't exist in the proxy list.", pid);
         return false;
     }
     std::lock_guard<std::mutex> lockPidTimers(pidTimersMutex_);
     if (pidTimersMap_.find(pid) == pidTimersMap_.end()) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "pid timer info map not found, just erase proxy map. pid: %{public}d", pid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "pid timer info map not found, just erase proxy map. pid: %{public}d", pid);
         return true;
     }
     for (auto itProxyPids = proxyPids_.at(pid).begin(); itProxyPids != proxyPids_.at(pid).end(); ++itProxyPids) {
