@@ -60,6 +60,8 @@ const auto INTERVAL_HALF_DAY = hours(12);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
 const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
+const int RETRY_TIMES = 6;
+const int RETRY_INTERVAL = 1;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 
@@ -786,6 +788,20 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
     return -1;
 }
 
+void TimerManager::NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer)
+{
+    auto retryRegister = [timer]() {
+        for (int i = 0; i < RETRY_TIMES; i++) {
+            sleep(RETRY_INTERVAL << i);
+            if (TimerManager::GetInstance()->NotifyWantAgent(timer)) {
+                return;
+            }
+        }
+    };
+    std::thread thread(retryRegister);
+    thread.detach();
+}
+
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
     auto wakeupNums = std::count_if(triggerList.begin(), triggerList.end(), [](auto timer) {return timer->wakeup;});
@@ -802,7 +818,9 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             TimerProxy::GetInstance().CallbackAlarmIfNeed(timer);
         }
         if (timer->wantAgent) {
-            NotifyWantAgent(timer);
+            if (!NotifyWantAgent(timer) && timer->bundleName == NEED_RECOVER_ON_REBOOT) {
+                NotifyWantAgentRetry(timer);
+            }
             if (timer->bundleName == NEED_RECOVER_ON_REBOOT) {
                 OHOS::NativeRdb::ValuesBucket values;
                 values.PutInt("state", 0);
@@ -835,15 +853,19 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
         holdRdbPredicates.EqualTo("timerId", static_cast<int64_t>(timer->id));
         auto holdResultSet = database.Query(holdRdbPredicates, ALL_DATA);
         if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr");
+            TIME_HILOGE(TIME_MODULE_SERVICE, "db query failed nullptr");
             return false;
         }
         // Line 7 is 'wantAgent'
         wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(holdResultSet, 7));
         want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
+        if (want == nullptr) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "want is nullptr, id=%{public}" PRId64 "", timer->id);
+            return false;
+        }
     }
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
-    auto code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
+    auto code = AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
     TIME_HILOGI(TIME_MODULE_SERVICE, "trigger wantAgent result: %{public}d", code);
     return code == ERR_OK;
 }

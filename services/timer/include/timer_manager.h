@@ -112,6 +112,7 @@ private:
                              std::chrono::steady_clock::time_point nowElapsed);
     void RescheduleKernelTimerLocked();
     void DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList);
+    void NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer);
     std::shared_ptr<Batch> FindFirstWakeupBatchLocked();
     void SetLocked(int type, std::chrono::nanoseconds when, std::chrono::steady_clock::time_point bootTime);
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
