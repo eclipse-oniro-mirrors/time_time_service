@@ -57,7 +57,7 @@ namespace {
 static const int MILLI_TO_BASE = 1000LL;
 static const int MICR_TO_BASE = 1000000LL;
 static const int NANO_TO_BASE = 1000000000LL;
-static const std::int32_t INIT_INTERVAL = 10000L;
+static const std::int32_t INIT_INTERVAL = 10L;
 static const uint32_t TIMER_TYPE_REALTIME_MASK = 1 << 0;
 static const uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
 static const uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
@@ -76,7 +76,6 @@ REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
 
 std::mutex TimeSystemAbility::instanceLock_;
 sptr<TimeSystemAbility> TimeSystemAbility::instance_;
-std::shared_ptr<AppExecFwk::EventHandler> TimeSystemAbility::serviceHandler_ = nullptr;
 
 TimeSystemAbility::TimeSystemAbility(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), state_(ServiceRunningState::STATE_NOT_START),
@@ -161,7 +160,6 @@ void TimeSystemAbility::OnStart()
         TIME_HILOGE(TIME_MODULE_SERVICE, "TimeSystemAbility is already running.");
         return;
     }
-    InitServiceHandler();
     TimerManager::GetInstance();
     TimeTickNotify::GetInstance().Init();
     TimeZoneInfo::GetInstance().Init();
@@ -181,8 +179,12 @@ void TimeSystemAbility::OnStart()
     AddSystemAbilityListener(MEMORY_MANAGER_SA_ID);
     InitDumpCmd();
     if (Init() != ERR_OK) {
-        auto callback = [this]() { Init(); };
-        serviceHandler_->PostTask(callback, "time_service_init_retry", INIT_INTERVAL);
+        auto callback = [this]() {
+            sleep(INIT_INTERVAL);
+            Init();
+        };
+        std::thread thread(callback);
+        thread.detach();
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init failed. Try again 10s later.");
     }
 }
@@ -247,8 +249,12 @@ void TimeSystemAbility::RegisterCommonEventSubscriber()
     bool subRes = TimeServiceNotify::GetInstance().RepublishEvents();
     if (!subRes) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to RegisterCommonEventSubscriber");
-        auto callback = [this]() { TimeServiceNotify::GetInstance().RepublishEvents(); };
-        serviceHandler_->PostTask(callback, "time_service_subscriber_retry", INIT_INTERVAL);
+        auto callback = [this]() {
+            sleep(INIT_INTERVAL);
+            TimeServiceNotify::GetInstance().RepublishEvents();
+        };
+        std::thread thread(callback);
+        thread.detach();
     }
     RegisterScreenOnSubscriber();
     RegisterNitzTimeSubscriber();
@@ -273,25 +279,12 @@ void TimeSystemAbility::OnStop()
         TIME_HILOGI(TIME_MODULE_SERVICE, "state is running.");
         return;
     }
-    serviceHandler_ = nullptr;
     TimeTickNotify::GetInstance().Stop();
     state_ = ServiceRunningState::STATE_NOT_START;
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End.");
     int pid = getpid();
     // 1: sa service, 0: died.
     Memory::MemMgrClient::GetInstance().NotifyProcessStatus(pid, 1, 0, TIME_SERVICE_ID);
-}
-
-void TimeSystemAbility::InitServiceHandler()
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "InitServiceHandler started.");
-    if (serviceHandler_ != nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, " Already init.");
-        return;
-    }
-    std::shared_ptr<AppExecFwk::EventRunner> runner = AppExecFwk::EventRunner::Create(TIME_SERVICE_NAME);
-    serviceHandler_ = std::make_shared<AppExecFwk::EventHandler>(runner);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "InitServiceHandler Succeeded.");
 }
 
 void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras)
