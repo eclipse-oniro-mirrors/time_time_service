@@ -58,7 +58,7 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
     TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone : %{public}s, Current timezone : %{public}s, uid: %{public}d",
         timezoneId.c_str(), curTimezoneId_.c_str(), IPCSkeleton::GetCallingUid());
     Global::I18n::I18nErrorCode err = Global::I18n::I18nErrorCode::SUCCESS;
-    std::set<std::string> availableTimezoneIDs = GetAvailableIDs(err);
+    std::set<std::string> availableTimezoneIDs = GetTimeZoneAvailableIDs(err);
     if (err != Global::I18n::I18nErrorCode::SUCCESS ||
         availableTimezoneIDs.find(std::string(TIMEZONE_PATH).append(timezoneId)) == availableTimezoneIDs.end()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid timezone");
