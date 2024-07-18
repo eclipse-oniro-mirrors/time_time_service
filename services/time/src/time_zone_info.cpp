@@ -60,7 +60,7 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
     Global::I18n::I18nErrorCode err = Global::I18n::I18nErrorCode::SUCCESS;
     std::set<std::string> availableTimezoneIDs = GetTimeZoneAvailableIDs(err);
     if (err != Global::I18n::I18nErrorCode::SUCCESS ||
-        availableTimezoneIDs.find(std::string(TIMEZONE_PATH).append(timezoneId)) == availableTimezoneIDs.end()) {
+        availableTimezoneIDs.find(timezoneId) == availableTimezoneIDs.end()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid timezone");
         return false;
     }
