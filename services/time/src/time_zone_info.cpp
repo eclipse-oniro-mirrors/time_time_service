@@ -22,7 +22,6 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
-constexpr const char *TIMEZONE_PATH = "/system/etc/zoneinfo/";
 const int TIMEZONE_OK = 0;
 const int CONFIG_LEN = 35;
 const int HOUR_TO_MIN = 60;
