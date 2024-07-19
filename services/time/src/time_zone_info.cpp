@@ -14,6 +14,7 @@
 */
 
 #include "time_zone_info.h"
+#include "utils.h"
 #include "ipc_skeleton.h"
 #include "time_file_utils.h"
 
@@ -21,7 +22,6 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
-constexpr const char *TIMEZONE_PATH = "/system/etc/zoneinfo/";
 const int TIMEZONE_OK = 0;
 const int CONFIG_LEN = 35;
 const int HOUR_TO_MIN = 60;
@@ -56,7 +56,10 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone : %{public}s, Current timezone : %{public}s, uid: %{public}d",
         timezoneId.c_str(), curTimezoneId_.c_str(), IPCSkeleton::GetCallingUid());
-    if (!TimeFileUtils::IsExistFile(std::string(TIMEZONE_PATH).append(timezoneId))) {
+    Global::I18n::I18nErrorCode err = Global::I18n::I18nErrorCode::SUCCESS;
+    std::set<std::string> availableTimezoneIDs = GetTimeZoneAvailableIDs(err);
+    if (err != Global::I18n::I18nErrorCode::SUCCESS ||
+        availableTimezoneIDs.find(timezoneId) == availableTimezoneIDs.end()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid timezone");
         return false;
     }
