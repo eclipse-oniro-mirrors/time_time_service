@@ -183,6 +183,7 @@ void TimeServiceTest::StartIdleTimer()
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
+    // 5000 means timer triggers after 5s
     TimeServiceClient::GetInstance()->StartTimerV9(g_idleTimerId, time + 5000);
 }
 
@@ -872,7 +873,7 @@ HWTEST_F(TimeServiceTest, CreateTimer009, TestSize.Level1)
     EXPECT_TRUE(ret);
 
     // wait for the second trigger success
-    while (g_data1 < 1) {
+    while (g_data1 < 2) {
         usleep(100000);
     }
     ret = TimeServiceClient::GetInstance()->StopTimer(timerId);
