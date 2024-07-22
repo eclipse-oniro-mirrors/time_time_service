@@ -14,7 +14,6 @@
 */
 
 #include <climits>
-#include <filesystem>
 #include <fstream>
 #include "time_zone_info.h"
 #include "ipc_skeleton.h"
