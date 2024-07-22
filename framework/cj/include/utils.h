@@ -27,8 +27,8 @@ enum CjErrorCode : int {
     PARAMETER_ERROR = 401,
 };
 
-} //SystemDateTime
-} //CJSystemapi
-} //OHOS
+} // SystemDateTime
+} // CJSystemapi
+} // OHOS
 
 #endif // OHOS_SYSTEM_DATE_TIME_UTILS_H
