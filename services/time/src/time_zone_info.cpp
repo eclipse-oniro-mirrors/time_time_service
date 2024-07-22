@@ -13,8 +13,10 @@
 * limitations under the License.
 */
 
+#include <climits>
+#include <filesystem>
+#include <fstream>
 #include "time_zone_info.h"
-#include "utils.h"
 #include "ipc_skeleton.h"
 #include "time_file_utils.h"
 
@@ -22,10 +24,12 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
+constexpr const char *TIMEZONE_LIST_CONFIG_PATH = "/system/etc/zoneinfo/timezone_list.cfg";
 const int TIMEZONE_OK = 0;
 const int CONFIG_LEN = 35;
 const int HOUR_TO_MIN = 60;
 } // namespace
+static std::set<std::string> TimeZoneInfo::availableTimeZoneIDs = {};
 
 TimeZoneInfo &TimeZoneInfo::GetInstance()
 {
@@ -56,10 +60,8 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone : %{public}s, Current timezone : %{public}s, uid: %{public}d",
         timezoneId.c_str(), curTimezoneId_.c_str(), IPCSkeleton::GetCallingUid());
-    Global::I18n::I18nErrorCode err = Global::I18n::I18nErrorCode::SUCCESS;
-    std::set<std::string> availableTimezoneIDs = GetTimeZoneAvailableIDs(err);
-    if (err != Global::I18n::I18nErrorCode::SUCCESS ||
-        availableTimezoneIDs.find(timezoneId) == availableTimezoneIDs.end()) {
+    GetTimeZoneAvailableIDs();
+    if (availableTimeZoneIDs.find(timezoneId) == availableTimeZoneIDs.end()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid timezone");
         return false;
     }
@@ -76,6 +78,32 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
     }
     curTimezoneId_ = timezoneId;
     return true;
+}
+
+void TimeZoneInfo::GetTimeZoneAvailableIDs()
+{
+    if (availableTimeZoneIDs.size() > 0) {
+        return;
+    }
+    char* resolvedPath = new char[PATH_MAX + 1];
+    if (realpath(TIMEZONE_LIST_CONFIG_PATH, resolvedPath) == nullptr) {
+        delete[] resolvedPath;
+        return;
+    }
+    std::ifstream file(resolvedPath);
+    if (!file.good()) {
+        delete[] resolvedPath;
+        return;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.length() == 0) {
+            break;
+        }
+        availableTimeZoneIDs.insert(line);
+    }
+    delete[] resolvedPath;
+    file.close();
 }
 
 bool TimeZoneInfo::GetTimezone(std::string &timezoneId)

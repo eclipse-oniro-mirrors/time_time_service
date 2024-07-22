@@ -37,7 +37,6 @@
         "ability_runtime",
         "relational_store",
         "hilog",
-        "i18n",
         "safwk",
         "c_utils",
         "access_token",
