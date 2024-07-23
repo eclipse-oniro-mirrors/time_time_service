@@ -84,7 +84,7 @@ void TimeZoneInfo::GetTimeZoneAvailableIDs()
     if (availableTimeZoneIDs.size() > 0) {
         return;
     }
-    std::unique_ptr<char[]> resolvedPath(new char[PATH_MAX +1]);
+    std::unique_ptr<char[]> resolvedPath = std::make_unique<char[]>(PATH_MAX + 1);
     if (realpath(TIMEZONE_LIST_CONFIG_PATH, resolvedPath.get()) == nullptr) {
         return;
     }
@@ -97,6 +97,7 @@ void TimeZoneInfo::GetTimeZoneAvailableIDs()
         if (line.length() == 0) {
             break;
         }
+        line = line.substr(0, line.find_last_not_of("\r\n") + 1);
         availableTimeZoneIDs.insert(line);
     }
     file.close();
