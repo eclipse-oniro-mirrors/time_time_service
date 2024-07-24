@@ -144,7 +144,7 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     while (timerId == 0) {
         timerId = random_();
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE,
+    TIME_HILOGD(TIME_MODULE_SERVICE,
                 "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}d"
                 "uid:%{public}d pid:%{public}d timerId:%{public}" PRId64 "", paras.timerType, paras.windowLength,
                 paras.interval, paras.flag, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid(), timerId);
@@ -193,10 +193,12 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
         TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
         return E_TIME_NOT_FOUND;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE,
-        "Start timer: %{public}" PRIu64 " TriggerTime: %{public}s uid:%{public}d pid:%{public}d",
-        timerId, std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
     auto timerInfo = it->second;
+    TIME_HILOGI(TIME_MODULE_SERVICE,
+        "id: %{public}" PRIu64 " typ:%{public}d len: %{public}" PRId64 " int: %{public}" PRId64 " "
+        "flg :%{public}d trig: %{public}s uid:%{public}d pid:%{public}d",
+        timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
+        std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
     if (TimerProxy::GetInstance().IsUidProxy(timerInfo->uid)) {
         TIME_HILOGI(TIME_MODULE_SERVICE,
             "Do not start timer, timer already proxy, id=%{public}" PRIu64 ", uid = %{public}d",
@@ -536,12 +538,12 @@ void TimerManager::TimerLooper()
     std::vector<std::shared_ptr<TimerInfo>> triggerList;
     while (runFlag_) {
         uint32_t result = handler_->WaitForAlarm();
-        TIME_HILOGI(TIME_MODULE_SERVICE, "res: %{public}u", result);
         auto nowRtc = std::chrono::system_clock::now();
         auto nowElapsed = GetBootTimeNs();
         triggerList.clear();
 
         if ((result & TIME_CHANGED_MASK) != 0) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "ret: %{public}u", result);
             system_clock::time_point lastTimeChangeClockTime;
             system_clock::time_point expectedClockTime;
             std::lock_guard<std::mutex> lock(mutex_);
@@ -671,13 +673,13 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         }
         auto batch = *iter;
         iter = alarmBatches_.erase(iter);
-        TIME_HILOGI(
+        TIME_HILOGD(
             TIME_MODULE_SERVICE, "batch size= %{public}d", static_cast<int>(alarmBatches_.size()));
         const auto n = batch->Size();
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
             triggerList.push_back(alarm);
-            TIME_HILOGI(TIME_MODULE_SERVICE, "alarm uid= %{public}d, id=%{public}" PRId64 " bundleName=%{public}s",
+            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "uid: %{public}d id:%{public}" PRId64 " name:%{public}s",
                 alarm->uid, alarm->id, alarm->bundleName.c_str());
 
             if (alarm->wakeup) {
@@ -714,18 +716,10 @@ void TimerManager::RescheduleKernelTimerLocked()
             #ifdef POWER_MANAGER_ENABLE
             HandleRunningLock(firstWakeup);
             #endif
-            auto alarmPtr = firstWakeup->Get(0);
-            TIME_HILOGI(TIME_MODULE_SERVICE, "timer id: %{public}" PRIu64 "uid: %{public}d, "
-                        "bootTime: %{public}lld", alarmPtr->id, alarmPtr->uid,
-                        bootTime.time_since_epoch().count());
             SetLocked(ELAPSED_REALTIME_WAKEUP, firstWakeup->GetStart().time_since_epoch(), bootTime);
         }
         if (firstBatch != firstWakeup) {
-            auto alarmPtr = firstBatch->Get(0);
             nextNonWakeup = firstBatch->GetStart();
-            TIME_HILOGI(TIME_MODULE_SERVICE, "timer id: %{public}" PRIu64 "uid: %{public}d, "
-                        "bootTime: %{public}lld", alarmPtr->id, alarmPtr->uid,
-                        bootTime.time_since_epoch().count());
         }
     }
 
@@ -756,10 +750,10 @@ void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
     int64_t whichBatch = (alarm->flags & static_cast<uint32_t>(STANDALONE)) ?
                          -1 :
                          AttemptCoalesceLocked(alarm->whenElapsed, alarm->maxWhenElapsed);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "whichBatch= %{public}" PRId64 ", id=%{public}" PRIu64 ","
-                "whenElapsed=%{public}lld , maxWhenElapsed=%{public}lld",
-                whichBatch, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
-                alarm->maxWhenElapsed.time_since_epoch().count());
+    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "bat: %{public}" PRId64 " id:%{public}" PRIu64 " "
+                         "we:%{public}lld mwe:%{public}lld",
+                         whichBatch, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
+                         alarm->maxWhenElapsed.time_since_epoch().count());
     if (whichBatch < 0) {
         AddBatchLocked(alarmBatches_, std::make_shared<Batch>(*alarm));
     } else {
@@ -844,7 +838,7 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
     }
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
     auto code = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "trigger wantAgent result: %{public}d", code);
+    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "trigWA ret: %{public}d", code);
     return code == ERR_OK;
 }
 
@@ -1205,7 +1199,7 @@ void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
                     firstAlarm->id, firstAlarm->uid, firstAlarm->bundleName.c_str());
         lockExpiredTime_ = currentTime + holdLockTime;
         std::thread lockingThread([this, holdLockTime] {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "start add runningLock thread");
+            TIME_HILOGD(TIME_MODULE_SERVICE, "start add runningLock thread");
             int32_t retryCount = 0;
             while (retryCount < MAX_RETRY_LOCK_TIMES) {
                 AddRunningLock(holdLockTime);
