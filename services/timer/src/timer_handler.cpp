@@ -107,8 +107,8 @@ int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when, std::chrono:
     }
 
     auto second = std::chrono::duration_cast<std::chrono::seconds>(when);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "triggerTime second: %{public}lld, triggerTime nanosecond: %{public}lld, current"
-        " bootTime: %{public}lld", second.count(), (when - second).count(), bootTime.time_since_epoch().count());
+    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "typ:%{public}d trig: %{public}lld %{public}lld, bt: %{public}lld",
+                         type, second.count(), (when - second).count(), bootTime.time_since_epoch().count());
     timespec ts {second.count(), (when - second).count()};
     itimerspec spec {timespec {}, ts};
     int ret = timerfd_settime(fds_[type], TFD_TIMER_ABSTIME, &spec, nullptr);
