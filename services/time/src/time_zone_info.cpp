@@ -13,6 +13,7 @@
 * limitations under the License.
 */
 
+#include <cerrno>
 #include <climits>
 #include <fstream>
 #include <sys/stat.h>
@@ -90,7 +91,7 @@ std::set<std::string> TimeZoneInfo::GetTimeZoneAvailableIDs()
     std::unique_ptr<char[]> resolvedPath = std::make_unique<char[]>(PATH_MAX + 1);
     TIME_HILOGE(TIME_MODULE_SERVICE, "Available TimeZone config path is %{public}s", tzIdConfigPath);
     if (realpath(tzIdConfigPath, resolvedPath.get()) == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "GetTimeZoneAvailableIDs get realpath failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "GetTimeZoneAvailableIDs get realpath failed, errno: %{public}d.", errno);
         return availableTimeZoneIDs;
     }
     std::ifstream file(resolvedPath.get());
