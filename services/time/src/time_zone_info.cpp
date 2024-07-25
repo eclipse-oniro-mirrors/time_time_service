@@ -31,7 +31,6 @@ const int TIMEZONE_OK = 0;
 const int CONFIG_LEN = 35;
 const int HOUR_TO_MIN = 60;
 } // namespace
-std::set<std::string> TimeZoneInfo::availableTimeZoneIDs = {};
 
 TimeZoneInfo &TimeZoneInfo::GetInstance()
 {
