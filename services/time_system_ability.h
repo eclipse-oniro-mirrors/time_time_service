@@ -103,7 +103,6 @@ private:
     };
 
     int32_t Init();
-    void InitServiceHandler();
     void ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras);
     bool GetTimeByClockId(clockid_t clockId, struct timespec &tv);
     int SetRtcTime(time_t sec);
@@ -121,7 +120,6 @@ private:
     static std::mutex instanceLock_;
     static sptr<TimeSystemAbility> instance_;
     const int rtcId;
-    static std::shared_ptr<AppExecFwk::EventHandler> serviceHandler_;
     sptr<RSSSaDeathRecipient> deathRecipient_ {};
 };
 } // namespace MiscServices
