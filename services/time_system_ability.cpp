@@ -945,6 +945,9 @@ bool TimeSystemAbility::RecoverTimer()
     } else {
         RecoverTimerInner(holdResultSet);
     }
+    if (holdResultSet != nullptr) {
+        holdResultSet->Close();
+    }
 
     OHOS::NativeRdb::RdbPredicates dropRdbPredicates(DROP_ON_REBOOT);
     auto dropResultSet = database.Query(dropRdbPredicates, ALL_DATA);
@@ -952,6 +955,9 @@ bool TimeSystemAbility::RecoverTimer()
         TIME_HILOGI(TIME_MODULE_SERVICE, "drop result set is nullptr or go to first row failed");
     } else {
         RecoverTimerInner(dropResultSet);
+    }
+    if (dropResultSet != nullptr) {
+        dropResultSet->Close();
     }
     return true;
 }
@@ -999,7 +1005,6 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             timerManager->StartTimer(timerId, triggerTime);
         }
     } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
-    resultSet->Close();
 }
 
 void TimeSystemAbility::SetAutoReboot()

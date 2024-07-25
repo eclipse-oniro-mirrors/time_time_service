@@ -49,7 +49,8 @@ TimeServiceStub::TimeServiceStub()
             [this] (MessageParcel &data, MessageParcel &reply) -> int32_t {
                 return OnGetMonotonicTimeMs(data, reply); } },
         { TimeServiceIpcInterfaceCode::GET_MONO_TIME_NANO,
-            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetBootTimeNs(data, reply); } },
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t {
+                return OnGetMonotonicTimeNs(data, reply); } },
         { TimeServiceIpcInterfaceCode::GET_THREAD_TIME_MILLI,
             [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetThreadTimeMs(data, reply); } },
         { TimeServiceIpcInterfaceCode::GET_THREAD_TIME_NANO,
