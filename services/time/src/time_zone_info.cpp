@@ -15,6 +15,7 @@
 
 #include <climits>
 #include <fstream>
+#include <sys/stat.h>
 #include "time_zone_info.h"
 #include "ipc_skeleton.h"
 #include "time_file_utils.h"
@@ -24,6 +25,7 @@ namespace MiscServices {
 namespace {
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
 constexpr const char *TIMEZONE_LIST_CONFIG_PATH = "/system/etc/zoneinfo/timezone_list.cfg";
+constexpr const char *DISTRO_TIMEZONE_LIST_CONFIG = "/system/etc/tzdata_distro/timezone_list.cfg";
 const int TIMEZONE_OK = 0;
 const int CONFIG_LEN = 35;
 const int HOUR_TO_MIN = 60;
@@ -59,7 +61,7 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone : %{public}s, Current timezone : %{public}s, uid: %{public}d",
         timezoneId.c_str(), curTimezoneId_.c_str(), IPCSkeleton::GetCallingUid());
-    GetTimeZoneAvailableIDs();
+    std::set<std::string> availableTimeZoneIDs = GetTimeZoneAvailableIDs();
     if (availableTimeZoneIDs.find(timezoneId) == availableTimeZoneIDs.end()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid timezone");
         return false;
@@ -79,18 +81,22 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
     return true;
 }
 
-void TimeZoneInfo::GetTimeZoneAvailableIDs()
+std::set<std::string> TimeZoneInfo::GetTimeZoneAvailableIDs()
 {
-    if (availableTimeZoneIDs.size() > 0) {
-        return;
-    }
-    std::unique_ptr<char[]> resolvedPath = std::make_unique<char[]>(PATH_MAX);
-    if (realpath(TIMEZONE_LIST_CONFIG_PATH, resolvedPath.get()) == nullptr) {
-        return;
+    std::set<std::string> availableTimeZoneIDs;
+    struct stat s;
+    const char *tzIdConfigPath = stat(DISTRO_TIMEZONE_LIST_CONFIG, &s) == 0 ?
+        DISTRO_TIMEZONE_LIST_CONFIG : TIMEZONE_LIST_CONFIG_PATH;
+    std::unique_ptr<char[]> resolvedPath = std::make_unique<char[]>(PATH_MAX + 1);
+    TIME_HILOGE(TIME_MODULE_SERVICE, "Available TimeZone config path is %{public}s", tzIdConfigPath);
+    if (realpath(tzIdConfigPath, resolvedPath.get()) == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "GetTimeZoneAvailableIDs get realpath failed.");
+        return availableTimeZoneIDs;
     }
     std::ifstream file(resolvedPath.get());
     if (!file.good()) {
-        return;
+        TIME_HILOGE(TIME_MODULE_SERVICE, "GetTimeZoneAvailableIDs open file failed.");
+        return availableTimeZoneIDs;
     }
     std::string line;
     while (std::getline(file, line)) {
@@ -101,6 +107,7 @@ void TimeZoneInfo::GetTimeZoneAvailableIDs()
         availableTimeZoneIDs.insert(line);
     }
     file.close();
+    return availableTimeZoneIDs;
 }
 
 bool TimeZoneInfo::GetTimezone(std::string &timezoneId)

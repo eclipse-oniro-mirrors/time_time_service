@@ -39,8 +39,7 @@ public:
 private:
     std::string curTimezoneId_;
     std::mutex timezoneMutex_;
-    static std::set<std::string> availableTimeZoneIDs;
-    static void GetTimeZoneAvailableIDs();
+    std::set<std::string> GetTimeZoneAvailableIDs();
 };
 } // namespace MiscServices
 } // namespace OHOS
