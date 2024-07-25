@@ -104,6 +104,10 @@ int64_t NtpTrustedTime::TimeResult::GetElapsedRealtimeMillis()
 
 int64_t NtpTrustedTime::TimeResult::CurrentTimeMillis()
 {
+    if (mTimeMillis == 0 || mElapsedRealtimeMillis == 0) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Missing authoritative time source");
+        return TIME_RESULT_UNINITED;
+    }
     return mTimeMillis + GetAgeMillis();
 }
 

@@ -75,6 +75,8 @@ TimeServiceStub::TimeServiceStub()
             [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnAllProxyReset(data, reply); } },
         { TimeServiceIpcInterfaceCode::GET_NTP_TIME_MILLI,
             [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetNtpTimeMs(data, reply); } },
+        { TimeServiceIpcInterfaceCode::GET_REAL_TIME_MILLI,
+            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetRealTimeMs(data, reply); } },
     };
 }
 
@@ -98,7 +100,7 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
     TIME_HILOGD(TIME_MODULE_SERVICE, "CallingPid = %{public}d, CallingUid = %{public}d, code = %{public}u", p, p1,
                 code);
     if (code >= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIME) &&
-        code <= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_NTP_TIME_MILLI)) {
+        code <= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_REAL_TIME_MILLI)) {
         auto itFunc = memberFuncMap_.find(static_cast<TimeServiceIpcInterfaceCode>(code));
         if (itFunc != memberFuncMap_.end()) {
             auto memberFunc = itFunc->second;
@@ -495,7 +497,27 @@ int32_t TimeServiceStub::OnGetNtpTimeMs(MessageParcel &data, MessageParcel &repl
         return ret;
     }
     if (!reply.WriteUint64(time)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to write timerId");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to write NTP time");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    return ERR_OK;
+}
+
+int32_t TimeServiceStub::OnGetRealTimeMs(MessageParcel &data, MessageParcel &reply)
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
+    int64_t time = 0;
+    auto ret = GetRealTimeMs(time);
+    if (ret != E_TIME_OK) {
+        return ret;
+    }
+    if (!reply.WriteUint64(time)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to write NTP time");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
