@@ -854,7 +854,7 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
         wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(holdResultSet, 7));
         want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
         if (want == nullptr) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "want is nullptr, id=%{public}" PRId64 "", timer->id);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr, id=%{public}" PRId64 "", timer->id);
             return false;
         }
     }

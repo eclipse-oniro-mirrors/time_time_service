@@ -965,6 +965,9 @@ bool TimeSystemAbility::RecoverTimer()
 void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet)
 {
     auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return;
+    }
     do {
         auto timerId = static_cast<uint64_t>(GetLong(resultSet, 0));
         auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
@@ -992,9 +995,6 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             TIME_HILOGE(TIME_MODULE_SERVICE, "wantAgent is nullptr, uid=%{public}d, id=%{public}" PRId64 "",
                 timerInfo->uid, timerInfo->id);
             continue;
-        }
-        if (timerManager == nullptr) {
-            return;
         }
         timerManager->ReCreateTimer(timerId, timerInfo);
         // Line 8 is 'state'
