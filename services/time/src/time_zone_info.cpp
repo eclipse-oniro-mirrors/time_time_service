@@ -88,14 +88,13 @@ std::set<std::string> TimeZoneInfo::GetTimeZoneAvailableIDs()
     const char *tzIdConfigPath = stat(DISTRO_TIMEZONE_LIST_CONFIG, &s) == 0 ?
         DISTRO_TIMEZONE_LIST_CONFIG : TIMEZONE_LIST_CONFIG_PATH;
     std::unique_ptr<char[]> resolvedPath = std::make_unique<char[]>(PATH_MAX + 1);
-    TIME_HILOGE(TIME_MODULE_SERVICE, "Available TimeZone config path is %{public}s", tzIdConfigPath);
     if (realpath(tzIdConfigPath, resolvedPath.get()) == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "GetTimeZoneAvailableIDs get realpath failed, errno: %{public}d.", errno);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get realpath failed, errno: %{public}d.", errno);
         return availableTimeZoneIDs;
     }
     std::ifstream file(resolvedPath.get());
     if (!file.good()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "GetTimeZoneAvailableIDs open file failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Open timezone list config file failed.");
         return availableTimeZoneIDs;
     }
     std::string line;
