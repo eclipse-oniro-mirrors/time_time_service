@@ -420,7 +420,7 @@ public:
      * @param time the wall time(the UTC time from 1970 0H:0M:0S) in milliseconds.
      * @return int32_t return error code.
      */
-    int32_t GetRealTimeMs(int64_t &time);
+    TIME_API int32_t GetRealTimeMs(int64_t &time);
 private:
     class TimeSaDeathRecipient : public IRemoteObject::DeathRecipient {
     public:
