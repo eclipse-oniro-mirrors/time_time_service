@@ -507,5 +507,24 @@ int32_t TimeServiceProxy::GetNtpTimeMs(int64_t &time)
     time = reply.ReadInt64();
     return result;
 }
+
+int32_t TimeServiceProxy::GetRealTimeMs(int64_t &time)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    int32_t result = Remote()->SendRequest(
+        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_REAL_TIME_MILLI), data, reply, option);
+    if (result != ERR_NONE) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "GetRealTimeMs failed, error code is: %{public}d", result);
+        return result;
+    }
+    time = reply.ReadInt64();
+    return result;
+}
 } // namespace MiscServices
 } // namespace OHOS

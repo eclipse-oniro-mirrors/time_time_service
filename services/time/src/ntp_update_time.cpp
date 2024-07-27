@@ -203,6 +203,22 @@ bool NtpUpdateTime::GetNtpTimeInner()
     return ret;
 }
 
+bool NtpUpdateTime::GetRealTimeInner(int64_t &time)
+{
+    time = NtpTrustedTime::GetInstance().CurrentTimeMillis();
+    if (time <= 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "current time is invalid: %{public}" PRId64 "", time);
+        return false;
+    }
+    return true;
+}
+
+bool NtpUpdateTime::GetRealTime(int64_t &time)
+{
+    std::lock_guard<std::mutex> autoLock(requestMutex_);
+    return GetRealTimeInner(time);
+}
+
 bool NtpUpdateTime::GetNtpTime(int64_t &time)
 {
     std::lock_guard<std::mutex> autoLock(requestMutex_);
@@ -224,11 +240,10 @@ bool NtpUpdateTime::GetNtpTime(int64_t &time)
         return false;
     }
     
-    time = NtpTrustedTime::GetInstance().CurrentTimeMillis();
-    if (time <= 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "current time is invalid: %{public}" PRId64 "", time);
+    if (!GetRealTimeInner(time)) {
         return false;
     }
+
     if (autoTimeInfo_.status == AUTO_TIME_STATUS_ON) {
         TimeSystemAbility::GetInstance()->SetTime(time);
     }

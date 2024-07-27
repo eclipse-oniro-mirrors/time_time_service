@@ -883,6 +883,16 @@ int32_t TimeSystemAbility::GetNtpTimeMs(int64_t &time)
     return E_TIME_OK;
 }
 
+int32_t TimeSystemAbility::GetRealTimeMs(int64_t &time)
+{
+    auto ret = NtpUpdateTime::GetInstance().GetRealTime(time);
+    if (!ret) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "GetRealTimeMs failed");
+        return E_TIME_NTP_NOT_UPDATE;
+    }
+    return E_TIME_OK;
+}
+
 void TimeSystemAbility::RSSSaDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &object)
 {
     auto timerManager = TimerManager::GetInstance();
@@ -994,7 +1004,6 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             timerManager->StartTimer(timerId, triggerTime);
         }
     } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
-    resultSet->Close();
 }
 
 void TimeSystemAbility::SetAutoReboot()

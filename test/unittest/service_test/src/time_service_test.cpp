@@ -885,7 +885,7 @@ HWTEST_F(TimeServiceTest, NtpTrustedTime001, TestSize.Level0)
     errCode = ntpTrustedTime->GetCacheAge();
     EXPECT_EQ(errCode, INT_MAX);
 
-    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(0, 0, 0);
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(1, 1, 0);
     int64_t time = ntpTrustedTime->CurrentTimeMillis();
     EXPECT_GT(time, 0);
     int64_t cacheAge = ntpTrustedTime->GetCacheAge();
