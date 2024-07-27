@@ -143,9 +143,6 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
                                   uint64_t &timerId,
                                   DatabaseType type)
 {
-    while (timerId == 0) {
-        timerId = random_();
-    }
     TIME_HILOGD(TIME_MODULE_SERVICE,
                 "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}d"
                 "uid:%{public}d pid:%{public}d timerId:%{public}" PRId64 "", paras.timerType, paras.windowLength,
@@ -153,6 +150,11 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
     if (bundleName.empty()) {
         bundleName = TimeFileUtils::GetNameByPid(IPCSkeleton::GetCallingPid());
+    }
+    std::lock_guard<std::mutex> lock(entryMapMutex_);
+    while (timerId == 0) {
+        // random_() needs to be protected in a lock.
+        timerId = random_();
     }
     auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
         timerId,
@@ -166,7 +168,6 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
         pid,
         bundleName
     });
-    std::lock_guard<std::mutex> lock(entryMapMutex_);
     timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
 
     if (type == NOT_STORE) {
