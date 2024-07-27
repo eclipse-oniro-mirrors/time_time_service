@@ -47,7 +47,9 @@ public:
         void Clear();
 
     private:
+        // Calculated network time from NTP server.
         int64_t mTimeMillis;
+        // Boot time when getting time from NTP server.
         int64_t mElapsedRealtimeMillis;
         int64_t mCertaintyMillis;
     };
