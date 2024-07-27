@@ -126,6 +126,7 @@ private:
     #ifdef POWER_MANAGER_ENABLE
     void HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup);
     void AddRunningLock(long long holdLockTime);
+    void AddRunningLockRetry(long long holdLockTime);
     #endif
 
     void UpdateTimersState(std::shared_ptr<TimerInfo> &alarm);

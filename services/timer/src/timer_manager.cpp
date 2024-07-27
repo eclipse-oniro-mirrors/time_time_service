@@ -60,18 +60,18 @@ const auto INTERVAL_HALF_DAY = hours(12);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
 const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
-const int RETRY_TIMES = 6;
-const int RETRY_INTERVAL = 1;
+const int WANT_RETRY_TIMES = 6;
+const int WANT_RETRY_INTERVAL = 1;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 
 #ifdef POWER_MANAGER_ENABLE
 constexpr int64_t USE_LOCK_ONE_SEC_IN_NANO = 1 * NANO_TO_SECOND;
 constexpr int64_t USE_LOCK_TIME_IN_NANO = 2 * NANO_TO_SECOND;
-constexpr int32_t USE_LOCK_DELAY_TIME_IN_MICRO = 10000;
-constexpr int32_t MAX_RETRY_LOCK_TIMES = 3;
 constexpr int32_t NANO_TO_MILLI = 1000000;
 constexpr int64_t ONE_HUNDRED_MILLI = 100000000; // 100ms
+const int POWER_RETRY_TIMES = 10;
+const int POWER_RETRY_INTERVAL = 10000;
 #endif
 
 #ifdef DEVICE_STANDBY_ENABLE
@@ -786,8 +786,8 @@ int64_t TimerManager::AttemptCoalesceLocked(std::chrono::steady_clock::time_poin
 void TimerManager::NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer)
 {
     auto retryRegister = [timer]() {
-        for (int i = 0; i < RETRY_TIMES; i++) {
-            sleep(RETRY_INTERVAL << i);
+        for (int i = 0; i < WANT_RETRY_TIMES; i++) {
+            sleep(WANT_RETRY_INTERVAL << i);
             if (TimerManager::GetInstance()->NotifyWantAgent(timer)) {
                 return;
             }
@@ -1221,17 +1221,23 @@ void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
                     PRIu64", uid:%{public}d  bundleName=%{public}s", static_cast<uint64_t>(holdLockTime),
                     firstAlarm->id, firstAlarm->uid, firstAlarm->bundleName.c_str());
         lockExpiredTime_ = currentTime + holdLockTime;
-        std::thread lockingThread([this, holdLockTime] {
-            TIME_HILOGD(TIME_MODULE_SERVICE, "start add runningLock thread");
-            int32_t retryCount = 0;
-            while (retryCount < MAX_RETRY_LOCK_TIMES) {
-                AddRunningLock(holdLockTime);
-                usleep(USE_LOCK_DELAY_TIME_IN_MICRO);
-                ++retryCount;
-            }
-        });
-        lockingThread.detach();
+        AddRunningLock(holdLockTime);
     }
+}
+
+void TimerManager::AddRunningLockRetry(long long holdLockTime)
+{
+    auto retryRegister = [this, holdLockTime]() {
+        for (int i = 0; i < POWER_RETRY_TIMES; i++) {
+            usleep(POWER_RETRY_INTERVAL);
+            runningLock_->Lock(static_cast<int32_t>(holdLockTime / NANO_TO_MILLI));
+            if (runningLock_->IsUsed()) {
+                return;
+            }
+        }
+    };
+    std::thread thread(retryRegister);
+    thread.detach();
 }
 
 void TimerManager::AddRunningLock(long long holdLockTime)
@@ -1245,8 +1251,10 @@ void TimerManager::AddRunningLock(long long holdLockTime)
         }
     }
     if (runningLock_ != nullptr) {
-        runningLock_->UnLock();
         runningLock_->Lock(static_cast<int32_t>(holdLockTime / NANO_TO_MILLI));
+        if (!runningLock_->IsUsed()) {
+            AddRunningLockRetry(holdLockTime);
+        }
     }
 }
 #endif
