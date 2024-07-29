@@ -22,6 +22,7 @@
 
 #include "parameter.h"
 #include "refbase.h"
+#include "set"
 #include "time.h"
 #include "time_common.h"
 
@@ -38,6 +39,7 @@ public:
 private:
     std::string curTimezoneId_;
     std::mutex timezoneMutex_;
+    std::set<std::string> GetTimeZoneAvailableIDs();
 };
 } // namespace MiscServices
 } // namespace OHOS
