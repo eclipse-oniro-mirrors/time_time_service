@@ -31,7 +31,7 @@ public:
     const int type;
     const std::chrono::milliseconds origWhen;
     const bool wakeup;
-    const std::function<void (const uint64_t)> callback;
+    const std::function<int32_t (const uint64_t)> callback;
     const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
     const uint32_t flags;
     const int uid;
@@ -53,7 +53,7 @@ public:
         std::chrono::milliseconds windowLength,
         std::chrono::steady_clock::time_point maxWhen,
         std::chrono::milliseconds interval,
-        std::function<void (const uint64_t)> callback,
+        std::function<int32_t (const uint64_t)> callback,
         std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
         uint32_t flags,
         int uid,

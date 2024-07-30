@@ -81,7 +81,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap001, TestSize.Level1)
     int32_t uid = 2000;
     int pid = 1000;
     uint64_t timerId = 0;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
@@ -124,7 +124,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap002, TestSize.Level1)
     int32_t uid = 2000;
     int pid = 1000;
     uint64_t timerId = 0;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
@@ -162,7 +162,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
     int32_t uid = 2000;
     int pid = 1000;
     uint64_t timerId = 0;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
@@ -205,7 +205,7 @@ HWTEST_F(TimeProxyTest, PidTimerMap001, TestSize.Level1)
     int32_t uid = 2000;
     int pid = 1001;
     uint64_t timerId = 0;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
@@ -252,7 +252,7 @@ HWTEST_F(TimeProxyTest, PidTimerMap002, TestSize.Level1)
     /* 清理pidTimersMap_，保证测试前pidTimersMap_内无其他测试中曾记录的pid影响 */
     TimerProxy::GetInstance().pidTimersMap_.clear();
 
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
@@ -290,7 +290,7 @@ HWTEST_F(TimeProxyTest, PidTimerMap003, TestSize.Level1)
     int32_t uid = 2000;
     int pid = 1002;
     uint64_t timerId = 0;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
@@ -359,7 +359,7 @@ HWTEST_F(TimeProxyTest, ProxyTimer002, TestSize.Level1)
     int32_t uid = 2000;
     int pid = 1000;
     uint64_t timerId = 0;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
@@ -488,7 +488,7 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
     int32_t uid = 2000;
     int32_t pid = 1000;
     uint64_t timerId = 0;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                      wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     usleep(BLOCK_TEST_TIME);
@@ -573,7 +573,7 @@ HWTEST_F(TimeProxyTest, PidProxyTimer002, TestSize.Level1)
     /* 清理pidTimersMap_，保证测试前pidTimersMap_内无其他测试中曾记录的pid影响 */
     TimerProxy::GetInstance().pidTimersMap_.clear();
 
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     
@@ -680,7 +680,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     /* clear pidTimersMap_ */
     TimerProxy::GetInstance().pidTimersMap_.clear();
 
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {},
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     

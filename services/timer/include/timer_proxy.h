@@ -34,7 +34,7 @@ class TimerProxy {
 public:
     void RemoveProxy(uint64_t timerNumber, int32_t uid);
     void RemovePidProxy(uint64_t timerNumber, int32_t uid);
-    void CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm);
+    int32_t CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm);
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);

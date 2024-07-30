@@ -79,7 +79,7 @@ bool TimerCallback::RemoveTimerCallbackInfo(uint64_t timerId)
     return false;
 }
 
-void TimerCallback::NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback)
+int32_t TimerCallback::NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     std::shared_ptr<ITimerInfo> timerInfo;
@@ -95,15 +95,16 @@ void TimerCallback::NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject
         timerInfo->OnTrigger();
     }
     if (timerCallback == nullptr) {
-        return;
+        return E_TIME_OK;
     }
     sptr<ITimerNotifyCallback> timerNotifyCallback = iface_cast<ITimerNotifyCallback>(timerCallback);
     if (timerNotifyCallback == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "timerNotifyCallback nullptr timerId:%{public}" PRId64 "", timerId);
-        return;
+        return E_TIME_NULLPTR;
     }
     timerNotifyCallback->Finish(timerId);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    return E_TIME_OK;
 }
 } // namespace MiscServices
 } // namespace OHOS

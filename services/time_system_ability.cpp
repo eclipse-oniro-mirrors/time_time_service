@@ -330,17 +330,17 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     if (timerManager == nullptr) {
         return E_TIME_NULLPTR;
     }
-    auto callbackFunc = [timerCallback, timerOptions, timerManager](uint64_t id) {
+    auto callbackFunc = [timerCallback, timerOptions, timerManager](uint64_t id) -> int32_t {
         #ifdef POWER_MANAGER_ENABLE
         if (timerOptions->type == ITimerManager::TimerType::RTC_WAKEUP ||
             timerOptions->type == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP) {
             auto notifyCallback = TimerNotifyCallback::GetInstance(timerManager);
-            timerCallback->NotifyTimer(id, notifyCallback->AsObject());
+            return timerCallback->NotifyTimer(id, notifyCallback->AsObject());
         } else {
-            timerCallback->NotifyTimer(id, nullptr);
+            return timerCallback->NotifyTimer(id, nullptr);
         }
         #else
-        timerCallback->NotifyTimer(id, nullptr);
+        return timerCallback->NotifyTimer(id, nullptr);
         #endif
     };
     if ((static_cast<uint32_t>(paras.flag) & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
@@ -358,7 +358,7 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
                                      uid, pid, timerId, type);
 }
 
-int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<void(const uint64_t)> callback,
+int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<int32_t (const uint64_t)> callback,
     uint64_t &timerId)
 {
     auto timerManager = TimerManager::GetInstance();

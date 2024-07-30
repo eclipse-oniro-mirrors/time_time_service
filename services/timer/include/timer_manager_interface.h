@@ -29,7 +29,7 @@ struct TimerEntry {
     uint64_t windowLength;
     uint64_t interval;
     int flag;
-    std::function<void (const uint64_t)> callback;
+    std::function<int32_t (const uint64_t)> callback;
     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
     int uid;
     int pid;
@@ -55,7 +55,7 @@ public:
     };
 
     virtual int32_t CreateTimer(TimerPara &paras,
-                                std::function<void (const uint64_t)> callback,
+                                std::function<int32_t (const uint64_t)> callback,
                                 std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                                 int uid, int pid, uint64_t &timerId, DatabaseType type) = 0;
 

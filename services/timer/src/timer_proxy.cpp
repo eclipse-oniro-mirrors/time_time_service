@@ -69,11 +69,11 @@ void TimerProxy::RemovePidProxy(uint64_t timerNumber, int pid)
     }
 }
 
-void TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
+int32_t TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
 {
     if (alarm == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "callback alarm is nullptr!");
-        return;
+        return E_TIME_NULLPTR;
     }
 
     int uid = alarm->uid;
@@ -94,7 +94,7 @@ void TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
             timeInfoVec.push_back(alarm);
             proxyMap_[uid] = timeInfoVec;
         }
-        return;
+        return E_TIME_OK;
     }
 
     if (pidIt != proxyPids_.end()) {
@@ -109,12 +109,12 @@ void TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
             timeInfoVec.push_back(alarm);
             proxyPidMap_[pid] = timeInfoVec;
         }
-        return;
+        return E_TIME_OK;
     }
-
-    alarm->callback(alarm->id);
-    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "cb: %{public}" PRId64 "", alarm->id);
-    return;
+    int32_t ret = alarm->callback(alarm->id);
+    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "cb: %{public}" PRId64 " ret: %{public}d",
+                         alarm->id, ret);
+    return ret;
 }
 
 bool TimerProxy::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger,
