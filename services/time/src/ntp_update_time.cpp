@@ -76,8 +76,9 @@ void NtpUpdateTime::Init()
     autoTimeInfo_.ntpServer = ntpServer;
     autoTimeInfo_.ntpServerSpec = ntpServerSpec;
     autoTimeInfo_.status = autoTime;
-    auto callback = [this](uint64_t id) {
+    auto callback = [this](uint64_t id) -> int32_t {
         this->RefreshNetworkTimeByTimer(id);
+        return E_TIME_OK;
     };
     TimerPara timerPara{};
     timerPara.timerType = static_cast<int>(ITimerManager::TimerType::ELAPSED_REALTIME);

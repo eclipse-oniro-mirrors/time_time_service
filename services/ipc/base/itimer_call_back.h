@@ -31,7 +31,7 @@ public:
      * @param timerCallback callback to notify finish.
      *
      */
-    virtual void NotifyTimer(uint64_t timerId, const sptr<IRemoteObject> &timerCallback) = 0;
+    virtual int32_t NotifyTimer(uint64_t timerId, const sptr<IRemoteObject> &timerCallback) = 0;
 
     enum Message { NOTIFY_TIMER = 1 };
 };

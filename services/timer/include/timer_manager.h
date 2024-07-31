@@ -43,7 +43,7 @@ constexpr const char *NEED_RECOVER_ON_REBOOT = "not_support";
 class TimerManager : public ITimerManager {
 public:
     int32_t CreateTimer(TimerPara &paras,
-                        std::function<void (const uint64_t)> callback,
+                        std::function<int32_t (const uint64_t)> callback,
                         std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                         int uid,
                         int pid,
@@ -76,7 +76,7 @@ private:
                     uint64_t windowLength,
                     uint64_t interval,
                     int flag,
-                    std::function<void (const uint64_t)> callback,
+                    std::function<int32_t (const uint64_t)> callback,
                     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                     int uid,
                     int pid,
@@ -88,7 +88,7 @@ private:
                           std::chrono::milliseconds windowLength,
                           std::chrono::steady_clock::time_point maxWhen,
                           std::chrono::milliseconds interval,
-                          std::function<void (const uint64_t)> callback,
+                          std::function<int32_t (const uint64_t)> callback,
                           const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                           uint32_t flags,
                           uint64_t callingUid,

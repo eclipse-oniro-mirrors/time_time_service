@@ -62,6 +62,8 @@ const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
 const int WANT_RETRY_TIMES = 6;
 const int WANT_RETRY_INTERVAL = 1;
+// an error code of ipc which means peer end is dead
+constexpr int PEER_END_DEAD = 29189;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 
@@ -136,7 +138,7 @@ OHOS::NativeRdb::ValuesBucket GetInsertValues(uint64_t &timerId, TimerPara &para
 }
 
 int32_t TimerManager::CreateTimer(TimerPara &paras,
-                                  std::function<void (const uint64_t)> callback,
+                                  std::function<int32_t (const uint64_t)> callback,
                                   std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                                   int uid,
                                   int pid,
@@ -308,7 +310,7 @@ void TimerManager::SetHandler(uint64_t id,
                               uint64_t windowLength,
                               uint64_t interval,
                               int flag,
-                              std::function<void (const uint64_t)> callback,
+                              std::function<int32_t (const uint64_t)> callback,
                               std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                               int uid,
                               int pid,
@@ -363,7 +365,7 @@ void TimerManager::SetHandlerLocked(uint64_t id, int type,
                                     std::chrono::milliseconds windowLength,
                                     std::chrono::steady_clock::time_point maxWhen,
                                     std::chrono::milliseconds interval,
-                                    std::function<void (const uint64_t)> callback,
+                                    std::function<int32_t (const uint64_t)> callback,
                                     const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                                     uint32_t flags,
                                     uint64_t callingUid,
@@ -389,7 +391,6 @@ void TimerManager::RemoveHandler(uint64_t id)
 // needs to acquire the lock `mutex_` before calling this method
 void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "remove id: %{public}" PRIu64 "", id);
     auto whichAlarms = [id](const TimerInfo &timer) {
         return timer.id == id;
     };
@@ -405,6 +406,7 @@ void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
             ++it;
         }
         if (didRemove) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "remove id: %{public}" PRIu64 "", id);
             break;
         }
     }
@@ -810,7 +812,10 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             StatisticReporter(IPCSkeleton::GetCallingPid(), wakeupNums, timer);
         }
         if (timer->callback) {
-            TimerProxy::GetInstance().CallbackAlarmIfNeed(timer);
+            if (TimerProxy::GetInstance().CallbackAlarmIfNeed(timer) == PEER_END_DEAD
+                && !timer->wantAgent) {
+                DestroyTimer(timer->id);
+            }
         }
         if (timer->wantAgent) {
             if (!NotifyWantAgent(timer) && timer->bundleName == NEED_RECOVER_ON_REBOOT) {
