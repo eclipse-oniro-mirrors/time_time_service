@@ -1039,7 +1039,7 @@ void TimeSystemAbility::SetAutoReboot()
                         "triggerTime: %{public}" PRIu64" currentTime: %{public}" PRId64"", triggerTime, currentTime);
             continue;
         }
-        if (bundleName == NEED_RECOVER_ON_REBOOT) {
+        if (bundleName == NEED_RECOVER_ON_REBOOT[0]) {
             int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
             if (tmfd < 0) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error: %{public}s", strerror(errno));
