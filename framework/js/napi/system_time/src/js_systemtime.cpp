@@ -111,9 +111,10 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
+    bool isCallback = asyncContext->isCallback;
     FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
+    return isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
@@ -161,9 +162,10 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
+    bool isCallback = asyncContext->isCallback;
     FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
+    return isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
@@ -213,9 +215,10 @@ napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
+    bool isCallback = asyncContext->isCallback;
     FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
+    return isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
@@ -265,9 +268,10 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
+    bool isCallback = asyncContext->isCallback;
     FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
+    return isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
@@ -317,9 +321,10 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
+    bool isCallback = asyncContext->isCallback;
     FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
+    return isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
@@ -363,9 +368,10 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
+    bool isCallback = asyncContext->isCallback;
     FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
+    return isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
@@ -409,9 +415,10 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
             delete asyncContext;
         },
         (void *)asyncContext, &asyncContext->work);
+    bool isCallback = asyncContext->isCallback;
     FreeWorkIfFail(
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated), env, asyncContext);
-    return asyncContext->isCallback ? NapiUtils::NapiGetNull(env) : promise;
+    return isCallback ? NapiUtils::NapiGetNull(env) : promise;
 }
 
 EXTERN_C_START
