@@ -398,16 +398,16 @@ void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
     for (auto it = alarmBatches_.begin(); it != alarmBatches_.end();) {
         auto batch = *it;
         didRemove = batch->Remove(whichAlarms);
-        if (batch->Size() == 0) {
-            TIME_HILOGD(TIME_MODULE_SERVICE, "erase");
-            it = alarmBatches_.erase(it);
-        } else {
-            ++it;
-        }
         if (didRemove) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "remove id: %{public}" PRIu64 "", id);
+            it = alarmBatches_.erase(it);
+            if (batch->Size() != 0) {
+                TIME_HILOGI(TIME_MODULE_SERVICE, "reorder batch");
+                AddBatchLocked(alarmBatches_, batch);
+            }
             break;
         }
+        ++it;
     }
     pendingDelayTimers_.erase(remove_if(pendingDelayTimers_.begin(), pendingDelayTimers_.end(),
         [id](const std::shared_ptr<TimerInfo> &timer) {
