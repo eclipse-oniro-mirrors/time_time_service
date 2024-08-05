@@ -1008,7 +1008,7 @@ bool TimerManager::CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm)
 // needs to acquire the lock `mutex_` before calling this method
 bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start adjust timer, uid=%{public}d, id=%{public}" PRId64 "",
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start adjust timer, uid=%{public}d, id=%{public}" PRId64 "",
         alarm->uid, alarm->id);
     if (mPendingIdleUntil_ == alarm) {
         return false;
@@ -1034,13 +1034,13 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<Tim
     }
 
     if (CheckAllowWhileIdle(alarm)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer unrestricted, not adjust. id=%{public}" PRId64 "", alarm->id);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Timer unrestricted, not adjust. id=%{public}" PRId64 "", alarm->id);
         return false;
     } else if (alarm->whenElapsed > mPendingIdleUntil_->whenElapsed) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, not adjust. id=%{public}" PRId64 "", alarm->id);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Timer not allowed, not adjust. id=%{public}" PRId64 "", alarm->id);
         return false;
     } else {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, id=%{public}" PRId64 "", alarm->id);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Timer not allowed, id=%{public}" PRId64 "", alarm->id);
         delayedTimers_[alarm->id] = alarm->whenElapsed;
         auto offset = ConvertToElapsed(mPendingIdleUntil_->when, mPendingIdleUntil_->type) - GetBootTimeNs();
         return alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), offset);
