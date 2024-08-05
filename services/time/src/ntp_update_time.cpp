@@ -191,7 +191,7 @@ bool NtpUpdateTime::GetNtpTimeInner(uint64_t interval)
 {
     // Determine the time interval between two NTP requests sent.
     int64_t curBootTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+        NtpTrustedTime::GetInstance().GetBootTimeNs().time_since_epoch()).count();
     uint64_t bootTime = static_cast<uint64_t>(curBootTime);
     auto lastBootTime = NtpTrustedTime::GetInstance().ElapsedRealtimeMillis();
     // If the time interval is too small, do not send NTP requests.

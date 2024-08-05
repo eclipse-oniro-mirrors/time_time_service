@@ -35,6 +35,7 @@ public:
     int64_t GetCacheAge();
     int64_t CurrentTimeMillis();
     int64_t ElapsedRealtimeMillis();
+    std::chrono::steady_clock::time_point GetBootTimeNs();
     class TimeResult : std::enable_shared_from_this<TimeResult> {
     public:
         TimeResult();
