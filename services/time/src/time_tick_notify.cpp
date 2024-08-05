@@ -56,6 +56,7 @@ void TimeTickNotify::Init()
     auto callback = [this]() { this->Callback(); };
     uint64_t nextTriggerTime = RefreshNextTriggerTime();
     TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify triggertime: %{public}" PRId64 "", nextTriggerTime);
+    std::lock_guard<std::mutex> lock(timeridMutex_);
     timerId_ = timer_.Register(callback, nextTriggerTime);
     TIME_HILOGD(TIME_MODULE_SERVICE, "Tick timer ID: %{public}d", timerId_);
 }
