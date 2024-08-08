@@ -31,18 +31,6 @@ namespace MiscServices {
 using AccessTokenKit = OHOS::Security::AccessToken::AccessTokenKit;
 using HapTokenInfo = OHOS::Security::AccessToken::HapTokenInfo;
 using TypeATokenTypeEnum = OHOS::Security::AccessToken::TypeATokenTypeEnum;
-bool TimeFileUtils::IsExistFile(const std::string &file)
-{
-    if (file.empty()) {
-        return false;
-    }
-
-    struct stat buf = {};
-    if (stat(file.c_str(), &buf) != 0) {
-        return false;
-    }
-    return S_ISREG(buf.st_mode);
-}
 
 std::string TimeFileUtils::GetBundleNameByTokenID(uint32_t tokenID)
 {
