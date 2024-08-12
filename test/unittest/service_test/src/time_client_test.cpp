@@ -156,8 +156,12 @@ void TimeClientTest::TearDown(void)
 void TestNtpThread(const char *name)
 {
     int64_t time;
-    auto errCode = TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
-    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    auto errCodeNtpTime = TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
+    EXPECT_EQ(errCodeNtpTime, TimeError::E_TIME_OK);
+    int64_t time_later;
+    auto errCodeRealTime = TimeServiceClient::GetInstance()->GetRealTimeMs(time_later);
+    EXPECT_EQ(errCodeRealTime, TimeError::E_TIME_OK);
+    EXPECT_GT(time_later, time);
 }
 
 /**
@@ -191,11 +195,11 @@ HWTEST_F(TimeClientTest, GetNtpTimeMs001, TestSize.Level1)
 }
 
 /**
-* @tc.name: GetNtpTimeMs002
-* @tc.desc: get ntp time.
+* @tc.name: GetNtpTimeMsAndGetRealTimeMs001
+* @tc.desc: get ntp time and get real time.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeClientTest, GetNtpTimeMs002, TestSize.Level1)
+HWTEST_F(TimeClientTest, GetNtpTimeMsAndGetRealTimeMs001, TestSize.Level1)
 {
     std::thread thread1(TestNtpThread, "thread1");
     std::thread thread2(TestNtpThread, "thread2");

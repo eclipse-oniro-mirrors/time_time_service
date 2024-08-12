@@ -31,6 +31,7 @@
 #include "timer_call_back.h"
 #include "time_common.h"
 #include "power_subscriber.h"
+#include "ntp_update_time.h"
 
 #define private public
 #define protected public
@@ -54,6 +55,7 @@ const int32_t RESERVED_UID = 99999;
 std::set<int> RESERVED_PIDLIST = {1111, 2222};
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NETWORK_TIME_STATUS_ON = "ON";
+const std::string AUTO_TIME_STATUS_ON = "ON";
 uint64_t g_idleTimerId = 0;
 const uint64_t TIMER_ID = 88888;
 const int UID = 999998;
@@ -196,6 +198,14 @@ void TimeServiceTest::StartIdleTimer()
 void TimeServiceTest::DestroyIdleTimer()
 {
     TimeServiceClient::GetInstance()->DestroyTimerV9(g_idleTimerId);
+}
+
+void TestNtpThread(const char *name)
+{
+    {
+        std::lock_guard<std::mutex> autoLock(NtpUpdateTime::requestMutex_);
+    }
+    NtpUpdateTime::SetSystemTime();
 }
 
 /**
@@ -934,7 +944,7 @@ HWTEST_F(TimeServiceTest, NtpTrustedTime001, TestSize.Level0)
     errCode = ntpTrustedTime->GetCacheAge();
     EXPECT_EQ(errCode, INT_MAX);
 
-    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(0, 0, 0);
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(1, 1, 0);
     int64_t time = ntpTrustedTime->CurrentTimeMillis();
     EXPECT_GT(time, 0);
     int64_t cacheAge = ntpTrustedTime->GetCacheAge();
@@ -983,6 +993,29 @@ HWTEST_F(TimeServiceTest, PowerSubscriber002, TestSize.Level0)
     auto subscriber = std::make_shared<PowerSubscriber>(CommonEventSubscribeInfo(matchingSkills));
     subscriber->OnReceiveEvent(eventData);
     EXPECT_NE(timerId, TimeTickNotify::GetInstance().timerId_);
+}
+
+/**
+* @tc.name: SetSystemTime001
+* @tc.desc: get ntp time.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, SetSystemTime001, TestSize.Level1)
+{
+    NtpUpdateTime::GetInstance().Init();
+    std::string tmp = NtpUpdateTime::autoTimeInfo_.status;
+    NtpUpdateTime::autoTimeInfo_.status = AUTO_TIME_STATUS_ON;
+
+    std::thread thread1(TestNtpThread, "thread1");
+    std::thread thread2(TestNtpThread, "thread2");
+    std::thread thread3(TestNtpThread, "thread3");
+    std::thread thread4(TestNtpThread, "thread4");
+    thread1.join();
+    thread2.join();
+    thread3.join();
+    thread4.join();
+
+    NtpUpdateTime::autoTimeInfo_.status = tmp;
 }
 
 /**

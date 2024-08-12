@@ -41,6 +41,7 @@ enum class TimeServiceIpcInterfaceCode {
     ADJUST_TIMER,
     SET_TIMER_EXEMPTION,
     GET_NTP_TIME_MILLI,
+    GET_REAL_TIME_MILLI,
 };
 } // namespace MiscServices
 } // namespace OHOS

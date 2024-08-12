@@ -35,6 +35,7 @@ public:
     int64_t GetCacheAge();
     int64_t CurrentTimeMillis();
     int64_t ElapsedRealtimeMillis();
+    std::chrono::steady_clock::time_point GetBootTimeNs();
     class TimeResult : std::enable_shared_from_this<TimeResult> {
     public:
         TimeResult();
@@ -47,7 +48,9 @@ public:
         void Clear();
 
     private:
+        // Calculated network time from NTP server.
         int64_t mTimeMillis;
+        // Boot time when getting time from NTP server.
         int64_t mElapsedRealtimeMillis;
         int64_t mCertaintyMillis;
     };

@@ -50,6 +50,7 @@ public:
     int32_t SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
     int32_t GetNtpTimeMs(int64_t &time) override;
+    int32_t GetRealTimeMs(int64_t &time) override;
 
 private:
     static inline BrokerDelegator<TimeServiceProxy> delegator_;

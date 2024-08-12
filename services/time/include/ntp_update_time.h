@@ -33,6 +33,7 @@ class NtpUpdateTime {
 public:
     static NtpUpdateTime &GetInstance();
     static bool GetNtpTime(int64_t &time);
+    static bool GetRealTime(int64_t &time);
     static void SetSystemTime();
     void RefreshNetworkTimeByTimer(uint64_t timerId);
     void UpdateNITZSetTime();
@@ -44,7 +45,8 @@ public:
 
 private:
     NtpUpdateTime();
-    static bool GetNtpTimeInner();
+    static bool GetNtpTimeInner(uint64_t interval);
+    static bool GetRealTimeInner(int64_t &time);
     static void ChangeNtpServerCallback(const char *key, const char *value, void *context);
     static std::vector<std::string> SplitNtpAddrs(const std::string &ntpStr);
     void StartTimer();

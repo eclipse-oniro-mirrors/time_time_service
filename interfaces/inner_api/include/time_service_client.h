@@ -411,6 +411,16 @@ public:
      * @return int32_t return error code.
      */
     TIME_API int32_t GetNtpTimeMs(int64_t &time);
+
+    /**
+     * @brief GetRealTimeMs
+     *
+     * Obtain the wall time based on the last ntp time.
+     *
+     * @param time the wall time(the UTC time from 1970 0H:0M:0S) in milliseconds.
+     * @return int32_t return error code.
+     */
+    TIME_API int32_t GetRealTimeMs(int64_t &time);
 private:
     class TimeSaDeathRecipient : public IRemoteObject::DeathRecipient {
     public:
