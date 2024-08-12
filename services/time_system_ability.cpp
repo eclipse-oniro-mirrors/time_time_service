@@ -999,7 +999,8 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(resultSet, 7)),
             // Line 5 is 'uid'
             GetInt(resultSet, 5),
-            0,
+            // Line 11 is 'pid'
+            GetInt(resultSet, 11),
             // Line 6 is 'bundleName'
             GetString(resultSet, 6)
         });
