@@ -798,4 +798,29 @@ describe('SystemDateTimeGetTest', function () {
         done();
         console.log('testGetTimezoneSync001 end');
     })
+
+    /**
+     * @tc.number: TestUpdateAndGetNtpTime001
+     * @tc.name: TestUpdateAndGetNtpTime001
+     * @tc.desc: test getNtpTime.
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('testUpdateAndGetNtpTime001', 0, async function (done) {
+        console.log("testUpdateAndGetNtpTime001 start");
+        try {
+            systemDateTime.getNtpTime();
+        } catch (err) {
+            expect(err.code).assertEqual(-1);
+        }
+        const nowTime = new Date().getTime();
+        await systemDateTime.updateNtpTime();
+        const milliTime = systemDateTime.getNtpTime();
+        console.log('Get ntp time is ' + milliTime);
+        expect(typeof (milliTime) === 'number' && milliTime >= nowTime).assertTrue();
+        console.log('testUpdateAndGetNtpTime001 end');
+        done();
+    })
 })

@@ -104,6 +104,8 @@ enum JsErrorCode : int32_t {
     PERMISSION_ERROR = 201,
     SYSTEM_APP_ERROR = 202,
     PARAMETER_ERROR = 401,
+    NTP_UPDATE_ERROR = 13000001,
+    NTP_NOT_UPDATE_ERROR = 13000002,
 };
 
 struct CallbackPromiseInfo {

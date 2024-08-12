@@ -815,6 +815,18 @@ int32_t TimeServiceClient::GetNtpTimeMs(int64_t &time)
     return proxy->GetNtpTimeMs(time);
 }
 
+int32_t TimeServiceClient::GetRealTimeMs(int64_t &time)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    return proxy->GetRealTimeMs(time);
+}
+
 sptr<ITimeService> TimeServiceClient::GetProxy()
 {
     std::lock_guard<std::mutex> autoLock(proxyLock_);

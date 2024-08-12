@@ -653,9 +653,6 @@ void TimerManager::TimerLooper()
                 std::lock_guard<std::mutex> lock(mutex_);
                 RescheduleKernelTimerLocked();
             }
-        } else {
-            std::lock_guard<std::mutex> lock(mutex_);
-            RescheduleKernelTimerLocked();
         }
     }
 }

@@ -57,6 +57,7 @@ enum TimeError {
     E_TIME_NTP_UPDATE_FAILED,
     E_TIME_ACCOUNT_NOT_MATCH,
     E_TIME_ACCOUNT_ERROR,
+    E_TIME_NTP_NOT_UPDATE,
 };
 
 enum DatabaseType {

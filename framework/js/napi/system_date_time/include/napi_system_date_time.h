@@ -43,6 +43,8 @@ private:
     static napi_value GetTime(napi_env env, napi_callback_info info);
     static napi_value GetUptime(napi_env env, napi_callback_info info);
     static napi_value GetTimezoneSync(napi_env env, napi_callback_info info);
+    static napi_value UpdateNtpTime(napi_env env, napi_callback_info info);
+    static napi_value GetNtpTime(napi_env env, napi_callback_info info);
 
     static int32_t GetTimezone(std::string &timezone);
     static int32_t GetDeviceTime(clockid_t clockId, bool isNano, int64_t &time);
