@@ -14,6 +14,7 @@
  */
 
 #include "sntp_client.h"
+#include "ntp_trusted_time.h"
 
 #include <chrono>
 #include <cstdio>
@@ -261,9 +262,8 @@ void SNTPClient::ReceivedMessage(char *buffer)
     int64_t _roundTripDelay = (_receiveClient - _originClient) - (_transmitServer - _receiveServer);
     mRoundTripTime = _roundTripDelay;
     mNtpTime = ConvertNtpToStamp(_ntpTs) + _clockOffset;
-    mNtpTimeReference =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-            .count();
+    mNtpTimeReference = std::chrono::duration_cast<std::chrono::milliseconds>(
+        NtpTrustedTime::GetInstance().GetBootTimeNs().time_since_epoch()).count();
     SetClockOffset(_clockOffset);
     TIME_HILOGI(TIME_MODULE_SERVICE, "_originClient:%{public}s, _receiveServer:%{public}s, _transmitServer:%{public}s,"
                 "_receiveClient:%{public}s", std::to_string(_originClient).c_str(),
