@@ -39,6 +39,9 @@
 #include "time_system_ability.h"
 #include "ntp_trusted_time.h"
 #include "time_tick_notify.h"
+#include "timer_database.h"
+#include "timer_proxy.h"
+#include "timer_notify_callback.h"
 
 namespace {
 using namespace testing::ext;
@@ -52,6 +55,9 @@ std::set<int> RESERVED_PIDLIST = {1111, 2222};
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NETWORK_TIME_STATUS_ON = "ON";
 uint64_t g_idleTimerId = 0;
+const uint64_t TIMER_ID = 88888;
+const int UID = 999998;
+const int PID = 999999;
 
 static HapPolicyParams g_policyA = {
     .apl = APL_SYSTEM_CORE,
@@ -977,5 +983,608 @@ HWTEST_F(TimeServiceTest, PowerSubscriber002, TestSize.Level0)
     auto subscriber = std::make_shared<PowerSubscriber>(CommonEventSubscribeInfo(matchingSkills));
     subscriber->OnReceiveEvent(eventData);
     EXPECT_NE(timerId, TimeTickNotify::GetInstance().timerId_);
+}
+
+/**
+* @tc.name: Batch001.
+* @tc.desc: test Batch.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, Batch001, TestSize.Level0)
+{
+    Batch batch;
+    EXPECT_EQ(batch.GetStart(), std::chrono::steady_clock::time_point::min());
+    EXPECT_EQ(batch.GetEnd(), std::chrono::steady_clock::time_point::max());
+    EXPECT_EQ(batch.GetFlags(), 0);
+}
+
+/**
+* @tc.name: TimerManager001.
+* @tc.desc: test ReCreateTimer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager001, TestSize.Level0)
+{
+    auto timerId1 = TIMER_ID;
+    auto timerId2 = TIMER_ID + 1;
+    auto entry = std::make_shared<TimerEntry>(
+            TimerEntry{timerId1, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
+    TimerManager::GetInstance()->ReCreateTimer(timerId1, entry);
+    TimerManager::GetInstance()->ReCreateTimer(timerId2, nullptr);
+    std::lock_guard<std::mutex> lock(TimerManager::GetInstance()->entryMapMutex_);
+
+    auto map = TimerManager::GetInstance()->timerEntryMap_;
+    auto it = map.find(timerId1);
+    EXPECT_NE(it, map.end());
+    if (it != map.end()) {
+        map.erase(it);
+    }
+    it = map.find(timerId2);
+    EXPECT_NE(it, map.end());
+    if (it != map.end()) {
+        map.erase(it);
+    }
+}
+
+/**
+* @tc.name: TimerManager002.
+* @tc.desc: test SetHandler with interval = milliseconds(10) < second(1).
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager002, TestSize.Level0)
+{
+    uint64_t max = std::numeric_limits<uint64_t>::max();
+    TimerManager::GetInstance()->SetHandler(TIMER_ID,
+                                            0,
+                                            max,
+                                            10,
+                                            0,
+                                            1,
+                                            nullptr,
+                                            nullptr,
+                                            0,
+                                            0,
+                                            "bundleName");
+    std::lock_guard<std::mutex> lock(TimerManager::GetInstance()->entryMapMutex_);
+    auto map = TimerManager::GetInstance()->timerEntryMap_;
+    auto it = map.find(TIMER_ID);
+    EXPECT_NE(it, map.end());
+    if (it != map.end()) {
+        map.erase(it);
+    }
+}
+
+/**
+* @tc.name: TimerManager003.
+* @tc.desc: test Set() with type > ALARM_TYPE_COUNT.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager003, TestSize.Level0)
+{
+    auto when = std::chrono::nanoseconds::zero();
+    auto bootTime = std::chrono::steady_clock::now();
+    auto res = TimerManager::GetInstance()->handler_->Set(6, when, bootTime);
+    EXPECT_EQ(res, -1);
+}
+
+/**
+* @tc.name: TimerManager004.
+* @tc.desc: test StartTimer with UidProxy and PidProxy.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager004, TestSize.Level0)
+{
+    TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
+    auto entry = std::make_shared<TimerEntry>(
+            TimerEntry{TIMER_ID, 0, 0, 0, 0, nullptr, nullptr, UID, PID, "bundleName"});
+    TimerManager::GetInstance()->ReCreateTimer(TIMER_ID, entry);
+
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
+        std::unordered_map<uint64_t, std::chrono::steady_clock::time_point> timePointMap {};
+        TimerProxy::GetInstance().proxyUids_.insert(std::make_pair(UID, timePointMap));
+    }
+    auto res = TimerManager::GetInstance()->StartTimer(TIMER_ID, 0);
+    EXPECT_EQ(res, E_TIME_DEAL_FAILED);
+
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
+        auto map = TimerProxy::GetInstance().proxyUids_;
+        auto it = map.find(UID);
+        if (it != map.end()) {
+            map.erase(it);
+        }
+    }
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyPidMutex_);
+        auto map = TimerProxy::GetInstance().proxyPids_;
+        std::unordered_map<uint64_t, std::chrono::steady_clock::time_point> timePointMap {};
+        map.insert(std::make_pair(UID, timePointMap));
+    }
+    res = TimerManager::GetInstance()->StartTimer(TIMER_ID, 0);
+    EXPECT_EQ(res, E_TIME_DEAL_FAILED);
+
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyPidMutex_);
+        auto map = TimerProxy::GetInstance().proxyPids_;
+        auto it = map.find(PID);
+        if (it != map.end()) {
+            map.erase(it);
+        }
+    }
+
+    TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
+}
+
+/**
+* @tc.name: TimerManager005.
+* @tc.desc: test StopTimerInner with nullptr TimerEntry.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager005, TestSize.Level0)
+{
+    TimerManager::GetInstance()->ReCreateTimer(TIMER_ID, nullptr);
+
+    auto res = TimerManager::GetInstance()->StopTimerInner(TIMER_ID, true);
+    EXPECT_EQ(res, E_TIME_OK);
+}
+
+/**
+* @tc.name: TimerManager006.
+* @tc.desc: test NotifyWantAgent.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager006, TestSize.Level0)
+{
+    TimerManager::GetInstance()->NotifyWantAgentRetry(nullptr);
+    
+    auto duration = std::chrono::milliseconds::zero();
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+                                                 nullptr, nullptr, 0, 0, 0, "");
+    auto res = TimerManager::GetInstance()->NotifyWantAgent(timerInfo);
+    EXPECT_FALSE(res);
+    
+    OHOS::NativeRdb::ValuesBucket insertValues;
+    insertValues.PutLong("timerId", TIMER_ID);
+    insertValues.PutInt("type", 0);
+    insertValues.PutInt("flag", 0);
+    insertValues.PutLong("windowLength", 0);
+    insertValues.PutLong("interval", 0);
+    insertValues.PutInt("uid", 0);
+    insertValues.PutString("bundleName", "");
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent = nullptr;
+    insertValues.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues.PutInt("state", 0);
+    insertValues.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
+    TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues);
+
+    res = TimerManager::GetInstance()->NotifyWantAgent(timerInfo);
+    EXPECT_FALSE(res);
+
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(HOLD_ON_REBOOT);
+    rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(TIMER_ID));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
+}
+
+/**
+* @tc.name: TimerManager007.
+* @tc.desc: test AdjustTimer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager007, TestSize.Level0)
+{
+    uint32_t interval = TimerManager::GetInstance()->adjustInterval_;
+    bool isAdjust = TimerManager::GetInstance()->adjustPolicy_;
+    auto res = TimerManager::GetInstance()->AdjustTimer(isAdjust, interval);
+    EXPECT_FALSE(res);
+    res = TimerManager::GetInstance()->AdjustTimer(!isAdjust, interval);
+    EXPECT_TRUE(res);
+    res = TimerManager::GetInstance()->AdjustTimer(isAdjust, interval + 1);
+    EXPECT_TRUE(res);
+    res = TimerManager::GetInstance()->AdjustTimer(isAdjust, interval);
+    EXPECT_TRUE(res);
+}
+
+/**
+* @tc.name: TimerManager008.
+* @tc.desc: test AdjustDeliveryTimeBasedOnDeviceIdle.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager008, TestSize.Level0)
+{
+    auto duration = std::chrono::milliseconds::zero();
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo1 = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+                                                 nullptr, nullptr, 0, 0, 0, "");
+    std::lock_guard<std::mutex> lock(TimerManager::GetInstance()->mutex_);
+    auto alarm = TimerManager::GetInstance()->mPendingIdleUntil_;
+    TimerManager::GetInstance()->mPendingIdleUntil_ = timerInfo1;
+    auto res = TimerManager::GetInstance()->AdjustDeliveryTimeBasedOnDeviceIdle(timerInfo1);
+    EXPECT_FALSE(res);
+
+    TimerManager::GetInstance()->mPendingIdleUntil_ = nullptr;
+    TimerManager::GetInstance()->delayedTimers_[TIMER_ID] = std::chrono::steady_clock::now();
+    res = TimerManager::GetInstance()->AdjustDeliveryTimeBasedOnDeviceIdle(timerInfo1);
+    EXPECT_TRUE(res);
+    auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(
+            (timePoint + std::chrono::hours(1)).time_since_epoch());
+    auto timerInfo2 = std::make_shared<TimerInfo>(TIMER_ID, 1, duration1, timePoint, duration, timePoint, duration,
+                                                  nullptr, nullptr, 0, 0, 0, "");
+    res = TimerManager::GetInstance()->AdjustDeliveryTimeBasedOnDeviceIdle(timerInfo2);
+    EXPECT_TRUE(res);
+    auto timerInfo3 = std::make_shared<TimerInfo>(TIMER_ID, 2, duration, timePoint, duration, timePoint, duration,
+                                                  nullptr, nullptr, 0, 0, 0, "");
+    res = TimerManager::GetInstance()->AdjustDeliveryTimeBasedOnDeviceIdle(timerInfo3);
+    EXPECT_TRUE(res);
+
+    TimerManager::GetInstance()->mPendingIdleUntil_ = alarm;
+}
+
+/**
+* @tc.name: TimerManager009.
+* @tc.desc: test ShowTimerEntryById TIMER_ID not in timerEntryMap_.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager009, TestSize.Level0)
+{
+    TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
+
+    auto res = TimerManager::GetInstance()->ShowTimerEntryById(0, TIMER_ID);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimerManager010.
+* @tc.desc: test ShowTimerTriggerById TIMER_ID in alarmBatches_.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager010, TestSize.Level0)
+{
+    auto entry = std::make_shared<TimerEntry>(
+            TimerEntry{TIMER_ID, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
+    TimerManager::GetInstance()->ReCreateTimer(TIMER_ID, entry);
+    uint64_t triggerTime = std::numeric_limits<uint64_t>::max();
+    TimerManager::GetInstance()->StartTimer(TIMER_ID, triggerTime);
+    auto res = TimerManager::GetInstance()->ShowTimerTriggerById(0, TIMER_ID);
+    TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
+    EXPECT_TRUE(res);
+}
+
+/**
+* @tc.name: TimerManager011.
+* @tc.desc: test HandleRSSDeath.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager011, TestSize.Level0)
+{
+    std::shared_ptr<TimerInfo> alarm;
+    {
+        std::lock_guard <std::mutex> lock(TimerManager::GetInstance()->mutex_);
+        alarm = TimerManager::GetInstance()->mPendingIdleUntil_;
+        TimerManager::GetInstance()->mPendingIdleUntil_ = nullptr;
+    }
+    TimerManager::GetInstance()->HandleRSSDeath();
+
+    auto duration = std::chrono::milliseconds::zero();
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+                                                  nullptr, nullptr, 0, 0, 0, "");
+    {
+        std::lock_guard <std::mutex> lock(TimerManager::GetInstance()->mutex_);
+        TimerManager::GetInstance()->mPendingIdleUntil_ = timerInfo;
+    }
+    auto entry = std::make_shared<TimerEntry>(
+            TimerEntry{TIMER_ID, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
+    TimerManager::GetInstance()->ReCreateTimer(TIMER_ID, entry);
+    TimerManager::GetInstance()->HandleRSSDeath();
+    auto res = TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
+    EXPECT_EQ(res, E_TIME_DEAL_FAILED);
+
+    {
+        std::lock_guard <std::mutex> lock(TimerManager::GetInstance()->mutex_);
+        TimerManager::GetInstance()->mPendingIdleUntil_ = alarm;
+    }
+}
+
+/**
+* @tc.name: TimerManager012.
+* @tc.desc: test TimerNotifyCallback GetInstance.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager012, TestSize.Level0)
+{
+    auto timerManager = TimerManager::GetInstance();
+    auto res = TimerNotifyCallback::GetInstance(timerManager);
+    EXPECT_NE(res, nullptr);
+    res = TimerNotifyCallback::GetInstance(timerManager);
+    EXPECT_NE(res, nullptr);
+}
+
+/**
+* @tc.name: SystemAbility001.
+* @tc.desc: test OnStop.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, SystemAbility001, TestSize.Level0)
+{
+    TimeSystemAbility::GetInstance()->OnStop();
+    EXPECT_EQ(TimeSystemAbility::GetInstance()->state_, ServiceRunningState::STATE_NOT_START);
+    TimeSystemAbility::GetInstance()->OnStop();
+    EXPECT_EQ(TimeSystemAbility::GetInstance()->state_, ServiceRunningState::STATE_NOT_START);
+}
+
+/**
+* @tc.name: SystemAbility002.
+* @tc.desc: test RecoverTimer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, SystemAbility002, TestSize.Level0)
+{
+    uint64_t timerId1 = TIMER_ID;
+    uint64_t timerId2 = TIMER_ID + 1;
+
+    auto map = TimerManager::GetInstance()->timerEntryMap_;
+    auto it = map.find(timerId1);
+    if (it != map.end()) {
+        map.erase(it);
+    }
+    it = map.find(timerId2);
+    if (it != map.end()) {
+        map.erase(it);
+    }
+
+    OHOS::NativeRdb::ValuesBucket insertValues1;
+    insertValues1.PutLong("timerId", timerId1);
+    insertValues1.PutInt("type", 0);
+    insertValues1.PutInt("flag", 0);
+    insertValues1.PutLong("windowLength", 0);
+    insertValues1.PutLong("interval", 0);
+    insertValues1.PutInt("uid", 0);
+    insertValues1.PutString("bundleName", "");
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent = nullptr;
+    insertValues1.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues1.PutInt("state", 0);
+    insertValues1.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
+    TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues1);
+
+    OHOS::NativeRdb::ValuesBucket insertValues2;
+    insertValues2.PutLong("timerId", timerId2);
+    insertValues2.PutInt("type", 0);
+    insertValues2.PutInt("flag", 0);
+    insertValues2.PutLong("windowLength", 0);
+    insertValues2.PutLong("interval", 0);
+    insertValues2.PutInt("uid", 0);
+    insertValues2.PutString("bundleName", "");
+    wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    insertValues2.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues2.PutInt("state", 0);
+    insertValues2.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
+    TimeDatabase::GetInstance().Insert(DROP_ON_REBOOT, insertValues2);
+
+    TimeSystemAbility::GetInstance()->RecoverTimer();
+
+    it = map.find(timerId1);
+    EXPECT_EQ(it, map.end());
+    it = map.find(timerId2);
+    EXPECT_EQ(it, map.end());
+
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete1(HOLD_ON_REBOOT);
+    rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
+
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete2(DROP_ON_REBOOT);
+    rdbPredicatesDelete2.EqualTo("timerId", static_cast<int64_t>(timerId2));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete2);
+}
+
+/**
+* @tc.name: SystemAbility003.
+* @tc.desc: test SetAutoReboot.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, SystemAbility003, TestSize.Level0)
+{
+    uint64_t timerId1 = TIMER_ID;
+    uint64_t timerId2 = TIMER_ID + 1;
+
+    TimeSystemAbility::GetInstance()->SetAutoReboot();
+    
+    OHOS::NativeRdb::ValuesBucket insertValues1;
+    insertValues1.PutLong("timerId", timerId1);
+    insertValues1.PutInt("type", 0);
+    insertValues1.PutInt("flag", 0);
+    insertValues1.PutLong("windowLength", 0);
+    insertValues1.PutLong("interval", 0);
+    insertValues1.PutInt("uid", 0);
+    insertValues1.PutString("bundleName", "anything");
+    insertValues1.PutString("wantAgent", "");
+    insertValues1.PutInt("state", 1);
+    insertValues1.PutLong("triggerTime", static_cast<int64_t>(0));
+    auto res = TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues1);
+    EXPECT_EQ(res, true);
+
+    OHOS::NativeRdb::ValuesBucket insertValues2;
+    insertValues2.PutLong("timerId", timerId2);
+    insertValues2.PutInt("type", 0);
+    insertValues2.PutInt("flag", 0);
+    insertValues2.PutLong("windowLength", 0);
+    insertValues2.PutLong("interval", 0);
+    insertValues2.PutInt("uid", 0);
+    insertValues2.PutString("bundleName", NEED_RECOVER_ON_REBOOT[0]);
+    insertValues2.PutString("wantAgent", "");
+    insertValues2.PutInt("state", 1);
+    insertValues2.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
+    res = TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues2);
+    EXPECT_EQ(res, true);
+
+    TimeSystemAbility::GetInstance()->SetAutoReboot();
+
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete1(HOLD_ON_REBOOT);
+    rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete2(HOLD_ON_REBOOT);
+    rdbPredicatesDelete2.EqualTo("timerId", static_cast<int64_t>(timerId2));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete2);
+}
+
+/**
+* @tc.name: SystemAbility004.
+* @tc.desc: test SetRealTime.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, SystemAbility004, TestSize.Level0)
+{
+    auto res = TimeSystemAbility::GetInstance()->SetRealTime(-1);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimeDatabase001.
+* @tc.desc: test TimeDatabase Insert.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimeDatabase001, TestSize.Level0)
+{
+    OHOS::NativeRdb::ValuesBucket insertValues;
+    insertValues.PutLong("something", 0);
+    auto res = TimeDatabase::GetInstance().Insert(DROP_ON_REBOOT, insertValues);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimeDatabase002.
+* @tc.desc: test TimeDatabase Update.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimeDatabase002, TestSize.Level0)
+{
+    OHOS::NativeRdb::ValuesBucket values;
+    values.PutInt("something", 1);
+    OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
+    rdbPredicates.EqualTo("something", 0)->And()->EqualTo("something", static_cast<int64_t>(0));
+    auto res = TimeDatabase::GetInstance().Update(values, rdbPredicates);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimeDatabase003.
+* @tc.desc: test TimeDatabase Delete.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimeDatabase003, TestSize.Level0)
+{
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(DROP_ON_REBOOT);
+    rdbPredicatesDelete.EqualTo("something", static_cast<int64_t>(0));
+    auto res = TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimerInfo001.
+* @tc.desc: test UpdateWhenElapsedFromNow.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerInfo001, TestSize.Level0)
+{
+    auto duration = std::chrono::milliseconds::zero();
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo = TimerInfo(0, 0, duration, timePoint, duration, timePoint, duration, nullptr,
+                                          nullptr, 0, 0, 0, "");
+    auto res = timerInfo.UpdateWhenElapsedFromNow(timePoint, duration);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimerInfo002.
+* @tc.desc: test AdjustTimer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerInfo002, TestSize.Level0)
+{
+    auto duration = std::chrono::milliseconds(0);
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo = TimerInfo(0, 0, duration, timePoint, duration, timePoint, duration, nullptr,
+                                          nullptr, 0, 0, 0, "");
+    auto res = timerInfo.AdjustTimer(timePoint, 1);
+    EXPECT_TRUE(res);
+}
+
+/**
+* @tc.name: NtpTime001.
+* @tc.desc: test SplitNtpAddrs return max size.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, NtpTime001, TestSize.Level0)
+{
+    const std::string ntpStr = "aaa,bbb,ccc,ddd,eee,fff";
+    auto res = NtpUpdateTime::GetInstance().SplitNtpAddrs(ntpStr);
+    EXPECT_EQ(res.size(), 5);
+}
+
+/**
+* @tc.name: NtpTime002.
+* @tc.desc: test RefreshNetworkTimeByTimer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, NtpTime002, TestSize.Level0)
+{
+    auto status = NtpUpdateTime::GetInstance().autoTimeInfo_.status;
+
+    NtpUpdateTime::GetInstance().autoTimeInfo_.status = NETWORK_TIME_STATUS_OFF;
+    NtpUpdateTime::GetInstance().RefreshNetworkTimeByTimer(TIMER_ID);
+
+    NtpUpdateTime::GetInstance().autoTimeInfo_.status = NETWORK_TIME_STATUS_ON;
+    NtpUpdateTime::GetInstance().RefreshNetworkTimeByTimer(TIMER_ID);
+
+    NtpUpdateTime::GetInstance().nitzUpdateTimeMilli_ = 0;
+    auto res = NtpUpdateTime::GetInstance().IsValidNITZTime();
+    EXPECT_FALSE(res);
+
+    NtpUpdateTime::GetInstance().UpdateNITZSetTime();
+    res = NtpUpdateTime::GetInstance().IsValidNITZTime();
+    EXPECT_TRUE(res);
+    NtpUpdateTime::GetInstance().RefreshNetworkTimeByTimer(TIMER_ID);
+
+    NtpUpdateTime::GetInstance().autoTimeInfo_.status = status;
+}
+
+/**
+* @tc.name: TimerCallback001.
+* @tc.desc: test InsertTimerCallbackInfo timerInfoMap_ already has TIMER_ID.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerCallback001, TestSize.Level0)
+{
+    auto res = TimerCallback::GetInstance()->InsertTimerCallbackInfo(TIMER_ID, nullptr);
+    EXPECT_FALSE(res);
+
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    TimerCallback::GetInstance()->InsertTimerCallbackInfo(TIMER_ID, timerInfo);
+    res = TimerCallback::GetInstance()->InsertTimerCallbackInfo(TIMER_ID, timerInfo);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimerCallback002.
+* @tc.desc: test RemoveTimerCallbackInfo TIMER_ID not in timerInfoMap_.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerCallback002, TestSize.Level0)
+{
+    TimerCallback::GetInstance()->RemoveTimerCallbackInfo(TIMER_ID);
+    auto res = TimerCallback::GetInstance()->RemoveTimerCallbackInfo(TIMER_ID);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimerCallback003.
+* @tc.desc: test NotifyTimer with timerCallback = nullptr.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerCallback003, TestSize.Level0)
+{
+    auto res = TimerCallback::GetInstance()->NotifyTimer(TIMER_ID, nullptr);
+    EXPECT_EQ(res, E_TIME_OK);
 }
 } // namespace

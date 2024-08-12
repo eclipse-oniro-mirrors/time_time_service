@@ -24,7 +24,6 @@ namespace {
 }
 class TimeFileUtils {
 public:
-    static bool IsExistFile(const std::string &file);
     static std::string GetBundleNameByTokenID(uint32_t tokenID);
     static std::string GetNameByPid(uint32_t pid);
 };
