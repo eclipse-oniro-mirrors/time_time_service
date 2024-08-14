@@ -102,7 +102,7 @@ std::set<std::string> TimeZoneInfo::GetTimeZoneAvailableIDs()
         if (line.length() == 0) {
             break;
         }
-        line = line.substr(0, line.find_last_not_of("\r\n") + 1);
+        line.resize(line.find_last_not_of("\r\n") + 1);
         availableTimeZoneIDs.insert(line);
     }
     file.close();
