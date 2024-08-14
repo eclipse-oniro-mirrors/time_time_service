@@ -119,21 +119,21 @@ TimerManager* TimerManager::GetInstance()
     return instance_;
 }
 
-OHOS::NativeRdb::ValuesBucket GetInsertValues(uint64_t &timerId, TimerPara &paras,
-                                              int uid, std::string bundleName,
-                                              std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent)
+OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerInfo, TimerPara &paras)
 {
     OHOS::NativeRdb::ValuesBucket insertValues;
-    insertValues.PutLong("timerId", timerId);
+    insertValues.PutLong("timerId", timerInfo->id);
     insertValues.PutInt("type", paras.timerType);
     insertValues.PutInt("flag", paras.flag);
     insertValues.PutLong("windowLength", paras.windowLength);
     insertValues.PutLong("interval", paras.interval);
-    insertValues.PutInt("uid", uid);
-    insertValues.PutString("bundleName", bundleName);
-    insertValues.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues.PutInt("uid", timerInfo->uid);
+    insertValues.PutString("bundleName", timerInfo->bundleName);
+    insertValues.PutString("wantAgent",
+        OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(timerInfo->wantAgent));
     insertValues.PutInt("state", 0);
     insertValues.PutLong("triggerTime", 0);
+    insertValues.PutInt("pid", timerInfo->pid);
     return insertValues;
 }
 
@@ -176,10 +176,10 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
         return E_TIME_OK;
     } else if (CheckNeedRecoverOnReboot(bundleName)) {
         TimeDatabase::GetInstance().Insert(std::string(HOLD_ON_REBOOT),
-                                           GetInsertValues(timerId, paras, uid, bundleName, wantAgent));
+                                           GetInsertValues(timerInfo, paras));
     } else {
         TimeDatabase::GetInstance().Insert(std::string(DROP_ON_REBOOT),
-                                           GetInsertValues(timerId, paras, uid, bundleName, wantAgent));
+                                           GetInsertValues(timerInfo, paras));
     }
     return E_TIME_OK;
 }
