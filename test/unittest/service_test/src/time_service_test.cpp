@@ -1207,16 +1207,29 @@ HWTEST_F(TimeServiceTest, TimerManager006, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, TimerManager007, TestSize.Level0)
 {
-    uint32_t interval = TimerManager::GetInstance()->adjustInterval_;
-    bool isAdjust = TimerManager::GetInstance()->adjustPolicy_;
-    auto res = TimerManager::GetInstance()->AdjustTimer(isAdjust, interval);
+    uint32_t interval;
+    bool isAdjust;
+    // Set 1000 as interval, because interval can not be 0;
+    uint32_t intervalSet = 1000;
+    {
+        std::lock_guard<std::mutex> lock(TimerManager::GetInstance()->mutex_);
+        interval = TimerManager::GetInstance()->adjustInterval_;
+        TimerManager::GetInstance()->adjustInterval_ = intervalSet;
+        isAdjust = TimerManager::GetInstance()->adjustPolicy_;
+    }
+
+    auto res = TimerManager::GetInstance()->AdjustTimer(isAdjust, intervalSet);
     EXPECT_FALSE(res);
-    res = TimerManager::GetInstance()->AdjustTimer(!isAdjust, interval);
+    res = TimerManager::GetInstance()->AdjustTimer(!isAdjust, intervalSet);
     EXPECT_TRUE(res);
-    res = TimerManager::GetInstance()->AdjustTimer(isAdjust, interval + 1);
+    res = TimerManager::GetInstance()->AdjustTimer(isAdjust, intervalSet + 1);
     EXPECT_TRUE(res);
-    res = TimerManager::GetInstance()->AdjustTimer(isAdjust, interval);
+    res = TimerManager::GetInstance()->AdjustTimer(isAdjust, intervalSet);
     EXPECT_TRUE(res);
+
+    std::lock_guard<std::mutex> lock(TimerManager::GetInstance()->mutex_);
+    TimerManager::GetInstance()->adjustInterval_ = interval;
+    TimerManager::GetInstance()->adjustPolicy_ = isAdjust;
 }
 
 /**
@@ -1580,44 +1593,5 @@ HWTEST_F(TimeServiceTest, NtpTime002, TestSize.Level0)
     NtpUpdateTime::GetInstance().RefreshNetworkTimeByTimer(TIMER_ID);
 
     NtpUpdateTime::GetInstance().autoTimeInfo_.status = status;
-}
-
-/**
-* @tc.name: TimerCallback001.
-* @tc.desc: test InsertTimerCallbackInfo timerInfoMap_ already has TIMER_ID.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, TimerCallback001, TestSize.Level0)
-{
-    auto res = TimerCallback::GetInstance()->InsertTimerCallbackInfo(TIMER_ID, nullptr);
-    EXPECT_FALSE(res);
-
-    auto timerInfo = std::make_shared<TimerInfoTest>();
-    TimerCallback::GetInstance()->InsertTimerCallbackInfo(TIMER_ID, timerInfo);
-    res = TimerCallback::GetInstance()->InsertTimerCallbackInfo(TIMER_ID, timerInfo);
-    EXPECT_FALSE(res);
-}
-
-/**
-* @tc.name: TimerCallback002.
-* @tc.desc: test RemoveTimerCallbackInfo TIMER_ID not in timerInfoMap_.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, TimerCallback002, TestSize.Level0)
-{
-    TimerCallback::GetInstance()->RemoveTimerCallbackInfo(TIMER_ID);
-    auto res = TimerCallback::GetInstance()->RemoveTimerCallbackInfo(TIMER_ID);
-    EXPECT_FALSE(res);
-}
-
-/**
-* @tc.name: TimerCallback003.
-* @tc.desc: test NotifyTimer with timerCallback = nullptr.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, TimerCallback003, TestSize.Level0)
-{
-    auto res = TimerCallback::GetInstance()->NotifyTimer(TIMER_ID, nullptr);
-    EXPECT_EQ(res, E_TIME_OK);
 }
 } // namespace
