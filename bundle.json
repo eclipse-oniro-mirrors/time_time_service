@@ -42,7 +42,8 @@
         "hisysevent",
         "device_standby",
         "init",
-        "power_manager"
+        "power_manager",
+        "jsoncpp"
       ]
     },
     "build": {
