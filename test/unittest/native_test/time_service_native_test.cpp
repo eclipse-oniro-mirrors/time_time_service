@@ -29,6 +29,11 @@ public:
     void TearDown(void) {};
 };
 
+/**
+* @tc.name: GetTimeZone001
+* @tc.desc: Test success status for OH_TimeService_GetTimeZone.
+* @tc.type: FUNC
+*/
 HWTEST_F(TimeServiceNativeTest, GetTimeZone001, TestSize.Level0)
 {
     int len = 40;
@@ -37,6 +42,11 @@ HWTEST_F(TimeServiceNativeTest, GetTimeZone001, TestSize.Level0)
     EXPECT_EQ(ret, TIMESERVICE_ERR_OK);
 }
 
+/**
+* @tc.name: GetTimeZone002
+* @tc.desc: Test failure status for OH_TimeService_GetTimeZone.
+* @tc.type: FUNC
+*/
 HWTEST_F(TimeServiceNativeTest, GetTimeZone002, TestSize.Level0)
 {
     int len = 0;
@@ -45,6 +55,11 @@ HWTEST_F(TimeServiceNativeTest, GetTimeZone002, TestSize.Level0)
     EXPECT_EQ(ret, TIMESERVICE_ERR_INVALID_PARAMETER);
 }
 
+/**
+* @tc.name: GetTimeZone003
+* @tc.desc: Test failure status for OH_TimeService_GetTimeZone.
+* @tc.type: FUNC
+*/
 HWTEST_F(TimeServiceNativeTest, GetTimeZone003, TestSize.Level0)
 {
     int len = 100;
