@@ -30,7 +30,7 @@ public:
 };
 
 /**
-* @tc.name: GetTimeZone001
+* @tc.name: GetTimeZone001.
 * @tc.desc: Test success status for OH_TimeService_GetTimeZone.
 * @tc.type: FUNC
 */
@@ -43,7 +43,7 @@ HWTEST_F(TimeServiceNativeTest, GetTimeZone001, TestSize.Level0)
 }
 
 /**
-* @tc.name: GetTimeZone002
+* @tc.name: GetTimeZone002.
 * @tc.desc: Test failure status for OH_TimeService_GetTimeZone.
 * @tc.type: FUNC
 */
@@ -56,7 +56,7 @@ HWTEST_F(TimeServiceNativeTest, GetTimeZone002, TestSize.Level0)
 }
 
 /**
-* @tc.name: GetTimeZone003
+* @tc.name: GetTimeZone003.
 * @tc.desc: Test failure status for OH_TimeService_GetTimeZone.
 * @tc.type: FUNC
 */

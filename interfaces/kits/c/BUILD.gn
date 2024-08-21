@@ -17,22 +17,18 @@ ohos_shared_library("time_service_ndk") {
   output_extension = "so"
 
   sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
     cfi = true
     cfi_cross_dso = true
-    debug = false
+    debug = time_sanitize_debug
   }
-  include_dirs = [
-    "../common/include",
-    "include",
-  ]
+  include_dirs = [ "include" ]
 
   sources = [ "src/time_service.c" ]
 
-  external_deps = [
-    "c_utils:utils",
-    "hilog:libhilog",
-    "init:libbegetutil",
-  ]
+  external_deps = [ "init:libbegetutil" ]
   innerapi_tags = [ "ndk" ]
   part_name = "time_service"
   subsystem_name = "time"
