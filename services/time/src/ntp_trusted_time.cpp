@@ -105,7 +105,6 @@ std::chrono::steady_clock::time_point NtpTrustedTime::GetBootTimeNs()
     return tp_epoch;
 }
 
-
 int64_t NtpTrustedTime::TimeResult::GetTimeMillis()
 {
     return mTimeMillis;

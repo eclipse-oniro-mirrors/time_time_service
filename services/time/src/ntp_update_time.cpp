@@ -192,7 +192,7 @@ bool NtpUpdateTime::GetNtpTimeInner(uint64_t interval)
 {
     // Determine the time interval between two NTP requests sent.
     int64_t curBootTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-            NtpTrustedTime::GetInstance().GetBootTimeNs().time_since_epoch()).count();
+        NtpTrustedTime::GetInstance().GetBootTimeNs().time_since_epoch()).count();
     uint64_t bootTime = static_cast<uint64_t>(curBootTime);
     auto lastBootTime = NtpTrustedTime::GetInstance().ElapsedRealtimeMillis();
     // If the time interval is too small, do not send NTP requests.
@@ -236,12 +236,12 @@ bool NtpUpdateTime::GetRealTime(int64_t &time)
 bool NtpUpdateTime::GetNtpTime(int64_t &time)
 {
     std::lock_guard<std::mutex> autoLock(requestMutex_);
-    
+
     if (!GetNtpTimeInner(ONE_HOUR)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed.");
         return false;
     }
-    
+
     if (!GetRealTimeInner(time)) {
         return false;
     }
