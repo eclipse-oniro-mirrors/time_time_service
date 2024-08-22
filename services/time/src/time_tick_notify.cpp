@@ -65,7 +65,7 @@ void TimeTickNotify::Callback()
 {
     std::lock_guard<std::mutex> lock(timeridMutex_);
     timer_.Unregister(timerId_);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Unregister id: %{public}d", timerId_);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Unregister id: %{public}d", timerId_);
     uint64_t nextTriggerTime = RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
     timerId_ = timer_.Register(callback, nextTriggerTime, true);
@@ -80,7 +80,7 @@ void TimeTickNotify::PowerCallback()
 {
     std::lock_guard<std::mutex> lock(timeridMutex_);
     timer_.Unregister(timerId_);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Unregister id: %{public}d", timerId_);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Unregister id: %{public}d", timerId_);
     uint64_t nextTriggerTime = RefreshNextTriggerTime();
     auto callback = [this]() { this->Callback(); };
     timerId_ = timer_.Register(callback, nextTriggerTime, true);
@@ -91,7 +91,7 @@ uint64_t TimeTickNotify::RefreshNextTriggerTime()
 {
     auto UTCTimeMicro = static_cast<uint64_t>(duration_cast<microseconds>(system_clock::now()
         .time_since_epoch()).count());
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Time micro: %{public}" PRIu64 "", UTCTimeMicro);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Time micro: %{public}" PRIu64 "", UTCTimeMicro);
     uint64_t timeMilliseconds = (UTCTimeMicro / MICRO_TO_MILLISECOND) % MINUTE_TO_MILLISECOND;
     uint64_t nextTriggerTime = MINUTE_TO_MILLISECOND - timeMilliseconds;
     return nextTriggerTime;
