@@ -680,8 +680,9 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
             triggerList.push_back(alarm);
-            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "uid: %{public}d id:%{public}" PRId64 " name:%{public}s",
-                alarm->uid, alarm->id, alarm->bundleName.c_str());
+            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "uid: %{public}d id:%{public}" PRId64 " name:%{public}s"
+                " wk:%{public}u",
+                alarm->uid, alarm->id, alarm->bundleName.c_str(), alarm->wakeup);
 
             if (alarm->wakeup) {
                 hasWakeup = true;
