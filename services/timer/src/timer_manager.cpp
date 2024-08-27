@@ -161,7 +161,7 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
         timerId,
         paras.timerType,
-        static_cast<uint64_t>(paras.windowLength),
+        paras.windowLength,
         paras.interval,
         paras.flag,
         std::move(callback),
@@ -306,7 +306,7 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 void TimerManager::SetHandler(uint64_t id,
                               int type,
                               uint64_t triggerAtTime,
-                              uint64_t windowLength,
+                              int64_t windowLength,
                               uint64_t interval,
                               int flag,
                               std::function<int32_t (const uint64_t)> callback,
@@ -319,10 +319,9 @@ void TimerManager::SetHandler(uint64_t id,
     if (windowLengthDuration > INTERVAL_HALF_DAY) {
         windowLengthDuration = INTERVAL_HOUR;
     }
-    auto minInterval = MIN_INTERVAL_ONE_SECONDS;
-    auto intervalDuration = milliseconds(interval);
-    if (intervalDuration > milliseconds::zero() && intervalDuration < minInterval) {
-        intervalDuration = minInterval;
+    auto intervalDuration = milliseconds(interval > MAX_MILLISECOND ? MAX_MILLISECOND : interval);
+    if (intervalDuration > milliseconds::zero() && intervalDuration < MIN_INTERVAL_ONE_SECONDS) {
+        intervalDuration = MIN_INTERVAL_ONE_SECONDS;
     } else if (intervalDuration > MAX_INTERVAL) {
         intervalDuration = MAX_INTERVAL;
     }
@@ -1096,7 +1095,7 @@ bool TimerManager::ShowTimerEntryMap(int fd)
         dprintf(fd, " * timer id            = %lu\n", iter->second->id);
         dprintf(fd, " * timer type          = %d\n", iter->second->type);
         dprintf(fd, " * timer flag          = %lu\n", iter->second->flag);
-        dprintf(fd, " * timer window Length = %lu\n", iter->second->windowLength);
+        dprintf(fd, " * timer window Length = %lld\n", iter->second->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
     }
@@ -1116,7 +1115,7 @@ bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
         dprintf(fd, " - dump timer number   = %lu\n", iter->first);
         dprintf(fd, " * timer id            = %lu\n", iter->second->id);
         dprintf(fd, " * timer type          = %d\n", iter->second->type);
-        dprintf(fd, " * timer window Length = %lu\n", iter->second->windowLength);
+        dprintf(fd, " * timer window Length = %lld\n", iter->second->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
     }
