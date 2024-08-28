@@ -445,7 +445,7 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
         " uid:%{public}d pid:%{public}d ",
         std::to_string(beforeTime).c_str(), std::to_string(time).c_str(), std::to_string(time - bootTime).c_str(),
         IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
-    if (time < 0 || time / 1000LL >= LLONG_MAX) {
+    if (time < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "input param error %{public}" PRId64 "", time);
         return false;
     }
