@@ -123,7 +123,7 @@ private:
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustTimersBasedOnDeviceIdle();
     void HandleRepeatTimer(const std::shared_ptr<TimerInfo> &timer, std::chrono::steady_clock::time_point nowElapsed);
-    inline bool CheckNeedRecoverOnReboot(std::string bundleName);
+    inline bool CheckNeedRecoverOnReboot(std::string bundleName, int type);
     #ifdef POWER_MANAGER_ENABLE
     void HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup);
     void AddRunningLock(long long holdLockTime);
