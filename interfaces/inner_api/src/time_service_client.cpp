@@ -751,11 +751,7 @@ int32_t TimeServiceClient::SetTimerExemption(const std::unordered_set<std::strin
 bool TimeServiceClient::ResetAllProxy()
 {
     TIME_HILOGD(TIME_MODULE_CLIENT, "ResetAllProxy");
-    if (timeServiceProxy_ == nullptr) {
-        TIME_HILOGW(TIME_MODULE_CLIENT, "ResetAllProxy ConnectService");
-        ConnectService();
-    }
-    if (timeServiceProxy_ == nullptr) {
+    if (!ConnectService()) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "ResetAllProxy ConnectService failed.");
         return false;
     }
