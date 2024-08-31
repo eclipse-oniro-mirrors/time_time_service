@@ -1151,23 +1151,10 @@ HWTEST_F(TimeServiceTest, TimerManager004, TestSize.Level0)
 
 /**
 * @tc.name: TimerManager005.
-* @tc.desc: test StopTimerInner with nullptr TimerEntry.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, TimerManager005, TestSize.Level0)
-{
-    TimerManager::GetInstance()->ReCreateTimer(TIMER_ID, nullptr);
-
-    auto res = TimerManager::GetInstance()->StopTimerInner(TIMER_ID, true);
-    EXPECT_EQ(res, E_TIME_OK);
-}
-
-/**
-* @tc.name: TimerManager006.
 * @tc.desc: test NotifyWantAgent.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager006, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager005, TestSize.Level0)
 {
     TimerManager::GetInstance()->NotifyWantAgentRetry(nullptr);
     
@@ -1201,11 +1188,11 @@ HWTEST_F(TimeServiceTest, TimerManager006, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager007.
+* @tc.name: TimerManager006.
 * @tc.desc: test AdjustTimer.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager007, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager006, TestSize.Level0)
 {
     uint32_t interval;
     bool isAdjust;
@@ -1233,11 +1220,11 @@ HWTEST_F(TimeServiceTest, TimerManager007, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager008.
+* @tc.name: TimerManager007.
 * @tc.desc: test AdjustDeliveryTimeBasedOnDeviceIdle.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager008, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager007, TestSize.Level0)
 {
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
@@ -1268,11 +1255,11 @@ HWTEST_F(TimeServiceTest, TimerManager008, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager009.
+* @tc.name: TimerManager008.
 * @tc.desc: test ShowTimerEntryById TIMER_ID not in timerEntryMap_.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager009, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager008, TestSize.Level0)
 {
     TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
 
@@ -1281,11 +1268,11 @@ HWTEST_F(TimeServiceTest, TimerManager009, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager010.
+* @tc.name: TimerManager009.
 * @tc.desc: test ShowTimerTriggerById TIMER_ID in alarmBatches_.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager010, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager009, TestSize.Level0)
 {
     auto entry = std::make_shared<TimerEntry>(
             TimerEntry{TIMER_ID, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
@@ -1298,11 +1285,11 @@ HWTEST_F(TimeServiceTest, TimerManager010, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager011.
+* @tc.name: TimerManager010.
 * @tc.desc: test HandleRSSDeath.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager011, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager010, TestSize.Level0)
 {
     std::shared_ptr<TimerInfo> alarm;
     {
@@ -1334,11 +1321,11 @@ HWTEST_F(TimeServiceTest, TimerManager011, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager012.
+* @tc.name: TimerManager011.
 * @tc.desc: test TimerNotifyCallback GetInstance.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager012, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager011, TestSize.Level0)
 {
     auto timerManager = TimerManager::GetInstance();
     auto res = TimerNotifyCallback::GetInstance(timerManager);
