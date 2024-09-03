@@ -171,7 +171,7 @@ describe("SystemDateTimeSetTest", function () {
     /**
      * @tc.number: TestSetTimeInvalidValue007
      * @tc.name: TestSetTimeInvalidValue007
-     * @tc.desc: Test setTime for callback with invalid value.
+     * @tc.desc: Test setTime for promise with invalid value.
      * @tc.size: MediumTest
      * @tc.type: Function
      * @tc.level: Level 1
@@ -407,4 +407,59 @@ describe("SystemDateTimeSetTest", function () {
             done();
         }
     });
+
+    /**
+     * @tc.number: TestSetTimezonenonsupport005
+     * @tc.name: TestSetTimezonenonsupport005
+     * @tc.desc: Test setDate for promise with nonsupport zone.
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+        it("TestSetTimezonenonsupport005", 0, async function (done) {
+            console.log("TestSetTimezonenonsupport005 start");
+            try {
+                systemDateTime.setTimezone('Asia/Hangzhou').then(() => {
+                    expect(false).assertTrue();
+                    done();
+                }).catch((err) => {
+                    expect(true).assertTrue();
+                    done();
+                })
+            } catch (err) {
+                expect(true).assertTrue();
+                done();
+            }
+            console.log("TestSetTimezonenonsupport005 end");
+        });
+    
+        /**
+         * @tc.number: TestSetTimezonenonsupport006
+         * @tc.name: TestSetTimezonenonsupport006
+         * @tc.desc: Test setDate for callback with nonsupport zone.
+         * @tc.size: MediumTest
+         * @tc.type: Function
+         * @tc.level: Level 1
+         * @tc.require:
+         */
+        it("TestSetTimezonenonsupport006", 0, async function (done) {
+            console.log("TestSetTimezonenonsupport006 start");
+            try {
+                systemDateTime.setTimezone('Asia/Hangzhou', (err) => {
+                    if (err) {
+                        expect(true).assertTrue();
+                        console.log(err.code);
+                    } else {
+                        expect(false).assertTrue();
+                    }
+                    done();
+                });
+            } catch (err) {
+                expect(true).assertTrue();
+                done();
+            }
+            console.log("TestSetTimezonenonsupport006 end");
+        });  
+
 })

@@ -108,4 +108,48 @@ describe('SystemDateTimeTest', function () {
         })
         console.log('testSetTimezoneNoPermission002 end');
     })
+
+    /**
+     * @tc.number: TestUpdateNtpTimeNoPermission001
+     * @tc.name: TestUpdateNtpTimeNoPermission001
+     * @tc.desc: Test UpdateNtpTime no permission for promise
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('TestUpdateNtpTimeNoPermission001', 0, async function (done) {
+        console.log("TestUpdateNtpTimeNoPermission001 start");
+        const timezone = "Antarctica/McMurdo";
+        systemDateTime.updateNtpTime().then(() => {
+            expect(false).assertTrue();
+            done();
+        }).catch((err) => {
+            expect(err.code).assertEqual(202);
+            done();
+        })
+        console.log('TestUpdateNtpTimeNoPermission001 end');
+    })   
+
+    /**
+     * @tc.number:TestgetNtpTimeNoPermission001
+     * @tc.name: TestgetNtpTimeNoPermission001
+     * @tc.desc: Test getNtpTime no permission
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('TestgetNtpTimeNoPermission001', 0, async function (done) {
+        console.log("TestgetNtpTimeNoPermission001 start");
+        const timezone = "Antarctica/McMurdo";
+        try{
+            systemDateTime.getNtpTime();
+        }catch(err){
+            expect(err.code).assertEqual(202);
+            done();
+        }
+        console.log('TestgetNtpTimeNoPermission001 end');
+    })      
+
 })

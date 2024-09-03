@@ -628,6 +628,7 @@ describe('SystemDateTimeGetTest', function () {
         const time = systemDateTime.getTime(true);
         console.log('Get current time is ' + time);
         expect(typeof (time) === 'number' && time >= nowTime).assertTrue();
+        expect(time.toString().length-6===nowTime.toString().length ).assertTrue();
         console.log('testGetTime001 end');
         done();
     })
@@ -647,9 +648,37 @@ describe('SystemDateTimeGetTest', function () {
         const time = systemDateTime.getTime(false);
         console.log('Get current time is ' + time);
         expect(typeof (time) === 'number' && time >= nowTime).assertTrue();
+        expect(time.toString().length===nowTime.toString().length ).assertTrue();
         console.log('testGetTime002 end');
         done();
     })
+
+    /**
+     * @tc.number: TestGetTime003
+     * @tc.name: TestGetTime003
+     * @tc.desc: test getTime with Default parameter.
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('testGetTime003', 0, function (done) {
+        console.log("testGetTime003 start");
+        const nowTime = new Date().getTime();
+        const time1 = systemDateTime.getTime();
+        const time2 = systemDateTime.getTime(123);
+        const time3 = systemDateTime.getTime("true");
+        console.log('Get current time1 is:' + time1+'  time2 is:'+time2+'  time3 is:'+time3);
+        expect(typeof (time1) === 'number' && time1 >= nowTime).assertTrue();
+        expect(time1.toString().length===nowTime.toString().length ).assertTrue();
+        expect(typeof (time2) === 'number' && time2 >= nowTime).assertTrue();
+        expect(time2.toString().length===nowTime.toString().length ).assertTrue();
+        expect(typeof (time3) === 'number' && time3 >= nowTime).assertTrue();
+        expect(time3.toString().length===nowTime.toString().length ).assertTrue();
+        console.log('testGetTime003 end');
+        done();
+    })
+
 
     /**
      * @tc.number: TestGetUptime001
@@ -814,6 +843,7 @@ describe('SystemDateTimeGetTest', function () {
             systemDateTime.getNtpTime();
         } catch (err) {
             expect(err.code).assertEqual(13000002);
+            done();
         }
         const nowTime = new Date().getTime();
         await systemDateTime.updateNtpTime();
@@ -822,6 +852,5 @@ describe('SystemDateTimeGetTest', function () {
         expect(typeof (milliTime) === 'number' && milliTime >= nowTime).assertTrue();
         console.log('testUpdateAndGetNtpTime001 end');
         done();
-    })
-    
-})
+    }) 
+}) 

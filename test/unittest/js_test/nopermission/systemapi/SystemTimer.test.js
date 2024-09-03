@@ -166,6 +166,7 @@ describe('SystemTimerTest', function () {
      * @tc.require:
      */
     it('testStopTimerNoPermission001', 0, async function (done) {
+        console.log("testStopTimerNoPermission001 start");
         systemTimer.stopTimer(123456).then(() => {
             expect(false).assertTrue();
             done();
@@ -173,6 +174,7 @@ describe('SystemTimerTest', function () {
             expect(err.code).assertEqual(202);
             done();
         })
+        console.log("testStopTimerNoPermission001 end");
     });
 
     /**
@@ -185,6 +187,7 @@ describe('SystemTimerTest', function () {
      * @tc.require:
      */
     it('testStopTimerNoPermission002', 0, async function (done) {
+        console.log("testStopTimerNoPermission002 start");
         systemTimer.stopTimer(123456, function (err) {
             if (err) {
                 expect(err.code).assertEqual(202);
@@ -193,5 +196,6 @@ describe('SystemTimerTest', function () {
             }
             done();
         });
+        console.log("testStopTimerNoPermission002 end");
     });
 })
