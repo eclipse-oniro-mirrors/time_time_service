@@ -63,8 +63,7 @@ HWTEST_F(TimeServiceNativeTest, GetTimeZone002, TestSize.Level0)
 HWTEST_F(TimeServiceNativeTest, GetTimeZone003, TestSize.Level0)
 {
     int len = 100;
-    char *bufTmp = NULL;
-    auto ret = OH_TimeService_GetTimeZone(bufTmp, len);
+    auto ret = OH_TimeService_GetTimeZone(NULL, len);
     EXPECT_EQ(ret, TIMESERVICE_ERR_INVALID_PARAMETER);
 }
 }
