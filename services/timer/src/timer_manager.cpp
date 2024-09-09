@@ -853,10 +853,14 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
         auto holdResultSet = database.Query(holdRdbPredicates, ALL_DATA);
         if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "db query failed nullptr");
+            if (holdResultSet != nullptr) {
+                holdResultSet->Close();
+            }
             return false;
         }
         // Line 7 is 'wantAgent'
         wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(holdResultSet, 7));
+        holdResultSet->Close();
         want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
         if (want == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr, id=%{public}" PRId64 "", timer->id);
