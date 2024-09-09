@@ -38,6 +38,8 @@
 #include "timer_proxy.h"
 #include "time_sysevent.h"
 #include "timer_database.h"
+#include "os_account.h"
+#include "os_account_manager.h"
 #ifdef POWER_MANAGER_ENABLE
 #include "time_system_ability.h"
 #endif
@@ -62,6 +64,7 @@ const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
 const int WANT_RETRY_TIMES = 6;
 const int WANT_RETRY_INTERVAL = 1;
+const int SYSTEM_USER_ID  = 0;
 // an error code of ipc which means peer end is dead
 constexpr int PEER_END_DEAD = 29189;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
@@ -798,6 +801,29 @@ void TimerManager::NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer)
     thread.detach();
 }
 
+int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &timer)
+{
+    int userIdOfTimer = -1;
+    int foregroundUserId = -1;
+    int getLocalIdErr = AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(timer->uid, userIdOfTimer);
+    if (getLocalIdErr != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get account id from uid failed, errcode: %{public}d", getLocalIdErr);
+        return E_TIME_ACCOUNT_ERROR;
+    }
+    int getForegroundIdErr = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(foregroundUserId);
+    if (getForegroundIdErr != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get foreground account id failed, errcode: %{public}d", getForegroundIdErr);
+        return E_TIME_ACCOUNT_ERROR;
+    }
+    if (userIdOfTimer == foregroundUserId || userIdOfTimer == SYSTEM_USER_ID) {
+        return E_TIME_OK;
+    } else {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "WA wait switch user, uid: %{public}d, timerId: %{public}" PRId64,
+            timer->uid, timer->id);
+        return E_TIME_ACCOUNT_NOT_MATCH;
+    }
+}
+
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
     auto wakeupNums = std::count_if(triggerList.begin(), triggerList.end(), [](auto timer) {return timer->wakeup;});
@@ -847,6 +873,16 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
     auto wantAgent = timer->wantAgent;
     std::shared_ptr<AAFwk::Want> want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
     if (want == nullptr) {
+        switch (CheckUserIdForNotify(timer)) {
+            case E_TIME_ACCOUNT_NOT_MATCH:
+                // No need to retry.
+                return true;
+            case E_TIME_ACCOUNT_ERROR:
+                TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr, id=%{public}" PRId64 "", timer->id);
+                return false;
+            default:
+                break;
+        }
         auto database = TimeDatabase::GetInstance();
         OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
         holdRdbPredicates.EqualTo("timerId", static_cast<int64_t>(timer->id));
@@ -861,6 +897,17 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
         // Line 7 is 'wantAgent'
         wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(holdResultSet, 7));
         holdResultSet->Close();
+        switch (CheckUserIdForNotify(timer)) {
+            case E_TIME_ACCOUNT_NOT_MATCH:
+                TIME_HILOGI(TIME_MODULE_SERVICE, "user sw after FS, id=%{public}" PRId64 "", timer->id);
+                // No need to retry.
+                return true;
+            case E_TIME_ACCOUNT_ERROR:
+                TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr, id=%{public}" PRId64 "", timer->id);
+                return false;
+            default:
+                break;
+        }
         want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
         if (want == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr, id=%{public}" PRId64 "", timer->id);
