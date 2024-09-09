@@ -25,6 +25,7 @@
 #include <thread>
 #include <vector>
 #include <unordered_set>
+#include <utility>
 
 #include "batch.h"
 #include "timer_handler.h"
@@ -118,6 +119,7 @@ private:
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
     std::chrono::steady_clock::time_point GetBootTimeNs();
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
+    int32_t CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &timer);
     bool NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer);
     bool CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
