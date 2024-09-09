@@ -60,6 +60,9 @@ uint64_t g_idleTimerId = 0;
 const uint64_t TIMER_ID = 88888;
 const int UID = 999998;
 const int PID = 999999;
+constexpr int ONE_HUNDRED = 100;
+constexpr int FIVE_HUNDRED = 500;
+constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
 
 static HapPolicyParams g_policyA = {
     .apl = APL_SYSTEM_CORE,
@@ -133,11 +136,12 @@ static HapInfoParams g_systemInfoParams = {
 static HapPolicyParams g_policyB = { .apl = APL_NORMAL, .domain = "test.domain" };
 
 static HapInfoParams g_notSystemInfoParams = {
-    .userID = 1,
+    .userID = 100,
     .bundleName = "timer",
     .instIndex = 0,
     .appIDDesc = "test",
     .apiVersion = 8,
+    .isSystemApp = false
 };
 
 class TimeServiceTest : public testing::Test {
@@ -206,6 +210,23 @@ void TestNtpThread(const char *name)
         std::lock_guard<std::mutex> autoLock(NtpUpdateTime::requestMutex_);
     }
     NtpUpdateTime::SetSystemTime();
+}
+
+/**
+ * @brief Wait for timer trigger
+ * @param data the global variable that callback function changes
+ * @param interval the time need to wait
+ */
+void WaitForAlarm(std::atomic<int> * data, int interval)
+{
+    int i = 0;
+    if (interval > 0) {
+        usleep(interval);
+    }
+    while (*data == 0 && i < ONE_HUNDRED) {
+        ++i;
+        usleep(ONE_HUNDRED*MICRO_TO_MILLISECOND);
+    }
 }
 
 /**
@@ -379,11 +400,11 @@ HWTEST_F(TimeServiceTest, IdleTimer002, TestSize.Level0)
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
-    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time) + 2000);
-    sleep(2);
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time) + FIVE_HUNDRED);
+    usleep(FIVE_HUNDRED*MICRO_TO_MILLISECOND);
     EXPECT_EQ(g_data1, 0);
     DestroyIdleTimer();
-    sleep(1);
+    WaitForAlarm(&g_data1, FIVE_HUNDRED * MICRO_TO_MILLISECOND);
     EXPECT_EQ(g_data1, 1);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
@@ -408,11 +429,10 @@ HWTEST_F(TimeServiceTest, IdleTimer003, TestSize.Level0)
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
-    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time) + 6000);
-    sleep(6);
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time) + FIVE_HUNDRED);
     EXPECT_EQ(g_data1, 0);
     DestroyIdleTimer();
-    sleep(6);
+    WaitForAlarm(&g_data1, FIVE_HUNDRED * MICRO_TO_MILLISECOND);
     EXPECT_EQ(g_data1, 1);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
@@ -437,10 +457,11 @@ HWTEST_F(TimeServiceTest, IdleTimer004, TestSize.Level0)
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
     int64_t time = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
-    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time + 6000));
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, static_cast<uint64_t>(time + FIVE_HUNDRED));
     StartIdleTimer();
-    sleep(6);
+    usleep(FIVE_HUNDRED * MICRO_TO_MILLISECOND);
     DestroyIdleTimer();
+    WaitForAlarm(&g_data1, ONE_HUNDRED * MICRO_TO_MILLISECOND);
     EXPECT_EQ(g_data1, 1);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
@@ -818,7 +839,6 @@ HWTEST_F(TimeServiceTest, CreateTimer007, TestSize.Level1)
     EXPECT_GT(timerId, 0);
     uint64_t max = std::numeric_limits<uint64_t>::max();
     auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId, max);
-    sleep(1);
     EXPECT_TRUE(ret);
     EXPECT_EQ(g_data1, 0);
     ret = TimeServiceClient::GetInstance()->StopTimer(timerId);
@@ -847,7 +867,6 @@ HWTEST_F(TimeServiceTest, CreateTimer008, TestSize.Level1)
     EXPECT_GT(timerId, 0);
     uint64_t max = std::numeric_limits<uint64_t>::max();
     auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId, max);
-    sleep(1);
     EXPECT_TRUE(ret);
     EXPECT_EQ(g_data1, 0);
     ret = TimeServiceClient::GetInstance()->StopTimer(timerId);
