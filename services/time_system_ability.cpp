@@ -191,23 +191,29 @@ void TimeSystemAbility::OnStart()
 void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId:%{public}d added!", systemAbilityId);
-    if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
-        RegisterCommonEventSubscriber();
-        RemoveSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
-    } else if (systemAbilityId == DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID) {
-        RegisterRSSDeathCallback();
-    } else if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
-        RegisterPowerStateListener();
-    } else if (systemAbilityId == COMM_NET_CONN_MANAGER_SYS_ABILITY_ID) {
-        NtpUpdateTime::GetInstance().MonitorNetwork();
-    } else if (systemAbilityId == ABILITY_MGR_SERVICE_ID) {
-        RecoverTimer();
-    } else if (systemAbilityId == MEMORY_MANAGER_SA_ID) {
-        NotifyProcessStatus(true);
-    } else {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not valid, id is %{public}d",
-            systemAbilityId);
-        return;
+    switch (systemAbilityId) {
+        case COMMON_EVENT_SERVICE_ID:
+            RegisterCommonEventSubscriber();
+            RemoveSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
+            break;
+        case DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID:
+            RegisterRSSDeathCallback();
+            break;
+        case POWER_MANAGER_SERVICE_ID:
+            RegisterPowerStateListener();
+            break;
+        case COMM_NET_CONN_MANAGER_SYS_ABILITY_ID:
+            NtpUpdateTime::GetInstance().MonitorNetwork();
+            break;
+        case ABILITY_MGR_SERVICE_ID:
+            RecoverTimer();
+            break;
+        case MEMORY_MANAGER_SA_ID:
+            NotifyProcessStatus(true);
+            break;
+        default:
+            TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not valid, id is %{public}d",
+                systemAbilityId);
     }
 }
 
