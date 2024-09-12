@@ -26,6 +26,12 @@
 
 namespace OHOS {
 namespace MiscServices {
+namespace {
+static const int MILLI_TO_SEC = 1000LL;
+static const int NANO_TO_SEC = 1000000000LL;
+constexpr int32_t NANO_TO_MILLI = NANO_TO_SEC / MILLI_TO_SEC;
+}
+
 std::mutex TimeServiceClient::instanceLock_;
 std::mutex TimeServiceClient::recoverTimerInfoLock_;
 sptr<TimeServiceClient> TimeServiceClient::instance_;
@@ -141,6 +147,15 @@ bool TimeServiceClient::ConnectService()
     SetProxy(proxy);
 
     if (!SubscribeSA(systemAbilityManager)) {
+        return false;
+    }
+    return true;
+}
+
+bool TimeServiceClient::GetTimeByClockId(clockid_t clockId, struct timespec &tv)
+{
+    if (clock_gettime(clockId, &tv) < 0) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed clock_gettime, errno: %{public}s.", strerror(errno));
         return false;
     }
     return true;
@@ -418,34 +433,24 @@ int32_t TimeServiceClient::GetTimeZone(std::string &timezoneId)
 int64_t TimeServiceClient::GetWallTimeMs()
 {
     int64_t time;
-    if (!ConnectService()) {
-        return -1;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetWallTimeMs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_REALTIME, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
+    time = tv.tv_sec * MILLI_TO_SEC + tv.tv_nsec / NANO_TO_MILLI;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return time;
 }
 
 int32_t TimeServiceClient::GetWallTimeMs(int64_t &time)
 {
-    if (!ConnectService()) {
-        return E_TIME_SA_DIED;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetWallTimeMs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_REALTIME, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return E_TIME_SA_DIED;
     }
+    time = tv.tv_sec * MILLI_TO_SEC + tv.tv_nsec / NANO_TO_MILLI;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return E_TIME_OK;
 }
@@ -453,36 +458,24 @@ int32_t TimeServiceClient::GetWallTimeMs(int64_t &time)
 int64_t TimeServiceClient::GetWallTimeNs()
 {
     int64_t time;
-    if (!ConnectService()) {
-        return -1;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetWallTimeNs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_REALTIME, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
+    time = tv.tv_sec * NANO_TO_SEC + tv.tv_nsec;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return time;
 }
 
 int32_t TimeServiceClient::GetWallTimeNs(int64_t &time)
 {
-    if (!ConnectService()) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "connect service failed.");
-        return E_TIME_SA_DIED;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "get proxy failed.");
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetWallTimeNs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_REALTIME, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return E_TIME_SA_DIED;
     }
+    time = tv.tv_sec * NANO_TO_SEC + tv.tv_nsec;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return E_TIME_OK;
 }
@@ -490,34 +483,24 @@ int32_t TimeServiceClient::GetWallTimeNs(int64_t &time)
 int64_t TimeServiceClient::GetBootTimeMs()
 {
     int64_t time;
-    if (!ConnectService()) {
-        return -1;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetBootTimeMs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
+    time = tv.tv_sec * MILLI_TO_SEC + tv.tv_nsec / NANO_TO_MILLI;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return time;
 }
 
 int32_t TimeServiceClient::GetBootTimeMs(int64_t &time)
 {
-    if (!ConnectService()) {
-        return E_TIME_SA_DIED;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetBootTimeMs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return E_TIME_SA_DIED;
     }
+    time = tv.tv_sec * MILLI_TO_SEC + tv.tv_nsec / NANO_TO_MILLI;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return E_TIME_OK;
 }
@@ -525,34 +508,24 @@ int32_t TimeServiceClient::GetBootTimeMs(int64_t &time)
 int64_t TimeServiceClient::GetBootTimeNs()
 {
     int64_t time;
-    if (!ConnectService()) {
-        return -1;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetBootTimeNs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
+    time = tv.tv_sec * NANO_TO_SEC + tv.tv_nsec;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return time;
 }
 
 int32_t TimeServiceClient::GetBootTimeNs(int64_t &time)
 {
-    if (!ConnectService()) {
-        return E_TIME_SA_DIED;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetBootTimeNs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return E_TIME_SA_DIED;
     }
+    time = tv.tv_sec * NANO_TO_SEC + tv.tv_nsec;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return E_TIME_OK;
 }
@@ -560,34 +533,24 @@ int32_t TimeServiceClient::GetBootTimeNs(int64_t &time)
 int64_t TimeServiceClient::GetMonotonicTimeMs()
 {
     int64_t time;
-    if (!ConnectService()) {
-        return -1;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetMonotonicTimeMs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_MONOTONIC, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
+    time = tv.tv_sec * MILLI_TO_SEC + tv.tv_nsec / NANO_TO_MILLI;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return time;
 }
 
 int32_t TimeServiceClient::GetMonotonicTimeMs(int64_t &time)
 {
-    if (!ConnectService()) {
-        return E_TIME_SA_DIED;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetMonotonicTimeMs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_MONOTONIC, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return E_TIME_SA_DIED;
     }
+    time = tv.tv_sec * MILLI_TO_SEC + tv.tv_nsec / NANO_TO_MILLI;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return E_TIME_OK;
 }
@@ -595,34 +558,24 @@ int32_t TimeServiceClient::GetMonotonicTimeMs(int64_t &time)
 int64_t TimeServiceClient::GetMonotonicTimeNs()
 {
     int64_t time;
-    if (!ConnectService()) {
-        return -1;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetMonotonicTimeNs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_MONOTONIC, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return -1;
     }
+    time = tv.tv_sec * NANO_TO_SEC + tv.tv_nsec;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return time;
 }
 
 int32_t TimeServiceClient::GetMonotonicTimeNs(int64_t &time)
 {
-    if (!ConnectService()) {
-        return E_TIME_SA_DIED;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return E_TIME_NULLPTR;
-    }
-    if (proxy->GetMonotonicTimeNs(time) != ERR_OK) {
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_MONOTONIC, tv)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
         return E_TIME_SA_DIED;
     }
+    time = tv.tv_sec * NANO_TO_SEC + tv.tv_nsec;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Result: %{public}" PRId64 "", time);
     return E_TIME_OK;
 }

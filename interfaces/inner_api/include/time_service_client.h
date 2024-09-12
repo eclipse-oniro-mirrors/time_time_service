@@ -454,6 +454,7 @@ private:
     ~TimeServiceClient();
     bool SubscribeSA(sptr<ISystemAbilityManager> systemAbilityManager);
     bool ConnectService();
+    bool GetTimeByClockId(clockid_t clockId, struct timespec &tv);
     void ClearProxy();
     sptr<ITimeService> GetProxy();
     void SetProxy(sptr<ITimeService> proxy);

@@ -740,16 +740,6 @@ int32_t TimeSystemAbility::GetWallTimeMs(int64_t &time)
     return E_TIME_DEAL_FAILED;
 }
 
-int32_t TimeSystemAbility::GetWallTimeNs(int64_t &time)
-{
-    struct timespec tv {};
-    if (GetTimeByClockId(CLOCK_REALTIME, tv)) {
-        time = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
-        return ERR_OK;
-    }
-    return E_TIME_DEAL_FAILED;
-}
-
 int32_t TimeSystemAbility::GetBootTimeMs(int64_t &time)
 {
     struct timespec tv {};
@@ -764,26 +754,6 @@ int32_t TimeSystemAbility::GetBootTimeNs(int64_t &time)
 {
     struct timespec tv {};
     if (GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
-        time = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
-        return ERR_OK;
-    }
-    return E_TIME_DEAL_FAILED;
-}
-
-int32_t TimeSystemAbility::GetMonotonicTimeMs(int64_t &time)
-{
-    struct timespec tv {};
-    if (GetTimeByClockId(CLOCK_MONOTONIC, tv)) {
-        time = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
-        return ERR_OK;
-    }
-    return E_TIME_DEAL_FAILED;
-}
-
-int32_t TimeSystemAbility::GetMonotonicTimeNs(int64_t &time)
-{
-    struct timespec tv {};
-    if (GetTimeByClockId(CLOCK_MONOTONIC, tv)) {
         time = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
         return ERR_OK;
     }
