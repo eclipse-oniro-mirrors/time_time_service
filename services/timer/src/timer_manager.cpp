@@ -1224,6 +1224,25 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
     return true;
 }
 
+void TimerManager::OnUserRemoved(int userId)
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Removed userId: %{public}d", userId);
+    std::vector<std::shared_ptr<TimerEntry>> removeList;
+    {
+        std::lock_guard<std::mutex> lock(entryMapMutex_);
+        for (auto it = timerEntryMap_.begin(); it != timerEntryMap_.end(); ++it) {
+            int userIdOfTimer = -1;
+            AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(it->second->uid, userIdOfTimer);
+            if (userId == userIdOfTimer) {
+                removeList.push_back(it->second);
+            }
+        }
+    }
+    for (auto it = removeList.begin(); it != removeList.end(); ++it) {
+        DestroyTimer((*it)->id);
+    }
+}
+
 void TimerManager::HandleRSSDeath()
 {
     TIME_HILOGI(TIME_MODULE_CLIENT, "RSSSaDeathRecipient died.");

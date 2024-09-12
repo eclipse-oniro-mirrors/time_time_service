@@ -63,6 +63,7 @@ public:
     bool ShowTimerEntryById(int fd, uint64_t timerId);
     bool ShowTimerTriggerById(int fd, uint64_t timerId);
     bool ShowIdleTimerInfo(int fd);
+    void OnUserRemoved(int userId);
     ~TimerManager() override;
     void HandleRSSDeath();
     static TimerManager* GetInstance();

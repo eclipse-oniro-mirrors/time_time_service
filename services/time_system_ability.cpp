@@ -45,6 +45,8 @@
 #include "nitz_subscriber.h"
 #include "init_param.h"
 #include "parameters.h"
+#include "os_account.h"
+#include "os_account_manager.h"
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
@@ -69,12 +71,27 @@ constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
+const std::string SUBSCRIBE_REMOVED = "UserRemoved";
 } // namespace
 
 REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
 
 std::mutex TimeSystemAbility::instanceLock_;
 sptr<TimeSystemAbility> TimeSystemAbility::instance_;
+
+class UserRemovedSubscriber : public AccountSA::OsAccountSubscriber {
+public:
+    explicit UserRemovedSubscriber(const AccountSA::OsAccountSubscribeInfo &subscribeInfo)
+        : AccountSA::OsAccountSubscriber(subscribeInfo)
+    {}
+
+    void OnAccountsChanged(const int &id)
+    {
+        TimerManager::GetInstance()->OnUserRemoved(id);
+    }
+
+    void OnAccountsSwitch(const int &newId, const int &oldId) {}
+};
 
 TimeSystemAbility::TimeSystemAbility(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), state_(ServiceRunningState::STATE_NOT_START),
@@ -176,6 +193,7 @@ void TimeSystemAbility::OnStart()
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
     AddSystemAbilityListener(MEMORY_MANAGER_SA_ID);
+    AddSystemAbilityListener(SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN);
     InitDumpCmd();
     if (Init() != ERR_OK) {
         auto callback = [this]() {
@@ -210,6 +228,9 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
             break;
         case MEMORY_MANAGER_SA_ID:
             NotifyProcessStatus(true);
+            break;
+        case SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN:
+            RegisterOsAccountSubscriber();
             break;
         default:
             TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not valid, id is %{public}d",
@@ -285,6 +306,17 @@ void TimeSystemAbility::NotifyProcessStatus(bool isStart)
         notifyProcessStatus(pid, 1, 0, TIME_SERVICE_ID); // 0 indicates the service is stopped
     }
     dlclose(libMemMgrClientHandle);
+}
+
+void TimeSystemAbility::RegisterOsAccountSubscriber()
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterOsAccountSubscriber Started");
+    AccountSA::OsAccountSubscribeInfo subscribeInfo(AccountSA::OS_ACCOUNT_SUBSCRIBE_TYPE::REMOVED, SUBSCRIBE_REMOVED);
+    auto userChangedSubscriber = std::make_shared<UserRemovedSubscriber>(subscribeInfo);
+    int err = AccountSA::OsAccountManager::SubscribeOsAccount(userChangedSubscriber);
+    if (err != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Subscribe user removed event failed, errcode: %{public}d", err);
+    }
 }
 
 int32_t TimeSystemAbility::Init()
