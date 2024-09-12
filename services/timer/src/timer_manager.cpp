@@ -174,7 +174,7 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
 
     if (type == NOT_STORE) {
         return E_TIME_OK;
-    } else if (CheckNeedRecoverOnReboot(bundleName)) {
+    } else if (CheckNeedRecoverOnReboot(bundleName, paras.timerType)) {
         TimeDatabase::GetInstance().Insert(std::string(HOLD_ON_REBOOT),
                                            GetInsertValues(timerId, paras, uid, bundleName, wantAgent));
     } else {
@@ -232,7 +232,9 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
                timerInfo->uid,
                timerInfo->pid,
                timerInfo->bundleName);
-    auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName) ? HOLD_ON_REBOOT : DROP_ON_REBOOT);
+    auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type)
+                      ? HOLD_ON_REBOOT
+                      : DROP_ON_REBOOT);
     OHOS::NativeRdb::ValuesBucket values;
     values.PutInt("state", 1);
     values.PutLong("triggerTime", static_cast<int64_t>(triggerTime));
@@ -262,16 +264,17 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         return E_TIME_DEAL_FAILED;
     }
     RemoveHandler(timerNumber);
-    if (it->second) {
-        int32_t uid = it->second->uid;
-        int32_t pid = it->second->pid;
-        TimerProxy::GetInstance().RemoveProxy(timerNumber, uid);
-        TimerProxy::GetInstance().RemovePidProxy(timerNumber, pid);
-        TimerProxy::GetInstance().EraseTimerFromProxyUidMap(timerNumber, uid);
-        TimerProxy::GetInstance().EraseTimerFromProxyPidMap(timerNumber, pid);
-    }
-    std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
-    if (CheckNeedRecoverOnReboot(bundleName)) {
+
+    int32_t uid = it->second->uid;
+    int32_t pid = it->second->pid;
+    TimerProxy::GetInstance().RemoveProxy(timerNumber, uid);
+    TimerProxy::GetInstance().RemovePidProxy(timerNumber, pid);
+    TimerProxy::GetInstance().EraseTimerFromProxyUidMap(timerNumber, uid);
+    TimerProxy::GetInstance().EraseTimerFromProxyPidMap(timerNumber, pid);
+
+    std::string bundleName = it->second->bundleName;
+    int type = it->second->type;
+    if (CheckNeedRecoverOnReboot(bundleName, type)) {
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 0);
         OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
@@ -817,10 +820,10 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             }
         }
         if (timer->wantAgent) {
-            if (!NotifyWantAgent(timer) && CheckNeedRecoverOnReboot(timer->bundleName)) {
+            if (!NotifyWantAgent(timer) && CheckNeedRecoverOnReboot(timer->bundleName, timer->type)) {
                 NotifyWantAgentRetry(timer);
             }
-            if (CheckNeedRecoverOnReboot(timer->bundleName)) {
+            if (CheckNeedRecoverOnReboot(timer->bundleName, timer->type)) {
                 OHOS::NativeRdb::ValuesBucket values;
                 values.PutInt("state", 0);
                 OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
@@ -853,10 +856,14 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
         auto holdResultSet = database.Query(holdRdbPredicates, ALL_DATA);
         if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "db query failed nullptr");
+            if (holdResultSet != nullptr) {
+                holdResultSet->Close();
+            }
             return false;
         }
         // Line 7 is 'wantAgent'
         wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(holdResultSet, 7));
+        holdResultSet->Close();
         want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
         if (want == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr, id=%{public}" PRId64 "", timer->id);
@@ -1205,10 +1212,10 @@ void TimerManager::HandleRepeatTimer(
     }
 }
 
-inline bool TimerManager::CheckNeedRecoverOnReboot(std::string bundleName)
+inline bool TimerManager::CheckNeedRecoverOnReboot(std::string bundleName, int type)
 {
-    return std::find(NEED_RECOVER_ON_REBOOT.begin(), NEED_RECOVER_ON_REBOOT.end(), bundleName) !=
-        NEED_RECOVER_ON_REBOOT.end();
+    return (std::find(NEED_RECOVER_ON_REBOOT.begin(), NEED_RECOVER_ON_REBOOT.end(), bundleName) !=
+        NEED_RECOVER_ON_REBOOT.end() && (type == RTC || type == RTC_WAKEUP));
 }
 
 #ifdef POWER_MANAGER_ENABLE
