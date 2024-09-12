@@ -38,12 +38,6 @@ private:
     int32_t OnSetTime(MessageParcel &data, MessageParcel &reply);
     int32_t OnSetTimeZone(MessageParcel &data, MessageParcel &reply);
     int32_t OnGetTimeZone(MessageParcel &data, MessageParcel &reply);
-    int32_t OnGetWallTimeMs(MessageParcel &data, MessageParcel &reply);
-    int32_t OnGetWallTimeNs(MessageParcel &data, MessageParcel &reply);
-    int32_t OnGetBootTimeMs(MessageParcel &data, MessageParcel &reply);
-    int32_t OnGetBootTimeNs(MessageParcel &data, MessageParcel &reply);
-    int32_t OnGetMonotonicTimeMs(MessageParcel &data, MessageParcel &reply);
-    int32_t OnGetMonotonicTimeNs(MessageParcel &data, MessageParcel &reply);
     int32_t OnGetThreadTimeMs(MessageParcel &data, MessageParcel &reply);
     int32_t OnGetThreadTimeNs(MessageParcel &data, MessageParcel &reply);
 
