@@ -114,7 +114,6 @@ private:
     void RegisterScreenOnSubscriber();
     void RegisterNitzTimeSubscriber();
     void RegisterOsAccountSubscriber();
-    void NotifyProcessStatus(bool isStart);
     bool IsValidTime(int64_t time);
     void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet);
     void SetAutoReboot();

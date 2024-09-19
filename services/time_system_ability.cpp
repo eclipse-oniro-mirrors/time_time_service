@@ -24,7 +24,6 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/timerfd.h>
-#include <dlfcn.h>
 
 #include "iservice_registry.h"
 #include "ntp_update_time.h"
@@ -192,7 +191,6 @@ void TimeSystemAbility::OnStart()
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
-    AddSystemAbilityListener(MEMORY_MANAGER_SA_ID);
     AddSystemAbilityListener(SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN);
     InitDumpCmd();
     if (Init() != ERR_OK) {
@@ -225,9 +223,6 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
             break;
         case ABILITY_MGR_SERVICE_ID:
             RecoverTimer();
-            break;
-        case MEMORY_MANAGER_SA_ID:
-            NotifyProcessStatus(true);
             break;
         case SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN:
             RegisterOsAccountSubscriber();
@@ -283,31 +278,6 @@ void TimeSystemAbility::RegisterCommonEventSubscriber()
     RegisterNitzTimeSubscriber();
 }
 
-void TimeSystemAbility::NotifyProcessStatus(bool isStart)
-{
-    void *libMemMgrClientHandle = dlopen("libmemmgrclient.z.so", RTLD_NOW);
-    if (!libMemMgrClientHandle) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "dlopen failed, %{public}s", dlerror());
-        return;
-    }
-    void *notifyProcessStatusFunc = dlsym(libMemMgrClientHandle, "notify_process_status");
-    if (!notifyProcessStatusFunc) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "dlsm failed");
-        dlclose(libMemMgrClientHandle);
-        return;
-    }
-    auto notifyProcessStatus = reinterpret_cast<int(*)(int, int, int, int)>(notifyProcessStatusFunc);
-    int pid = getpid();
-    if (isStart) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "notify memmgr started");
-        notifyProcessStatus(pid, 1, 1, TIME_SERVICE_ID); // 1 indicates the service is started
-    } else {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "notify memmgr stopped");
-        notifyProcessStatus(pid, 1, 0, TIME_SERVICE_ID); // 0 indicates the service is stopped
-    }
-    dlclose(libMemMgrClientHandle);
-}
-
 void TimeSystemAbility::RegisterOsAccountSubscriber()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterOsAccountSubscriber Started");
@@ -341,7 +311,6 @@ void TimeSystemAbility::OnStop()
     TimeTickNotify::GetInstance().Stop();
     state_ = ServiceRunningState::STATE_NOT_START;
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End.");
-    NotifyProcessStatus(false);
 }
 
 void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras)
