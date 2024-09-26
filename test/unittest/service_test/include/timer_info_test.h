@@ -42,6 +42,7 @@ public:
     virtual void SetType(const int &type) override;
     virtual void SetRepeat(bool repeat) override;
     virtual void SetInterval(const uint64_t &interval) override;
+    void SetDisposable(const bool &disposable);
     virtual void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) override;
     void SetCallbackInfo(const std::function<void()> &callBack);
 
@@ -81,14 +82,22 @@ void TimerInfoTest::SetRepeat(bool _repeat)
 {
     repeat = _repeat;
 }
+
 void TimerInfoTest::SetInterval(const uint64_t &_interval)
 {
     interval = _interval;
 }
+
 void TimerInfoTest::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent)
 {
     wantAgent = _wantAgent;
 }
+
+void TimerInfoTest::SetDisposable(const bool &_disposable)
+{
+    disposable = _disposable;
+}
+
 } // namespace MiscServices
 } // namespace OHOS
 #endif
