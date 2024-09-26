@@ -840,6 +840,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             if (TimerProxy::GetInstance().CallbackAlarmIfNeed(timer) == PEER_END_DEAD
                 && !timer->wantAgent) {
                 DestroyTimer(timer->id);
+                return;
             }
         }
         if (timer->wantAgent) {
@@ -863,6 +864,10 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
                     ->EqualTo("timerId", static_cast<int64_t>(timer->id));
                 TimeDatabase::GetInstance().Update(values, rdbPredicates);
             }
+        }
+        if (((timer->flags & static_cast<uint32_t>(IS_DISPOSABLE)) > 0) &&
+            (timer->repeatInterval == milliseconds::zero())) {
+            DestroyTimer(timer->id);
         }
     }
 }

@@ -939,6 +939,61 @@ HWTEST_F(TimeClientTest, StartTimer012, TestSize.Level1)
 }
 
 /**
+* @tc.name: StartTimer013
+* @tc.desc: Start a timer which is disposable. It will be destroyed by time service.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, StartTimer013, TestSize.Level1)
+{
+    TIME_HILOGI(TIME_MODULE_CLIENT, "StartTimer013 start");
+    g_data1 = 0;
+    g_data2 = 0;
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetDisposable(true);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    errCode = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    sleep(1);
+    errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
+    EXPECT_NE(errCode, TimeError::E_TIME_OK);
+}
+
+/**
+* @tc.name: StartTimer014
+* @tc.desc: Start a repeat timer which is disposable. It will not be destroyed by time service.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, StartTimer014, TestSize.Level1)
+{
+    TIME_HILOGI(TIME_MODULE_CLIENT, "StartTimer014 start");
+    g_data1 = 0;
+    g_data2 = 0;
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(true);
+    timerInfo->SetInterval(1000);
+    timerInfo->SetDisposable(true);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    errCode = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    sleep(1);
+    errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+}
+
+/**
 * @tc.name: RecoverTimer001
 * @tc.desc: Create system timer, check whether the corresponding data is recorded when the timer is created.
 * @tc.type: FUNC

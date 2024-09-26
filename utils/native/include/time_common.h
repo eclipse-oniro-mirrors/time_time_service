@@ -29,6 +29,7 @@ struct TimerPara {
     int timerType;
     int64_t windowLength;
     uint64_t interval;
+    bool disposable;
     int flag;
 };
 

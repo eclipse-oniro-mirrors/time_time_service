@@ -45,6 +45,7 @@ public:
         ALLOW_WHILE_IDLE_UNRESTRICTED = 1 << 3,
         IDLE_UNTIL = 1 << 4,
         INEXACT_REMINDER = 1 << 5,
+        IS_DISPOSABLE = 1 << 6,
     };
 
     enum TimerType {
