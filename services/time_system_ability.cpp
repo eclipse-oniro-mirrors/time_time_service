@@ -315,6 +315,7 @@ void TimeSystemAbility::OnStop()
 void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras)
 {
     auto uIntType = static_cast<uint32_t>(timerOptions->type);
+    auto disposable = timerOptions->disposable;
     bool isRealtime = (uIntType & TIMER_TYPE_REALTIME_MASK) > 0;
     bool isWakeup = (uIntType & TIMER_TYPE_REALTIME_WAKEUP_MASK) > 0;
     paras.windowLength = (uIntType & TIMER_TYPE_EXACT_MASK) > 0 ? 0 : -1;
@@ -333,6 +334,9 @@ void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerO
     }
     if ((uIntType & TIMER_TYPE_INEXACT_REMINDER_MASK) > 0) {
         paras.flag += ITimerManager::TimerFlag::INEXACT_REMINDER;
+    }
+    if (disposable) {
+        paras.flag += ITimerManager::TimerFlag::IS_DISPOSABLE;
     }
     paras.interval = timerOptions->repeat ? timerOptions->interval : 0;
 }

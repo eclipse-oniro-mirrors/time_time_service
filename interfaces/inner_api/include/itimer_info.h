@@ -29,6 +29,7 @@ public:
 
     int type;
     bool repeat;
+    bool disposable = false;
     uint64_t interval;
     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
 
@@ -76,6 +77,18 @@ public:
      *
      */
     virtual void SetInterval(const uint64_t &interval) = 0;
+
+    /**
+     * SetDisposable set timer disposable or not
+     * @para: _disposable bool
+     *        true: the timer will be destoryed automaticly when it is triggered.
+     *              But do not take effect for repeat timer.
+     *        fasle: the timer need to be destroyed by client
+     */
+    void SetDisposable(const bool &_disposable)
+    {
+        disposable = _disposable;
+    }
     virtual void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) = 0;
     virtual void OnTrigger() = 0;
 };
