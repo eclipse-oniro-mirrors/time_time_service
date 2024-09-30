@@ -277,35 +277,35 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 
     std::string bundleName = it->second->bundleName;
     int type = it->second->type;
+    TIME_HILOGI(TIME_MODULE_SERVICE, "db bgn");
     if (CheckNeedRecoverOnReboot(bundleName, type)) {
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 0);
         OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
-        rdbPredicates.EqualTo("state", 1)
-            ->And()
-            ->EqualTo("timerId", static_cast<int64_t>(timerNumber));
+        rdbPredicates.EqualTo("state", 1)->And()->EqualTo("timerId", static_cast<int64_t>(timerNumber));
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
         if (needDestroy) {
             timerEntryMap_.erase(it);
             OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(HOLD_ON_REBOOT);
             rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
+            TIME_HILOGI(TIME_MODULE_SERVICE, "db del");
             TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
         }
     } else {
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 0);
         OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
-        rdbPredicates.EqualTo("state", 1)
-            ->And()
-            ->EqualTo("timerId", static_cast<int64_t>(timerNumber));
+        rdbPredicates.EqualTo("state", 1)->And()->EqualTo("timerId", static_cast<int64_t>(timerNumber));
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
         if (needDestroy) {
             timerEntryMap_.erase(it);
             OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(DROP_ON_REBOOT);
             rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
+            TIME_HILOGI(TIME_MODULE_SERVICE, "db del");
             TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
         }
     }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "db end");
     return E_TIME_OK;
 }
 
