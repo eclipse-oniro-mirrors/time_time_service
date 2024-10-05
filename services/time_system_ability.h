@@ -67,7 +67,7 @@ public:
     int32_t CreateTimer(TimerPara &paras, std::function<int32_t (const uint64_t)> callback, uint64_t &timerId);
     int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
     int32_t StopTimer(uint64_t timerId) override;
-    int32_t DestroyTimer(uint64_t timerId) override;
+    int32_t DestroyTimer(uint64_t timerId, bool isAsync) override;
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
     bool ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger) override;
     int32_t AdjustTimer(bool isAdjust, uint32_t interval) override;

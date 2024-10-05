@@ -342,6 +342,16 @@ public:
     TIME_API bool DestroyTimer(uint64_t timerId);
 
     /**
+     * @brief DestroyTimerAsync
+     *
+     * Destroy a timer asynchronously.
+     *
+     * @param indicate timerId.
+     * @return true on success, false on failure.
+     */
+    TIME_API bool DestroyTimerAsync(uint64_t timerId);
+
+    /**
      * @brief DestroyTimer
      *
      * Destroy a timer.
@@ -350,6 +360,16 @@ public:
      * @return error code.
      */
     TIME_API int32_t DestroyTimerV9(uint64_t timerId);
+
+    /**
+     * @brief DestroyTimerAsync
+     *
+     * Destroy a timer asynchronously.
+     *
+     * @param indicate timerId.
+     * @return error code.
+     */
+    TIME_API int32_t DestroyTimerAsyncV9(uint64_t timerId);
 
     /**
      * @brief ProxyTimer

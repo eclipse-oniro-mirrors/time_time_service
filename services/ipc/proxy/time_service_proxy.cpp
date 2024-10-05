@@ -16,6 +16,7 @@
 #include "time_service_proxy.h"
 
 #include "iremote_broker.h"
+#include "message_option.h"
 #include "time_common.h"
 #include "time_service_ipc_interface_code.h"
 
@@ -138,7 +139,7 @@ int32_t TimeServiceProxy::StopTimer(uint64_t timerId)
     return Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::STOP_TIMER), data, reply, option);
 }
 
-int32_t TimeServiceProxy::DestroyTimer(uint64_t timerId)
+int32_t TimeServiceProxy::DestroyTimer(uint64_t timerId, bool isAsync)
 {
     MessageParcel data, reply;
     MessageOption option;
@@ -149,6 +150,10 @@ int32_t TimeServiceProxy::DestroyTimer(uint64_t timerId)
     if (!data.WriteUint64(timerId)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write timerId");
         return E_TIME_WRITE_PARCEL_ERROR;
+    }
+
+    if (isAsync) {
+        option.SetFlags(MessageOption::TF_ASYNC);
     }
     return Remote()->SendRequest(
         static_cast<uint32_t>(TimeServiceIpcInterfaceCode::DESTROY_TIMER), data, reply, option);
