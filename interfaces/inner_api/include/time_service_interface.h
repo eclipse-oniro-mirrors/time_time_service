@@ -149,9 +149,10 @@ public:
     * DestroyTimer
     *
     * @param timerId indicate timerId
+    * @param isAsync indicate is async or not.
     * @return bool true on success, false on failure.
     */
-    virtual int32_t DestroyTimer(uint64_t timerId) = 0;
+    virtual int32_t DestroyTimer(uint64_t timerId, bool isAsync = false) = 0;
 
     /**
      * ProxyTimer

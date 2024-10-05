@@ -22,6 +22,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "time_common.h"
+#include "time_service_proxy.h"
 #include "timer_call_back.h"
 
 namespace OHOS {
@@ -368,7 +369,40 @@ int32_t TimeServiceClient::DestroyTimerV9(uint64_t timerId)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    auto errCode = proxy->DestroyTimer(timerId);
+    auto errCode = proxy->DestroyTimer(timerId, false);
+    if (errCode != 0) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "destroy timer failed: %{public}d", errCode);
+        return errCode;
+    }
+    TimerCallback::GetInstance()->RemoveTimerCallbackInfo(timerId);
+    std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
+    auto info = recoverTimerInfoMap_.find(timerId);
+    if (info != recoverTimerInfoMap_.end()) {
+        recoverTimerInfoMap_.erase(timerId);
+    }
+    return errCode;
+}
+
+bool TimeServiceClient::DestroyTimerAsync(uint64_t timerId)
+{
+    int32_t errCode = DestroyTimerAsyncV9(timerId);
+    if (errCode != E_TIME_OK) {
+        return false;
+    }
+    return true;
+}
+
+int32_t TimeServiceClient::DestroyTimerAsyncV9(uint64_t timerId)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    
+    auto errCode = proxy->DestroyTimer(timerId, true);
     if (errCode != 0) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "destroy timer failed: %{public}d", errCode);
         return errCode;

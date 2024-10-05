@@ -418,7 +418,7 @@ int32_t TimeSystemAbility::StopTimer(uint64_t timerId)
     return ret;
 }
 
-int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId)
+int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId, bool isAsync)
 {
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
