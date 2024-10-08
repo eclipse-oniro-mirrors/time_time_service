@@ -365,7 +365,7 @@ int32_t TimeServiceStub::OnDestroyTimer(MessageParcel &data, MessageParcel &repl
         return E_TIME_NOT_SYSTEM_APP;
     }
     auto timerId = data.ReadUint64();
-    if (DestroyTimer(timerId) != E_TIME_OK) {
+    if (DestroyTimer(timerId, false) != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to destory timer");
         return E_TIME_DEAL_FAILED;
     }

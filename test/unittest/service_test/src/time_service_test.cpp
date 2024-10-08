@@ -884,6 +884,51 @@ HWTEST_F(TimeServiceTest, CreateTimer009, TestSize.Level1)
 }
 
 /**
+ * @tc.name: CreateTimer010
+ * @tc.desc: Create system timer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(TimeServiceTest, CreateTimer010, TestSize.Level1) {
+    AddPermission();
+    uint64_t timerId = 0;
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId, 5);
+    EXPECT_FALSE(ret);
+    ret = TimeServiceClient::GetInstance()->StopTimer(timerId);
+    EXPECT_FALSE(ret);
+    ret = TimeServiceClient::GetInstance()->DestroyTimerAsync(timerId);
+    EXPECT_TRUE(ret);
+    DeletePermission();
+}
+
+/**
+ * @tc.name: CreateTimer011
+ * @tc.desc: Create system timer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(TimeServiceTest, CreateTimer011, TestSize.Level1) {
+    AddPermission();
+    g_data1 = 0;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME |
+                       timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(0);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto timerId = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
+    EXPECT_GT(timerId, 0);
+    uint64_t max = std::numeric_limits<uint64_t>::max();
+    auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId, max);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(g_data1, 0);
+    ret = TimeServiceClient::GetInstance()->StopTimer(timerId);
+    EXPECT_TRUE(ret);
+    ret = TimeServiceClient::GetInstance()->DestroyTimerAsync(timerId);
+    EXPECT_TRUE(ret);
+    DeletePermission();
+}
+
+/**
 * @tc.name: SntpClient001.
 * @tc.desc: test SntpClient.
 * @tc.type: FUNC
