@@ -260,24 +260,24 @@ int32_t TimerManager::DestroyTimer(uint64_t timerId)
 int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", needDestroy: %{public}d", timerNumber, needDestroy);
-    std::lock_guard<std::mutex> lock(entryMapMutex_);
-    auto it = timerEntryMap_.find(timerNumber);
-    if (it == timerEntryMap_.end()) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "timer not exist");
-        return E_TIME_DEAL_FAILED;
+    bool needRecoverOnReboot;
+    {
+        std::lock_guard<std::mutex> lock(entryMapMutex_);
+        auto it = timerEntryMap_.find(timerNumber);
+        if (it == timerEntryMap_.end()) {
+            TIME_HILOGW(TIME_MODULE_SERVICE, "timer not exist");
+            return E_TIME_DEAL_FAILED;
+        }
+        RemoveHandler(timerNumber);
+
+        TimerProxy::GetInstance().RemoveProxy(timerNumber, it->second->uid);
+        TimerProxy::GetInstance().RemovePidProxy(timerNumber, it->second->pid);
+        TimerProxy::GetInstance().EraseTimerFromProxyUidMap(timerNumber, it->second->uid);
+        TimerProxy::GetInstance().EraseTimerFromProxyPidMap(timerNumber, it->second->pid);
+        needRecoverOnReboot = CheckNeedRecoverOnReboot(it->second->bundleName, it->second->type);
+        if (needDestroy) { timerEntryMap_.erase(it); }
     }
-    RemoveHandler(timerNumber);
-
-    int32_t uid = it->second->uid;
-    int32_t pid = it->second->pid;
-    TimerProxy::GetInstance().RemoveProxy(timerNumber, uid);
-    TimerProxy::GetInstance().RemovePidProxy(timerNumber, pid);
-    TimerProxy::GetInstance().EraseTimerFromProxyUidMap(timerNumber, uid);
-    TimerProxy::GetInstance().EraseTimerFromProxyPidMap(timerNumber, pid);
-
-    std::string bundleName = it->second->bundleName;
-    int type = it->second->type;
-    if (CheckNeedRecoverOnReboot(bundleName, type)) {
+    if (needRecoverOnReboot) {
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 0);
         OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
@@ -286,7 +286,6 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
             ->EqualTo("timerId", static_cast<int64_t>(timerNumber));
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
         if (needDestroy) {
-            timerEntryMap_.erase(it);
             OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(HOLD_ON_REBOOT);
             rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
             TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
@@ -300,7 +299,6 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
             ->EqualTo("timerId", static_cast<int64_t>(timerNumber));
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
         if (needDestroy) {
-            timerEntryMap_.erase(it);
             OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(DROP_ON_REBOOT);
             rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
             TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
