@@ -156,24 +156,27 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     if (bundleName.empty()) {
         bundleName = TimeFileUtils::GetNameByPid(IPCSkeleton::GetCallingPid());
     }
-    std::lock_guard<std::mutex> lock(entryMapMutex_);
-    while (timerId == 0) {
-        // random_() needs to be protected in a lock.
-        timerId = random_();
+    std::shared_ptr<TimerEntry> timerInfo;
+    {
+        std::lock_guard<std::mutex> lock(entryMapMutex_);
+        while (timerId == 0) {
+            // random_() needs to be protected in a lock.
+            timerId = random_();
+        }
+        timerInfo = std::make_shared<TimerEntry>(TimerEntry {
+            timerId,
+            paras.timerType,
+            paras.windowLength,
+            paras.interval,
+            paras.flag,
+            std::move(callback),
+            wantAgent,
+            uid,
+            pid,
+            bundleName
+        });
+        timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
     }
-    auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
-        timerId,
-        paras.timerType,
-        paras.windowLength,
-        paras.interval,
-        paras.flag,
-        std::move(callback),
-        wantAgent,
-        uid,
-        pid,
-        bundleName
-    });
-    timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
 
     if (type == NOT_STORE) {
         return E_TIME_OK;
@@ -195,13 +198,16 @@ void TimerManager::ReCreateTimer(uint64_t timerId, std::shared_ptr<TimerEntry> t
 
 int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
 {
-    std::lock_guard<std::mutex> lock(entryMapMutex_);
-    auto it = timerEntryMap_.find(timerId);
-    if (it == timerEntryMap_.end()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
-        return E_TIME_NOT_FOUND;
+    std::shared_ptr<TimerEntry> timerInfo;
+    {
+        std::lock_guard<std::mutex> lock(entryMapMutex_);
+        auto it = timerEntryMap_.find(timerId);
+        if (it == timerEntryMap_.end()) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
+            return E_TIME_NOT_FOUND;
+        }
+        timerInfo = it->second;
     }
-    auto timerInfo = it->second;
     TIME_HILOGI(TIME_MODULE_SERVICE,
         "id: %{public}" PRIu64 " typ:%{public}d len: %{public}" PRId64 " int: %{public}" PRId64 " "
         "flg :%{public}d trig: %{public}s uid:%{public}d pid:%{public}d",
@@ -224,16 +230,8 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
         std::lock_guard<std::mutex> lock(mutex_);
         RemoveLocked(timerId, false);
     }
-    SetHandler(timerInfo->id,
-               timerInfo->type,
-               triggerTime,
-               timerInfo->windowLength,
-               timerInfo->interval,
-               timerInfo->flag,
-               timerInfo->callback,
-               timerInfo->wantAgent,
-               timerInfo->uid,
-               timerInfo->pid,
+    SetHandler(timerInfo->id, timerInfo->type, triggerTime, timerInfo->windowLength, timerInfo->interval,
+               timerInfo->flag, timerInfo->callback, timerInfo->wantAgent, timerInfo->uid, timerInfo->pid,
                timerInfo->bundleName);
     auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type)
                       ? HOLD_ON_REBOOT
@@ -269,7 +267,6 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
             return E_TIME_DEAL_FAILED;
         }
         RemoveHandler(timerNumber);
-
         TimerProxy::GetInstance().RemoveProxy(timerNumber, it->second->uid);
         TimerProxy::GetInstance().RemovePidProxy(timerNumber, it->second->pid);
         TimerProxy::GetInstance().EraseTimerFromProxyUidMap(timerNumber, it->second->uid);
