@@ -309,7 +309,7 @@ void NtpUpdateTime::StartTimer()
 void NtpUpdateTime::Stop()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    TimeSystemAbility::GetInstance()->DestroyTimer(timerId_);
+    TimeSystemAbility::GetInstance()->DestroyTimer(timerId_, false);
 }
 
 void NtpUpdateTime::RegisterSystemParameterListener()
