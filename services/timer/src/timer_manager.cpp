@@ -841,7 +841,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             if (TimerProxy::GetInstance().CallbackAlarmIfNeed(timer) == PEER_END_DEAD
                 && !timer->wantAgent) {
                 DestroyTimer(timer->id);
-                return;
+                continue;
             }
         }
         if (timer->wantAgent) {
