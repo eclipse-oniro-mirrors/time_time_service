@@ -221,38 +221,6 @@ void SNTPClient::CreateMessage(char *buffer)
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
-void SNTPClient::WriteTimeStamp(char *buffer, ntp_timestamp *ntp)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    uint64_t _ntpTs = ntp->second;
-    _ntpTs = (_ntpTs << RECEIVE_TIMESTAMP_OFFSET) | ntp->fraction;
-    m_originateTimestamp = _ntpTs;
-
-    SNTPMessage _sntpMsg;
-    // Important, if you don't set the version/mode, the server will ignore you.
-    _sntpMsg.clear();
-    _sntpMsg._leapIndicator = 0;
-    _sntpMsg._versionNumber = VERSION_THREE;
-    _sntpMsg._mode = MODE_THREE;
-    _sntpMsg._originateTimestamp = _ntpTs;
-    char value[sizeof(uint64_t)];
-    errno_t ret = memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
-    if (ret != EOK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);
-        return;
-    }
-    int numOfBit = sizeof(uint64_t) - 1;
-    int offsetEnd = ORIGINATE_TIMESTAMP_OFFSET + sizeof(uint64_t);
-    for (int loop = ORIGINATE_TIMESTAMP_OFFSET; loop < offsetEnd; loop++) {
-        buffer[loop] = value[numOfBit];
-        numOfBit--;
-    }
-    // create the 1-byte info in one go... the result should be 27 :)
-    buffer[INDEX_ZERO] = (_sntpMsg._leapIndicator << SNTP_MSG_OFFSET_SIX) |
-                         (_sntpMsg._versionNumber << SNTP_MSG_OFFSET_THREE) | _sntpMsg._mode;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-}
-
 void SNTPClient::ReceivedMessage(char *buffer)
 {
     struct ntp_timestamp ntp{};

@@ -28,6 +28,9 @@ using namespace std::chrono;
 namespace {
 constexpr uint64_t NANO_TO_MILESECOND = 100000;
 constexpr int BLOCK_TEST_TIME = 100000;
+const uint64_t TIMER_ID = 88887;
+const int UID = 999996;
+const int PID = 999997;
 }
 TimerManager* timerManagerHandler_ = nullptr;
 
@@ -713,6 +716,168 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     bool adjret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
     EXPECT_TRUE(adjret);
     EXPECT_NE(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
+}
+
+/**
+* @tc.name: ProxyTimerCover001
+* @tc.desc: test CallbackAlarmIfNeed
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, ProxyTimerCover001, TestSize.Level1)
+{
+    auto res = TimerProxy::GetInstance().CallbackAlarmIfNeed(nullptr);
+    EXPECT_EQ(res, E_TIME_NULLPTR);
+}
+
+/**
+* @tc.name: ProxyTimerCover002
+* @tc.desc: test UID
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
+{
+    bool retProxy = timerManagerHandler_->ProxyTimer(UID, true, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
+        EXPECT_EQ(TimerProxy::GetInstance().proxyUids_.size(), (const unsigned int) 1);
+        auto it = TimerProxy::GetInstance().proxyUids_.find(UID);
+        EXPECT_NE(it, TimerProxy::GetInstance().proxyUids_.end());
+        EXPECT_EQ(it->second.size(), (const unsigned int) 0);
+    }
+
+    auto duration = std::chrono::milliseconds::zero();
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo1 = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+                                                 nullptr, nullptr, 0, UID, 0, "");
+    auto res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
+    EXPECT_EQ(res, E_TIME_OK);
+    auto timerInfo2 = std::make_shared<TimerInfo>(TIMER_ID + 1, 0, duration, timePoint, duration, timePoint, duration,
+                                                 nullptr, nullptr, 0, UID, 0, "");
+    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo2);
+    EXPECT_EQ(res, E_TIME_OK);
+
+    TimerProxy::GetInstance().RemoveProxy(TIMER_ID, UID);
+    TimerProxy::GetInstance().RemoveProxy(TIMER_ID + 1, UID);
+
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
+        auto it = TimerProxy::GetInstance().proxyMap_.find(UID);
+        EXPECT_EQ(it, TimerProxy::GetInstance().proxyMap_.end());
+    }
+
+    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
+    EXPECT_EQ(res, E_TIME_OK);
+    retProxy = timerManagerHandler_->ProxyTimer(UID, false, true);
+    EXPECT_TRUE(retProxy);
+
+    retProxy = timerManagerHandler_->ProxyTimer(UID, true, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
+    EXPECT_EQ(res, E_TIME_OK);
+
+    TimerProxy::GetInstance().ResetProxyMaps();
+
+    TimerProxy::GetInstance().EraseTimerFromProxyUidMap(0, UID);
+}
+
+
+/**
+* @tc.name: ProxyTimerCover003
+* @tc.desc: test PID
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
+{
+    std::set<int> pidList;
+    pidList.insert(PID);
+    bool retProxy = timerManagerHandler_->ProxyTimer(pidList, true, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
+    auto it = TimerProxy::GetInstance().proxyPids_.find(PID);
+    EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
+
+    auto duration = std::chrono::milliseconds::zero();
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo1 = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+                                                  nullptr, nullptr, 0, 0, PID, "");
+    auto res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
+    EXPECT_EQ(res, E_TIME_OK);
+    auto timerInfo2 = std::make_shared<TimerInfo>(TIMER_ID + 1, 0, duration, timePoint, duration, timePoint, duration,
+                                                  nullptr, nullptr, 0, 0, PID, "");
+    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo2);
+    EXPECT_EQ(res, E_TIME_OK);
+
+    TimerProxy::GetInstance().RemovePidProxy(TIMER_ID, PID);
+    TimerProxy::GetInstance().RemovePidProxy(TIMER_ID + 1, PID);
+
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyPidMutex_);
+        auto it = TimerProxy::GetInstance().proxyPidMap_.find(UID);
+        EXPECT_EQ(it, TimerProxy::GetInstance().proxyPidMap_.end());
+    }
+
+    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
+    EXPECT_EQ(res, E_TIME_OK);
+    retProxy = timerManagerHandler_->ProxyTimer(pidList, false, true);
+    EXPECT_TRUE(retProxy);
+
+    retProxy = timerManagerHandler_->ProxyTimer(pidList, true, true);
+    EXPECT_TRUE(retProxy);
+    usleep(BLOCK_TEST_TIME);
+    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
+    EXPECT_EQ(res, E_TIME_OK);
+
+    TimerProxy::GetInstance().ResetProxyPidMaps();
+
+    TimerProxy::GetInstance().EraseTimerFromProxyPidMap(0, PID);
+}
+
+/**
+* @tc.name: ProxyTimerCover004
+* @tc.desc: test CallbackAlarmIfNeed
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, ProxyTimerCover004, TestSize.Level1)
+{
+    TimerProxy::GetInstance().RecordUidTimerMap(nullptr, false);
+    TimerProxy::GetInstance().RemoveUidTimerMap(nullptr);
+
+    auto duration = std::chrono::milliseconds::zero();
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+                                                  nullptr, nullptr, 0, UID, PID, "");
+    TimerProxy::GetInstance().RecordUidTimerMap(timerInfo, false);
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().uidTimersMutex_);
+        auto it = TimerProxy::GetInstance().uidTimersMap_.find(UID);
+        EXPECT_NE(it, TimerProxy::GetInstance().uidTimersMap_.end());
+    }
+    TimerProxy::GetInstance().RemoveUidTimerMap(timerInfo);
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().uidTimersMutex_);
+        auto it = TimerProxy::GetInstance().uidTimersMap_.find(UID);
+        EXPECT_EQ(it, TimerProxy::GetInstance().uidTimersMap_.end());
+    }
+
+    TimerProxy::GetInstance().RecordPidTimerMap(nullptr, false);
+    TimerProxy::GetInstance().RemovePidTimerMap(nullptr);
+
+    TimerProxy::GetInstance().RecordPidTimerMap(timerInfo, false);
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().pidTimersMutex_);
+        auto it = TimerProxy::GetInstance().pidTimersMap_.find(PID);
+        EXPECT_NE(it, TimerProxy::GetInstance().pidTimersMap_.end());
+    }
+    TimerProxy::GetInstance().RemovePidTimerMap(timerInfo);
+    {
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().pidTimersMutex_);
+        auto it = TimerProxy::GetInstance().pidTimersMap_.find(PID);
+        EXPECT_EQ(it, TimerProxy::GetInstance().pidTimersMap_.end());
+    }
 }
 
 }  // MiscServices

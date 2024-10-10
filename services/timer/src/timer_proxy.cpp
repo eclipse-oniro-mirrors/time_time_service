@@ -36,15 +36,15 @@ void TimerProxy::RemoveProxy(uint64_t timerNumber, int32_t uid)
     std::lock_guard<std::mutex> lock(proxyMutex_);
     auto itMap = proxyMap_.find(uid);
     if (itMap != proxyMap_.end()) {
-        auto alarms = itMap->second;
-        for (auto itAlarm = alarms.begin(); itAlarm != alarms.end();) {
+        auto alarms = &itMap->second;
+        for (auto itAlarm = alarms->begin(); itAlarm != alarms->end();) {
             if ((*itAlarm)->id == timerNumber) {
-                itAlarm = alarms.erase(itAlarm);
+                itAlarm = alarms->erase(itAlarm);
             } else {
                 itAlarm++;
             }
         }
-        if (alarms.empty()) {
+        if (alarms->empty()) {
             proxyMap_.erase(uid);
         }
     }
@@ -55,15 +55,15 @@ void TimerProxy::RemovePidProxy(uint64_t timerNumber, int pid)
     std::lock_guard<std::mutex> lock(proxyPidMutex_);
     auto itMap = proxyPidMap_.find(pid);
     if (itMap != proxyPidMap_.end()) {
-        auto alarms = itMap->second;
-        for (auto itAlarm = alarms.begin(); itAlarm != alarms.end();) {
+        auto alarms = &itMap->second;
+        for (auto itAlarm = alarms->begin(); itAlarm != alarms->end();) {
             if ((*itAlarm)->id == timerNumber) {
-                itAlarm = alarms.erase(itAlarm);
+                itAlarm = alarms->erase(itAlarm);
             } else {
                 itAlarm++;
             }
         }
-        if (alarms.empty()) {
+        if (alarms->empty()) {
             proxyPidMap_.erase(pid);
         }
     }

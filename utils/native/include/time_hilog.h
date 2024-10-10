@@ -55,21 +55,20 @@ static constexpr OHOS::HiviewDFX::HiLogLabel TIME_MODULE_LABEL[TIME_MODULE_BUTT]
     { LOG_CORE, TIME_JS_NAPI, "TimeJSNAPI" },
 };
 
-#define R_FILENAME_ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
-#define R_FORMATED(fmt, ...) "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__
+#define R_FORMATED(fmt, ...) "%{public}s# " fmt, __FUNCTION__, ##__VA_ARGS__
 
 // In order to improve performance, do not check the module range.
 // Besides, make sure module is less than TIME_MODULE_BUTT.
 #define TIME_HILOGF(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_FATAL, TIME_MODULE_LABEL[module].domain, \
-    TIME_MODULE_LABEL[module].tag, "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__)
+    TIME_MODULE_LABEL[module].tag, "%{public}s# " fmt, __FUNCTION__, ##__VA_ARGS__)
 #define TIME_HILOGE(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_ERROR, TIME_MODULE_LABEL[module].domain, \
-    TIME_MODULE_LABEL[module].tag, "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__)
+    TIME_MODULE_LABEL[module].tag, "%{public}s# " fmt, __FUNCTION__, ##__VA_ARGS__)
 #define TIME_HILOGW(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_WARN, TIME_MODULE_LABEL[module].domain, \
-    TIME_MODULE_LABEL[module].tag, "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__)
+    TIME_MODULE_LABEL[module].tag, "%{public}s# " fmt, __FUNCTION__, ##__VA_ARGS__)
 #define TIME_HILOGI(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_INFO, TIME_MODULE_LABEL[module].domain, \
-    TIME_MODULE_LABEL[module].tag, "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__)
+    TIME_MODULE_LABEL[module].tag, "%{public}s# " fmt, __FUNCTION__, ##__VA_ARGS__)
 #define TIME_HILOGD(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_DEBUG, TIME_MODULE_LABEL[module].domain, \
-    TIME_MODULE_LABEL[module].tag, "[%{public}s] %{public}s# " fmt, R_FILENAME_, __FUNCTION__, ##__VA_ARGS__)
+    TIME_MODULE_LABEL[module].tag, "%{public}s# " fmt, __FUNCTION__, ##__VA_ARGS__)
 #define TIME_SIMPLIFY_HILOGI(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_INFO, TIME_MODULE_LABEL[module].domain, \
     TIME_MODULE_LABEL[module].tag, fmt, ##__VA_ARGS__)
 

@@ -24,6 +24,7 @@ namespace OHOS {
 namespace MiscServices {
 constexpr const char *DB_NAME = "/data/service/el1/public/database/time/time.db";
 constexpr int DATABASE_OPEN_VERSION = 1;
+constexpr int DATABASE_OPEN_VERSION_2 = 2;
 constexpr int CHECK_VERSION_FAILED = -1;
 constexpr int API12_5_0_RELEASE = 50;
 constexpr int INVALID_VERSION = -50;
@@ -31,30 +32,6 @@ constexpr int64_t MILLISECOND_TO_NANO = 1000000;
 constexpr int CLOCK_POWEROFF_ALARM = 12;
 constexpr const char *HOLD_ON_REBOOT = "hold_on_reboot";
 constexpr const char *DROP_ON_REBOOT = "drop_on_reboot";
-
-constexpr const char *CREATE_TIME_TIMER_HOLD_ON_REBOOT = "CREATE TABLE IF NOT EXISTS hold_on_reboot "
-                                                         "(timerId INTEGER PRIMARY KEY, "
-                                                         "type INTEGER, "
-                                                         "flag INTEGER, "
-                                                         "windowLength INTEGER, "
-                                                         "interval INTEGER, "
-                                                         "uid INTEGER, "
-                                                         "bundleName TEXT, "
-                                                         "wantAgent TEXT, "
-                                                         "state INTEGER, "
-                                                         "triggerTime INTEGER)";
-
-constexpr const char *CREATE_TIME_TIMER_DROP_ON_REBOOT = "CREATE TABLE IF NOT EXISTS drop_on_reboot "
-                                                         "(timerId INTEGER PRIMARY KEY, "
-                                                         "type INTEGER, "
-                                                         "flag INTEGER, "
-                                                         "windowLength INTEGER, "
-                                                         "interval INTEGER, "
-                                                         "uid INTEGER, "
-                                                         "bundleName TEXT, "
-                                                         "wantAgent TEXT, "
-                                                         "state INTEGER, "
-                                                         "triggerTime INTEGER)";
 
 int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
 int64_t GetLong(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);

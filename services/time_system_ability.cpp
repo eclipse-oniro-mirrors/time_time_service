@@ -455,7 +455,7 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
         " uid:%{public}d pid:%{public}d ",
         std::to_string(beforeTime).c_str(), std::to_string(time).c_str(), std::to_string(time - bootTime).c_str(),
         IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
-    if (time < 0 || time / 1000LL >= LLONG_MAX) {
+    if (time < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "input param error %{public}" PRId64 "", time);
         return false;
     }
@@ -1009,7 +1009,8 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(resultSet, 7)),
             // Line 5 is 'uid'
             GetInt(resultSet, 5),
-            0,
+            // Line 11 is 'pid'
+            GetInt(resultSet, 11),
             // Line 6 is 'bundleName'
             GetString(resultSet, 6)
         });
