@@ -62,3 +62,40 @@ ohos_shared_library("time_client") {
   subsystem_name = "time"
   part_name = "time_service"
 }
+
+ohos_shared_library("time_client_test") {
+  sources = [
+    "${api_path}/src/time_service_client.cpp",
+    "${time_service_path}/ipc/proxy/time_service_proxy.cpp",
+    "${time_service_path}/ipc/proxy/timer_notify_callback_proxy.cpp",
+    "${time_service_path}/ipc/stub/timer_call_back_stub.cpp",
+    "${time_service_path}/time/src/itimer_info.cpp",
+    "${time_service_path}/time/src/timer_call_back.cpp",
+  ]
+  configs = [ ":time_client_config" ]
+  public_configs = [ ":time_client_config" ]
+  innerapi_tags = [
+    "platformsdk",
+    "sasdk",
+  ]
+  external_deps = [
+    "ability_runtime:abilitykit_native",
+    "ability_runtime:extensionkit_native",
+    "ability_runtime:wantagent_innerkits",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "samgr:samgr_proxy",
+  ]
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = time_sanitize_debug
+  }
+  subsystem_name = "time"
+  part_name = "time_service"
+}
