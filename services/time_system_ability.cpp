@@ -68,7 +68,8 @@ constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t ONE_MILLI = 1000;
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
-                                                   "uid", "bundleName", "wantAgent", "state", "triggerTime" };
+                                                   "uid", "bundleName", "wantAgent", "state", "triggerTime" \
+                                                   "pid"};
 const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
 } // namespace
 
@@ -1016,8 +1017,8 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(resultSet, 7)),
             // Line 5 is 'uid'
             GetInt(resultSet, 5),
-            // Line 11 is 'pid'
-            GetInt(resultSet, 11),
+            // Line 10 is 'pid'
+            GetInt(resultSet, 10),
             // Line 6 is 'bundleName'
             GetString(resultSet, 6)
         });
