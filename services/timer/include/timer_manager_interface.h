@@ -26,7 +26,7 @@ namespace MiscServices {
 struct TimerEntry {
     uint64_t id;
     int type;
-    uint64_t windowLength;
+    int64_t windowLength;
     uint64_t interval;
     int flag;
     std::function<int32_t (const uint64_t)> callback;

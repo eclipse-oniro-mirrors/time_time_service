@@ -470,8 +470,8 @@ private:
 
     static std::mutex instanceLock_;
     static sptr<TimeServiceClient> instance_;
-    static std::map<uint64_t, std::shared_ptr<RecoverTimerInfo>> recoverTimerInfoMap_;
-    static std::mutex recoverTimerInfoLock_;
+    TIME_API static std::map<uint64_t, std::shared_ptr<RecoverTimerInfo>> recoverTimerInfoMap_;
+    TIME_API static std::mutex recoverTimerInfoLock_;
     std::mutex proxyLock_;
     std::mutex deathLock_;
     sptr<ITimeService> timeServiceProxy_;

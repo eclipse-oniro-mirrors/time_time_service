@@ -18,6 +18,36 @@
 
 namespace OHOS {
 namespace MiscServices {
+constexpr const char *CREATE_TIME_TIMER_HOLD_ON_REBOOT = "CREATE TABLE IF NOT EXISTS hold_on_reboot "
+                                                         "(timerId INTEGER PRIMARY KEY, "
+                                                         "type INTEGER, "
+                                                         "flag INTEGER, "
+                                                         "windowLength INTEGER, "
+                                                         "interval INTEGER, "
+                                                         "uid INTEGER, "
+                                                         "bundleName TEXT, "
+                                                         "wantAgent TEXT, "
+                                                         "state INTEGER, "
+                                                         "triggerTime INTEGER, "
+                                                         "pid INTEGER)";
+
+constexpr const char *CREATE_TIME_TIMER_DROP_ON_REBOOT = "CREATE TABLE IF NOT EXISTS drop_on_reboot "
+                                                         "(timerId INTEGER PRIMARY KEY, "
+                                                         "type INTEGER, "
+                                                         "flag INTEGER, "
+                                                         "windowLength INTEGER, "
+                                                         "interval INTEGER, "
+                                                         "uid INTEGER, "
+                                                         "bundleName TEXT, "
+                                                         "wantAgent TEXT, "
+                                                         "state INTEGER, "
+                                                         "triggerTime INTEGER, "
+                                                         "pid INTEGER)";
+
+constexpr const char *HOLD_ON_REBOOT_ADD_COLUMN = "ALTER TABLE hold_on_reboot ADD COLUMN pid INTEGER";
+
+constexpr const char *DROP_ON_REBOOT_ADD_COLUMN = "ALTER TABLE drop_on_reboot ADD COLUMN pid INTEGER";
+
 TimeDatabase::TimeDatabase()
 {
     int errCode = OHOS::NativeRdb::E_OK;
@@ -26,7 +56,7 @@ TimeDatabase::TimeDatabase()
     config.SetEncryptStatus(false);
     config.SetReadConSize(1);
     TimeDBOpenCallback timeDBOpenCallback;
-    store_ = OHOS::NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_OPEN_VERSION, timeDBOpenCallback, errCode);
+    store_ = OHOS::NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_OPEN_VERSION_2, timeDBOpenCallback, errCode);
     TIME_HILOGI(TIME_MODULE_SERVICE, "Gets time database, ret: %{public}d", errCode);
 }
 
@@ -167,6 +197,18 @@ int TimeDBOpenCallback::OnOpen(OHOS::NativeRdb::RdbStore &store)
 
 int TimeDBOpenCallback::OnUpgrade(OHOS::NativeRdb::RdbStore &store, int oldVersion, int newVersion)
 {
+    if (oldVersion == DATABASE_OPEN_VERSION && newVersion == DATABASE_OPEN_VERSION_2) {
+        int ret = store.ExecuteSql(HOLD_ON_REBOOT_ADD_COLUMN);
+        if (ret != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "hold_on_reboot add column failed, ret: %{public}d", ret);
+            return ret;
+        }
+        ret = store.ExecuteSql(DROP_ON_REBOOT_ADD_COLUMN);
+        if (ret != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "drop_on_reboot add column failed, ret: %{public}d", ret);
+            return ret;
+        }
+    }
     return OHOS::NativeRdb::E_OK;
 }
 

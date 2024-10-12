@@ -103,14 +103,6 @@ private:
     void CreateMessage(char *buffer);
 
     /**
-    * This function creates the SNTP message ready for transmission (SNTP Req)
-    * and returns it back.
-    *
-    * @param buffer the message to be sent
-    */
-    void WriteTimeStamp(char *buffer, ntp_timestamp *ntp);
-
-    /**
      * This function gets the information received from the SNTP response
      * and prints the results (e.g. offset, round trip delay etc.)
      *

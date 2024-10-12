@@ -122,21 +122,21 @@ TimerManager* TimerManager::GetInstance()
     return instance_;
 }
 
-OHOS::NativeRdb::ValuesBucket GetInsertValues(uint64_t &timerId, TimerPara &paras,
-                                              int uid, std::string bundleName,
-                                              std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent)
+OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerInfo, TimerPara &paras)
 {
     OHOS::NativeRdb::ValuesBucket insertValues;
-    insertValues.PutLong("timerId", timerId);
+    insertValues.PutLong("timerId", timerInfo->id);
     insertValues.PutInt("type", paras.timerType);
     insertValues.PutInt("flag", paras.flag);
     insertValues.PutLong("windowLength", paras.windowLength);
     insertValues.PutLong("interval", paras.interval);
-    insertValues.PutInt("uid", uid);
-    insertValues.PutString("bundleName", bundleName);
-    insertValues.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues.PutInt("uid", timerInfo->uid);
+    insertValues.PutString("bundleName", timerInfo->bundleName);
+    insertValues.PutString("wantAgent",
+        OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(timerInfo->wantAgent));
     insertValues.PutInt("state", 0);
     insertValues.PutLong("triggerTime", 0);
+    insertValues.PutLong("pid", timerInfo->pid);
     return insertValues;
 }
 
@@ -164,7 +164,7 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
         timerId,
         paras.timerType,
-        static_cast<uint64_t>(paras.windowLength),
+        paras.windowLength,
         paras.interval,
         paras.flag,
         std::move(callback),
@@ -179,10 +179,10 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
         return E_TIME_OK;
     } else if (CheckNeedRecoverOnReboot(bundleName, paras.timerType)) {
         TimeDatabase::GetInstance().Insert(std::string(HOLD_ON_REBOOT),
-                                           GetInsertValues(timerId, paras, uid, bundleName, wantAgent));
+                                           GetInsertValues(timerInfo, paras));
     } else {
         TimeDatabase::GetInstance().Insert(std::string(DROP_ON_REBOOT),
-                                           GetInsertValues(timerId, paras, uid, bundleName, wantAgent));
+                                           GetInsertValues(timerInfo, paras));
     }
     return E_TIME_OK;
 }
@@ -310,7 +310,7 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 void TimerManager::SetHandler(uint64_t id,
                               int type,
                               uint64_t triggerAtTime,
-                              uint64_t windowLength,
+                              int64_t windowLength,
                               uint64_t interval,
                               int flag,
                               std::function<int32_t (const uint64_t)> callback,
@@ -323,10 +323,9 @@ void TimerManager::SetHandler(uint64_t id,
     if (windowLengthDuration > INTERVAL_HALF_DAY) {
         windowLengthDuration = INTERVAL_HOUR;
     }
-    auto minInterval = MIN_INTERVAL_ONE_SECONDS;
-    auto intervalDuration = milliseconds(interval);
-    if (intervalDuration > milliseconds::zero() && intervalDuration < minInterval) {
-        intervalDuration = minInterval;
+    auto intervalDuration = milliseconds(interval > MAX_MILLISECOND ? MAX_MILLISECOND : interval);
+    if (intervalDuration > milliseconds::zero() && intervalDuration < MIN_INTERVAL_ONE_SECONDS) {
+        intervalDuration = MIN_INTERVAL_ONE_SECONDS;
     } else if (intervalDuration > MAX_INTERVAL) {
         intervalDuration = MAX_INTERVAL;
     }
@@ -687,8 +686,9 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
             triggerList.push_back(alarm);
-            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "uid: %{public}d id:%{public}" PRId64 " name:%{public}s",
-                alarm->uid, alarm->id, alarm->bundleName.c_str());
+            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "uid: %{public}d id:%{public}" PRId64 " name:%{public}s"
+                " wk:%{public}u",
+                alarm->uid, alarm->id, alarm->bundleName.c_str(), alarm->wakeup);
 
             if (alarm->wakeup) {
                 hasWakeup = true;
@@ -1065,7 +1065,7 @@ bool TimerManager::CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm)
 // needs to acquire the lock `mutex_` before calling this method
 bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "start adjust timer, uid=%{public}d, id=%{public}" PRId64 "",
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start adjust timer, uid=%{public}d, id=%{public}" PRId64 "",
         alarm->uid, alarm->id);
     if (mPendingIdleUntil_ == alarm) {
         return false;
@@ -1091,13 +1091,13 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<Tim
     }
 
     if (CheckAllowWhileIdle(alarm)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer unrestricted, not adjust. id=%{public}" PRId64 "", alarm->id);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Timer unrestricted, not adjust. id=%{public}" PRId64 "", alarm->id);
         return false;
     } else if (alarm->whenElapsed > mPendingIdleUntil_->whenElapsed) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, not adjust. id=%{public}" PRId64 "", alarm->id);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Timer not allowed, not adjust. id=%{public}" PRId64 "", alarm->id);
         return false;
     } else {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer not allowed, id=%{public}" PRId64 "", alarm->id);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Timer not allowed, id=%{public}" PRId64 "", alarm->id);
         delayedTimers_[alarm->id] = alarm->whenElapsed;
         auto offset = ConvertToElapsed(mPendingIdleUntil_->when, mPendingIdleUntil_->type) - GetBootTimeNs();
         return alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), offset);
@@ -1155,7 +1155,7 @@ bool TimerManager::ShowTimerEntryMap(int fd)
         dprintf(fd, " * timer id            = %lu\n", iter->second->id);
         dprintf(fd, " * timer type          = %d\n", iter->second->type);
         dprintf(fd, " * timer flag          = %lu\n", iter->second->flag);
-        dprintf(fd, " * timer window Length = %lu\n", iter->second->windowLength);
+        dprintf(fd, " * timer window Length = %lld\n", iter->second->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
     }
@@ -1175,7 +1175,7 @@ bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
         dprintf(fd, " - dump timer number   = %lu\n", iter->first);
         dprintf(fd, " * timer id            = %lu\n", iter->second->id);
         dprintf(fd, " * timer type          = %d\n", iter->second->type);
-        dprintf(fd, " * timer window Length = %lu\n", iter->second->windowLength);
+        dprintf(fd, " * timer window Length = %lld\n", iter->second->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
     }
