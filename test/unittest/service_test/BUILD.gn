@@ -42,7 +42,7 @@ ohos_unittest("TimeServiceTest") {
   configs = [ ":module_private_config" ]
 
   deps = [
-    "${api_path}:time_client_test",
+    "${api_path}:time_client",
     "${time_service_path}:time_system_ability_static",
     "//third_party/googletest:gtest_main",
   ]
@@ -81,7 +81,7 @@ ohos_unittest("TimeClientTest") {
   configs = [ ":module_private_config" ]
 
   deps = [
-    "${api_path}:time_client_test",
+    "${api_path}:time_client",
     "${time_service_path}:time_system_ability_static",
     "//third_party/googletest:gtest_main",
   ]
@@ -118,7 +118,7 @@ ohos_unittest("TimeDfxTest") {
   configs = [ ":module_private_config" ]
 
   deps = [
-    "${api_path}:time_client_test",
+    "${api_path}:time_client",
     "${time_service_path}:time_system_ability_static",
     "//third_party/googletest:gtest_main",
   ]
@@ -185,7 +185,7 @@ ohos_unittest("TimeProxyTest") {
   configs = [ ":module_private_config" ]
 
   deps = [
-    "${api_path}:time_client_test",
+    "${api_path}:time_client",
     "${time_service_path}:time_system_ability_static",
     "//third_party/googletest:gtest_main",
   ]
