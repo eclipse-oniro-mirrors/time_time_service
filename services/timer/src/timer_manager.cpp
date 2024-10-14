@@ -40,6 +40,7 @@
 #include "timer_database.h"
 #include "os_account.h"
 #include "os_account_manager.h"
+#include "parameters.h"
 #ifdef POWER_MANAGER_ENABLE
 #include "time_system_ability.h"
 #endif
@@ -114,6 +115,10 @@ TimerManager* TimerManager::GetInstance()
                 return nullptr;
             }
             instance_ = new TimerManager(impl);
+            std::vector<std::string> bundleList = TimeFileUtils::GetBundleList();
+            if (!bundleList.empty()) {
+                NEED_RECOVER_ON_REBOOT = bundleList;
+            }
         }
     }
     if (instance_ == nullptr) {
