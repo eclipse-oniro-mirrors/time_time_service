@@ -40,7 +40,6 @@
 #include "timer_database.h"
 #include "os_account.h"
 #include "os_account_manager.h"
-#include "parameters.h"
 #ifdef POWER_MANAGER_ENABLE
 #include "time_system_ability.h"
 #endif
@@ -68,7 +67,6 @@ const int WANT_RETRY_INTERVAL = 1;
 const int SYSTEM_USER_ID  = 0;
 // an error code of ipc which means peer end is dead
 constexpr int PEER_END_DEAD = 29189;
-const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 
@@ -105,30 +103,6 @@ TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
     alarmThread_.reset(new std::thread([this] { this->TimerLooper(); }));
 }
 
-std::vector<std::string> GetBundleList()
-{
-    std::vector<std::string> bundleList;
-    std::string bundleStr = system::GetParameter(AUTO_RESTORE_TIMER_APPS, "");
-    size_t start = 0;
-    do {
-        size_t end = bundleStr.find(',', start);
-        if (end < start) {
-            break;
-        }
-        std::string temp = bundleStr.substr(start, end - start);
-        if (temp.empty()) {
-            ++start;
-            continue;
-        }
-        bundleList.emplace_back(temp);
-        if (end == std::string::npos) {
-            break;
-        }
-        start = end + 1;
-    } while (start < bundleStr.size());
-    return bundleList;
-}
-
 TimerManager* TimerManager::GetInstance()
 {
     if (instance_ == nullptr) {
@@ -140,7 +114,7 @@ TimerManager* TimerManager::GetInstance()
                 return nullptr;
             }
             instance_ = new TimerManager(impl);
-            std::vector<std::string> bundleList = GetBundleList();
+            std::vector<std::string> bundleList = TimeFileUtils::GetBundleList();
             if (!bundleList.empty()) {
                 NEED_RECOVER_ON_REBOOT = bundleList;
             }
