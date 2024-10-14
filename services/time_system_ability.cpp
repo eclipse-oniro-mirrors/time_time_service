@@ -38,6 +38,7 @@
 #include "timer_manager_interface.h"
 #include "timer_proxy.h"
 #include "timer_database.h"
+#include "time_file_utils.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
 #include "power_subscriber.h"
@@ -1053,6 +1054,7 @@ void TimeSystemAbility::SetAutoReboot()
     }
     int64_t currentTime = 0;
     TimeSystemAbility::GetInstance()->GetWallTimeMs(currentTime);
+    auto bundleList = TimeFileUtils::GetBundleList();
     do {
         auto bundleName = GetString(resultSet, 0);
         uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 1));
@@ -1061,7 +1063,7 @@ void TimeSystemAbility::SetAutoReboot()
                         "triggerTime: %{public}" PRIu64" currentTime: %{public}" PRId64"", triggerTime, currentTime);
             continue;
         }
-        if (bundleName == NEED_RECOVER_ON_REBOOT[0]) {
+        if (bundleName == (bundleList.empty() ? "" : bundleList[0])) {
             int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
             if (tmfd < 0) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error: %{public}s", strerror(errno));

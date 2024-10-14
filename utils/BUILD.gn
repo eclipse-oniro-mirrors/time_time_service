@@ -37,6 +37,7 @@ ohos_source_set("time_utils") {
     "access_token:libtokenid_sdk",
     "c_utils:utils",
     "hilog:libhilog",
+    "init:libbegetutil",
     "ipc:ipc_single",
   ]
   branch_protector_ret = "pac_ret"
