@@ -28,9 +28,7 @@
 namespace OHOS {
 namespace MiscServices {
 std::mutex TimeServiceClient::instanceLock_;
-std::mutex TimeServiceClient::recoverTimerInfoLock_;
 sptr<TimeServiceClient> TimeServiceClient::instance_;
-std::map<uint64_t, std::shared_ptr<TimeServiceClient::RecoverTimerInfo>> TimeServiceClient::recoverTimerInfoMap_;
 
 TimeServiceClient::TimeServiceListener::TimeServiceListener ()
 {
@@ -49,9 +47,9 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
             TIME_HILOGE(TIME_MODULE_CLIENT, "New TimerCallback failed");
             return;
         }
-        std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
-        auto iter = recoverTimerInfoMap_.begin();
-        for (; iter != recoverTimerInfoMap_.end(); iter++) {
+        std::lock_guard<std::mutex> lock(TimeServiceClient::GetInstance()->recoverTimerInfoLock_);
+        auto iter = TimeServiceClient::GetInstance()->recoverTimerInfoMap_.begin();
+        for (; iter != TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end(); iter++) {
             auto timerId = iter->first;
             proxy->CreateTimer(iter->second->timerInfo, timerCallbackInfoObject, timerId);
             if (iter->second->state == 1) {
