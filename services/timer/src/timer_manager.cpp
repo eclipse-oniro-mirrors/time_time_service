@@ -136,7 +136,7 @@ OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerI
         OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(timerInfo->wantAgent));
     insertValues.PutInt("state", 0);
     insertValues.PutLong("triggerTime", 0);
-    insertValues.PutLong("pid", timerInfo->pid);
+    insertValues.PutInt("pid", timerInfo->pid);
     return insertValues;
 }
 
