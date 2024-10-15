@@ -52,6 +52,8 @@ public:
     void EraseTimerFromProxyPidMap(const uint64_t id, const int pid);
     void RecordUidTimerMap(const std::shared_ptr<TimerInfo> &alarm, const bool isRebatched);
     void RecordPidTimerMap(const std::shared_ptr<TimerInfo> &alarm, const bool isRebatched);
+    void RecordProxyUidTimerMap(const std::shared_ptr<TimerInfo> &alarm);
+    void RecordProxyPidTimerMap(const std::shared_ptr<TimerInfo> &alarm);
     void RemoveUidTimerMap(const std::shared_ptr<TimerInfo> &alarm);
     void RemovePidTimerMap(const std::shared_ptr<TimerInfo> &alarm);
     void RemoveUidTimerMap(const uint64_t id);

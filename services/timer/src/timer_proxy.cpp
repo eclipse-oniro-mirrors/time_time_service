@@ -417,6 +417,30 @@ void TimerProxy::RemoveUidTimerMap(const std::shared_ptr<TimerInfo> &alarm)
     }
 }
 
+void TimerProxy::RecordProxyUidTimerMap(const std::shared_ptr<TimerInfo> &alarm)
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    auto it = proxyUids_.find(alarm->uid);
+    if (it != proxyUids_.end()) {
+        it->second.insert(std::make_pair(alarm->id, alarm->whenElapsed));
+    } else {
+        proxyUids_.insert(std::make_pair(alarm->uid,
+            std::unordered_map<uint64_t, std::chrono::steady_clock::time_point>{{alarm->id, alarm->whenElapsed}}));
+    }
+}
+
+void TimerProxy::RecordProxyPidTimerMap(const std::shared_ptr<TimerInfo> &alarm)
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    auto it = proxyPids_.find(alarm->pid);
+    if (it != proxyPids_.end()) {
+        it->second.insert(std::make_pair(alarm->id, alarm->whenElapsed));
+    } else {
+        proxyPids_.insert(std::make_pair(alarm->pid,
+            std::unordered_map<uint64_t, std::chrono::steady_clock::time_point>{{alarm->id, alarm->whenElapsed}}));
+    }
+}
+
 void TimerProxy::RemovePidTimerMap(const std::shared_ptr<TimerInfo> &alarm)
 {
     if (alarm == nullptr) {
