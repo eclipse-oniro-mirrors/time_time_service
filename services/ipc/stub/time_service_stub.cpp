@@ -37,20 +37,6 @@ TimeServiceStub::TimeServiceStub()
             [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnSetTimeZone(data, reply); } },
         { TimeServiceIpcInterfaceCode::GET_TIME_ZONE,
             [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetTimeZone(data, reply); } },
-        { TimeServiceIpcInterfaceCode::GET_WALL_TIME_MILLI,
-            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetWallTimeMs(data, reply); } },
-        { TimeServiceIpcInterfaceCode::GET_WALL_TIME_NANO,
-            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetWallTimeNs(data, reply); } },
-        { TimeServiceIpcInterfaceCode::GET_BOOT_TIME_MILLI,
-            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetBootTimeMs(data, reply); } },
-        { TimeServiceIpcInterfaceCode::GET_BOOT_TIME_NANO,
-            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetBootTimeNs(data, reply); } },
-        { TimeServiceIpcInterfaceCode::GET_MONO_TIME_MILLI,
-            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t {
-                return OnGetMonotonicTimeMs(data, reply); } },
-        { TimeServiceIpcInterfaceCode::GET_MONO_TIME_NANO,
-            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t {
-                return OnGetMonotonicTimeNs(data, reply); } },
         { TimeServiceIpcInterfaceCode::GET_THREAD_TIME_MILLI,
             [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnGetThreadTimeMs(data, reply); } },
         { TimeServiceIpcInterfaceCode::GET_THREAD_TIME_NANO,
@@ -165,90 +151,6 @@ int32_t TimeServiceStub::OnGetTimeZone(MessageParcel &data, MessageParcel &reply
         return ret;
     }
     reply.WriteString(timeZoneId);
-    TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
-    return ret;
-}
-
-int32_t TimeServiceStub::OnGetWallTimeMs(MessageParcel &data, MessageParcel &reply)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t time;
-    int32_t ret = GetWallTimeMs(time);
-    if (ret != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
-        return ret;
-    }
-    reply.WriteInt64(time);
-    TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
-    return ret;
-}
-
-int32_t TimeServiceStub::OnGetWallTimeNs(MessageParcel &data, MessageParcel &reply)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t time;
-    int32_t ret = GetWallTimeNs(time);
-    if (ret != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
-        return ret;
-    }
-    reply.WriteInt64(time);
-    TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
-    return ret;
-}
-
-int32_t TimeServiceStub::OnGetBootTimeMs(MessageParcel &data, MessageParcel &reply)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t time;
-    int32_t ret = GetBootTimeMs(time);
-    if (ret != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
-        return ret;
-    }
-    reply.WriteInt64(time);
-    TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
-    return ret;
-}
-
-int32_t TimeServiceStub::OnGetBootTimeNs(MessageParcel &data, MessageParcel &reply)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t time;
-    int32_t ret = GetBootTimeNs(time);
-    if (ret != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
-        return ret;
-    }
-    reply.WriteInt64(time);
-    TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
-    return ret;
-}
-
-int32_t TimeServiceStub::OnGetMonotonicTimeMs(MessageParcel &data, MessageParcel &reply)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t time;
-    int32_t ret = GetMonotonicTimeMs(time);
-    if (ret != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
-        return ret;
-    }
-    reply.WriteInt64(time);
-    TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
-    return ret;
-}
-
-int32_t TimeServiceStub::OnGetMonotonicTimeNs(MessageParcel &data, MessageParcel &reply)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
-    int64_t time;
-    int32_t ret = GetMonotonicTimeNs(time);
-    if (ret != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, " end##ret = %{public}d", ret);
-        return ret;
-    }
-    reply.WriteInt64(time);
     TIME_HILOGD(TIME_MODULE_SERVICE, " end.");
     return ret;
 }

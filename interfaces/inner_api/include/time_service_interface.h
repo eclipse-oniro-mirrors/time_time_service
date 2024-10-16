@@ -54,54 +54,6 @@ public:
     virtual int32_t GetTimeZone(std::string &timezoneId) = 0;
 
     /**
-    * GetWallTimeMs
-    *
-    * @param times result of times ,unit: millisecond
-    * @return int32_t ERR_OK on success, other on failure.
-    */
-    virtual int32_t GetWallTimeMs(int64_t &times) = 0;
-
-    /**
-    * GetWallTimeNs
-    *
-    * @param times result of times ,unit: Nanosecond
-    * @return int32_t ERR_OK on success, other on failure.
-    */
-    virtual int32_t GetWallTimeNs(int64_t &times) = 0;
-
-    /**
-    * GetBootTimeMs
-    *
-    * @param times result of times ,unit: millisecond
-    * @return int32_t ERR_OK on success, other on failure.
-    */
-    virtual int32_t GetBootTimeMs(int64_t &times) = 0;
-
-    /**
-    * GetBootTimeNs
-    *
-    * @param times result of times ,unit: millisecond
-    * @return int32_t ERR_OK on success, other on failure.
-    */
-    virtual int32_t GetBootTimeNs(int64_t &times) = 0;
-
-    /**
-    * GetMonotonicTimeMs
-    *
-    * @param times result of times ,unit: millisecond
-    * @return int32_t ERR_OK on success, other on failure.
-    */
-    virtual int32_t GetMonotonicTimeMs(int64_t &times) = 0;
-
-    /**
-    * GetMonotonicTimeNs
-    *
-    * @param times result of times ,unit: Nanosecond
-    * @return int32_t ERR_OK on success, other on failure.
-    */
-    virtual int32_t GetMonotonicTimeNs(int64_t &times) = 0;
-
-    /**
     * GetThreadTimeMs
     *
     * @param times result of times ,unit: millisecond

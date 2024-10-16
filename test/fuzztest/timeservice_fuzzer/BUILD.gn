@@ -33,26 +33,6 @@ timedestroytimer_test = {
   configFuzzer = "timedestroytimer_fuzzer"
   source = "timedestroytimer_fuzzer/timedestroytimer_fuzzer.cpp"
 }
-timegetboottimemilli_test = {
-  targetName = "TimeGetBootTimeMilliFuzzTest"
-  configFuzzer = "timegetboottimemilli_fuzzer"
-  source = "timegetboottimemilli_fuzzer/timegetboottimemilli_fuzzer.cpp"
-}
-timegetboottimenano_test = {
-  targetName = "TimeGetBootTimeNanoFuzzTest"
-  configFuzzer = "timegetboottimenano_fuzzer"
-  source = "timegetboottimenano_fuzzer/timegetboottimenano_fuzzer.cpp"
-}
-timegetmonotimemilli_test = {
-  targetName = "TimeGetMonoTimeMilliFuzzTest"
-  configFuzzer = "timegetmonotimemilli_fuzzer"
-  source = "timegetmonotimemilli_fuzzer/timegetmonotimemilli_fuzzer.cpp"
-}
-timegetmonotimenano_test = {
-  targetName = "TimeGetMonoTimeNanoFuzzTest"
-  configFuzzer = "timegetmonotimenano_fuzzer"
-  source = "timegetmonotimenano_fuzzer/timegetmonotimenano_fuzzer.cpp"
-}
 timegetthreadtimemilli_test = {
   targetName = "TimeGetThreadTimeMilliFuzzTest"
   configFuzzer = "timegetthreadtimemilli_fuzzer"
@@ -67,16 +47,6 @@ timegettimezone_test = {
   targetName = "TimeGetTimeZoneFuzzTest"
   configFuzzer = "timegettimezone_fuzzer"
   source = "timegettimezone_fuzzer/timegettimezone_fuzzer.cpp"
-}
-timegetwalltimemilli_test = {
-  targetName = "TimeGetWallTimeMilliFuzzTest"
-  configFuzzer = "timegetwalltimemilli_fuzzer"
-  source = "timegetwalltimemilli_fuzzer/timegetwalltimemilli_fuzzer.cpp"
-}
-timegetwalltimenano_test = {
-  targetName = "TimeGetWallTimeNanoFuzzTest"
-  configFuzzer = "timegetwalltimenano_fuzzer"
-  source = "timegetwalltimenano_fuzzer/timegetwalltimenano_fuzzer.cpp"
 }
 timereceivedmessage_test = {
   targetName = "TimeReceivedMessageFuzzTest"
@@ -113,15 +83,9 @@ time_fuzztests = [
   timeboundarycode_test,
   timecreatetimer_test,
   timedestroytimer_test,
-  timegetboottimemilli_test,
-  timegetboottimenano_test,
-  timegetmonotimemilli_test,
-  timegetmonotimenano_test,
   timegetthreadtimemilli_test,
   timegetthreadtimenano_test,
   timegettimezone_test,
-  timegetwalltimemilli_test,
-  timegetwalltimenano_test,
   timereceivedmessage_test,
   timeservicesettimezone_test,
   timestarttimer_test,
@@ -192,15 +156,9 @@ group("fuzztest") {
     ":TimeBoundaryCodeFuzzTest",
     ":TimeCreateTimerFuzzTest",
     ":TimeDestroyTimerFuzzTest",
-    ":TimeGetBootTimeMilliFuzzTest",
-    ":TimeGetBootTimeNanoFuzzTest",
-    ":TimeGetMonoTimeMilliFuzzTest",
-    ":TimeGetMonoTimeNanoFuzzTest",
     ":TimeGetThreadTimeMilliFuzzTest",
     ":TimeGetThreadTimeNanoFuzzTest",
     ":TimeGetTimeZoneFuzzTest",
-    ":TimeGetWallTimeMilliFuzzTest",
-    ":TimeGetWallTimeNanoFuzzTest",
     ":TimeReceivedMessageFuzzTest",
     ":TimeServiceSetTimeZoneFuzzTest",
     ":TimeSntpFuzzTest",
