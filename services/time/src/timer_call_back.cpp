@@ -22,17 +22,12 @@ namespace MiscServices {
 std::mutex TimerCallback::instanceLock_;
 sptr<TimerCallback> TimerCallback::instance_;
 
-std::map<uint64_t, std::shared_ptr<ITimerInfo>> TimerCallback::timerInfoMap_;
-std::mutex TimerCallback::timerInfoMutex_;
-
 TimerCallback::TimerCallback()
 {
 }
 
 TimerCallback::~TimerCallback()
 {
-    std::lock_guard<std::mutex> lock(timerInfoMutex_);
-    timerInfoMap_.clear();
 }
 
 sptr<TimerCallback> TimerCallback::GetInstance()
