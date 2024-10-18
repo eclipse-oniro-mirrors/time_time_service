@@ -46,8 +46,8 @@ private:
 
     static std::mutex instanceLock_;
     static sptr<TimerCallback> instance_;
-    static std::map<uint64_t, std::shared_ptr<ITimerInfo>> timerInfoMap_;
-    static std::mutex timerInfoMutex_;
+    std::map<uint64_t, std::shared_ptr<ITimerInfo>> timerInfoMap_;
+    std::mutex timerInfoMutex_;
 };
 } // namespace MiscServices
 } // namespace OHOS
