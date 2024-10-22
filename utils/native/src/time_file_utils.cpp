@@ -26,10 +26,10 @@
 
 constexpr int CMDLINE_PATH_LEN = 32;
 constexpr int CMDLINE_LEN = 128;
-const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
 
 namespace OHOS {
 namespace MiscServices {
+const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
 using AccessTokenKit = OHOS::Security::AccessToken::AccessTokenKit;
 using HapTokenInfo = OHOS::Security::AccessToken::HapTokenInfo;
 using TypeATokenTypeEnum = OHOS::Security::AccessToken::TypeATokenTypeEnum;
