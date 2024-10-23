@@ -49,6 +49,7 @@ public:
     void ClearDropOnReboot();
 
 private:
+    bool RecoverDataBase();
     std::shared_ptr<OHOS::NativeRdb::RdbStore> store_;
 };
 
