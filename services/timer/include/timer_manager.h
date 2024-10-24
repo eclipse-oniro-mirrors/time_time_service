@@ -135,8 +135,14 @@ private:
 
     void UpdateTimersState(std::shared_ptr<TimerInfo> &alarm);
     bool AdjustSingleTimer(std::shared_ptr<TimerInfo> timer);
+    void IncreaseTimerCount(int uid);
+    void DecreaseTimerCount(int uid);
+    void CheckTimerCount();
+    void ShowTimerCountByUid();
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
+    // vector<uid, count>
+    std::vector<std::pair<int32_t, int32_t>> timerCount_;
     std::default_random_engine random_;
     std::atomic_bool runFlag_;
     std::shared_ptr<TimerHandler> handler_;
@@ -156,6 +162,8 @@ private:
     std::shared_ptr<TimerInfo> mPendingIdleUntil_;
     bool adjustPolicy_ = false;
     uint32_t adjustInterval_ = 0;
+    int64_t timerOutOfRangeTimes_ = 0;
+    std::chrono::steady_clock::time_point lastTimerOutOfRangeTime_;
     #ifdef POWER_MANAGER_ENABLE
     std::mutex runningLockMutex_;
     std::shared_ptr<PowerMgr::RunningLock> runningLock_;

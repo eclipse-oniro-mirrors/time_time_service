@@ -63,6 +63,7 @@ const int PID = 999999;
 constexpr int ONE_HUNDRED = 100;
 constexpr int FIVE_HUNDRED = 500;
 constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
+constexpr int TIMER_ALARM_COUNT = 50;
 
 static HapPolicyParams g_policyA = {
     .apl = APL_SYSTEM_CORE,
@@ -1103,20 +1104,13 @@ HWTEST_F(TimeServiceTest, Batch001, TestSize.Level0)
 HWTEST_F(TimeServiceTest, TimerManager001, TestSize.Level0)
 {
     auto timerId1 = TIMER_ID;
-    auto timerId2 = TIMER_ID + 1;
     auto entry = std::make_shared<TimerEntry>(
             TimerEntry{timerId1, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
     TimerManager::GetInstance()->ReCreateTimer(timerId1, entry);
-    TimerManager::GetInstance()->ReCreateTimer(timerId2, nullptr);
     std::lock_guard<std::mutex> lock(TimerManager::GetInstance()->entryMapMutex_);
 
     auto map = TimerManager::GetInstance()->timerEntryMap_;
     auto it = map.find(timerId1);
-    EXPECT_NE(it, map.end());
-    if (it != map.end()) {
-        map.erase(it);
-    }
-    it = map.find(timerId2);
     EXPECT_NE(it, map.end());
     if (it != map.end()) {
         map.erase(it);
@@ -1398,6 +1392,94 @@ HWTEST_F(TimeServiceTest, TimerManager011, TestSize.Level0)
     EXPECT_NE(res, nullptr);
 }
 
+/**
+* @tc.name: TimerManager012.
+* @tc.desc: test OnPackageRemoved.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager012, TestSize.Level0)
+{
+    auto timerManager = TimerManager::GetInstance();
+    {
+        std::lock_guard<std::mutex> lock(timerManager->entryMapMutex_);
+        timerManager->timerEntryMap_.clear();
+    }
+
+    auto entry = std::make_shared<TimerEntry>(
+            TimerEntry{TIMER_ID, 0, 0, 0, 0, nullptr, nullptr, UID, 0, "bundleName"});
+    timerManager->ReCreateTimer(TIMER_ID, entry);
+    timerManager->OnPackageRemoved(UID);
+
+    {
+        std::lock_guard<std::mutex> lock(timerManager->entryMapMutex_);
+        auto map = timerManager->timerEntryMap_;
+        auto it = map.find(TIMER_ID);
+        EXPECT_EQ(it, map.end());
+        if (it != map.end()) {
+            map.erase(it);
+        }
+    }
+}
+
+/**
+* @tc.name: TimerManager013.
+* @tc.desc: test record and delete of timerCount_.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager013, TestSize.Level0)
+{
+    int uid1 = UID;
+    int uid2 = UID + 1;
+    TimerManager::GetInstance()->timerCount_.clear();
+    for (int i = 0; i < 10; ++i) {
+        TimerManager::GetInstance()->IncreaseTimerCount(uid1);
+    }
+    EXPECT_EQ(TimerManager::GetInstance()->timerCount_.size(), 1);
+    auto it = std::find_if(TimerManager::GetInstance()->timerCount_.begin(),
+        TimerManager::GetInstance()->timerCount_.end(),
+        [uid1](const std::pair<int32_t, size_t>& pair) {
+            return pair.first == uid1;
+    });
+    EXPECT_EQ(it->second, 10);
+    for (int i = 0; i < 10; ++i) {
+        TimerManager::GetInstance()->IncreaseTimerCount(uid2);
+    }
+    EXPECT_EQ(TimerManager::GetInstance()->timerCount_.size(), 2);
+    for (int i = 0; i < 5; ++i) {
+        TimerManager::GetInstance()->DecreaseTimerCount(uid2);
+    }
+    it = std::find_if(TimerManager::GetInstance()->timerCount_.begin(),
+        TimerManager::GetInstance()->timerCount_.end(),
+        [uid2](const std::pair<int32_t, size_t>& pair) {
+            return pair.first == uid2;
+    });
+    EXPECT_EQ(it->second, 5);
+}
+
+/**
+* @tc.name: TimerManager014.
+* @tc.desc: test when create and delete timer, the change of timerOutOfRangeTimes_.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager014, TestSize.Level0)
+{
+    TimerManager::GetInstance()->timerEntryMap_.clear();
+    TimerManager::GetInstance()->timerCount_.clear();
+    TimerManager::GetInstance()->timerOutOfRangeTimes_ = 0;
+    uint64_t i = 0;
+    for (; i <= TIMER_ALARM_COUNT; ++i) {
+        auto entry = std::make_shared<TimerEntry>(
+            TimerEntry{i, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
+        TimerManager::GetInstance()->ReCreateTimer(i, entry);
+    }
+    EXPECT_EQ(TimerManager::GetInstance()->timerOutOfRangeTimes_, 1);
+    for (; i <= TIMER_ALARM_COUNT * 2; ++i) {
+        auto entry = std::make_shared<TimerEntry>(
+            TimerEntry{i, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
+        TimerManager::GetInstance()->ReCreateTimer(i, entry);
+    }
+    EXPECT_EQ(TimerManager::GetInstance()->timerOutOfRangeTimes_, 2);
+}
 /**
 * @tc.name: SystemAbility001.
 * @tc.desc: test OnStop.
