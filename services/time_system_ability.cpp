@@ -948,6 +948,9 @@ bool TimeSystemAbility::RecoverTimer()
     if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "hold result set is nullptr or go to first row failed");
     } else {
+        int count;
+        holdResultSet->GetRowCount(count);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result rows count: %{public}d", count);
         RecoverTimerInner(holdResultSet);
     }
     if (holdResultSet != nullptr) {
@@ -959,6 +962,9 @@ bool TimeSystemAbility::RecoverTimer()
     if (dropResultSet == nullptr || dropResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "drop result set is nullptr or go to first row failed");
     } else {
+        int count;
+        dropResultSet->GetRowCount(count);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result rows count: %{public}d", count);
         RecoverTimerInner(dropResultSet);
     }
     if (dropResultSet != nullptr) {

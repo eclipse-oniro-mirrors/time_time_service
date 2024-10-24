@@ -58,12 +58,37 @@ TimeDatabase::TimeDatabase()
     TimeDBOpenCallback timeDBOpenCallback;
     store_ = OHOS::NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_OPEN_VERSION_2, timeDBOpenCallback, errCode);
     TIME_HILOGI(TIME_MODULE_SERVICE, "Gets time database, ret: %{public}d", errCode);
+    if (errCode == OHOS::NativeRdb::E_SQLITE_CORRUPT) {
+        auto ret = OHOS::NativeRdb::RdbHelper::DeleteRdbStore(config);
+        if (ret != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "delete corrupt database failed, ret: %{public}d", ret);
+            return;
+        }
+        store_ = OHOS::NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_OPEN_VERSION_2, timeDBOpenCallback, errCode);
+    }
 }
 
 TimeDatabase &TimeDatabase::GetInstance()
 {
     static TimeDatabase timeDatabase;
     return timeDatabase;
+}
+
+bool TimeDatabase::RecoverDataBase()
+{
+    OHOS::NativeRdb::RdbStoreConfig config(DB_NAME);
+    config.SetSecurityLevel(NativeRdb::SecurityLevel::S1);
+    config.SetEncryptStatus(false);
+    config.SetReadConSize(1);
+    auto ret = OHOS::NativeRdb::RdbHelper::DeleteRdbStore(config);
+    if (ret != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "delete corrupt database failed, ret: %{public}d", ret);
+        return false;
+    }
+    TimeDBOpenCallback timeDbOpenCallback;
+    int errCode;
+    store_ = OHOS::NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_OPEN_VERSION_2, timeDbOpenCallback, errCode);
+    return true;
 }
 
 int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
@@ -98,7 +123,16 @@ bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::Value
     int ret = store_->Insert(outRowId, table, insertValues);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "insert values failed, ret: %{public}d", ret);
-        return false;
+        if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
+            return false;
+        }
+        if (!RecoverDataBase()) {
+            return false;
+        }
+        ret = store_->Insert(outRowId, table, insertValues);
+        if (ret != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Insert values after RecoverDataBase failed, ret: %{public}d", ret);
+        }
     }
     return true;
 }
@@ -115,7 +149,16 @@ bool TimeDatabase::Update(
     int ret = store_->Update(changedRows, values, predicates);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "update values failed, ret: %{public}d", ret);
-        return false;
+        if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
+            return false;
+        }
+        if (!RecoverDataBase()) {
+            return false;
+        }
+        ret = store_->Update(changedRows, values, predicates);
+        if (ret != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Update values after RecoverDataBase failed, ret: %{public}d", ret);
+        }
     }
     return true;
 }
@@ -127,7 +170,13 @@ std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return nullptr;
     }
-    return store_->Query(predicates, columns);
+    auto result = store_->Query(predicates, columns);
+    int count;
+    if (result->GetRowCount(count) == OHOS::NativeRdb::E_SQLITE_CORRUPT) {
+        RecoverDataBase();
+        return nullptr;
+    }
+    return result;
 }
 
 bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
@@ -141,7 +190,16 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
     int ret = store_->Delete(deletedRows, predicates);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "delete values failed, ret: %{public}d", ret);
-        return false;
+        if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
+            return false;
+        }
+        if (!RecoverDataBase()) {
+            return false;
+        }
+        ret = store_->Delete(deletedRows, predicates);
+        if (ret != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Delete values after RecoverDataBase failed, ret: %{public}d", ret);
+        }
     }
     return true;
 }
@@ -156,6 +214,16 @@ void TimeDatabase::ClearDropOnReboot()
     int ret = store_->ExecuteSql("DELETE FROM drop_on_reboot");
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Clears drop_on_reboot table failed");
+        if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
+            return;
+        }
+        if (!RecoverDataBase()) {
+            return;
+        }
+        ret = store_->ExecuteSql("DELETE FROM drop_on_reboot");
+        if (ret != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret: %{public}d", ret);
+        }
     }
 }
 
