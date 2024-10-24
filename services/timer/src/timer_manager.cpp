@@ -1248,6 +1248,23 @@ void TimerManager::OnUserRemoved(int userId)
     }
 }
 
+void TimerManager::OnPackageRemoved(int uid)
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Removed uid: %{public}d", uid);
+    std::vector<std::shared_ptr<TimerEntry>> removeList;
+    {
+        std::lock_guard<std::mutex> lock(entryMapMutex_);
+        for (auto it = timerEntryMap_.begin(); it != timerEntryMap_.end(); ++it) {
+            if (it->second->uid == uid) {
+                removeList.push_back(it->second);
+            }
+        }
+    }
+    for (auto it = removeList.begin(); it != removeList.end(); ++it) {
+        DestroyTimer((*it)->id);
+    }
+}
+
 void TimerManager::HandleRSSDeath()
 {
     TIME_HILOGI(TIME_MODULE_CLIENT, "RSSSaDeathRecipient died.");
