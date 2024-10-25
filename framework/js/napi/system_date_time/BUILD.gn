@@ -43,6 +43,7 @@ ohos_shared_library("systemdatetime") {
     "hilog:libhilog",
     "init:libbegetutil",
     "napi:ace_napi",
+    "samgr:samgr_proxy",
   ]
   branch_protector_ret = "pac_ret"
   sanitize = {
