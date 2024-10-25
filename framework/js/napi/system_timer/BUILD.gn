@@ -55,6 +55,7 @@ ohos_shared_library("systemtimer") {
     "c_utils:utils",
     "hilog:libhilog",
     "napi:ace_napi",
+    "samgr:samgr_proxy",
   ]
   branch_protector_ret = "pac_ret"
   sanitize = {
