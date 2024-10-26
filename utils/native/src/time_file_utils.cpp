@@ -22,12 +22,14 @@
 #include "ipc_skeleton.h"
 #include "securec.h"
 #include "time_hilog.h"
+#include "parameters.h"
 
 constexpr int CMDLINE_PATH_LEN = 32;
 constexpr int CMDLINE_LEN = 128;
 
 namespace OHOS {
 namespace MiscServices {
+const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
 using AccessTokenKit = OHOS::Security::AccessToken::AccessTokenKit;
 using HapTokenInfo = OHOS::Security::AccessToken::HapTokenInfo;
 using TypeATokenTypeEnum = OHOS::Security::AccessToken::TypeATokenTypeEnum;
@@ -71,6 +73,30 @@ std::string TimeFileUtils::GetNameByPid(uint32_t pid)
     }
     (void)fclose(fp);
     return cmdline;
+}
+
+std::vector<std::string> TimeFileUtils::GetBundleList()
+{
+    std::vector<std::string> bundleList;
+    std::string bundleStr = system::GetParameter(AUTO_RESTORE_TIMER_APPS, "");
+    size_t start = 0;
+    do {
+        size_t end = bundleStr.find(',', start);
+        if (end < start) {
+            break;
+        }
+        std::string temp = bundleStr.substr(start, end - start);
+        if (temp.empty()) {
+            ++start;
+            continue;
+        }
+        bundleList.emplace_back(temp);
+        if (end == std::string::npos) {
+            break;
+        }
+        start = end + 1;
+    } while (start < bundleStr.size());
+    return bundleList;
 }
 } // namespace MiscServices
 } // namespace OHOS

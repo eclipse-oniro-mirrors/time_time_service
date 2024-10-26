@@ -17,6 +17,7 @@
 #define TIME_FILE_UTILS_H
 
 #include <string>
+#include <vector>
 
 namespace OHOS {
 namespace MiscServices {
@@ -26,6 +27,7 @@ class TimeFileUtils {
 public:
     static std::string GetBundleNameByTokenID(uint32_t tokenID);
     static std::string GetNameByPid(uint32_t pid);
+    static std::vector<std::string> GetBundleList();
 };
 } // namespace MiscServices
 } // namespace OHOS
