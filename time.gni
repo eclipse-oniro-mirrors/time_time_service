@@ -26,6 +26,7 @@ time_sanitize_debug = false
 
 declare_args() {
   device_standby = true
+  time_hicollie_able = true
   if (defined(global_parts_info) &&
       !defined(global_parts_info.resourceschedule_device_standby)) {
     device_standby = false
