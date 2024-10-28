@@ -15,6 +15,7 @@
 
 #include "simple_timer_info.h"
 #include "time_common.h"
+#include "time_xcollie.h"
 #include "time_service_stub.h"
 #include "ntp_update_time.h"
 #include "ntp_trusted_time.h"
@@ -116,6 +117,7 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
 int32_t TimeServiceStub::OnSetTime(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
+    TimeXCollie timeXCollie("TimeService::SetTime");
     int64_t time = data.ReadInt64();
     auto apiVersion = data.ReadInt8();
     if (apiVersion == APIVersion::API_VERSION_9) {
@@ -136,6 +138,7 @@ int32_t TimeServiceStub::OnSetTime(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnSetTimeZone(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
+    TimeXCollie timeXCollie("TimeService::SetTimeZone");
     std::string timeZoneId = data.ReadString();
     auto apiVersion = data.ReadInt8();
     if (apiVersion == APIVersion::API_VERSION_9) {
@@ -156,6 +159,7 @@ int32_t TimeServiceStub::OnSetTimeZone(MessageParcel &data, MessageParcel &reply
 int32_t TimeServiceStub::OnGetTimeZone(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
+    TimeXCollie timeXCollie("TimeService::GetTimeZone");
     std::string timeZoneId;
     int32_t ret = GetTimeZone(timeZoneId);
     if (ret != ERR_OK) {
@@ -254,6 +258,7 @@ int32_t TimeServiceStub::OnGetMonotonicTimeNs(MessageParcel &data, MessageParcel
 int32_t TimeServiceStub::OnGetThreadTimeMs(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
+    TimeXCollie timeXCollie("TimeService::GetThreadTimeMs");
     int64_t time;
     int32_t ret = GetThreadTimeMs(time);
     if (ret != ERR_OK) {
@@ -268,6 +273,7 @@ int32_t TimeServiceStub::OnGetThreadTimeMs(MessageParcel &data, MessageParcel &r
 int32_t TimeServiceStub::OnGetThreadTimeNs(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, " start.");
+    TimeXCollie timeXCollie("TimeService::GetThreadTimeNs");
     int64_t time;
     int32_t ret = GetThreadTimeNs(time);
     if (ret != ERR_OK) {
@@ -282,6 +288,7 @@ int32_t TimeServiceStub::OnGetThreadTimeNs(MessageParcel &data, MessageParcel &r
 int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TimeXCollie timeXCollie("TimeService::CreateTimer");
     if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
         return E_TIME_NOT_SYSTEM_APP;
@@ -327,6 +334,7 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
 int32_t TimeServiceStub::OnStartTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TimeXCollie timeXCollie("TimeService::StartTimer");
     if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
         return E_TIME_NOT_SYSTEM_APP;
@@ -344,6 +352,7 @@ int32_t TimeServiceStub::OnStartTimer(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnStopTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TimeXCollie timeXCollie("TimeService::StopTimer");
     if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
         return E_TIME_NOT_SYSTEM_APP;
@@ -360,6 +369,7 @@ int32_t TimeServiceStub::OnStopTimer(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnDestroyTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TimeXCollie timeXCollie("TimeService::DestroyTimer");
     if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
         return E_TIME_NOT_SYSTEM_APP;
@@ -376,6 +386,7 @@ int32_t TimeServiceStub::OnDestroyTimer(MessageParcel &data, MessageParcel &repl
 int32_t TimeServiceStub::OnTimerProxy(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TimeXCollie timeXCollie("TimeService::TimerProxy");
     auto uid = data.ReadInt32();
     if (uid == 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Error param uid.");
@@ -392,6 +403,7 @@ int32_t TimeServiceStub::OnTimerProxy(MessageParcel &data, MessageParcel &reply)
 
 int32_t TimeServiceStub::OnPidTimerProxy(MessageParcel &data, MessageParcel &reply)
 {
+    TimeXCollie timeXCollie("TimeService::PidTimerProxy");
     auto pidListSize = data.ReadInt32();
     std::set<int> pidList;
     if (pidListSize == 0 || pidListSize > MAX_PID_LIST_SIZE) {
@@ -419,6 +431,7 @@ int32_t TimeServiceStub::OnPidTimerProxy(MessageParcel &data, MessageParcel &rep
 int32_t TimeServiceStub::OnAdjustTimer(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "on timer adjust start.");
+    TimeXCollie timeXCollie("TimeService::AdjustTimer");
     if (!TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Adjust Timer permission check failed");
         return E_TIME_NO_PERMISSION;
@@ -446,6 +459,7 @@ int32_t TimeServiceStub::OnAdjustTimer(MessageParcel &data, MessageParcel &reply
 int32_t TimeServiceStub::OnSetTimerExemption(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "set timer exemption start.");
+    TimeXCollie timeXCollie("TimeService::SetTimerExemption");
     if (!TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Set Timer Exemption permission check failed");
         return E_TIME_NO_PERMISSION;
@@ -478,6 +492,7 @@ int32_t TimeServiceStub::OnSetTimerExemption(MessageParcel &data, MessageParcel 
 int32_t TimeServiceStub::OnAllProxyReset(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TimeXCollie timeXCollie("TimeService::AllProxyReset");
     if (!ResetAllProxy()) {
         return E_TIME_DEAL_FAILED;
     }
