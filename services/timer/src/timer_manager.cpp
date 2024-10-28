@@ -40,7 +40,6 @@
 #include "timer_database.h"
 #include "os_account.h"
 #include "os_account_manager.h"
-#include "parameters.h"
 #ifdef POWER_MANAGER_ENABLE
 #include "time_system_ability.h"
 #endif
