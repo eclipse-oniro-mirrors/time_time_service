@@ -88,7 +88,11 @@ public:
 
     void OnAccountsChanged(const int &id)
     {
-        TimerManager::GetInstance()->OnUserRemoved(id);
+        auto timerManager = TimerManager::GetInstance();
+        if (timerManager == nullptr) {
+            return;
+        }
+        timerManager->OnUserRemoved(id);
     }
 
     void OnAccountsSwitch(const int &newId, const int &oldId) {}
