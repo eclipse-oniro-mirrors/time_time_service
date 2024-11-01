@@ -53,9 +53,15 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
             TIME_HILOGE(TIME_MODULE_CLIENT, "New TimerCallback failed");
             return;
         }
-        std::lock_guard<std::mutex> lock(TimeServiceClient::GetInstance()->recoverTimerInfoLock_);
-        auto iter = TimeServiceClient::GetInstance()->recoverTimerInfoMap_.begin();
-        for (; iter != TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end(); iter++) {
+        std::map<uint64_t, std::shared_ptr<RecoverTimerInfo>> recoverTimer;
+        {
+            auto timerServiceClient = TimeServiceClient::GetInstance();
+            std::lock_guard<std::mutex> lock(timerServiceClient->recoverTimerInfoLock_);
+            recoverTimer = timerServiceClient->recoverTimerInfoMap_;
+        }
+        TIME_HILOGI(TIME_MODULE_CLIENT, "recoverTimer count：%{public}zu", recoverTimer.size());
+        auto iter = recoverTimer.begin();
+        for (; iter != recoverTimer.end(); iter++) {
             auto timerId = iter->first;
             proxy->CreateTimer(iter->second->timerInfo, timerCallbackInfoObject, timerId);
             if (iter->second->state == 1) {
@@ -64,7 +70,7 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
         }
         return;
     } else {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Id is not TIME_SERVICE_ID");
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Id is not TIME_SERVICE_ID");
         return;
     }
 }
@@ -74,7 +80,10 @@ void TimeServiceClient::TimeServiceListener::OnRemoveSystemAbility(
 {
 }
 
-TimeServiceClient::TimeServiceClient() = default;
+TimeServiceClient::TimeServiceClient()
+{
+    listener_ = new (std::nothrow) TimeServiceListener();
+}
 
 TimeServiceClient::~TimeServiceClient()
 {
@@ -100,7 +109,7 @@ sptr<TimeServiceClient> TimeServiceClient::GetInstance()
 
 bool TimeServiceClient::SubscribeSA(sptr<ISystemAbilityManager> systemAbilityManager)
 {
-    auto timeServiceListener = new (std::nothrow) TimeServiceListener();
+    auto timeServiceListener = listener_;
     if (timeServiceListener == nullptr) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Get timeServiceListener failed.");
         return false;
