@@ -267,7 +267,6 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         needRecoverOnReboot = CheckNeedRecoverOnReboot(it->second->bundleName, it->second->type);
         if (needDestroy) { timerEntryMap_.erase(it); }
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "db bgn");
     if (needRecoverOnReboot) {
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 0);
@@ -277,7 +276,6 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         if (needDestroy) {
             OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(HOLD_ON_REBOOT);
             rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
-            TIME_HILOGI(TIME_MODULE_SERVICE, "db del");
             TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
         }
     } else {
@@ -289,11 +287,9 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         if (needDestroy) {
             OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(DROP_ON_REBOOT);
             rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
-            TIME_HILOGI(TIME_MODULE_SERVICE, "db del");
             TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
         }
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "db end");
     return E_TIME_OK;
 }
 
