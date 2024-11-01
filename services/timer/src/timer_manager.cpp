@@ -372,13 +372,13 @@ void TimerManager::SetHandlerLocked(uint64_t id, int type,
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, uid=%{public}" PRIu64 " id=%{public}" PRId64 "",
             callingUid, alarm->id);
         TimerProxy::GetInstance().RecordProxyUidTimerMap(alarm);
-        alarm->UpdateWhenElapsedFromNow(whenElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
+        alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
     if (TimerProxy::GetInstance().IsPidProxy(alarm->pid)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, pid=%{public}" PRIu64 " id=%{public}" PRId64 "",
             callingPid, alarm->id);
         TimerProxy::GetInstance().RecordProxyPidTimerMap(alarm);
-        alarm->UpdateWhenElapsedFromNow(whenElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
+        alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
     
     SetHandlerLocked(alarm, false, false);
