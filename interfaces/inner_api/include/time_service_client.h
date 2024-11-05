@@ -468,6 +468,7 @@ private:
     sptr<ITimeService> GetProxy();
     void SetProxy(sptr<ITimeService> proxy);
 
+    sptr<TimeServiceListener> listener_;
     static std::mutex instanceLock_;
     static sptr<TimeServiceClient> instance_;
     TIME_API std::map<uint64_t, std::shared_ptr<RecoverTimerInfo>> recoverTimerInfoMap_;
