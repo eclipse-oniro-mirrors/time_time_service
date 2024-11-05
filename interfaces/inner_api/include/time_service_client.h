@@ -441,6 +441,7 @@ public:
      * @return int32_t return error code.
      */
     TIME_API int32_t GetRealTimeMs(int64_t &time);
+    void HandleRecoverMap(uint64_t timerId);
 private:
     class TimeSaDeathRecipient : public IRemoteObject::DeathRecipient {
     public:

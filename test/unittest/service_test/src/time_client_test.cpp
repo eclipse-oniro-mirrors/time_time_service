@@ -1119,9 +1119,75 @@ HWTEST_F(TimeClientTest, RecoverTimer004, TestSize.Level1)
         auto info = TimeServiceClient::GetInstance()->recoverTimerInfoMap_.find(timerId);
         EXPECT_EQ(info, TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
     }
+}
+
+/**
+* @tc.name: RecoverTimer005
+* @tc.desc: start a non-repeat timer, after the timer is triggered, check the state in RecoverTimerMap.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, RecoverTimer005, TestSize.Level1)
+{
+    g_data1 = 0;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetInterval(0);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    uint64_t timerId;
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    int64_t time;
+    TimeServiceClient::GetInstance()->GetBootTimeMs(time);
+    auto startRet = TimeServiceClient::GetInstance()->StartTimerV9(timerId, time + FIVE_HUNDRED);
+    EXPECT_EQ(startRet, TimeError::E_TIME_OK);
+    WaitForAlarm(&g_data1, FIVE_HUNDRED * MICRO_TO_MILLISECOND);
+    EXPECT_EQ(g_data1, 1);
+    {
+        std::lock_guard<std::mutex> lock(TimeServiceClient::GetInstance()->recoverTimerInfoLock_);
+        auto info = TimeServiceClient::GetInstance()->recoverTimerInfoMap_.find(timerId);
+        EXPECT_NE(info, TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
+        EXPECT_NE(info->second->timerInfo, nullptr);
+        EXPECT_EQ(info->second->state, 0);
+    }
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 
+/**
+* @tc.name: RecoverTimer006
+* @tc.desc: start a non-repeat and disposable timer, after the timer is triggered, check the state in RecoverTimerMap.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
+{
+    g_data1 = 0;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetDisposable(true);
+    timerInfo->SetInterval(0);
+    timerInfo->SetWantAgent(nullptr);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    uint64_t timerId;
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    int64_t time;
+    TimeServiceClient::GetInstance()->GetBootTimeMs(time);
+    auto startRet = TimeServiceClient::GetInstance()->StartTimerV9(timerId, time + FIVE_HUNDRED);
+    EXPECT_EQ(startRet, TimeError::E_TIME_OK);
+    WaitForAlarm(&g_data1, FIVE_HUNDRED * MICRO_TO_MILLISECOND);
+    EXPECT_EQ(g_data1, 1);
+    {
+        std::lock_guard<std::mutex> lock(TimeServiceClient::GetInstance()->recoverTimerInfoLock_);
+        auto info = TimeServiceClient::GetInstance()->recoverTimerInfoMap_.find(timerId);
+        EXPECT_EQ(info, TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
+    }
+    auto ret = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
+    EXPECT_NE(ret, E_TIME_OK);
+}
 
 /**
 * @tc.name: AdjustTimer001

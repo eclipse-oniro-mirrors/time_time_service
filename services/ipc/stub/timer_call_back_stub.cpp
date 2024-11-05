@@ -14,6 +14,7 @@
  */
 
 #include "timer_call_back_stub.h"
+#include "time_service_client.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -45,6 +46,7 @@ int TimerCallbackStub::OnTriggerStub(MessageParcel &data)
     sptr<IRemoteObject> obj = data.ReadRemoteObject();
     NotifyTimer(timerId, obj);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TimeServiceClient::GetInstance()->HandleRecoverMap(timerId);
     return ERR_OK;
 }
 } // namespace MiscServices

@@ -59,7 +59,7 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
             std::lock_guard<std::mutex> lock(timerServiceClient->recoverTimerInfoLock_);
             recoverTimer = timerServiceClient->recoverTimerInfoMap_;
         }
-        TIME_HILOGI(TIME_MODULE_CLIENT, "recoverTimer count：%{public}zu", recoverTimer.size());
+        TIME_HILOGI(TIME_MODULE_CLIENT, "recoverTimer count:%{public}zu", recoverTimer.size());
         auto iter = recoverTimer.begin();
         for (; iter != recoverTimer.end(); iter++) {
             auto timerId = iter->first;
@@ -436,6 +436,26 @@ int32_t TimeServiceClient::DestroyTimerAsyncV9(uint64_t timerId)
         recoverTimerInfoMap_.erase(timerId);
     }
     return errCode;
+}
+
+void TimeServiceClient::HandleRecoverMap(uint64_t timerId)
+{
+    std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
+    auto info = recoverTimerInfoMap_.find(timerId);
+    if (info == recoverTimerInfoMap_.end()) {
+        TIME_HILOGD(TIME_MODULE_CLIENT, "timer:%{public}" PRId64 "is not in map.", timerId);
+        return;
+    }
+    if (info->second->timerInfo->repeat == true) {
+        return;
+    }
+    if (info->second->timerInfo->disposable == true) {
+        TIME_HILOGD(TIME_MODULE_CLIENT, "timer:%{public}" PRId64 "is disposable.", timerId);
+        recoverTimerInfoMap_.erase(timerId);
+        return;
+    }
+    TIME_HILOGD(TIME_MODULE_CLIENT, "timer:%{public}" PRId64 "change state by trigger.", timerId);
+    info->second->state = 0;
 }
 
 std::string TimeServiceClient::GetTimeZone()
