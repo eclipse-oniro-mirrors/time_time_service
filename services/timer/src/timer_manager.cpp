@@ -707,7 +707,6 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
 // needs to acquire the lock `mutex_` before calling this method
 void TimerManager::RescheduleKernelTimerLocked()
 {
-    auto nextNonWakeup = std::chrono::steady_clock::time_point::min();
     auto bootTime = GetBootTimeNs();
     if (!alarmBatches_.empty()) {
         auto firstWakeup = FindFirstWakeupBatchLocked();
@@ -716,15 +715,19 @@ void TimerManager::RescheduleKernelTimerLocked()
             #ifdef POWER_MANAGER_ENABLE
             HandleRunningLock(firstWakeup);
             #endif
-            SetLocked(ELAPSED_REALTIME_WAKEUP, firstWakeup->GetStart().time_since_epoch(), bootTime);
+            auto setTimePoint = firstWakeup->GetStart().time_since_epoch();
+            if (setTimePoint.count() != lastSetTime_[ELAPSED_REALTIME_WAKEUP]) {
+                SetLocked(ELAPSED_REALTIME_WAKEUP, setTimePoint, bootTime);
+                lastSetTime_[ELAPSED_REALTIME_WAKEUP] = setTimePoint.count();
+            }
         }
         if (firstBatch != firstWakeup) {
-            nextNonWakeup = firstBatch->GetStart();
+            auto setTimePoint = firstBatch->GetStart().time_since_epoch();
+            if (setTimePoint.count() != lastSetTime_[ELAPSED_REALTIME]) {
+                SetLocked(ELAPSED_REALTIME, setTimePoint, bootTime);
+                lastSetTime_[ELAPSED_REALTIME] = setTimePoint.count();
+            }
         }
-    }
-
-    if (nextNonWakeup != std::chrono::steady_clock::time_point::min()) {
-        SetLocked(ELAPSED_REALTIME, nextNonWakeup.time_since_epoch(), bootTime);
     }
 }
 

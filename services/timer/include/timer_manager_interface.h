@@ -52,7 +52,8 @@ public:
         RTC_WAKEUP = 0,
         RTC = 1,
         ELAPSED_REALTIME_WAKEUP = 2,
-        ELAPSED_REALTIME = 3
+        ELAPSED_REALTIME = 3,
+        TIMER_TYPE_BUTT
     };
 
     virtual int32_t CreateTimer(TimerPara &paras,
