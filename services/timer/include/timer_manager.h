@@ -64,6 +64,7 @@ public:
     bool ShowTimerTriggerById(int fd, uint64_t timerId);
     bool ShowIdleTimerInfo(int fd);
     void OnUserRemoved(int userId);
+    void OnPackageRemoved(int uid);
     ~TimerManager() override;
     void HandleRSSDeath();
     static TimerManager* GetInstance();

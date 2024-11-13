@@ -47,6 +47,7 @@
 #include "parameters.h"
 #include "os_account.h"
 #include "os_account_manager.h"
+#include "package_subscriber.h"
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
@@ -267,6 +268,20 @@ void TimeSystemAbility::RegisterNitzTimeSubscriber()
     }
 }
 
+void TimeSystemAbility::RegisterPackageRemovedSubscriber()
+{
+    MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_BUNDLE_REMOVED);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
+
+    CommonEventSubscribeInfo subscriberInfo(matchingSkills);
+    std::shared_ptr<PackageRemovedSubscriber> subscriberPtr =
+            std::make_shared<PackageRemovedSubscriber>(subscriberInfo);
+    bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "register res:%{public}d", subscribeResult);
+}
+
 void TimeSystemAbility::RegisterCommonEventSubscriber()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterCommonEventSubscriber Started");
@@ -282,6 +297,7 @@ void TimeSystemAbility::RegisterCommonEventSubscriber()
     }
     RegisterScreenOnSubscriber();
     RegisterNitzTimeSubscriber();
+    RegisterPackageRemovedSubscriber();
 }
 
 void TimeSystemAbility::RegisterOsAccountSubscriber()

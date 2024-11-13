@@ -1399,6 +1399,35 @@ HWTEST_F(TimeServiceTest, TimerManager011, TestSize.Level0)
 }
 
 /**
+* @tc.name: TimerManager012.
+* @tc.desc: test OnPackageRemoved.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager012, TestSize.Level0)
+{
+    auto timerManager = TimerManager::GetInstance();
+    {
+        std::lock_guard<std::mutex> lock(timerManager->entryMapMutex_);
+        timerManager->timerEntryMap_.clear();
+    }
+
+    auto entry = std::make_shared<TimerEntry>(
+            TimerEntry{TIMER_ID, 0, 0, 0, 0, nullptr, nullptr, UID, 0, "bundleName"});
+    timerManager->ReCreateTimer(TIMER_ID, entry);
+    timerManager->OnPackageRemoved(UID);
+
+    {
+        std::lock_guard<std::mutex> lock(timerManager->entryMapMutex_);
+        auto map = timerManager->timerEntryMap_;
+        auto it = map.find(TIMER_ID);
+        EXPECT_EQ(it, map.end());
+        if (it != map.end()) {
+            map.erase(it);
+        }
+    }
+}
+
+/**
 * @tc.name: SystemAbility001.
 * @tc.desc: test OnStop.
 * @tc.type: FUNC
