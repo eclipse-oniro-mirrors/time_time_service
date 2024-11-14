@@ -268,12 +268,16 @@ bool TimeServiceProxy::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
     return true;
 }
 
-bool TimeServiceProxy::ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger)
+bool TimeServiceProxy::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
 {
     MessageParcel data, reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
+        return false;
+    }
+    if (!data.WriteInt32(uid)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write uid");
         return false;
     }
     if (!data.WriteInt32(pidList.size())) {

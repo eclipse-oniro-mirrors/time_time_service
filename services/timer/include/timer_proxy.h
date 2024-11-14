@@ -38,7 +38,7 @@ public:
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
-    bool PidProxyTimer(int pidList, bool isProxy, bool needRetrigger,
+    bool PidProxyTimer(int32_t uid, int pid, bool isProxy, bool needRetrigger,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
     bool AdjustTimer(bool isAdjust, uint32_t interval,
@@ -76,7 +76,7 @@ private:
     void UpdateProxyWhenElapsedForProxyUidMap(const int32_t uid,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
-    void UpdateProxyWhenElapsedForProxyPidMap(const int32_t uid,
+    void UpdateProxyWhenElapsedForProxyPidMap(const int32_t uid, const int32_t pid,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
     bool UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_point &now,

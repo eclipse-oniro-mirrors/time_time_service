@@ -534,11 +534,12 @@ HWTEST_F(TimeProxyTest, PidProxyTimer001, TestSize.Level1)
 {
     /* 代理一个timer，可以代理成功，可以记录到proxyUid_中 */
     int pid = 1003;
+    int uid = 2003;
     std::set<int> pidList;
     pidList.insert(pid);
     bool isProxy = true;
     bool needRetrigger = true;
-    bool ret = timerManagerHandler_->ProxyTimer(pidList, isProxy, needRetrigger);
+    bool ret = timerManagerHandler_->ProxyTimer(uid, pidList, isProxy, needRetrigger);
     EXPECT_TRUE(ret);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
@@ -548,7 +549,7 @@ HWTEST_F(TimeProxyTest, PidProxyTimer001, TestSize.Level1)
 
     /* 解代理一个timer，可以解代理成功，可以从proxyPid_中删除 */
     isProxy = false;
-    ret = timerManagerHandler_->ProxyTimer(pidList, isProxy, needRetrigger);
+    ret = timerManagerHandler_->ProxyTimer(uid, pidList, isProxy, needRetrigger);
     EXPECT_TRUE(ret);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)0);
@@ -590,7 +591,7 @@ HWTEST_F(TimeProxyTest, PidProxyTimer002, TestSize.Level1)
     std::chrono::steady_clock::time_point time = TimerProxy::GetInstance().pidTimersMap_[pid][timerId]->whenElapsed;
 
     /* 代理一个timer，可以代理成功，可以记录到proxyPid_中 */
-    bool retProxy = timerManagerHandler_->ProxyTimer(pidList, true, true);
+    bool retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
@@ -611,7 +612,7 @@ HWTEST_F(TimeProxyTest, PidProxyTimer002, TestSize.Level1)
     EXPECT_NE(it4->second->whenElapsed, time);
 
     /* 解代理一个timer，可以解代理成功，可以更新proxyPid_表 */
-    ret = timerManagerHandler_->ProxyTimer(pidList, false, true);
+    ret = timerManagerHandler_->ProxyTimer(uid, pidList, false, true);
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)0);
@@ -632,6 +633,7 @@ HWTEST_F(TimeProxyTest, PidProxyTimer002, TestSize.Level1)
 */
 HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
 {
+    int uid = 1000;
     /* 代理三个timer，可以代理成功，可以记录到proxyPid_中 */
     int pid1 = 2000;
     std::set<int> pidList;
@@ -642,8 +644,8 @@ HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
 
     int pid3 = 4000;
     pidList.insert(pid3);
-
-    bool retProxy = timerManagerHandler_->ProxyTimer(pidList, true, true);
+    
+    bool retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)3);
@@ -659,6 +661,58 @@ HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
     retProxy = timerManagerHandler_->ResetAllProxy();
     EXPECT_TRUE(retProxy);
     EXPECT_TRUE(TimerProxy::GetInstance().proxyPids_.empty());
+}
+
+/**
+* @tc.name: PidProxyTimer004
+* @tc.desc: test proxy of same pid but different uid.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, PidProxyTimer004, TestSize.Level1)
+{
+    TimerPara paras;
+    paras.timerType = 2;
+    paras.windowLength = -1;
+    paras.interval = 0;
+    paras.flag = 0;
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int32_t uid1 = 2000;
+    int32_t uid2 = 2001;
+    int pid = 1000;
+    uint64_t timerId1 = 0;
+    uint64_t timerId2 = 0;
+
+    TimerProxy::GetInstance().pidTimersMap_.clear();
+    TimerProxy::GetInstance().proxyPids_.clear();
+    /* create timer by uid1 */
+    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
+                                                    wantAgent, uid1, pid, timerId1, NOT_STORE);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
+    uint64_t triggerTime = 10000000 + nowElapsed;
+    ret = timerManagerHandler_->StartTimer(timerId1, triggerTime);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_[pid].size(), (const unsigned int)1);
+    
+    /* create timer by uid2 */
+    ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
+                                                    wantAgent, uid2, pid, timerId2, NOT_STORE);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+    nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
+    triggerTime = 10000000 + nowElapsed;
+    ret = timerManagerHandler_->StartTimer(timerId2, triggerTime);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    usleep(BLOCK_TEST_TIME);
+    EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_[pid].size(), (const unsigned int)2);
+
+    std::set<int> pidList;
+    pidList.insert(pid);
+    /* proxy uid1 expect proxyPids_ only has one element */
+    ret = timerManagerHandler_->ProxyTimer(uid1, pidList, true, true);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
 }
 
 /**
@@ -682,6 +736,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
 
     /* clear pidTimersMap_ */
     TimerProxy::GetInstance().pidTimersMap_.clear();
+    TimerProxy::GetInstance().proxyPids_.clear();
 
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                     wantAgent, uid, pid, timerId, NOT_STORE);
@@ -696,7 +751,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     EXPECT_EQ(TimerProxy::GetInstance().pidTimersMap_.size(), (const unsigned int)1);
 
     /* The proxy of a timer is successful and can be recorded in proxyPid_. */
-    bool retProxy = timerManagerHandler_->ProxyTimer(pidList, true, true);
+    bool retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
@@ -705,7 +760,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     EXPECT_EQ(it->second.size(), (const unsigned int)1);
 
     /* Cancel a proxy timer. The proxy is canceled successfully, and the proxyPid_ table is updated. */
-    ret = timerManagerHandler_->ProxyTimer(pidList, false, true);
+    ret = timerManagerHandler_->ProxyTimer(uid, pidList, false, true);
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)0);
@@ -791,9 +846,12 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
 {
+    TimerProxy::GetInstance().pidTimersMap_.clear();
+    TimerProxy::GetInstance().proxyPids_.clear();
+    int uid = 2000;
     std::set<int> pidList;
     pidList.insert(PID);
-    bool retProxy = timerManagerHandler_->ProxyTimer(pidList, true, true);
+    bool retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
@@ -822,10 +880,10 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
 
     res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
     EXPECT_EQ(res, E_TIME_OK);
-    retProxy = timerManagerHandler_->ProxyTimer(pidList, false, true);
+    retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, false, true);
     EXPECT_TRUE(retProxy);
 
-    retProxy = timerManagerHandler_->ProxyTimer(pidList, true, true);
+    retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
