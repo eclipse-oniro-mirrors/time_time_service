@@ -78,38 +78,41 @@ int32_t TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
 
     int uid = alarm->uid;
     int pid = alarm->pid;
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    auto uidIt = proxyUids_.find(uid);
-    auto pidIt = proxyPids_.find(pid);
-
-    if (uidIt != proxyUids_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Alarm is uid proxy!");
-        auto itMap = proxyMap_.find(uid);
-        if (itMap == proxyMap_.end()) {
-            std::vector<std::shared_ptr<TimerInfo>> timeInfoVec;
-            timeInfoVec.push_back(alarm);
-            proxyMap_[uid] = timeInfoVec;
-        } else {
-            std::vector<std::shared_ptr<TimerInfo>> timeInfoVec = itMap->second;
-            timeInfoVec.push_back(alarm);
-            proxyMap_[uid] = timeInfoVec;
+    {
+        std::lock_guard<std::mutex> lock(proxyMutex_);
+        auto uidIt = proxyUids_.find(uid);
+        if (uidIt != proxyUids_.end()) {
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Alarm is uid proxy!");
+            auto itMap = proxyMap_.find(uid);
+            if (itMap == proxyMap_.end()) {
+                std::vector<std::shared_ptr<TimerInfo>> timeInfoVec;
+                timeInfoVec.push_back(alarm);
+                proxyMap_[uid] = timeInfoVec;
+            } else {
+                std::vector<std::shared_ptr<TimerInfo>> timeInfoVec = itMap->second;
+                timeInfoVec.push_back(alarm);
+                proxyMap_[uid] = timeInfoVec;
+            }
+            return E_TIME_OK;
         }
-        return E_TIME_OK;
     }
-
-    if (pidIt != proxyPids_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Alarm is pid proxy!");
-        auto itMap = proxyPidMap_.find(pid);
-        if (itMap == proxyPidMap_.end()) {
-            std::vector<std::shared_ptr<TimerInfo>> timeInfoVec;
-            timeInfoVec.push_back(alarm);
-            proxyPidMap_[pid] = timeInfoVec;
-        } else {
-            std::vector<std::shared_ptr<TimerInfo>> timeInfoVec = itMap->second;
-            timeInfoVec.push_back(alarm);
-            proxyPidMap_[pid] = timeInfoVec;
+    {
+        std::lock_guard<std::mutex> lock(proxyPidMutex_);
+        auto pidIt = proxyPids_.find(pid);
+        if (pidIt != proxyPids_.end()) {
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Alarm is pid proxy!");
+            auto itMap = proxyPidMap_.find(pid);
+            if (itMap == proxyPidMap_.end()) {
+                std::vector<std::shared_ptr<TimerInfo>> timeInfoVec;
+                timeInfoVec.push_back(alarm);
+                proxyPidMap_[pid] = timeInfoVec;
+            } else {
+                std::vector<std::shared_ptr<TimerInfo>> timeInfoVec = itMap->second;
+                timeInfoVec.push_back(alarm);
+                proxyPidMap_[pid] = timeInfoVec;
+            }
+            return E_TIME_OK;
         }
-        return E_TIME_OK;
     }
     int32_t ret = alarm->callback(alarm->id);
     TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "cb: %{public}" PRId64 " ret: %{public}d",

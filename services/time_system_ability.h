@@ -110,6 +110,7 @@ private:
     void RegisterPowerStateListener();
     void RegisterScreenOnSubscriber();
     void RegisterNitzTimeSubscriber();
+    void RegisterPackageRemovedSubscriber();
     void RegisterOsAccountSubscriber();
     bool IsValidTime(int64_t time);
     void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet);

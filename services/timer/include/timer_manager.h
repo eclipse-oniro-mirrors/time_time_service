@@ -64,6 +64,7 @@ public:
     bool ShowTimerTriggerById(int fd, uint64_t timerId);
     bool ShowIdleTimerInfo(int fd);
     void OnUserRemoved(int userId);
+    void OnPackageRemoved(int uid);
     ~TimerManager() override;
     void HandleRSSDeath();
     static TimerManager* GetInstance();
@@ -160,6 +161,7 @@ private:
     std::map<uint64_t, std::chrono::steady_clock::time_point> delayedTimers_;
     // idle timer
     std::shared_ptr<TimerInfo> mPendingIdleUntil_;
+    std::array<int64_t, TIMER_TYPE_BUTT> lastSetTime_ = {0};
     bool adjustPolicy_ = false;
     uint32_t adjustInterval_ = 0;
     int64_t timerOutOfRangeTimes_ = 0;

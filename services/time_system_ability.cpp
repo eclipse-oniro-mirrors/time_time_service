@@ -47,6 +47,7 @@
 #include "parameters.h"
 #include "os_account.h"
 #include "os_account_manager.h"
+#include "package_subscriber.h"
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
@@ -88,7 +89,11 @@ public:
 
     void OnAccountsChanged(const int &id)
     {
-        TimerManager::GetInstance()->OnUserRemoved(id);
+        auto timerManager = TimerManager::GetInstance();
+        if (timerManager == nullptr) {
+            return;
+        }
+        timerManager->OnUserRemoved(id);
     }
 
     void OnAccountsSwitch(const int &newId, const int &oldId) {}
@@ -224,7 +229,12 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
             NtpUpdateTime::GetInstance().MonitorNetwork();
             break;
         case ABILITY_MGR_SERVICE_ID:
+            AddSystemAbilityListener(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+            RemoveSystemAbilityListener(ABILITY_MGR_SERVICE_ID);
+            break;
+        case BUNDLE_MGR_SERVICE_SYS_ABILITY_ID:
             RecoverTimer();
+            RemoveSystemAbilityListener(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
             break;
         case SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN:
             RegisterOsAccountSubscriber();
@@ -263,6 +273,20 @@ void TimeSystemAbility::RegisterNitzTimeSubscriber()
     }
 }
 
+void TimeSystemAbility::RegisterPackageRemovedSubscriber()
+{
+    MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_BUNDLE_REMOVED);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
+
+    CommonEventSubscribeInfo subscriberInfo(matchingSkills);
+    std::shared_ptr<PackageRemovedSubscriber> subscriberPtr =
+            std::make_shared<PackageRemovedSubscriber>(subscriberInfo);
+    bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "register res:%{public}d", subscribeResult);
+}
+
 void TimeSystemAbility::RegisterCommonEventSubscriber()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterCommonEventSubscriber Started");
@@ -278,6 +302,7 @@ void TimeSystemAbility::RegisterCommonEventSubscriber()
     }
     RegisterScreenOnSubscriber();
     RegisterNitzTimeSubscriber();
+    RegisterPackageRemovedSubscriber();
 }
 
 void TimeSystemAbility::RegisterOsAccountSubscriber()
@@ -948,6 +973,9 @@ bool TimeSystemAbility::RecoverTimer()
     if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "hold result set is nullptr or go to first row failed");
     } else {
+        int count;
+        holdResultSet->GetRowCount(count);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result rows count: %{public}d", count);
         RecoverTimerInner(holdResultSet);
     }
     if (holdResultSet != nullptr) {
@@ -959,6 +987,9 @@ bool TimeSystemAbility::RecoverTimer()
     if (dropResultSet == nullptr || dropResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "drop result set is nullptr or go to first row failed");
     } else {
+        int count;
+        dropResultSet->GetRowCount(count);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result rows count: %{public}d", count);
         RecoverTimerInner(dropResultSet);
     }
     if (dropResultSet != nullptr) {

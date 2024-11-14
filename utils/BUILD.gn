@@ -28,6 +28,7 @@ ohos_source_set("time_utils") {
   sources = [
     "${time_service_path}/time_permission.cpp",
     "${time_utils_path}/native/src/time_file_utils.cpp",
+    "${time_utils_path}/native/src/time_xcollie.cpp",
   ]
 
   deps = []
@@ -40,6 +41,13 @@ ohos_source_set("time_utils") {
     "init:libbegetutil",
     "ipc:ipc_single",
   ]
+  defines = []
+
+  if (time_hicollie_able) {
+    external_deps += [ "hicollie:libhicollie" ]
+    defines += [ "HICOLLIE_ENABLE" ]
+  }
+
   branch_protector_ret = "pac_ret"
   sanitize = {
     integer_overflow = true

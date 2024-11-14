@@ -208,13 +208,16 @@ void TimerManager::ReCreateTimer(uint64_t timerId, std::shared_ptr<TimerEntry> t
 
 int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
 {
-    std::lock_guard<std::mutex> lock(entryMapMutex_);
-    auto it = timerEntryMap_.find(timerId);
-    if (it == timerEntryMap_.end()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
-        return E_TIME_NOT_FOUND;
+    std::shared_ptr<TimerEntry> timerInfo;
+    {
+        std::lock_guard<std::mutex> lock(entryMapMutex_);
+        auto it = timerEntryMap_.find(timerId);
+        if (it == timerEntryMap_.end()) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
+            return E_TIME_NOT_FOUND;
+        }
+        timerInfo = it->second;
     }
-    auto timerInfo = it->second;
     TIME_HILOGI(TIME_MODULE_SERVICE,
         "id: %{public}" PRIu64 " typ:%{public}d len: %{public}" PRId64 " int: %{public}" PRId64 " "
         "flg :%{public}d trig: %{public}s uid:%{public}d pid:%{public}d",
@@ -226,16 +229,8 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
         std::lock_guard<std::mutex> lock(mutex_);
         RemoveLocked(timerId, false);
     }
-    SetHandler(timerInfo->id,
-               timerInfo->type,
-               triggerTime,
-               timerInfo->windowLength,
-               timerInfo->interval,
-               timerInfo->flag,
-               timerInfo->callback,
-               timerInfo->wantAgent,
-               timerInfo->uid,
-               timerInfo->pid,
+    SetHandler(timerInfo->id, timerInfo->type, triggerTime, timerInfo->windowLength, timerInfo->interval,
+               timerInfo->flag, timerInfo->callback, timerInfo->wantAgent, timerInfo->uid, timerInfo->pid,
                timerInfo->bundleName);
     auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type)
                       ? HOLD_ON_REBOOT
@@ -335,7 +330,6 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
             return E_TIME_DEAL_FAILED;
         }
         RemoveHandler(timerNumber);
-
         TimerProxy::GetInstance().RemoveProxy(timerNumber, it->second->uid);
         TimerProxy::GetInstance().RemovePidProxy(timerNumber, it->second->pid);
         TimerProxy::GetInstance().EraseTimerFromProxyUidMap(timerNumber, it->second->uid);
@@ -346,7 +340,6 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
             DecreaseTimerCount(it->second->uid);
         }
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "db bgn");
     if (needRecoverOnReboot) {
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 0);
@@ -356,7 +349,6 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         if (needDestroy) {
             OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(HOLD_ON_REBOOT);
             rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
-            TIME_HILOGI(TIME_MODULE_SERVICE, "db del");
             TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
         }
     } else {
@@ -368,11 +360,9 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         if (needDestroy) {
             OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(DROP_ON_REBOOT);
             rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
-            TIME_HILOGI(TIME_MODULE_SERVICE, "db del");
             TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
         }
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "db end");
     return E_TIME_OK;
 }
 
@@ -451,13 +441,13 @@ void TimerManager::SetHandlerLocked(uint64_t id, int type,
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, uid=%{public}" PRIu64 " id=%{public}" PRId64 "",
             callingUid, alarm->id);
         TimerProxy::GetInstance().RecordProxyUidTimerMap(alarm);
-        alarm->UpdateWhenElapsedFromNow(whenElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
+        alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
     if (TimerProxy::GetInstance().IsPidProxy(alarm->pid)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, pid=%{public}" PRIu64 " id=%{public}" PRId64 "",
             callingPid, alarm->id);
         TimerProxy::GetInstance().RecordProxyPidTimerMap(alarm);
-        alarm->UpdateWhenElapsedFromNow(whenElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
+        alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
     
     SetHandlerLocked(alarm, false, false);
@@ -790,7 +780,6 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
 // needs to acquire the lock `mutex_` before calling this method
 void TimerManager::RescheduleKernelTimerLocked()
 {
-    auto nextNonWakeup = std::chrono::steady_clock::time_point::min();
     auto bootTime = GetBootTimeNs();
     if (!alarmBatches_.empty()) {
         auto firstWakeup = FindFirstWakeupBatchLocked();
@@ -799,15 +788,19 @@ void TimerManager::RescheduleKernelTimerLocked()
             #ifdef POWER_MANAGER_ENABLE
             HandleRunningLock(firstWakeup);
             #endif
-            SetLocked(ELAPSED_REALTIME_WAKEUP, firstWakeup->GetStart().time_since_epoch(), bootTime);
+            auto setTimePoint = firstWakeup->GetStart().time_since_epoch();
+            if (setTimePoint.count() != lastSetTime_[ELAPSED_REALTIME_WAKEUP]) {
+                SetLocked(ELAPSED_REALTIME_WAKEUP, setTimePoint, bootTime);
+                lastSetTime_[ELAPSED_REALTIME_WAKEUP] = setTimePoint.count();
+            }
         }
         if (firstBatch != firstWakeup) {
-            nextNonWakeup = firstBatch->GetStart();
+            auto setTimePoint = firstBatch->GetStart().time_since_epoch();
+            if (setTimePoint.count() != lastSetTime_[ELAPSED_REALTIME]) {
+                SetLocked(ELAPSED_REALTIME, setTimePoint, bootTime);
+                lastSetTime_[ELAPSED_REALTIME] = setTimePoint.count();
+            }
         }
-    }
-
-    if (nextNonWakeup != std::chrono::steady_clock::time_point::min()) {
-        SetLocked(ELAPSED_REALTIME, nextNonWakeup.time_since_epoch(), bootTime);
     }
 }
 
@@ -1315,6 +1308,23 @@ void TimerManager::OnUserRemoved(int userId)
             int userIdOfTimer = -1;
             AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(it->second->uid, userIdOfTimer);
             if (userId == userIdOfTimer) {
+                removeList.push_back(it->second);
+            }
+        }
+    }
+    for (auto it = removeList.begin(); it != removeList.end(); ++it) {
+        DestroyTimer((*it)->id);
+    }
+}
+
+void TimerManager::OnPackageRemoved(int uid)
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Removed uid: %{public}d", uid);
+    std::vector<std::shared_ptr<TimerEntry>> removeList;
+    {
+        std::lock_guard<std::mutex> lock(entryMapMutex_);
+        for (auto it = timerEntryMap_.begin(); it != timerEntryMap_.end(); ++it) {
+            if (it->second->uid == uid) {
                 removeList.push_back(it->second);
             }
         }

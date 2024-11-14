@@ -34,6 +34,7 @@ ohos_shared_library("cj_system_date_time_ffi") {
       "hilog:libhilog",
       "init:libbegetutil",
       "napi:cj_bind_ffi",
+      "samgr:samgr_proxy",
     ]
   } else {
     defines += [ "PREVIEWER" ]
