@@ -290,9 +290,9 @@ HWTEST_F(TimeServiceTest, ProxyTimer004, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, PidProxyTimer001, TestSize.Level0)
 {
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, true, true);
+    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, RESERVED_PIDLIST, true, true);
     EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, false, true);
+    ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, RESERVED_PIDLIST, false, true);
     EXPECT_TRUE(ret);
 }
 
@@ -303,7 +303,7 @@ HWTEST_F(TimeServiceTest, PidProxyTimer001, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, PidProxyTimer002, TestSize.Level0)
 {
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, true, true);
+    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, RESERVED_PIDLIST, true, true);
     EXPECT_TRUE(ret);
     ret = TimeServiceClient::GetInstance()->ResetAllProxy();
     EXPECT_TRUE(ret);
@@ -316,7 +316,7 @@ HWTEST_F(TimeServiceTest, PidProxyTimer002, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, PidProxyTimer003, TestSize.Level0)
 {
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, false, true);
+    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, RESERVED_PIDLIST, false, true);
     EXPECT_FALSE(ret);
 }
 
@@ -328,9 +328,9 @@ HWTEST_F(TimeServiceTest, PidProxyTimer003, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, PidProxyTimer004, TestSize.Level0)
 {
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, true, false);
+    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, RESERVED_PIDLIST, true, false);
     EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_PIDLIST, false, false);
+    ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, RESERVED_PIDLIST, false, false);
     EXPECT_TRUE(ret);
 }
 

@@ -819,11 +819,12 @@ HWTEST_F(TimeClientTest, StartTimer009, TestSize.Level1)
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
     pid_t pid = IPCSkeleton::GetCallingPid();
+    pid_t uid = IPCSkeleton::GetCallingUid();
     std::set<int> pidList;
     pidList.insert(pid);
-    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, true, true);
     usleep(FIVE_HUNDRED * MICRO_TO_MILLISECOND);
-    TimeServiceClient::GetInstance()->ProxyTimer(pidList, false, true);
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, false, true);
     WaitForAlarm(&g_data1, 0);
     EXPECT_EQ(g_data1, 1);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
@@ -848,10 +849,11 @@ HWTEST_F(TimeClientTest, StartTimer010, TestSize.Level1)
     EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
+    pid_t uid = IPCSkeleton::GetCallingUid();
     pid_t pid = IPCSkeleton::GetCallingPid();
     std::set<int> pidList;
     pidList.insert(pid);
-    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, true, true);
     usleep(FIVE_HUNDRED * MICRO_TO_MILLISECOND);
     TimeServiceClient::GetInstance()->ResetAllProxy();
     WaitForAlarm(&g_data1, 0);
@@ -878,10 +880,11 @@ HWTEST_F(TimeClientTest, StartTimer011, TestSize.Level1)
     EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
+    pid_t uid = IPCSkeleton::GetCallingUid();
     pid_t pid = IPCSkeleton::GetCallingPid();
     std::set<int> pidList;
     pidList.insert(pid);
-    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, true, true);
     sleep(1);
     TimeServiceClient::GetInstance()->ResetAllProxy();
     WaitForAlarm(&g_data1, 0);
@@ -922,11 +925,12 @@ HWTEST_F(TimeClientTest, StartTimer012, TestSize.Level1)
     auto triggerTime2 = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId2, triggerTime2 + FIVE_HUNDRED);
     pid_t pid2 = IPCSkeleton::GetCallingUid();
+    pid_t uid = IPCSkeleton::GetCallingUid();
 
     std::set<int> pidList;
     pidList.insert(pid1);
     pidList.insert(pid2);
-    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, true, true);
     
     sleep(1);
     TimeServiceClient::GetInstance()->ResetAllProxy();
@@ -1233,10 +1237,11 @@ HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
     EXPECT_EQ(startRet, TimeError::E_TIME_OK);
     TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
     pid_t pid = IPCSkeleton::GetCallingPid();
+    pid_t uid = IPCSkeleton::GetCallingUid();
     std::set<int> pidList;
     pidList.insert(pid);
-    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
-    TimeSystemAbility::GetInstance()->ProxyTimer(pidList, false, true);
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, true, true);
+    TimeSystemAbility::GetInstance()->ProxyTimer(uid, pidList, false, true);
 
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);

@@ -308,6 +308,7 @@ int32_t TimeServiceStub::OnTimerProxy(MessageParcel &data, MessageParcel &reply)
 int32_t TimeServiceStub::OnPidTimerProxy(MessageParcel &data, MessageParcel &reply)
 {
     TimeXCollie timeXCollie("TimeService::PidTimerProxy");
+    auto uid = data.ReadInt32();
     auto pidListSize = data.ReadInt32();
     std::set<int> pidList;
     if (pidListSize == 0 || pidListSize > MAX_PID_LIST_SIZE) {
@@ -326,7 +327,7 @@ int32_t TimeServiceStub::OnPidTimerProxy(MessageParcel &data, MessageParcel &rep
     }
     auto isProxy = data.ReadBool();
     auto needRetrigger = data.ReadBool();
-    if (!ProxyTimer(pidList, isProxy, needRetrigger)) {
+    if (!ProxyTimer(uid, pidList, isProxy, needRetrigger)) {
         return E_TIME_DEAL_FAILED;
     }
     return ERR_OK;

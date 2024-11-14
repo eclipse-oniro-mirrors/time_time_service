@@ -39,10 +39,10 @@ bool FuzzTimerProxyTimer(const uint8_t *data, size_t size)
     TimerProxy::GetInstance().ProxyTimer(uid, false, true, now, callback);
     TimerProxy::GetInstance().ProxyTimer(uid, false, false, now, callback);
 
-    TimerProxy::GetInstance().PidProxyTimer(uid, true, true, now, callback);
-    TimerProxy::GetInstance().PidProxyTimer(uid, true, false, now, callback);
-    TimerProxy::GetInstance().PidProxyTimer(uid, false, true, now, callback);
-    TimerProxy::GetInstance().PidProxyTimer(uid, false, false, now, callback);
+    TimerProxy::GetInstance().PidProxyTimer(uid, uid, true, true, now, callback);
+    TimerProxy::GetInstance().PidProxyTimer(uid, uid, true, false, now, callback);
+    TimerProxy::GetInstance().PidProxyTimer(uid, uid, false, true, now, callback);
+    TimerProxy::GetInstance().PidProxyTimer(uid, uid, false, false, now, callback);
     return true;
 }
 
