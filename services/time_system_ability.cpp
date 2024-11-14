@@ -860,7 +860,7 @@ int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval)
     return E_TIME_OK;
 }
 
-bool TimeSystemAbility::ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger)
+bool TimeSystemAbility::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
 {
     if (!TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
@@ -870,7 +870,7 @@ bool TimeSystemAbility::ProxyTimer(std::set<int> pidList, bool isProxy, bool nee
     if (timerManager == nullptr) {
         return false;
     }
-    return timerManager->ProxyTimer(pidList, isProxy, needRetrigger);
+    return timerManager->ProxyTimer(uid, pidList, isProxy, needRetrigger);
 }
 
 int32_t TimeSystemAbility::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)

@@ -393,7 +393,7 @@ public:
      * @param true if need retrigger, false if not.
      * @return true on success, false on failure.
      */
-    TIME_API bool ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger);
+    TIME_API bool ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger);
 
     /**
      * @brief AdjustTimer

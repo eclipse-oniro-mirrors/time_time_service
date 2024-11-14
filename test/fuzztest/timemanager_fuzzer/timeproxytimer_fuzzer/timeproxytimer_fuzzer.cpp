@@ -38,10 +38,10 @@ bool FuzzTimeProxyTimer(const uint8_t *rawData, size_t size)
 
     std::set<int> pidList;
     pidList.insert(uid);
-    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, true);
-    TimeServiceClient::GetInstance()->ProxyTimer(pidList, true, false);
-    TimeServiceClient::GetInstance()->ProxyTimer(pidList, false, false);
-    TimeServiceClient::GetInstance()->ProxyTimer(pidList, false, true);
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, true, true);
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, true, false);
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, false, false);
+    TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, false, true);
 
     return true;
 }
