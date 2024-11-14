@@ -229,7 +229,12 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
             NtpUpdateTime::GetInstance().MonitorNetwork();
             break;
         case ABILITY_MGR_SERVICE_ID:
+            AddSystemAbilityListener(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+            RemoveSystemAbilityListener(ABILITY_MGR_SERVICE_ID);
+            break;
+        case BUNDLE_MGR_SERVICE_SYS_ABILITY_ID:
             RecoverTimer();
+            RemoveSystemAbilityListener(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
             break;
         case SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN:
             RegisterOsAccountSubscriber();
