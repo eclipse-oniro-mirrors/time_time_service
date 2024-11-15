@@ -67,6 +67,10 @@ const int WANT_RETRY_INTERVAL = 1;
 const int SYSTEM_USER_ID  = 0;
 // an error code of ipc which means peer end is dead
 constexpr int PEER_END_DEAD = 29189;
+constexpr int TIMER_ALARM_COUNT = 50;
+constexpr int MAX_TIMER_ALARM_COUNT = 100;
+constexpr int TIMER_ALRAM_INTERVAL = 60;
+constexpr int TIMER_COUNT_TOP_NUM = 5;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 
@@ -98,7 +102,8 @@ TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
       runFlag_ {true},
       handler_ {std::move(impl)},
       lastTimeChangeClockTime_ {system_clock::time_point::min()},
-      lastTimeChangeRealtime_ {steady_clock::time_point::min()}
+      lastTimeChangeRealtime_ {steady_clock::time_point::min()},
+      lastTimerOutOfRangeTime_ {steady_clock::time_point::min()}
 {
     alarmThread_.reset(new std::thread([this] { this->TimerLooper(); }));
 }
@@ -180,8 +185,8 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
             bundleName
         });
         timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
+        IncreaseTimerCount(uid);
     }
-
     if (type == NOT_STORE) {
         return E_TIME_OK;
     } else if (CheckNeedRecoverOnReboot(bundleName, paras.timerType)) {
@@ -198,6 +203,7 @@ void TimerManager::ReCreateTimer(uint64_t timerId, std::shared_ptr<TimerEntry> t
 {
     std::lock_guard<std::mutex> lock(entryMapMutex_);
     timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
+    IncreaseTimerCount(timerInfo->uid);
 }
 
 int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
@@ -238,6 +244,70 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
     return E_TIME_OK;
 }
 
+void TimerManager::IncreaseTimerCount(int uid)
+{
+    auto it = std::find_if(timerCount_.begin(), timerCount_.end(),
+        [uid](const std::pair<int32_t, size_t>& pair) {
+            return pair.first == uid;
+        });
+    if (it == timerCount_.end()) {
+        timerCount_.push_back(std::make_pair(uid, 1));
+    } else {
+        it->second++;
+    }
+    CheckTimerCount();
+}
+
+void TimerManager::DecreaseTimerCount(int uid)
+{
+    auto it = std::find_if(timerCount_.begin(), timerCount_.end(),
+        [uid](const std::pair<int32_t, size_t>& pair) {
+            return pair.first == uid;
+        });
+    if (it == timerCount_.end()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "uid: %{public}d has no timer", uid);
+    } else {
+        it->second--;
+    }
+}
+
+void TimerManager::CheckTimerCount()
+{
+    int count = static_cast<int>(timerEntryMap_.size());
+    if (count > (timerOutOfRangeTimes_ + 1) * TIMER_ALARM_COUNT) {
+        timerOutOfRangeTimes_ += 1;
+        TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}d timer in system", count);
+        ShowTimerCountByUid();
+        lastTimerOutOfRangeTime_ = GetBootTimeNs();
+        return;
+    }
+    auto currentBootTime = GetBootTimeNs();
+    if (count > MAX_TIMER_ALARM_COUNT &&
+        currentBootTime - lastTimerOutOfRangeTime_ > std::chrono::minutes(TIMER_ALRAM_INTERVAL)) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}d timer in system", count);
+        ShowTimerCountByUid();
+        lastTimerOutOfRangeTime_ = currentBootTime;
+        return;
+    }
+}
+
+void TimerManager::ShowTimerCountByUid()
+{
+    std::string uidStr = "";
+    std::string countStr = "";
+    auto size = static_cast<int>(timerCount_.size());
+    std::sort(timerCount_.begin(), timerCount_.end(),
+        [](const std::pair<int32_t, int32_t>& a, const std::pair<int32_t, int32_t>& b) {
+            return a.second > b.second;
+        });
+    auto limitedSize = (size > TIMER_COUNT_TOP_NUM) ? TIMER_COUNT_TOP_NUM : size;
+    for (auto it = timerCount_.begin(); it != timerCount_.begin() + limitedSize; ++it) {
+        uidStr = uidStr + std::to_string(it->first) + " ";
+        countStr = countStr + std::to_string(it->second) + " ";
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Top uid:[%{public}s], nums:[%{public}s]", uidStr.c_str(), countStr.c_str());
+}
+
 int32_t TimerManager::StopTimer(uint64_t timerId)
 {
     return StopTimerInner(timerId, false);
@@ -265,7 +335,10 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
         TimerProxy::GetInstance().EraseTimerFromProxyUidMap(timerNumber, it->second->uid);
         TimerProxy::GetInstance().EraseTimerFromProxyPidMap(timerNumber, it->second->pid);
         needRecoverOnReboot = CheckNeedRecoverOnReboot(it->second->bundleName, it->second->type);
-        if (needDestroy) { timerEntryMap_.erase(it); }
+        if (needDestroy) {
+            timerEntryMap_.erase(it);
+            DecreaseTimerCount(it->second->uid);
+        }
     }
     if (needRecoverOnReboot) {
         OHOS::NativeRdb::ValuesBucket values;
