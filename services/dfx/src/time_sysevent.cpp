@@ -26,6 +26,9 @@ using HiSysEventNameSpace = OHOS::HiviewDFX::HiSysEvent;
 
 void StatisticReporter(int32_t callerPid, int32_t size, std::shared_ptr<TimerInfo> timer)
 {
+    if (timer == nullptr) {
+        return;
+    }
     int32_t callerUid = timer->uid;
     std::string bundleOrProcessName = timer->bundleName;
     int32_t type = timer->type;
