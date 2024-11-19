@@ -957,6 +957,7 @@ HWTEST_F(TimeClientTest, StartTimer013, TestSize.Level1)
     timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(false);
     timerInfo->SetDisposable(true);
+    timerInfo->SetAutoRestore(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
@@ -985,6 +986,7 @@ HWTEST_F(TimeClientTest, StartTimer014, TestSize.Level1)
     timerInfo->SetRepeat(true);
     timerInfo->SetInterval(1000);
     timerInfo->SetDisposable(true);
+    timerInfo->SetAutoRestore(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);

@@ -37,6 +37,7 @@ public:
     virtual void SetRepeat(bool repeat) override;
     virtual void SetInterval(const uint64_t &interval) override;
     virtual void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) override;
+    void SetAutoRestore(bool _autoRestore);
     void SetCallbackInfo(const napi_env &env, const napi_ref &ref);
 
 private:
