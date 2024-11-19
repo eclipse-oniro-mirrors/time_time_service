@@ -170,7 +170,7 @@ public:
      * @param needRetrigger true if need retrigger, false if not.
      * @return bool true on success, false on failure.
      */
-    virtual bool ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger) = 0;
+    virtual bool ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger) = 0;
 
     /**
      * AdjustTimer

@@ -159,7 +159,7 @@ bool TimerProxy::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger,
     return true;
 }
 
-bool TimerProxy::PidProxyTimer(int pid, bool isProxy, bool needRetrigger,
+bool TimerProxy::PidProxyTimer(int32_t uid, int pid, bool isProxy, bool needRetrigger,
     const std::chrono::steady_clock::time_point &now,
     std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback)
 {
@@ -168,7 +168,7 @@ bool TimerProxy::PidProxyTimer(int pid, bool isProxy, bool needRetrigger,
 
     std::lock_guard<std::mutex> lockProxy(proxyPidMutex_);
     if (isProxy) {
-        UpdateProxyWhenElapsedForProxyPidMap(pid, now, insertAlarmCallback);
+        UpdateProxyWhenElapsedForProxyPidMap(uid, pid, now, insertAlarmCallback);
         return true;
     }
 
@@ -553,7 +553,7 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyUidMap(const int32_t uid,
     proxyUids_.insert(std::make_pair(uid, timePointMap));
 }
 
-void TimerProxy::UpdateProxyWhenElapsedForProxyPidMap(int pid,
+void TimerProxy::UpdateProxyWhenElapsedForProxyPidMap(int32_t uid, int pid,
     const std::chrono::steady_clock::time_point &now,
     std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback)
 {
@@ -574,14 +574,16 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyPidMap(int pid,
     std::unordered_map<uint64_t, std::chrono::steady_clock::time_point> timePointMap {};
     for (auto itPidTimersMap = pidTimersMap_.at(pid).begin(); itPidTimersMap!= pidTimersMap_.at(pid).end();
         ++itPidTimersMap) {
-        timePointMap.insert(std::make_pair(itPidTimersMap->first, itPidTimersMap->second->whenElapsed));
-        itPidTimersMap->second->UpdateWhenElapsedFromNow(now, milliseconds(proxyDelayTime_));
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Update proxy WhenElapsed for proxy pid map. "
-            "pid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
-            itPidTimersMap->second->pid, itPidTimersMap->second->id,
-            itPidTimersMap->second->whenElapsed.time_since_epoch().count(),
-            now.time_since_epoch().count());
-        insertAlarmCallback(itPidTimersMap->second);
+        if (uid == itPidTimersMap->second->uid) {
+            timePointMap.insert(std::make_pair(itPidTimersMap->first, itPidTimersMap->second->whenElapsed));
+            itPidTimersMap->second->UpdateWhenElapsedFromNow(now, milliseconds(proxyDelayTime_));
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Update proxy WhenElapsed for proxy pid map. "
+                "pid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
+                itPidTimersMap->second->pid, itPidTimersMap->second->id,
+                itPidTimersMap->second->whenElapsed.time_since_epoch().count(),
+                now.time_since_epoch().count());
+            insertAlarmCallback(itPidTimersMap->second);
+        }
     }
     proxyPids_.insert(std::make_pair(pid, timePointMap));
 }

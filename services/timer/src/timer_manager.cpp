@@ -970,12 +970,12 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval)
     return TimerProxy::GetInstance().AdjustTimer(isAdjust, interval, now, callback);
 }
 
-bool TimerManager::ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger)
+bool TimerManager::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
 {
     std::set<int> failurePid;
     std::lock_guard<std::mutex> lock(mutex_);
     for (std::set<int>::iterator pid = pidList.begin(); pid != pidList.end(); ++pid) {
-        if (!TimerProxy::GetInstance().PidProxyTimer(*pid, isProxy, needRetrigger, GetBootTimeNs(),
+        if (!TimerProxy::GetInstance().PidProxyTimer(uid, *pid, isProxy, needRetrigger, GetBootTimeNs(),
             [this] (std::shared_ptr<TimerInfo> &alarm) { UpdateTimersState(alarm); })) {
             failurePid.insert(*pid);
         }

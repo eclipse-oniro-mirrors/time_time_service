@@ -751,7 +751,7 @@ bool TimeServiceClient::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger
     return proxy->ProxyTimer(uid, isProxy, needRetrigger);
 }
 
-bool TimeServiceClient::ProxyTimer(std::set<int> pidList, bool isProxy, bool needRetrigger)
+bool TimeServiceClient::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
 {
     if (!ConnectService()) {
         return false;
@@ -760,7 +760,7 @@ bool TimeServiceClient::ProxyTimer(std::set<int> pidList, bool isProxy, bool nee
     if (proxy == nullptr) {
         return false;
     }
-    return proxy->ProxyTimer(pidList, isProxy, needRetrigger);
+    return proxy->ProxyTimer(uid, pidList, isProxy, needRetrigger);
 }
 
 int32_t TimeServiceClient::AdjustTimer(bool isAdjust, uint32_t interval)
