@@ -67,7 +67,8 @@ bool FuzzTimerSetTimerExemption(const uint8_t *data, size_t size)
 
 bool FuzzTimerResetProxy(const uint8_t *data, size_t size)
 {
-    auto now = std::chrono::steady_clock::now();
+    uint64_t offset = static_cast<uint64_t>(*data);
+    auto now = std::chrono::steady_clock::now() + std::chrono::nanoseconds(offset);
     auto callback = [] (std::shared_ptr<TimerInfo> &alarm) {};
     TimerProxy::GetInstance().ResetAllProxy(now, callback);
     return true;
