@@ -25,7 +25,6 @@ using namespace OHOS::MiscServices;
 
 namespace OHOS {
 constexpr size_t U32_AT_SIZE = 4;
-constexpr size_t ADJUST_TIMER_INTERVAL = 5;
 
 
 bool FuzzTimeProxyTimer(const uint8_t *rawData, size_t size)
@@ -48,7 +47,8 @@ bool FuzzTimeProxyTimer(const uint8_t *rawData, size_t size)
 
 bool FuzzTimeAdjustTimer(const uint8_t *rawData, size_t size)
 {
-    TimeServiceClient::GetInstance()->AdjustTimer(true, ADJUST_TIMER_INTERVAL);
+    size_t interval = static_cast<size_t>(*rawData);
+    TimeServiceClient::GetInstance()->AdjustTimer(true, interval);
     TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
     return true;
 }

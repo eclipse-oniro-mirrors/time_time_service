@@ -39,7 +39,7 @@ bool FuzzTimeSetTimezone(const uint8_t *rawData, size_t size)
 bool FuzzTimeGetTimezone(const uint8_t *rawData, size_t size)
 {
     TimeServiceClient::GetInstance()->GetTimeZone();
-    std::string timezoneId;
+    std::string timezoneId(reinterpret_cast<const char *>(rawData), size);
     TimeServiceClient::GetInstance()->GetTimeZone(timezoneId);
     return true;
 }
@@ -58,25 +58,32 @@ bool FuzzTimeSetTime(const uint8_t *rawData, size_t size)
 
 bool FuzzTimeGetTime(const uint8_t *rawData, size_t size)
 {
-    int64_t time;
     TimeServiceClient::GetInstance()->GetWallTimeMs();
+    int64_t time = static_cast<int64_t>(*rawData);
     TimeServiceClient::GetInstance()->GetWallTimeMs(time);
     TimeServiceClient::GetInstance()->GetWallTimeNs();
+    time = static_cast<int64_t>(*rawData);
     TimeServiceClient::GetInstance()->GetWallTimeNs(time);
 
     TimeServiceClient::GetInstance()->GetBootTimeMs();
+    time = static_cast<int64_t>(*rawData);
     TimeServiceClient::GetInstance()->GetBootTimeMs(time);
     TimeServiceClient::GetInstance()->GetBootTimeNs();
+    time = static_cast<int64_t>(*rawData);
     TimeServiceClient::GetInstance()->GetBootTimeNs(time);
 
     TimeServiceClient::GetInstance()->GetMonotonicTimeMs();
+    time = static_cast<int64_t>(*rawData);
     TimeServiceClient::GetInstance()->GetMonotonicTimeMs(time);
     TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
+    time = static_cast<int64_t>(*rawData);
     TimeServiceClient::GetInstance()->GetMonotonicTimeNs(time);
 
     TimeServiceClient::GetInstance()->GetThreadTimeMs();
+    time = static_cast<int64_t>(*rawData);
     TimeServiceClient::GetInstance()->GetThreadTimeMs(time);
     TimeServiceClient::GetInstance()->GetThreadTimeNs();
+    time = static_cast<int64_t>(*rawData);
     TimeServiceClient::GetInstance()->GetThreadTimeNs(time);
     return true;
 }
