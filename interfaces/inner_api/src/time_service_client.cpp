@@ -44,6 +44,7 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
     int32_t saId, const std::string &deviceId)
 {
     if (saId == TIME_SERVICE_ID) {
+        TimeServiceClient::GetInstance()->ConnectService();
         auto proxy = TimeServiceClient::GetInstance()->GetProxy();
         if (proxy == nullptr) {
             return;
@@ -127,25 +128,26 @@ bool TimeServiceClient::ConnectService()
     if (GetProxy() != nullptr) {
         return true;
     }
-
     sptr<ISystemAbilityManager> systemAbilityManager =
         SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (systemAbilityManager == nullptr) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Getting SystemAbilityManager failed.");
         return false;
     }
-
     auto systemAbility = systemAbilityManager->GetSystemAbility(TIME_SERVICE_ID);
     if (systemAbility == nullptr) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Get SystemAbility failed.");
         return false;
     }
-
+    IPCObjectProxy *ipcProxy = reinterpret_cast<IPCObjectProxy*>(systemAbility.GetRefPtr());
+    if (ipcProxy->IsObjectDead()) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Time service is dead.");
+        return false;
+    }
     std::lock_guard<std::mutex> autoLock(deathLock_);
     if (deathRecipient_ == nullptr) {
         deathRecipient_ = new TimeSaDeathRecipient();
     }
-
     systemAbility->AddDeathRecipient(deathRecipient_);
     sptr<ITimeService> proxy = iface_cast<ITimeService>(systemAbility);
     if (proxy == nullptr) {
@@ -153,7 +155,6 @@ bool TimeServiceClient::ConnectService()
         return false;
     }
     SetProxy(proxy);
-
     if (!SubscribeSA(systemAbilityManager)) {
         return false;
     }
