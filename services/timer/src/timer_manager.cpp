@@ -217,21 +217,21 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
             return E_TIME_NOT_FOUND;
         }
         timerInfo = it->second;
+        TIME_HILOGI(TIME_MODULE_SERVICE,
+            "id: %{public}" PRIu64 " typ:%{public}d len: %{public}" PRId64 " int: %{public}" PRId64 " "
+            "flg :%{public}d trig: %{public}s uid:%{public}d pid:%{public}d",
+            timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
+            std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
+        {
+            // To prevent the same ID from being started repeatedly,
+            // the later start overwrites the earlier start.
+            std::lock_guard<std::mutex> lock(mutex_);
+            RemoveLocked(timerId, false);
+        }
+        SetHandler(timerInfo->id, timerInfo->type, triggerTime, timerInfo->windowLength, timerInfo->interval,
+            timerInfo->flag, timerInfo->callback, timerInfo->wantAgent, timerInfo->uid, timerInfo->pid,
+            timerInfo->bundleName);
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE,
-        "id: %{public}" PRIu64 " typ:%{public}d len: %{public}" PRId64 " int: %{public}" PRId64 " "
-        "flg :%{public}d trig: %{public}s uid:%{public}d pid:%{public}d",
-        timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
-        std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
-    {
-        // To prevent the same ID from being started repeatedly,
-        // the later start overwrites the earlier start.
-        std::lock_guard<std::mutex> lock(mutex_);
-        RemoveLocked(timerId, false);
-    }
-    SetHandler(timerInfo->id, timerInfo->type, triggerTime, timerInfo->windowLength, timerInfo->interval,
-               timerInfo->flag, timerInfo->callback, timerInfo->wantAgent, timerInfo->uid, timerInfo->pid,
-               timerInfo->bundleName);
     auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type)
                       ? HOLD_ON_REBOOT
                       : DROP_ON_REBOOT);
