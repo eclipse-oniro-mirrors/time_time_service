@@ -69,6 +69,7 @@ constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t ONE_MILLI = 1000;
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
+const std::string SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime", \
                                                    "pid"};
@@ -1056,7 +1057,7 @@ void TimeSystemAbility::SetAutoReboot()
     }
     int64_t currentTime = 0;
     TimeSystemAbility::GetInstance()->GetWallTimeMs(currentTime);
-    auto bundleList = TimeFileUtils::GetBundleList();
+    auto bundleList = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
     do {
         auto bundleName = GetString(resultSet, 0);
         uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 1));
@@ -1065,7 +1066,7 @@ void TimeSystemAbility::SetAutoReboot()
                         "triggerTime: %{public}" PRIu64" currentTime: %{public}" PRId64"", triggerTime, currentTime);
             continue;
         }
-        if (bundleName == (bundleList.empty() ? "" : bundleList[0])) {
+        if (std::find(bundleList.begin(), bundleList.end(), bundleName) != bundleList.end()) {
             int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
             if (tmfd < 0) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error: %{public}s", strerror(errno));
