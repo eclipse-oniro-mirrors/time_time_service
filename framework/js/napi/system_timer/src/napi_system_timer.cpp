@@ -94,6 +94,10 @@ void ITimerInfoInstance::SetInterval(const uint64_t &_interval)
 {
     interval = _interval;
 }
+void ITimerInfoInstance::SetAutoRestore(bool _autoRestore)
+{
+    autoRestore = _autoRestore;
+}
 void ITimerInfoInstance::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent)
 {
     wantAgent = _wantAgent;
@@ -124,6 +128,7 @@ napi_value NapiSystemTimer::SystemTimerInit(napi_env env, napi_value exports)
 std::map<std::string, napi_valuetype> PARA_NAPI_TYPE_MAP = {
     { "type", napi_number },
     { "repeat", napi_boolean },
+    { "autoRestore", napi_boolean },
     { "interval", napi_number },
     { "wantAgent", napi_object },
     { "callback", napi_function },
@@ -132,6 +137,7 @@ std::map<std::string, napi_valuetype> PARA_NAPI_TYPE_MAP = {
 std::map<std::string, std::string> NAPI_TYPE_STRING_MAP = {
     { "type", "number" },
     { "repeat", "boolean" },
+    { "autoRestore", "boolean" },
     { "interval", "number" },
     { "wantAgent", "object" },
     { "callback", "function" },
@@ -156,6 +162,10 @@ void ParseTimerOptions(napi_env env, ContextBase *context, std::string paraType,
         bool repeat = false;
         napi_get_value_bool(env, result, &repeat);
         iTimerInfoInstance->SetRepeat(repeat);
+    } else if (paraType == "autoRestore") {
+        bool autoRestore = false;
+        napi_get_value_bool(env, result, &autoRestore);
+        iTimerInfoInstance->SetAutoRestore(autoRestore);
     } else if (paraType == "interval") {
         int64_t interval = 0;
         napi_get_value_int64(env, result, &interval);
@@ -195,6 +205,12 @@ void NapiSystemTimer::GetTimerOptions(const napi_env &env, ContextBase *context,
     ParseTimerOptions(env, context, "repeat", value, iTimerInfoInstance);
     CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->errMessage, JsErrorCode::PARAMETER_ERROR);
 
+    // autoRestore?: boolean
+    napi_has_named_property(env, value, "autoRestore", &hasProperty);
+    if (hasProperty) {
+        ParseTimerOptions(env, context, "autoRestore", value, iTimerInfoInstance);
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->errMessage, JsErrorCode::PARAMETER_ERROR);
+    }
     // interval?: number
     napi_has_named_property(env, value, "interval", &hasProperty);
     if (hasProperty) {

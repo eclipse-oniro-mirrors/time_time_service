@@ -62,6 +62,7 @@ bool FuzzTimeCreateTimerV9(int64_t data, size_t size)
     timerInfo->SetType(static_cast<int>(data));
     timerInfo->SetInterval(data);
     timerInfo->SetRepeat(data);
+    timerInfo->SetAutoRestore(false);
     uint64_t timerId = 0;
     TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     TimeServiceClient::GetInstance()->DestroyTimer(timerId);

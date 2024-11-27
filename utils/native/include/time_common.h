@@ -30,6 +30,7 @@ struct TimerPara {
     int64_t windowLength;
     uint64_t interval;
     bool disposable;
+    bool autoRestore;
     int flag;
 };
 
@@ -58,6 +59,7 @@ enum TimeError {
     E_TIME_NTP_NOT_UPDATE,
     E_TIME_ACCOUNT_NOT_MATCH,
     E_TIME_ACCOUNT_ERROR,
+    E_TIME_AUTO_RESTORE_ERROR,
 };
 
 enum DatabaseType {

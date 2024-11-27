@@ -344,11 +344,11 @@ void TimeSystemAbility::OnStop()
 void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras)
 {
     auto uIntType = static_cast<uint32_t>(timerOptions->type);
-    auto disposable = timerOptions->disposable;
     bool isRealtime = (uIntType & TIMER_TYPE_REALTIME_MASK) > 0;
     bool isWakeup = (uIntType & TIMER_TYPE_REALTIME_WAKEUP_MASK) > 0;
     paras.windowLength = (uIntType & TIMER_TYPE_EXACT_MASK) > 0 ? 0 : -1;
     paras.flag = (uIntType & TIMER_TYPE_EXACT_MASK) > 0 ? 1 : 0;
+    paras.autoRestore = timerOptions->autoRestore;
     if (isRealtime && isWakeup) {
         paras.timerType = ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP;
     } else if (isRealtime) {
@@ -359,15 +359,24 @@ void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerO
         paras.timerType = ITimerManager::TimerType::RTC;
     }
     if ((uIntType & TIMER_TYPE_IDLE_MASK) > 0) {
-        paras.flag += ITimerManager::TimerFlag::IDLE_UNTIL;
+        paras.flag |= ITimerManager::TimerFlag::IDLE_UNTIL;
     }
     if ((uIntType & TIMER_TYPE_INEXACT_REMINDER_MASK) > 0) {
-        paras.flag += ITimerManager::TimerFlag::INEXACT_REMINDER;
+        paras.flag |= ITimerManager::TimerFlag::INEXACT_REMINDER;
     }
-    if (disposable) {
-        paras.flag += ITimerManager::TimerFlag::IS_DISPOSABLE;
+    if (timerOptions->disposable) {
+        paras.flag |= ITimerManager::TimerFlag::IS_DISPOSABLE;
     }
     paras.interval = timerOptions->repeat ? timerOptions->interval : 0;
+}
+
+int32_t TimeSystemAbility::CheckTimerPara(const DatabaseType type, const TimerPara &paras)
+{
+    if (paras.autoRestore && (paras.timerType == ITimerManager::TimerType::ELAPSED_REALTIME ||
+        paras.timerType == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP || type == DatabaseType::NOT_STORE)) {
+        return E_TIME_AUTO_RESTORE_ERROR;
+    }
+    return E_TIME_OK;
 }
 
 int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
@@ -382,8 +391,19 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
         TIME_HILOGE(TIME_MODULE_SERVICE, "ITimerCallback nullptr.");
         return E_TIME_NULLPTR;
     }
+    auto type = DatabaseType::NOT_STORE;
+    if (timerOptions->wantAgent != nullptr) {
+        type = DatabaseType::STORE;
+    }
+    int uid = IPCSkeleton::GetCallingUid();
+    int pid = IPCSkeleton::GetCallingPid();
     struct TimerPara paras {};
     ParseTimerPara(timerOptions, paras);
+    int32_t res = CheckTimerPara(type, paras);
+    if (res != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "check para err:%{public}d,uid:%{public}d", res, uid);
+        return res;
+    }
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
         return E_TIME_NULLPTR;
@@ -404,14 +424,8 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     if ((static_cast<uint32_t>(paras.flag) & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
         !TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer.");
-        paras.flag = 0;
+        paras.flag &= ~ITimerManager::TimerFlag::IDLE_UNTIL;
     }
-    auto type = DatabaseType::NOT_STORE;
-    if (timerOptions->wantAgent != nullptr) {
-        type = DatabaseType::STORE;
-    }
-    int uid = IPCSkeleton::GetCallingUid();
-    int pid = IPCSkeleton::GetCallingPid();
     return timerManager->CreateTimer(paras, callbackFunc, timerOptions->wantAgent,
                                      uid, pid, timerId, type);
 }
@@ -977,7 +991,7 @@ bool TimeSystemAbility::RecoverTimer()
         int count;
         holdResultSet->GetRowCount(count);
         TIME_HILOGI(TIME_MODULE_SERVICE, "hold result rows count: %{public}d", count);
-        RecoverTimerInner(holdResultSet);
+        RecoverTimerInner(holdResultSet, true);
     }
     if (holdResultSet != nullptr) {
         holdResultSet->Close();
@@ -991,7 +1005,7 @@ bool TimeSystemAbility::RecoverTimer()
         int count;
         dropResultSet->GetRowCount(count);
         TIME_HILOGI(TIME_MODULE_SERVICE, "drop result rows count: %{public}d", count);
-        RecoverTimerInner(dropResultSet);
+        RecoverTimerInner(dropResultSet, false);
     }
     if (dropResultSet != nullptr) {
         dropResultSet->Close();
@@ -999,7 +1013,7 @@ bool TimeSystemAbility::RecoverTimer()
     return true;
 }
 
-void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet)
+void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, bool autoRestore)
 {
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
@@ -1018,6 +1032,8 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             static_cast<uint64_t>(GetLong(resultSet, 4)),
             // Line 2 is 'flag'
             GetInt(resultSet, 2),
+            // autoRestore depends on the table type
+            autoRestore,
             // Callback can't recover.
             nullptr,
             // Line 7 is 'wantAgent'
