@@ -32,7 +32,6 @@ int32_t NapiUtils::ConvertErrorCode(int32_t timeErrorCode)
             return JsErrorCode::SYSTEM_APP_ERROR;
         case MiscServices::E_TIME_NO_PERMISSION:
             return JsErrorCode::PERMISSION_ERROR;
-        case MiscServices::E_TIME_AUTO_RESTORE_ERROR:
         case MiscServices::E_TIME_PARAMETERS_INVALID:
             return JsErrorCode::PARAMETER_ERROR;
         case MiscServices::E_TIME_NTP_UPDATE_FAILED:

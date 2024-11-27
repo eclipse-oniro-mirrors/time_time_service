@@ -94,10 +94,6 @@ void ITimerInfoInstance::SetInterval(const uint64_t &_interval)
 {
     interval = _interval;
 }
-void ITimerInfoInstance::SetAutoRestore(bool _autoRestore)
-{
-    autoRestore = _autoRestore;
-}
 void ITimerInfoInstance::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent)
 {
     wantAgent = _wantAgent;

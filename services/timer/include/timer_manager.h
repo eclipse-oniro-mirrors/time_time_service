@@ -39,7 +39,6 @@
 
 namespace OHOS {
 namespace MiscServices {
-static std::vector<std::string> NEED_RECOVER_ON_REBOOT = { "not_support" };
 
 class TimerManager : public ITimerManager {
 public:
