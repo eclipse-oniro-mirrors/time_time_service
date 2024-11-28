@@ -29,7 +29,6 @@ public:
     void SetRepeat(bool repeat) override;
     void SetInterval(const uint64_t &interval) override;
     void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) override;
-    void SetAutoRestore(bool autoRestore);
 };
 
 TimerInfo::TimerInfo() = default;
@@ -52,10 +51,6 @@ void TimerInfo::SetInterval(const uint64_t &interval)
 void TimerInfo::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent)
 {
     this->wantAgent = wantAgent;
-}
-void TimerInfo::SetAutoRestore(bool autoRestore)
-{
-    this->autoRestore = autoRestore;
 }
 void TimerInfo::OnTrigger()
 {
