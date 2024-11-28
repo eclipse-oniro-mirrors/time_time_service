@@ -31,7 +31,6 @@ public:
     const int type;
     const std::chrono::milliseconds origWhen;
     const bool wakeup;
-    const bool autoRestore;
     const std::function<int32_t (const uint64_t)> callback;
     const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
     const uint32_t flags;
@@ -57,7 +56,6 @@ public:
         std::function<int32_t (const uint64_t)> callback,
         std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
         uint32_t flags,
-        bool autoRestore,
         int uid,
         int pid,
         const std::string &bundleName);

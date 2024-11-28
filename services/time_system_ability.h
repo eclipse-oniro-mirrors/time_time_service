@@ -102,7 +102,6 @@ private:
 
     int32_t Init();
     void ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras);
-    int32_t CheckTimerPara(const DatabaseType type, const TimerPara &paras);
     bool GetTimeByClockId(clockid_t clockId, struct timespec &tv);
     int SetRtcTime(time_t sec);
     bool CheckRtc(const std::string &rtcPath, uint64_t rtcId);
@@ -114,7 +113,7 @@ private:
     void RegisterPackageRemovedSubscriber();
     void RegisterOsAccountSubscriber();
     bool IsValidTime(int64_t time);
-    void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, bool autoRestore);
+    void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet);
     void SetAutoReboot();
 
     ServiceRunningState state_;

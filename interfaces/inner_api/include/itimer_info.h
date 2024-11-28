@@ -30,7 +30,6 @@ public:
     int type;
     bool repeat;
     bool disposable = false;
-    bool autoRestore = false;
     uint64_t interval;
     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
 
@@ -84,22 +83,11 @@ public:
      * @para: _disposable bool
      *        true: the timer will be destoryed automaticly when it is triggered.
      *              But do not take effect for repeat timer.
-     *        false: the timer need to be destroyed by client
+     *        fasle: the timer need to be destroyed by client
      */
     void SetDisposable(const bool &_disposable)
     {
         disposable = _disposable;
-    }
-
-    /**
-     * SetAutoRestore set timer restored upon reboot
-     * @para: _autoRestore bool
-     *        true: the timer will be restored when the device reboots.
-     *        false: the timer won't be restored when the device reboots.
-     */
-    void SetAutoRestore(bool _autoRestore)
-    {
-        autoRestore = _autoRestore;
     }
     virtual void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) = 0;
     virtual void OnTrigger() = 0;
