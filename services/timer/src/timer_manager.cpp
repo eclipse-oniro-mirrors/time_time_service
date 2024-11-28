@@ -71,7 +71,6 @@ constexpr int TIMER_ALARM_COUNT = 50;
 constexpr int MAX_TIMER_ALARM_COUNT = 100;
 constexpr int TIMER_ALRAM_INTERVAL = 60;
 constexpr int TIMER_COUNT_TOP_NUM = 5;
-const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 
@@ -120,10 +119,6 @@ TimerManager* TimerManager::GetInstance()
                 return nullptr;
             }
             instance_ = new TimerManager(impl);
-            std::vector<std::string> bundleList = TimeFileUtils::GetParameterList(AUTO_RESTORE_TIMER_APPS);
-            if (!bundleList.empty()) {
-                NEED_RECOVER_ON_REBOOT = bundleList;
-            }
         }
     }
     if (instance_ == nullptr) {

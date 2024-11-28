@@ -1566,7 +1566,6 @@ HWTEST_F(TimeServiceTest, SystemAbility002, TestSize.Level0)
 HWTEST_F(TimeServiceTest, SystemAbility003, TestSize.Level0)
 {
     uint64_t timerId1 = TIMER_ID;
-    uint64_t timerId2 = TIMER_ID + 1;
 
     TimeSystemAbility::GetInstance()->SetAutoReboot();
     
@@ -1584,28 +1583,11 @@ HWTEST_F(TimeServiceTest, SystemAbility003, TestSize.Level0)
     auto res = TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues1);
     EXPECT_EQ(res, true);
 
-    OHOS::NativeRdb::ValuesBucket insertValues2;
-    insertValues2.PutLong("timerId", timerId2);
-    insertValues2.PutInt("type", 0);
-    insertValues2.PutInt("flag", 0);
-    insertValues2.PutLong("windowLength", 0);
-    insertValues2.PutLong("interval", 0);
-    insertValues2.PutInt("uid", 0);
-    insertValues2.PutString("bundleName", NEED_RECOVER_ON_REBOOT[0]);
-    insertValues2.PutString("wantAgent", "");
-    insertValues2.PutInt("state", 1);
-    insertValues2.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
-    res = TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues2);
-    EXPECT_EQ(res, true);
-
     TimeSystemAbility::GetInstance()->SetAutoReboot();
 
     OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete1(HOLD_ON_REBOOT);
     rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
     TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
-    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete2(HOLD_ON_REBOOT);
-    rdbPredicatesDelete2.EqualTo("timerId", static_cast<int64_t>(timerId2));
-    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete2);
 }
 
 /**

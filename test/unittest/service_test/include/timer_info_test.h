@@ -41,7 +41,6 @@ public:
     virtual void OnTrigger() override;
     virtual void SetType(const int &type) override;
     virtual void SetRepeat(bool repeat) override;
-    void SetAutoRestore(bool restore);
     virtual void SetInterval(const uint64_t &interval) override;
     void SetDisposable(const bool &disposable);
     virtual void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) override;
@@ -97,11 +96,6 @@ void TimerInfoTest::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent
 void TimerInfoTest::SetDisposable(const bool &_disposable)
 {
     disposable = _disposable;
-}
-
-void TimerInfoTest::SetAutoRestore(bool _autoRestore)
-{
-    autoRestore = _autoRestore;
 }
 
 } // namespace MiscServices
