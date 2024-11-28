@@ -848,7 +848,7 @@ bool TimeSystemAbility::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger
 {
     if (!TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
-        return E_TIME_NO_PERMISSION;
+        return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "ProxyTimer service start uid: %{public}d, isProxy: %{public}d", uid, isProxy);
     auto timerManager = TimerManager::GetInstance();
@@ -874,7 +874,7 @@ bool TimeSystemAbility::ProxyTimer(int32_t uid, std::set<int> pidList, bool isPr
 {
     if (!TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
-        return E_TIME_NO_PERMISSION;
+        return false;
     }
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
@@ -897,7 +897,7 @@ bool TimeSystemAbility::ResetAllProxy()
 {
     if (!TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ResetAllProxy permission check failed");
-        return E_TIME_NO_PERMISSION;
+        return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "ResetAllProxy service");
     auto timerManager = TimerManager::GetInstance();
