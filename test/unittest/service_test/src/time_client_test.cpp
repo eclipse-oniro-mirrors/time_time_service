@@ -580,6 +580,31 @@ HWTEST_F(TimeClientTest, CreateTimer007, TestSize.Level1)
 }
 
 /**
+* @tc.name: CreateTimer008
+* @tc.desc: Create system timer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, CreateTimer008, TestSize.Level1)
+{
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(0);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetAutoRestore(true);
+    timerInfo->SetWantAgent(nullptr);
+    uint64_t timerId;
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_DEAL_FAILED);
+
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME);
+    errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_DEAL_FAILED);
+
+    timerInfo->SetType(timerInfo->TIMER_TYPE_REALTIME | timerInfo->TIMER_TYPE_WAKEUP);
+    errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_DEAL_FAILED);
+}
+
+/**
 * @tc.name: StartTimer001
 * @tc.desc: Start system timer.
 * @tc.type: FUNC
@@ -957,6 +982,7 @@ HWTEST_F(TimeClientTest, StartTimer013, TestSize.Level1)
     timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
     timerInfo->SetRepeat(false);
     timerInfo->SetDisposable(true);
+    timerInfo->SetAutoRestore(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
@@ -985,6 +1011,7 @@ HWTEST_F(TimeClientTest, StartTimer014, TestSize.Level1)
     timerInfo->SetRepeat(true);
     timerInfo->SetInterval(1000);
     timerInfo->SetDisposable(true);
+    timerInfo->SetAutoRestore(false);
     timerInfo->SetCallbackInfo(TimeOutCallback1);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);

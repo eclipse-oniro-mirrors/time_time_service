@@ -30,6 +30,7 @@ struct TimerPara {
     int64_t windowLength;
     uint64_t interval;
     bool disposable;
+    bool autoRestore;
     int flag;
 };
 
@@ -41,6 +42,7 @@ constexpr ErrCode TIME_ERR_OFFSET = ErrCodeOffset(SUBSYS_SMALLSERVICES, TIME_MOD
 
 enum TimeError {
     E_TIME_OK = 0,
+    // 77856768
     E_TIME_SA_DIED = TIME_ERR_OFFSET,
     E_TIME_READ_PARCEL_ERROR,
     E_TIME_WRITE_PARCEL_ERROR,
@@ -58,6 +60,7 @@ enum TimeError {
     E_TIME_NTP_NOT_UPDATE,
     E_TIME_ACCOUNT_NOT_MATCH,
     E_TIME_ACCOUNT_ERROR,
+    E_TIME_AUTO_RESTORE_ERROR,
 };
 
 enum DatabaseType {
