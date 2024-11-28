@@ -873,6 +873,10 @@ void TimerManager::NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer)
 
 int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &timer)
 {
+    auto bundleList = TimeFileUtils::GetBundleList();
+    if (!bundleList.empty() && timer->bundleName == bundleList[0]) {
+        return E_TIME_OK;
+    }
     int userIdOfTimer = -1;
     int foregroundUserId = -1;
     int getLocalIdErr = AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(timer->uid, userIdOfTimer);
