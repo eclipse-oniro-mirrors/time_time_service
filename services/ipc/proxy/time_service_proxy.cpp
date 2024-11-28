@@ -74,6 +74,10 @@ int32_t TimeServiceProxy::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOp
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write disposable");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
+    if (!data.WriteBool(timerOptions->autoRestore)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write autoRestore");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
     if (!data.WriteUint64(timerOptions->interval)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write interval");
         return E_TIME_WRITE_PARCEL_ERROR;

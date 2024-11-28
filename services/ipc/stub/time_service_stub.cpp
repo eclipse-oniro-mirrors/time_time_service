@@ -201,6 +201,7 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
     auto type = data.ReadInt32();
     auto repeat = data.ReadBool();
     auto disposable = data.ReadBool();
+    auto autoRestore = data.ReadBool();
     auto interval = data.ReadUint64();
     if (data.ReadBool()) {
         wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>(
@@ -220,6 +221,7 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
     timerOptions->repeat = repeat;
     timerOptions->interval = interval;
     timerOptions->disposable = disposable;
+    timerOptions->autoRestore = autoRestore;
     timerOptions->wantAgent = wantAgent;
     uint64_t timerId = data.ReadUint64();
     auto errCode = CreateTimer(timerOptions, obj, timerId);
