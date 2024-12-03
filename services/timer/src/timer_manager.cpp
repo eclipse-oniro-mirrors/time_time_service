@@ -72,6 +72,7 @@ constexpr int MAX_TIMER_ALARM_COUNT = 100;
 constexpr int TIMER_ALRAM_INTERVAL = 60;
 constexpr int TIMER_COUNT_TOP_NUM = 5;
 const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
+const std::string SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 
@@ -874,6 +875,10 @@ void TimerManager::NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer)
 
 int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &timer)
 {
+    auto bundleList = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
+    if (!bundleList.empty() && timer->bundleName == bundleList[0]) {
+        return E_TIME_OK;
+    }
     int userIdOfTimer = -1;
     int foregroundUserId = -1;
     int getLocalIdErr = AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(timer->uid, userIdOfTimer);
