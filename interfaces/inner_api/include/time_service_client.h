@@ -449,7 +449,6 @@ private:
         void OnRemoteDied(const wptr<IRemoteObject> &object) override
         {
             TimeServiceClient::GetInstance()->ClearProxy();
-            TimeServiceClient::GetInstance()->ConnectService();
         };
 
     private:
