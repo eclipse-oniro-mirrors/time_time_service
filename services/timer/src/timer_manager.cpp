@@ -923,6 +923,9 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             if (!NotifyWantAgent(timer) && CheckNeedRecoverOnReboot(timer->bundleName, timer->type)) {
                 NotifyWantAgentRetry(timer);
             }
+            if (timer->repeatInterval != milliseconds::zero()) {
+                continue;
+            }
             if (CheckNeedRecoverOnReboot(timer->bundleName, timer->type)) {
                 OHOS::NativeRdb::ValuesBucket values;
                 values.PutInt("state", 0);
