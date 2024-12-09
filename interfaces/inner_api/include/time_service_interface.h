@@ -204,6 +204,16 @@ public:
      */
     virtual int32_t GetNtpTimeMs(int64_t &time) = 0;
 
+    /**
+     * @brief GetRealTimeMs
+     *
+     * Obtain the wall time calculated based on the last NTP time.
+     *
+     * @param time the wall time(the UTC time from 1970 0H:0M:0S) in milliseconds.
+     * @return int32_t return error code.
+     */
+    virtual int32_t GetRealTimeMs(int64_t &time) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.miscservices.time.ITimeService");
 };
 } // namespace MiscServices

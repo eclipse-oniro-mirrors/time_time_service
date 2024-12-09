@@ -59,6 +59,7 @@ private:
     int32_t OnSetTimerExemption(MessageParcel &data, MessageParcel &reply);
     int32_t OnAllProxyReset(MessageParcel &data, MessageParcel &reply);
     int32_t OnGetNtpTimeMs(MessageParcel &data, MessageParcel &reply);
+    int32_t OnGetRealTimeMs(MessageParcel &data, MessageParcel &reply);
     std::map<TimeServiceIpcInterfaceCode, TimeServiceFunc> memberFuncMap_;
 };
 } // namespace MiscServices

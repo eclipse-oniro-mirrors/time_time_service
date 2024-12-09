@@ -51,6 +51,8 @@ napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value expor
         DECLARE_NAPI_STATIC_FUNCTION("getRealActiveTime", GetRealActiveTime),
         DECLARE_NAPI_STATIC_FUNCTION("getRealTime", GetRealTime),
         DECLARE_NAPI_STATIC_FUNCTION("getTime", GetTime),
+        DECLARE_NAPI_STATIC_FUNCTION("updateNtpTime", UpdateNtpTime),
+        DECLARE_NAPI_STATIC_FUNCTION("getNtpTime", GetNtpTime),
         DECLARE_NAPI_STATIC_FUNCTION("setDate", SetDate),
         DECLARE_NAPI_STATIC_FUNCTION("getDate", GetDate),
         DECLARE_NAPI_STATIC_FUNCTION("setTimezone", SetTimezone),
@@ -449,6 +451,56 @@ napi_value NapiSystemDateTime::GetTimezoneSync(napi_env env, napi_callback_info 
             "convert native object to javascript object failed", JsErrorCode::ERROR);
     };
     return NapiWork::SyncEnqueue(env, getTimezoneContext, "GetTimezone", executor, complete);
+}
+
+napi_value NapiSystemDateTime::UpdateNtpTime(napi_env env, napi_callback_info info)
+{
+    struct UpdateNtpTime : public ContextBase {
+        int64_t time = 0;
+    };
+    auto *updateNtpTimeContext = new UpdateNtpTime();
+    auto inputParser = [env, updateNtpTimeContext](size_t argc, napi_value *argv) {
+        updateNtpTimeContext->status = napi_ok;
+    };
+    updateNtpTimeContext->GetCbInfo(env, info, inputParser);
+
+    auto executor = [updateNtpTimeContext]() {
+        int32_t innerCode = TimeServiceClient::GetInstance()->GetNtpTimeMs(updateNtpTimeContext->time);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            updateNtpTimeContext->errCode = innerCode;
+            updateNtpTimeContext->status = napi_generic_failure;
+        }
+    };
+    auto complete = [env](napi_value &output) {
+        output = NapiUtils::GetUndefinedValue(env);
+    };
+    return NapiWork::AsyncEnqueue(env, updateNtpTimeContext, "UpdateNtpTime", executor, complete);
+}
+
+napi_value NapiSystemDateTime::GetNtpTime(napi_env env, napi_callback_info info)
+{
+    struct GetNtpTimeContext : public ContextBase {
+        int64_t time = 0;
+    };
+    auto *getNtpTimeContext = new GetNtpTimeContext();
+    auto inputParser = [env, getNtpTimeContext](size_t argc, napi_value *argv) {
+        getNtpTimeContext->status = napi_ok;
+    };
+    getNtpTimeContext->GetCbInfo(env, info, inputParser);
+
+    auto executor = [getNtpTimeContext]() {
+        int32_t innerCode = TimeServiceClient::GetInstance()->GetRealTimeMs(getNtpTimeContext->time);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            getNtpTimeContext->errCode = innerCode;
+            getNtpTimeContext->status = napi_generic_failure;
+        }
+    };
+    auto complete = [getNtpTimeContext](napi_value &output) {
+        getNtpTimeContext->status = napi_create_int64(getNtpTimeContext->env, getNtpTimeContext->time, &output);
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getNtpTimeContext,
+            "convert native object to javascript object failed", JsErrorCode::ERROR);
+    };
+    return NapiWork::SyncEnqueue(env, getNtpTimeContext, "GetNtpTime", executor, complete);
 }
 
 int32_t NapiSystemDateTime::GetDeviceTime(clockid_t clockId, bool isNano, int64_t &time)

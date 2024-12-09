@@ -31,6 +31,7 @@ namespace {
 constexpr int64_t TIME_RESULT_UNINITED = -1;
 constexpr int64_t HALF = 2;
 constexpr int32_t RETRY_TIMES = 2;
+const int NANO_TO_SECOND =  1000000000;
 } // namespace
 
 NtpTrustedTime &NtpTrustedTime::GetInstance()
@@ -92,6 +93,19 @@ int64_t NtpTrustedTime::GetCacheAge()
     }
 }
 
+std::chrono::steady_clock::time_point NtpTrustedTime::GetBootTimeNs()
+{
+    int64_t timeNow = -1;
+    struct timespec tv {};
+    if (clock_gettime(CLOCK_BOOTTIME, &tv) < 0) {
+        return std::chrono::steady_clock::now();
+    }
+    timeNow = tv.tv_sec * NANO_TO_SECOND + tv.tv_nsec;
+    std::chrono::steady_clock::time_point tp_epoch ((std::chrono::nanoseconds(timeNow)));
+    return tp_epoch;
+}
+
+
 int64_t NtpTrustedTime::TimeResult::GetTimeMillis()
 {
     return mTimeMillis;
@@ -104,13 +118,17 @@ int64_t NtpTrustedTime::TimeResult::GetElapsedRealtimeMillis()
 
 int64_t NtpTrustedTime::TimeResult::CurrentTimeMillis()
 {
+    if (mTimeMillis == 0 || mElapsedRealtimeMillis == 0) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Missing authoritative time source");
+        return TIME_RESULT_UNINITED;
+    }
     return mTimeMillis + GetAgeMillis();
 }
 
 int64_t NtpTrustedTime::TimeResult::GetAgeMillis()
 {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-        .count() - this->mElapsedRealtimeMillis;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        NtpTrustedTime::GetInstance().GetBootTimeNs().time_since_epoch()).count() - this->mElapsedRealtimeMillis;
 }
 
 NtpTrustedTime::TimeResult::TimeResult()
