@@ -54,12 +54,9 @@ public:
     bool SetRealTime(int64_t time);
     int32_t SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
     int32_t GetTimeZone(std::string &timeZoneId) override;
-    int32_t GetWallTimeMs(int64_t &time) override;
-    int32_t GetWallTimeNs(int64_t &time) override;
-    int32_t GetBootTimeMs(int64_t &time) override;
-    int32_t GetBootTimeNs(int64_t &time) override;
-    int32_t GetMonotonicTimeMs(int64_t &time) override;
-    int32_t GetMonotonicTimeNs(int64_t &time) override;
+    int32_t GetWallTimeMs(int64_t &time);
+    int32_t GetBootTimeMs(int64_t &time);
+    int32_t GetBootTimeNs(int64_t &time);
     int32_t GetThreadTimeMs(int64_t &time) override;
     int32_t GetThreadTimeNs(int64_t &time) override;
     int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
