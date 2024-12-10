@@ -35,7 +35,6 @@ NITZSubscriber::NITZSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo &s
 void NITZSubscriber::OnReceiveEvent(const CommonEventData &data)
 {
     uint32_t code = UNKNOWN_BROADCAST_EVENT;
-    OHOS::EventFwk::Want want = data.GetWant();
     std::string action = data.GetWant().GetAction();
     TIME_HILOGD(TIME_MODULE_SERVICE, "receive one broadcast:%{public}s", action.c_str());
 
