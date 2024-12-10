@@ -22,16 +22,12 @@
 #include <sys/time.h>
 
 #include "init_param.h"
-#include "net_conn_callback_observer.h"
-#include "net_conn_client.h"
-#include "net_specifier.h"
 #include "ntp_trusted_time.h"
 #include "parameters.h"
 #include "time_common.h"
 #include "time_system_ability.h"
 
 using namespace std::chrono;
-using namespace OHOS::NetManagerStandard;
 
 namespace OHOS {
 namespace MiscServices {
@@ -46,8 +42,6 @@ const std::string AUTO_TIME_STATUS_ON = "ON";
 const std::string AUTO_TIME_STATUS_OFF = "OFF";
 constexpr uint64_t TWO_SECONDS = 2000;
 constexpr uint64_t ONE_HOUR = 3600000;
-constexpr int32_t RETRY_TIMES = 3;
-constexpr uint32_t RETRY_INTERVAL = 1;
 const std::string DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
 } // namespace
 
@@ -90,45 +84,6 @@ void NtpUpdateTime::Init()
     TimeSystemAbility::GetInstance()->StartTimer(timerId_, nextTriggerTime_);
     TIME_HILOGI(TIME_MODULE_SERVICE, "ntp update timerId: %{public}" PRIu64 "triggertime: %{public}" PRId64 "",
                 timerId_, nextTriggerTime_);
-}
-
-int32_t NtpUpdateTime::MonitorNetwork()
-{
-    // observer net connection
-    TIME_HILOGD(TIME_MODULE_SERVICE, "NtpUpdateTime::MonitorNetwork");
-    NetSpecifier netSpecifier;
-    NetAllCapabilities netAllCapabilities;
-    netAllCapabilities.netCaps_.insert(NetManagerStandard::NetCap::NET_CAPABILITY_INTERNET);
-    netSpecifier.netCapabilities_ = netAllCapabilities;
-    sptr<NetSpecifier> specifier = new (std::nothrow) NetSpecifier(netSpecifier);
-    if (specifier == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "new operator error.specifier is nullptr");
-        return NET_CONN_ERR_INPUT_NULL_PTR;
-    }
-    sptr<NetConnCallbackObserver> observer = new (std::nothrow) NetConnCallbackObserver();
-    if (observer == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "new operator error.observer is nullptr");
-        return NET_CONN_ERR_INPUT_NULL_PTR;
-    }
-    int nRet = NetConnClient::GetInstance().RegisterNetConnCallback(specifier, observer, 0);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterNetConnCallback retcode= %{public}d", nRet);
-
-    if (nRet == E_TIME_OK) {
-        return nRet;
-    }
-    auto retryRegister = [specifier, observer]() {
-        for (int i = 0; i < RETRY_TIMES; i++) {
-            sleep(RETRY_INTERVAL);
-            int nRet = NetConnClient::GetInstance().RegisterNetConnCallback(specifier, observer, 0);
-            TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterNetConnCallback retcode= %{public}d", nRet);
-            if (nRet == E_TIME_OK) {
-                return;
-            }
-        }
-    };
-    std::thread thread(retryRegister);
-    thread.detach();
-    return nRet;
 }
 
 void NtpUpdateTime::RefreshNetworkTimeByTimer(uint64_t timerId)
