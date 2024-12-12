@@ -22,6 +22,7 @@
 #include "time_service_fuzz_utils.h"
 #include "time_service_ipc_interface_code.h"
 #include "timer_proxy.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace OHOS::MiscServices;
 
@@ -76,9 +77,10 @@ bool FuzzTimerResetProxy(const uint8_t *data, size_t size)
 
 bool FuzzTimerEraseTimer(const uint8_t *data, size_t size)
 {
-    auto id = static_cast<uint64_t>(*data);
-    auto uid = static_cast<uint32_t>(*data);
-    auto pid = static_cast<int>(*data);
+    FuzzedDataProvider fdp(data, size);
+    uint64_t id = fdp.ConsumeIntegral<uint64_t>();
+    uint32_t uid = fdp.ConsumeIntegral<uint32_t>();
+    int pid = fdp.ConsumeIntegral<int>();
     TimerProxy::GetInstance().EraseTimerFromProxyUidMap(id, uid);
     TimerProxy::GetInstance().EraseTimerFromProxyPidMap(id, pid);
     return true;
