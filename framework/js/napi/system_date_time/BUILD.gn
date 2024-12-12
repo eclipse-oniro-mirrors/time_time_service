@@ -42,6 +42,7 @@ ohos_shared_library("systemdatetime") {
     "c_utils:utils",
     "hilog:libhilog",
     "init:libbegetutil",
+    "ipc:ipc_single",
     "napi:ace_napi",
     "samgr:samgr_proxy",
   ]
