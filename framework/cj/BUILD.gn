@@ -33,6 +33,7 @@ ohos_shared_library("cj_system_date_time_ffi") {
       "c_utils:utils",
       "hilog:libhilog",
       "init:libbegetutil",
+      "ipc:ipc_single",
       "napi:cj_bind_ffi",
       "samgr:samgr_proxy",
     ]
