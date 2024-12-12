@@ -20,6 +20,7 @@
 #include <string_ex.h>
 
 #include "time_service_client.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace OHOS::MiscServices;
 
@@ -58,32 +59,33 @@ bool FuzzTimeSetTime(const uint8_t *rawData, size_t size)
 
 bool FuzzTimeGetTime(const uint8_t *rawData, size_t size)
 {
+    FuzzedDataProvider fdp(rawData, size);
     TimeServiceClient::GetInstance()->GetWallTimeMs();
-    int64_t time = static_cast<int64_t>(*rawData);
+    int64_t time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetWallTimeMs(time);
     TimeServiceClient::GetInstance()->GetWallTimeNs();
-    time = static_cast<int64_t>(*rawData);
+    time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetWallTimeNs(time);
 
     TimeServiceClient::GetInstance()->GetBootTimeMs();
-    time = static_cast<int64_t>(*rawData);
+    time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetBootTimeMs(time);
     TimeServiceClient::GetInstance()->GetBootTimeNs();
-    time = static_cast<int64_t>(*rawData);
+    time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetBootTimeNs(time);
 
     TimeServiceClient::GetInstance()->GetMonotonicTimeMs();
-    time = static_cast<int64_t>(*rawData);
+    time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetMonotonicTimeMs(time);
     TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
-    time = static_cast<int64_t>(*rawData);
+    time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetMonotonicTimeNs(time);
 
     TimeServiceClient::GetInstance()->GetThreadTimeMs();
-    time = static_cast<int64_t>(*rawData);
+    time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetThreadTimeMs(time);
     TimeServiceClient::GetInstance()->GetThreadTimeNs();
-    time = static_cast<int64_t>(*rawData);
+    time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetThreadTimeNs(time);
     return true;
 }
