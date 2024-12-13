@@ -31,7 +31,7 @@ bool TimerInfo::Matches(const std::string &packageName) const
     return false;
 }
 
-TimerInfo::TimerInfo(uint64_t _id, int _type,
+TimerInfo::TimerInfo(std::string _name, uint64_t _id, int _type,
                      std::chrono::milliseconds _when,
                      std::chrono::steady_clock::time_point _whenElapsed,
                      std::chrono::milliseconds _windowLength,
@@ -44,7 +44,8 @@ TimerInfo::TimerInfo(uint64_t _id, int _type,
                      int _uid,
                      int _pid,
                      const std::string &_bundleName)
-    : id {_id},
+    : name {_name},
+      id {_id},
       type {_type},
       origWhen {_when},
       wakeup {_type == ITimerManager::ELAPSED_REALTIME_WAKEUP || _type == ITimerManager::RTC_WAKEUP},

@@ -32,6 +32,7 @@ public:
     bool disposable = false;
     bool autoRestore = false;
     uint64_t interval;
+    std::string name = "";
     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
 
     /**
@@ -100,6 +101,17 @@ public:
     void SetAutoRestore(bool _autoRestore)
     {
         autoRestore = _autoRestore;
+    }
+
+    /**
+     * SetName set timer name
+     * @para: _name string
+     *        If set a timer with the same name as a previous one,
+     *        the previous timer will be destroyed.
+     */
+    void SetName(const std::string &_name)
+    {
+        name = _name;
     }
     virtual void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) = 0;
     virtual void OnTrigger() = 0;

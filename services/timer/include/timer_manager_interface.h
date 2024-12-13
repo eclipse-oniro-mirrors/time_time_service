@@ -24,6 +24,7 @@
 namespace OHOS {
 namespace MiscServices {
 struct TimerEntry {
+    std::string name;
     uint64_t id;
     int type;
     int64_t windowLength;
