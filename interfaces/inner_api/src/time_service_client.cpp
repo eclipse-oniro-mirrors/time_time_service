@@ -264,6 +264,23 @@ uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> timerOptions
     return timerId;
 }
 
+// needs to acquire the lock `recoverTimerInfoLock_` before calling this method
+void TimeServiceClient::CheckNameLocked(std::string name)
+{
+    auto it = std::find(timerNameList_.begin(), timerNameList_.end(), name);
+    if (it == timerNameList_.end()) {
+        timerNameList_.push_back(name);
+        return;
+    }
+    auto recoverIter = std::find_if(recoverTimerInfoMap_.begin(), recoverTimerInfoMap_.end(),
+                                    [name](const auto& pair) {
+                                        return pair.second->timerInfo->name == name;
+                                    });
+    if (recoverIter != recoverTimerInfoMap_.end()) {
+        recoverIter = recoverTimerInfoMap_.erase(recoverIter);
+    }
+}
+
 int32_t TimeServiceClient::CreateTimerV9(std::shared_ptr<ITimerInfo> timerOptions, uint64_t &timerId)
 {
     if (timerOptions == nullptr) {
@@ -290,6 +307,9 @@ int32_t TimeServiceClient::CreateTimerV9(std::shared_ptr<ITimerInfo> timerOption
 
     if (timerOptions->wantAgent == nullptr) {
         std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
+        if (timerOptions->name != "") {
+            CheckNameLocked(timerOptions->name);
+        }
         auto info = recoverTimerInfoMap_.find(timerId);
         if (info != recoverTimerInfoMap_.end()) {
             TIME_HILOGE(TIME_MODULE_CLIENT, "recover timer info already insert.");
@@ -401,6 +421,12 @@ int32_t TimeServiceClient::DestroyTimerV9(uint64_t timerId)
     std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
     auto info = recoverTimerInfoMap_.find(timerId);
     if (info != recoverTimerInfoMap_.end()) {
+        if (info->second->timerInfo->name != "") {
+            auto it = std::find(timerNameList_.begin(), timerNameList_.end(), info->second->timerInfo->name);
+            if (it != timerNameList_.end()) {
+                timerNameList_.erase(it);
+            }
+        }
         recoverTimerInfoMap_.erase(timerId);
     }
     return errCode;

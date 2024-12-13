@@ -62,6 +62,10 @@ int32_t TimeServiceProxy::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOp
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
+    if (!data.WriteString(timerOptions->name)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write name");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
     if (!data.WriteInt32(timerOptions->type)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write type");
         return E_TIME_WRITE_PARCEL_ERROR;

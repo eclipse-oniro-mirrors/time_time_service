@@ -478,10 +478,12 @@ private:
     void ClearProxy();
     sptr<ITimeService> GetProxy();
     void SetProxy(sptr<ITimeService> proxy);
+    void CheckNameLocked(std::string name);
 
     sptr<TimeServiceListener> listener_;
     static std::mutex instanceLock_;
     static sptr<TimeServiceClient> instance_;
+    TIME_API std::vector<std::string> timerNameList_;
     TIME_API std::map<uint64_t, std::shared_ptr<RecoverTimerInfo>> recoverTimerInfoMap_;
     TIME_API std::mutex recoverTimerInfoLock_;
     std::mutex proxyLock_;

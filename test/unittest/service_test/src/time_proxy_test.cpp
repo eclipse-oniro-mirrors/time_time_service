@@ -774,6 +774,25 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
 }
 
 /**
+* @tc.name: AdjustTimerExemption001.
+* @tc.desc: test adjust timer exemption list.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, AdjustTimerExemption001, TestSize.Level0)
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "AdjustTimerExemption001 start");
+    std::unordered_set<std::string> exemptionSet = {"bundleName|name"};
+    TimerProxy::GetInstance().SetTimerExemption(exemptionSet, true);
+    auto duration = std::chrono::milliseconds::zero();
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo = TimerInfo("name", 0, 0, duration, timePoint, duration, timePoint, duration, nullptr,
+        nullptr, 0, false, 0, 0, "bundleName");
+    auto timerInfoPtr = std::make_shared<TimerInfo>(timerInfo);
+    auto ret = TimerProxy::GetInstance().IsTimerExemption(timerInfoPtr);
+    EXPECT_EQ(ret, true);
+}
+
+/**
 * @tc.name: ProxyTimerCover001
 * @tc.desc: test CallbackAlarmIfNeed
 * @tc.type: FUNC
@@ -804,12 +823,12 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
 
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
-    auto timerInfo1 = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+    auto timerInfo1 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
                                                  nullptr, nullptr, 0, false, UID, 0, "");
     auto res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
     EXPECT_EQ(res, E_TIME_OK);
-    auto timerInfo2 = std::make_shared<TimerInfo>(TIMER_ID + 1, 0, duration, timePoint, duration, timePoint, duration,
-                                                 nullptr, nullptr, 0, false, UID, 0, "");
+    auto timerInfo2 = std::make_shared<TimerInfo>("", TIMER_ID + 1, 0, duration, timePoint, duration, timePoint,
+                                                 duration, nullptr, nullptr, 0, false, UID, 0, "");
     res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo2);
     EXPECT_EQ(res, E_TIME_OK);
 
@@ -860,12 +879,12 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
 
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
-    auto timerInfo1 = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+    auto timerInfo1 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
                                                   nullptr, nullptr, 0, false, 0, PID, "");
     auto res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
     EXPECT_EQ(res, E_TIME_OK);
-    auto timerInfo2 = std::make_shared<TimerInfo>(TIMER_ID + 1, 0, duration, timePoint, duration, timePoint, duration,
-                                                  nullptr, nullptr, 0, false, 0, PID, "");
+    auto timerInfo2 = std::make_shared<TimerInfo>("", TIMER_ID + 1, 0, duration, timePoint, duration, timePoint,
+                                                  duration, nullptr, nullptr, 0, false, 0, PID, "");
     res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo2);
     EXPECT_EQ(res, E_TIME_OK);
 
@@ -906,7 +925,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover004, TestSize.Level1)
 
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
-    auto timerInfo = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+    auto timerInfo = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
                                                   nullptr, nullptr, 0, false, UID, PID, "");
     TimerProxy::GetInstance().RecordUidTimerMap(timerInfo, false);
     {

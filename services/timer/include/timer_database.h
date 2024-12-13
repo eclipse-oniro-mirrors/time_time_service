@@ -25,6 +25,7 @@ namespace MiscServices {
 constexpr const char *DB_NAME = "/data/service/el1/public/database/time/time.db";
 constexpr int DATABASE_OPEN_VERSION = 1;
 constexpr int DATABASE_OPEN_VERSION_2 = 2;
+constexpr int DATABASE_OPEN_VERSION_3 = 3;
 constexpr int CHECK_VERSION_FAILED = -1;
 constexpr int API12_5_0_RELEASE = 50;
 constexpr int INVALID_VERSION = -50;

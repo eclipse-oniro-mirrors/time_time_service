@@ -25,6 +25,7 @@ using namespace OHOS::MiscServices;
 namespace OHOS {
 namespace MiscServices {
 namespace Time {
+static constexpr size_t STR_MAX_LENGTH = 64;
 ITimerInfoInstance::ITimerInfoInstance() : callbackInfo_{}
 {
 }
@@ -122,6 +123,7 @@ napi_value NapiSystemTimer::SystemTimerInit(napi_env env, napi_value exports)
 }
 
 std::map<std::string, napi_valuetype> PARA_NAPI_TYPE_MAP = {
+    { "name", napi_string },
     { "type", napi_number },
     { "repeat", napi_boolean },
     { "autoRestore", napi_boolean },
@@ -131,6 +133,7 @@ std::map<std::string, napi_valuetype> PARA_NAPI_TYPE_MAP = {
 };
 
 std::map<std::string, std::string> NAPI_TYPE_STRING_MAP = {
+    { "name", "string" },
     { "type", "number" },
     { "repeat", "boolean" },
     { "autoRestore", "boolean" },
@@ -179,6 +182,14 @@ void ParseTimerOptions(napi_env env, ContextBase *context, std::string paraType,
         napi_ref onTriggerCallback;
         napi_create_reference(env, result, 1, &onTriggerCallback);
         iTimerInfoInstance->SetCallbackInfo(env, onTriggerCallback);
+    } else if (paraType == "name") {
+        std::string name = "";
+        auto ret = NapiUtils::GetValue(env, result, name);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, ret == napi_ok,
+            "The type of 'name' must be string", JsErrorCode::PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, name.size() <= STR_MAX_LENGTH,
+            "timer name must <= 64.", JsErrorCode::PARAMETER_ERROR);
+        iTimerInfoInstance->SetName(name);
     }
 }
 
@@ -226,6 +237,13 @@ void NapiSystemTimer::GetTimerOptions(const napi_env &env, ContextBase *context,
     napi_has_named_property(env, value, "callback", &hasProperty);
     if (hasProperty) {
         ParseTimerOptions(env, context, "callback", value, iTimerInfoInstance);
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->errMessage, JsErrorCode::PARAMETER_ERROR);
+    }
+
+    // name?: string
+    napi_has_named_property(env, value, "name", &hasProperty);
+    if (hasProperty) {
+        ParseTimerOptions(env, context, "name", value, iTimerInfoInstance);
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->errMessage, JsErrorCode::PARAMETER_ERROR);
     }
 }

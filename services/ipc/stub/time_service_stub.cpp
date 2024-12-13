@@ -198,6 +198,7 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
         return E_TIME_NOT_SYSTEM_APP;
     }
     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent{ nullptr };
+    auto name = data.ReadString();
     auto type = data.ReadInt32();
     auto repeat = data.ReadBool();
     auto disposable = data.ReadBool();
@@ -217,6 +218,7 @@ int32_t TimeServiceStub::OnCreateTimer(MessageParcel &data, MessageParcel &reply
         return E_TIME_NULLPTR;
     }
     auto timerOptions = std::make_shared<SimpleTimerInfo>();
+    timerOptions->name = name;
     timerOptions->type = type;
     timerOptions->repeat = repeat;
     timerOptions->interval = interval;
