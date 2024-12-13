@@ -62,6 +62,10 @@ int32_t TimeServiceProxy::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOp
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
+    if (!data.WriteString(timerOptions->name)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write name");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
     if (!data.WriteInt32(timerOptions->type)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write type");
         return E_TIME_WRITE_PARCEL_ERROR;
@@ -86,11 +90,9 @@ int32_t TimeServiceProxy::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOp
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write wantAgent status");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
-    if (timerOptions->wantAgent != nullptr) {
-        if (!data.WriteParcelable(&(*timerOptions->wantAgent))) {
-            TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write wantAgent");
-            return E_TIME_WRITE_PARCEL_ERROR;
-        }
+    if (timerOptions->wantAgent != nullptr && !data.WriteParcelable(&(*timerOptions->wantAgent))) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write wantAgent");
+        return E_TIME_WRITE_PARCEL_ERROR;
     }
     if (!data.WriteRemoteObject(timerCallback)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write timerCallback");
@@ -104,7 +106,6 @@ int32_t TimeServiceProxy::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOp
         Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::CREATE_TIMER), data, reply, option);
     if (ret == E_TIME_OK) {
         timerId = reply.ReadUint64();
-        return E_TIME_OK;
     }
     return ret;
 }

@@ -65,13 +65,14 @@ static const uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
 static const uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
 static const uint32_t TIMER_TYPE_IDLE_MASK = 1 << 3;
 static const uint32_t TIMER_TYPE_INEXACT_REMINDER_MASK = 1 << 4;
+static constexpr int32_t STR_MAX_LENGTH = 64;
 constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t ONE_MILLI = 1000;
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime", \
-                                                   "pid"};
+                                                   "pid", "name"};
 const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
 const std::string SUBSCRIBE_REMOVED = "UserRemoved";
 } // namespace
@@ -366,6 +367,9 @@ void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerO
     if (timerOptions->disposable) {
         paras.flag |= ITimerManager::TimerFlag::IS_DISPOSABLE;
     }
+    if (timerOptions->name != "") {
+        paras.name = timerOptions->name;
+    }
     paras.interval = timerOptions->repeat ? timerOptions->interval : 0;
 }
 
@@ -374,6 +378,9 @@ int32_t TimeSystemAbility::CheckTimerPara(const DatabaseType type, const TimerPa
     if (paras.autoRestore && (paras.timerType == ITimerManager::TimerType::ELAPSED_REALTIME ||
         paras.timerType == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP || type == DatabaseType::NOT_STORE)) {
         return E_TIME_AUTO_RESTORE_ERROR;
+    }
+    if (paras.name.size() > STR_MAX_LENGTH) {
+        return E_TIME_PARAMETERS_INVALID;
     }
     return E_TIME_OK;
 }
@@ -1021,6 +1028,8 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
     do {
         auto timerId = static_cast<uint64_t>(GetLong(resultSet, 0));
         auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
+            // line 11 is 'name'
+            GetString(resultSet, 11),
             // Line 0 is 'timerId'
             timerId,
             // Line 1 is 'type'

@@ -605,6 +605,103 @@ HWTEST_F(TimeClientTest, CreateTimer008, TestSize.Level1)
 }
 
 /**
+* @tc.name: CreateTimer009
+* @tc.desc: Create system timer with a long name, expect false.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, CreateTimer009, TestSize.Level1)
+{
+    g_data1 = 0;
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetName("0123456789012345678901234567890123456789012345678901234567890123456789");
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    timerInfo->SetWantAgent(wantAgent);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_NE(errCode, TimeError::E_TIME_OK);
+    
+    TIME_HILOGI(TIME_MODULE_CLIENT, "test timer id: %{public}" PRId64 "", timerId);
+}
+
+/**
+* @tc.name: CreateTimer010
+* @tc.desc: Create two timers with same name, expect first is destroyed.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, CreateTimer010, TestSize.Level1)
+{
+    g_data1 = 0;
+    uint64_t timerId1;
+    uint64_t timerId2;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetName("testname");
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    timerInfo->SetWantAgent(wantAgent);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId1);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, 0);
+    auto nameList = TimeServiceClient::GetInstance()->timerNameList_;
+    auto name = std::find(nameList.begin(), nameList.end(), "testname");
+    EXPECT_NE(name, nameList.end());
+
+    errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId2);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId2, 0);
+
+    auto info = TimeServiceClient::GetInstance()->recoverTimerInfoMap_.find(timerId1);
+    EXPECT_EQ(info, TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
+
+    errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId1);
+    EXPECT_NE(errCode, TimeError::E_TIME_OK);
+
+    errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId2);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+
+    nameList = TimeServiceClient::GetInstance()->timerNameList_;
+    name = std::find(nameList.begin(), nameList.end(), "testname");
+    EXPECT_EQ(name, nameList.end());
+}
+
+/**
+* @tc.name: CreateTimer011
+* @tc.desc: Create a timer with name and destroy it, create a new timer with same name,
+*           expect OK.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, CreateTimer011, TestSize.Level1)
+{
+    g_data1 = 0;
+    uint64_t timerId1;
+    uint64_t timerId2;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetName("testname");
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    timerInfo->SetWantAgent(wantAgent);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId1);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId1, 0);
+
+    errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId1);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+
+    errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId2);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId2, 0);
+
+    errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId2);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+}
+
+/**
 * @tc.name: StartTimer001
 * @tc.desc: Start system timer.
 * @tc.type: FUNC
