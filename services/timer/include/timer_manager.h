@@ -73,7 +73,8 @@ private:
     explicit TimerManager(std::shared_ptr<TimerHandler> impl);
     void TimerLooper();
 
-    void SetHandler(uint64_t id,
+    void SetHandler(std::string name,
+                    uint64_t id,
                     int type,
                     uint64_t triggerAtTime,
                     int64_t windowLength,
@@ -85,7 +86,8 @@ private:
                     int uid,
                     int pid,
                     const std::string &bundleName);
-    void SetHandlerLocked(uint64_t id,
+    void SetHandlerLocked(std::string name,
+                          uint64_t id,
                           int type,
                           std::chrono::milliseconds when,
                           std::chrono::steady_clock::time_point whenElapsed,
@@ -123,6 +125,8 @@ private:
     std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
     std::chrono::steady_clock::time_point GetBootTimeNs();
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
+    int32_t StopTimerInnerLocked(bool needDestroy, uint64_t timerNumber, bool &needRecover);
+    void UpdateOrDeleteDatabase(bool needDestroy, uint64_t timerNumber, bool needRecover);
     int32_t CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &timer);
     bool NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer);
     bool CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm);
@@ -142,10 +146,14 @@ private:
     void DecreaseTimerCount(int uid);
     void CheckTimerCount();
     void ShowTimerCountByUid();
+    void AddTimerName(int uid, std::string name, uint64_t timerId);
+    void DeleteTimerName(int uid, std::string name, uint64_t timerId);
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     // vector<uid, count>
     std::vector<std::pair<int32_t, int32_t>> timerCount_;
+    // <uid, <name, timerid>>
+    std::map<int32_t, std::map<std::string, uint64_t>> timerNameMap_;
     std::default_random_engine random_;
     std::atomic_bool runFlag_;
     std::shared_ptr<TimerHandler> handler_;
@@ -153,6 +161,7 @@ private:
     std::vector<std::shared_ptr<Batch>> alarmBatches_;
     std::mutex mutex_;
     std::mutex entryMapMutex_;
+    std::mutex timerMapMutex_;
     std::chrono::system_clock::time_point lastTimeChangeClockTime_;
     std::chrono::steady_clock::time_point lastTimeChangeRealtime_;
     static std::mutex instanceLock_;
