@@ -77,6 +77,7 @@ private:
                     int64_t windowLength,
                     uint64_t interval,
                     int flag,
+                    bool autoRestore,
                     std::function<int32_t (const uint64_t)> callback,
                     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
                     int uid,
@@ -92,6 +93,7 @@ private:
                           std::function<int32_t (const uint64_t)> callback,
                           const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
                           uint32_t flags,
+                          bool autoRestore,
                           uint64_t callingUid,
                           uint64_t callingPid,
                           const std::string &bundleName);
@@ -125,7 +127,7 @@ private:
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustTimersBasedOnDeviceIdle();
     void HandleRepeatTimer(const std::shared_ptr<TimerInfo> &timer, std::chrono::steady_clock::time_point nowElapsed);
-    inline bool CheckNeedRecoverOnReboot(std::string bundleName, int type);
+    inline bool CheckNeedRecoverOnReboot(std::string bundleName, int type, bool autoRestore);
     #ifdef POWER_MANAGER_ENABLE
     void HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup);
     void AddRunningLock(long long holdLockTime);

@@ -1063,7 +1063,7 @@ HWTEST_F(TimeServiceTest, TimerManager001, TestSize.Level0)
 {
     auto timerId1 = TIMER_ID;
     auto entry = std::make_shared<TimerEntry>(
-            TimerEntry{timerId1, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
+            TimerEntry{timerId1, 0, 0, 0, 0, false, nullptr, nullptr, 0, 0, "bundleName"});
     TimerManager::GetInstance()->ReCreateTimer(timerId1, entry);
     std::lock_guard<std::mutex> lock(TimerManager::GetInstance()->entryMapMutex_);
 
@@ -1089,6 +1089,7 @@ HWTEST_F(TimeServiceTest, TimerManager002, TestSize.Level0)
                                             10,
                                             0,
                                             1,
+                                            false,
                                             nullptr,
                                             nullptr,
                                             0,
@@ -1125,7 +1126,7 @@ HWTEST_F(TimeServiceTest, TimerManager004, TestSize.Level0)
 {
     TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
     auto entry = std::make_shared<TimerEntry>(
-            TimerEntry{TIMER_ID, 0, 0, 0, 0, nullptr, nullptr, UID, PID, "bundleName"});
+            TimerEntry{TIMER_ID, 0, 0, 0, 0, false, nullptr, nullptr, UID, PID, "bundleName"});
     TimerManager::GetInstance()->ReCreateTimer(TIMER_ID, entry);
 
     {
@@ -1177,7 +1178,7 @@ HWTEST_F(TimeServiceTest, TimerManager005, TestSize.Level0)
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
-                                                 nullptr, nullptr, 0, 0, 0, "");
+                                                 nullptr, nullptr, 0, false, 0, 0, "");
     auto res = TimerManager::GetInstance()->NotifyWantAgent(timerInfo);
     EXPECT_FALSE(res);
 
@@ -1245,7 +1246,7 @@ HWTEST_F(TimeServiceTest, TimerManager007, TestSize.Level0)
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo1 = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
-                                                 nullptr, nullptr, 0, 0, 0, "");
+                                                 nullptr, nullptr, 0, false, 0, 0, "");
     std::lock_guard<std::mutex> lock(TimerManager::GetInstance()->mutex_);
     auto alarm = TimerManager::GetInstance()->mPendingIdleUntil_;
     TimerManager::GetInstance()->mPendingIdleUntil_ = timerInfo1;
@@ -1259,11 +1260,11 @@ HWTEST_F(TimeServiceTest, TimerManager007, TestSize.Level0)
     auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(
             (timePoint + std::chrono::hours(1)).time_since_epoch());
     auto timerInfo2 = std::make_shared<TimerInfo>(TIMER_ID, 1, duration1, timePoint, duration, timePoint, duration,
-                                                  nullptr, nullptr, 0, 0, 0, "");
+                                                  nullptr, nullptr, 0, false, 0, 0, "");
     res = TimerManager::GetInstance()->AdjustDeliveryTimeBasedOnDeviceIdle(timerInfo2);
     EXPECT_TRUE(res);
     auto timerInfo3 = std::make_shared<TimerInfo>(TIMER_ID, 2, duration, timePoint, duration, timePoint, duration,
-                                                  nullptr, nullptr, 0, 0, 0, "");
+                                                  nullptr, nullptr, 0, false, 0, 0, "");
     res = TimerManager::GetInstance()->AdjustDeliveryTimeBasedOnDeviceIdle(timerInfo3);
     EXPECT_TRUE(res);
 
@@ -1291,7 +1292,7 @@ HWTEST_F(TimeServiceTest, TimerManager008, TestSize.Level0)
 HWTEST_F(TimeServiceTest, TimerManager009, TestSize.Level0)
 {
     auto entry = std::make_shared<TimerEntry>(
-            TimerEntry{TIMER_ID, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
+            TimerEntry{TIMER_ID, 0, 0, 0, 0, false, nullptr, nullptr, 0, 0, "bundleName"});
     TimerManager::GetInstance()->ReCreateTimer(TIMER_ID, entry);
     uint64_t triggerTime = std::numeric_limits<uint64_t>::max();
     TimerManager::GetInstance()->StartTimer(TIMER_ID, triggerTime);
@@ -1318,13 +1319,13 @@ HWTEST_F(TimeServiceTest, TimerManager010, TestSize.Level0)
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
-                                                  nullptr, nullptr, 0, 0, 0, "");
+                                                  nullptr, nullptr, 0, false, 0, 0, "");
     {
         std::lock_guard <std::mutex> lock(TimerManager::GetInstance()->mutex_);
         TimerManager::GetInstance()->mPendingIdleUntil_ = timerInfo;
     }
     auto entry = std::make_shared<TimerEntry>(
-            TimerEntry{TIMER_ID, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
+            TimerEntry{TIMER_ID, 0, 0, 0, 0, false, nullptr, nullptr, 0, 0, "bundleName"});
     TimerManager::GetInstance()->ReCreateTimer(TIMER_ID, entry);
     TimerManager::GetInstance()->HandleRSSDeath();
     auto res = TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
@@ -1398,13 +1399,13 @@ HWTEST_F(TimeServiceTest, TimerManager014, TestSize.Level0)
     uint64_t i = 0;
     for (; i <= TIMER_ALARM_COUNT; ++i) {
         auto entry = std::make_shared<TimerEntry>(
-            TimerEntry{i, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
+            TimerEntry{i, 0, 0, 0, 0, false, nullptr, nullptr, 0, 0, "bundleName"});
         TimerManager::GetInstance()->ReCreateTimer(i, entry);
     }
     EXPECT_EQ(TimerManager::GetInstance()->timerOutOfRangeTimes_, 1);
     for (; i <= TIMER_ALARM_COUNT * 2; ++i) {
         auto entry = std::make_shared<TimerEntry>(
-            TimerEntry{i, 0, 0, 0, 0, nullptr, nullptr, 0, 0, "bundleName"});
+            TimerEntry{i, 0, 0, 0, 0, false, nullptr, nullptr, 0, 0, "bundleName"});
         TimerManager::GetInstance()->ReCreateTimer(i, entry);
     }
     EXPECT_EQ(TimerManager::GetInstance()->timerOutOfRangeTimes_, 2);
@@ -1494,7 +1495,6 @@ HWTEST_F(TimeServiceTest, SystemAbility002, TestSize.Level0)
 HWTEST_F(TimeServiceTest, SystemAbility003, TestSize.Level0)
 {
     uint64_t timerId1 = TIMER_ID;
-    uint64_t timerId2 = TIMER_ID + 1;
 
     TimeSystemAbility::GetInstance()->SetAutoReboot();
 
@@ -1512,28 +1512,11 @@ HWTEST_F(TimeServiceTest, SystemAbility003, TestSize.Level0)
     auto res = TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues1);
     EXPECT_EQ(res, true);
 
-    OHOS::NativeRdb::ValuesBucket insertValues2;
-    insertValues2.PutLong("timerId", timerId2);
-    insertValues2.PutInt("type", 0);
-    insertValues2.PutInt("flag", 0);
-    insertValues2.PutLong("windowLength", 0);
-    insertValues2.PutLong("interval", 0);
-    insertValues2.PutInt("uid", 0);
-    insertValues2.PutString("bundleName", NEED_RECOVER_ON_REBOOT[0]);
-    insertValues2.PutString("wantAgent", "");
-    insertValues2.PutInt("state", 1);
-    insertValues2.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
-    res = TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues2);
-    EXPECT_EQ(res, true);
-
     TimeSystemAbility::GetInstance()->SetAutoReboot();
 
     OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete1(HOLD_ON_REBOOT);
     rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
     TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
-    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete2(HOLD_ON_REBOOT);
-    rdbPredicatesDelete2.EqualTo("timerId", static_cast<int64_t>(timerId2));
-    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete2);
 }
 
 /**
@@ -1598,7 +1581,7 @@ HWTEST_F(TimeServiceTest, TimerInfo001, TestSize.Level0)
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo = TimerInfo(0, 0, duration, timePoint, duration, timePoint, duration, nullptr,
-                                          nullptr, 0, 0, 0, "");
+                                          nullptr, 0, false, 0, 0, "");
     auto res = timerInfo.UpdateWhenElapsedFromNow(timePoint, duration);
     EXPECT_FALSE(res);
 }
@@ -1613,7 +1596,7 @@ HWTEST_F(TimeServiceTest, TimerInfo002, TestSize.Level0)
     auto duration = std::chrono::milliseconds(0);
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo = TimerInfo(0, 0, duration, timePoint, duration, timePoint, duration, nullptr,
-                                          nullptr, 0, 0, 0, "");
+                                          nullptr, 0, false, 0, 0, "");
     auto res = timerInfo.AdjustTimer(timePoint, 1);
     EXPECT_TRUE(res);
 }
