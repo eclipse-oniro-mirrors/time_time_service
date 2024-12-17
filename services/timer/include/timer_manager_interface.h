@@ -29,6 +29,7 @@ struct TimerEntry {
     int64_t windowLength;
     uint64_t interval;
     int flag;
+    bool autoRestore;
     std::function<int32_t (const uint64_t)> callback;
     std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent;
     int uid;
