@@ -158,10 +158,10 @@ void TestNtpThread(const char *name)
     int64_t time;
     auto errCodeNtpTime = TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
     EXPECT_EQ(errCodeNtpTime, TimeError::E_TIME_OK);
-    int64_t time_later;
-    auto errCodeRealTime = TimeServiceClient::GetInstance()->GetRealTimeMs(time_later);
+    int64_t timeLater;
+    auto errCodeRealTime = TimeServiceClient::GetInstance()->GetRealTimeMs(timeLater);
     EXPECT_EQ(errCodeRealTime, TimeError::E_TIME_OK);
-    EXPECT_GT(time_later, time);
+    EXPECT_GT(timeLater, time);
 }
 
 /**
@@ -1297,7 +1297,7 @@ HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
     TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
-    int64_t time=0;
+    int64_t time = 0;
     TimeServiceClient::GetInstance()->GetBootTimeMs(time);
     auto startRet = TimeServiceClient::GetInstance()->StartTimerV9(timerId, time + 300000);
     EXPECT_EQ(startRet, TimeError::E_TIME_OK);
