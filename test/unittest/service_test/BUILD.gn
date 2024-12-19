@@ -64,7 +64,6 @@ ohos_unittest("TimeServiceTest") {
     "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_single",
-    "jsoncpp:jsoncpp",
     "power_manager:powermgr_client",
     "relational_store:native_dataability",
     "relational_store:native_rdb",
