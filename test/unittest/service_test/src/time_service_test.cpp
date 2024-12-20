@@ -32,7 +32,6 @@
 #include "time_common.h"
 #include "power_subscriber.h"
 #include "ntp_update_time.h"
-#include "cjson_helper.h"
 
 #define private public
 #define protected public
@@ -41,6 +40,7 @@
 #include "time_system_ability.h"
 #include "ntp_trusted_time.h"
 #include "time_tick_notify.h"
+#include "timer_database.h"
 #include "timer_proxy.h"
 #include "timer_notify_callback.h"
 
@@ -228,31 +228,6 @@ void WaitForAlarm(std::atomic<int> * data, int interval)
         ++i;
         usleep(ONE_HUNDRED*MICRO_TO_MILLISECOND);
     }
-}
-
-/**
- * @brief Check timeId in json table
- * @param tableName the tableName
- * @param timerId the timerId need check
- */
-bool CheckInJson(std::string tableName, uint64_t timerId)
-{
-    bool flag = false;
-    cJSON* db1 = NULL;
-    cJSON* data1 = CjsonHelper::GetInstance().QueryTable(tableName, db1);
-    if (data1 != NULL) {
-        int size = cJSON_GetArraySize(data1);
-        for (int i = 0; i < size; ++i) {
-            cJSON* obj = cJSON_GetArrayItem(data1, i);
-
-            if (cJSON_GetObjectItem(obj, "timerId")->valuestring == std::to_string(timerId)) {
-                flag = true;
-                break;
-            }
-        }
-    }
-    cJSON_Delete(db1);
-    return flag;
 }
 
 /**
@@ -1241,22 +1216,34 @@ HWTEST_F(TimeServiceTest, TimerManager004, TestSize.Level0)
 HWTEST_F(TimeServiceTest, TimerManager005, TestSize.Level0)
 {
     TimerManager::GetInstance()->NotifyWantAgentRetry(nullptr);
-
+    
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
                                                  nullptr, nullptr, 0, false, 0, 0, "");
     auto res = TimerManager::GetInstance()->NotifyWantAgent(timerInfo);
     EXPECT_FALSE(res);
-
-    auto entry = std::make_shared<TimerEntry>(
-            TimerEntry{TIMER_ID, 0, 0, 0, 0, false, nullptr, nullptr, 0, 0, "bundleName"});
-    CjsonHelper::GetInstance().Insert(HOLD_ON_REBOOT, entry);
+    
+    OHOS::NativeRdb::ValuesBucket insertValues;
+    insertValues.PutLong("timerId", TIMER_ID);
+    insertValues.PutInt("type", 0);
+    insertValues.PutInt("flag", 0);
+    insertValues.PutLong("windowLength", 0);
+    insertValues.PutLong("interval", 0);
+    insertValues.PutInt("uid", 0);
+    insertValues.PutString("bundleName", "");
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent = nullptr;
+    insertValues.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues.PutInt("state", 0);
+    insertValues.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
+    TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues);
 
     res = TimerManager::GetInstance()->NotifyWantAgent(timerInfo);
     EXPECT_FALSE(res);
 
-    CjsonHelper::GetInstance().Delete(HOLD_ON_REBOOT, TIMER_ID);
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(HOLD_ON_REBOOT);
+    rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(TIMER_ID));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
 }
 
 /**
@@ -1527,13 +1514,33 @@ HWTEST_F(TimeServiceTest, SystemAbility002, TestSize.Level0)
         map.erase(it);
     }
 
-    auto entry1 = std::make_shared<TimerEntry>(
-            TimerEntry{timerId1, 0, 0, 0, 0, true, nullptr, nullptr, 0, 0, "bundleName1"});
-    CjsonHelper::GetInstance().Insert(HOLD_ON_REBOOT, entry1);
+    OHOS::NativeRdb::ValuesBucket insertValues1;
+    insertValues1.PutLong("timerId", timerId1);
+    insertValues1.PutInt("type", 0);
+    insertValues1.PutInt("flag", 0);
+    insertValues1.PutLong("windowLength", 0);
+    insertValues1.PutLong("interval", 0);
+    insertValues1.PutInt("uid", 0);
+    insertValues1.PutString("bundleName", "");
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent = nullptr;
+    insertValues1.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues1.PutInt("state", 0);
+    insertValues1.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
+    TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues1);
 
-    auto entry2 = std::make_shared<TimerEntry>(
-            TimerEntry{timerId2, 0, 0, 0, 0, false, nullptr, nullptr, 0, 0, "bundleName1"});
-    CjsonHelper::GetInstance().Insert(DROP_ON_REBOOT, entry2);
+    OHOS::NativeRdb::ValuesBucket insertValues2;
+    insertValues2.PutLong("timerId", timerId2);
+    insertValues2.PutInt("type", 0);
+    insertValues2.PutInt("flag", 0);
+    insertValues2.PutLong("windowLength", 0);
+    insertValues2.PutLong("interval", 0);
+    insertValues2.PutInt("uid", 0);
+    insertValues2.PutString("bundleName", "");
+    wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    insertValues2.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues2.PutInt("state", 0);
+    insertValues2.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
+    TimeDatabase::GetInstance().Insert(DROP_ON_REBOOT, insertValues2);
 
     TimeSystemAbility::GetInstance()->RecoverTimer();
 
@@ -1542,8 +1549,13 @@ HWTEST_F(TimeServiceTest, SystemAbility002, TestSize.Level0)
     it = map.find(timerId2);
     EXPECT_EQ(it, map.end());
 
-    CjsonHelper::GetInstance().Delete(HOLD_ON_REBOOT, static_cast<int64_t>(timerId1));
-    CjsonHelper::GetInstance().Delete(DROP_ON_REBOOT, static_cast<int64_t>(timerId2));
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete1(HOLD_ON_REBOOT);
+    rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
+
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete2(DROP_ON_REBOOT);
+    rdbPredicatesDelete2.EqualTo("timerId", static_cast<int64_t>(timerId2));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete2);
 }
 
 /**
@@ -1556,17 +1568,26 @@ HWTEST_F(TimeServiceTest, SystemAbility003, TestSize.Level0)
     uint64_t timerId1 = TIMER_ID;
 
     TimeSystemAbility::GetInstance()->SetAutoReboot();
-
-    auto entry1 = std::make_shared<TimerEntry>(
-            TimerEntry{timerId1, 0, 0, 0, 0, true, nullptr, nullptr, 0, 0, "anything"});
-    auto res = CjsonHelper::GetInstance().Insert(HOLD_ON_REBOOT, entry1);
-    EXPECT_EQ(res, true);
-    res = CjsonHelper::GetInstance().UpdateTrigger(HOLD_ON_REBOOT, timerId1, 0);
+    
+    OHOS::NativeRdb::ValuesBucket insertValues1;
+    insertValues1.PutLong("timerId", timerId1);
+    insertValues1.PutInt("type", 0);
+    insertValues1.PutInt("flag", 0);
+    insertValues1.PutLong("windowLength", 0);
+    insertValues1.PutLong("interval", 0);
+    insertValues1.PutInt("uid", 0);
+    insertValues1.PutString("bundleName", "anything");
+    insertValues1.PutString("wantAgent", "");
+    insertValues1.PutInt("state", 1);
+    insertValues1.PutLong("triggerTime", static_cast<int64_t>(0));
+    auto res = TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues1);
     EXPECT_EQ(res, true);
 
     TimeSystemAbility::GetInstance()->SetAutoReboot();
 
-    CjsonHelper::GetInstance().Delete(HOLD_ON_REBOOT, static_cast<int64_t>(timerId1));
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete1(HOLD_ON_REBOOT);
+    rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
 }
 
 /**
@@ -1577,6 +1598,47 @@ HWTEST_F(TimeServiceTest, SystemAbility003, TestSize.Level0)
 HWTEST_F(TimeServiceTest, SystemAbility004, TestSize.Level0)
 {
     auto res = TimeSystemAbility::GetInstance()->SetRealTime(-1);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimeDatabase001.
+* @tc.desc: test TimeDatabase Insert.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimeDatabase001, TestSize.Level0)
+{
+    OHOS::NativeRdb::ValuesBucket insertValues;
+    insertValues.PutLong("something", 0);
+    auto res = TimeDatabase::GetInstance().Insert(DROP_ON_REBOOT, insertValues);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimeDatabase002.
+* @tc.desc: test TimeDatabase Update.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimeDatabase002, TestSize.Level0)
+{
+    OHOS::NativeRdb::ValuesBucket values;
+    values.PutInt("something", 1);
+    OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
+    rdbPredicates.EqualTo("something", 0)->And()->EqualTo("something", static_cast<int64_t>(0));
+    auto res = TimeDatabase::GetInstance().Update(values, rdbPredicates);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimeDatabase003.
+* @tc.desc: test TimeDatabase Delete.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimeDatabase003, TestSize.Level0)
+{
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(DROP_ON_REBOOT);
+    rdbPredicatesDelete.EqualTo("something", static_cast<int64_t>(0));
+    auto res = TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
     EXPECT_FALSE(res);
 }
 
@@ -1593,151 +1655,6 @@ HWTEST_F(TimeServiceTest, TimerInfo001, TestSize.Level0)
                                           nullptr, 0, false, 0, 0, "");
     auto res = timerInfo.UpdateWhenElapsedFromNow(timePoint, duration);
     EXPECT_FALSE(res);
-}
-
-/**
-* @tc.name: Cjson001.
-* @tc.desc: cjson.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, Cjson001, TestSize.Level0)
-{
-    auto timerId2 = TIMER_ID + 1;
-
-    auto entry1 = std::make_shared<TimerEntry>(
-            TimerEntry{TIMER_ID, 1, 1, 1, 1, false, nullptr, nullptr, 1, 1, "bundleName1"});
-    auto ret = CjsonHelper::GetInstance().Insert(std::string(DROP_ON_REBOOT), entry1);
-    EXPECT_TRUE(ret);
-    auto entry2 = std::make_shared<TimerEntry>(
-            TimerEntry{timerId2, 2, 2, 2, 2, true, nullptr, nullptr, 2, 2, "bundleName2"});
-    ret = CjsonHelper::GetInstance().Insert(std::string(HOLD_ON_REBOOT), entry2);
-    EXPECT_TRUE(ret);
-
-    EXPECT_TRUE(CheckInJson(DROP_ON_REBOOT, TIMER_ID));
-    EXPECT_TRUE(CheckInJson(HOLD_ON_REBOOT, timerId2));
-
-    CjsonHelper::GetInstance().Delete(std::string(DROP_ON_REBOOT), TIMER_ID);
-    CjsonHelper::GetInstance().Delete(std::string(HOLD_ON_REBOOT), timerId2);
-
-    EXPECT_FALSE(CheckInJson(DROP_ON_REBOOT, TIMER_ID));
-    EXPECT_FALSE(CheckInJson(HOLD_ON_REBOOT, timerId2));
-}
-
-/**
-* @tc.name: Cjson002.
-* @tc.desc: cjson.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, Cjson002, TestSize.Level0)
-{
-    auto timerId2 = TIMER_ID + 1;
-
-    auto entry1 = std::make_shared<TimerEntry>(
-            TimerEntry{TIMER_ID, 1, 1, 1, 1, false, nullptr, nullptr, 1, 1, "bundleName1"});
-    auto ret = CjsonHelper::GetInstance().Insert(std::string(DROP_ON_REBOOT), entry1);
-    EXPECT_TRUE(ret);
-    auto entry2 = std::make_shared<TimerEntry>(
-            TimerEntry{timerId2, 2, 2, 2, 2, true, nullptr, nullptr, 2, 2, "bundleName2"});
-    ret = CjsonHelper::GetInstance().Insert(std::string(HOLD_ON_REBOOT), entry2);
-    EXPECT_TRUE(ret);
-
-    EXPECT_TRUE(CheckInJson(DROP_ON_REBOOT, TIMER_ID));
-    EXPECT_TRUE(CheckInJson(HOLD_ON_REBOOT, timerId2));
-
-    CjsonHelper::GetInstance().Clear(std::string(DROP_ON_REBOOT));
-    CjsonHelper::GetInstance().Clear(std::string(HOLD_ON_REBOOT));
-
-    EXPECT_FALSE(CheckInJson(DROP_ON_REBOOT, TIMER_ID));
-    EXPECT_FALSE(CheckInJson(HOLD_ON_REBOOT, timerId2));
-}
-
-/**
-* @tc.name: Cjson003.
-* @tc.desc: cjson.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, Cjson003, TestSize.Level0)
-{
-    auto triggerTime = 200;
-    auto entry1 = std::make_shared<TimerEntry>(
-            TimerEntry{TIMER_ID, 1, 1, 1, 1, false, nullptr, nullptr, 1, 1, "bundleName1"});
-    CjsonHelper::GetInstance().Insert(std::string(DROP_ON_REBOOT), entry1);
-
-    CjsonHelper::GetInstance().UpdateTrigger(std::string(DROP_ON_REBOOT), TIMER_ID, triggerTime);
-
-    bool flag = false;
-    cJSON* db1 = NULL;
-    cJSON* data1 = CjsonHelper::GetInstance().QueryTable(DROP_ON_REBOOT, db1);
-    if (data1 != NULL) {
-        int size = cJSON_GetArraySize(data1);
-        for (int i = 0; i < size; ++i) {
-            cJSON* obj = cJSON_GetArrayItem(data1, i);
-
-            if (cJSON_GetObjectItem(obj, "timerId")->valuestring == std::to_string(TIMER_ID)) {
-                auto state = cJSON_GetObjectItem(obj, "state")->valueint;
-                EXPECT_EQ(state, 1);
-                string triggerTimeStr = cJSON_GetObjectItem(obj, "triggerTime")->valuestring;
-                EXPECT_EQ(triggerTimeStr, std::to_string(triggerTime));
-                flag = true;
-                break;
-            }
-        }
-    }
-    cJSON_Delete(db1);
-    EXPECT_TRUE(flag);
-    CjsonHelper::GetInstance().UpdateState(std::string(DROP_ON_REBOOT), TIMER_ID);
-    flag = false;
-    db1 = NULL;
-    data1 = CjsonHelper::GetInstance().QueryTable(DROP_ON_REBOOT, db1);
-    if (data1 != NULL) {
-        int size = cJSON_GetArraySize(data1);
-        for (int i = 0; i < size; ++i) {
-            cJSON* obj = cJSON_GetArrayItem(data1, i);
-
-            if (cJSON_GetObjectItem(obj, "timerId")->valuestring == std::to_string(TIMER_ID)) {
-                auto state = cJSON_GetObjectItem(obj, "state")->valueint;
-                EXPECT_EQ(state, 0);
-                flag = true;
-                break;
-            }
-        }
-    }
-    cJSON_Delete(db1);
-    EXPECT_TRUE(flag);
-
-    CjsonHelper::GetInstance().Delete(std::string(DROP_ON_REBOOT), TIMER_ID);
-}
-
-
-/**
-* @tc.name: Cjson004.
-* @tc.desc: cjson.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, Cjson004, TestSize.Level0)
-{
-    auto entry1 = std::make_shared<TimerEntry>(
-            TimerEntry{TIMER_ID, 1, 1, 1, 1, false, nullptr, nullptr, 1, 1, "bundleName1"});
-    CjsonHelper::GetInstance().Insert(std::string(DROP_ON_REBOOT), entry1);
-    std::string want1 = CjsonHelper::GetInstance().QueryWant(std::string(DROP_ON_REBOOT), TIMER_ID);
-    EXPECT_EQ(want1, "");
-    CjsonHelper::GetInstance().Delete(std::string(DROP_ON_REBOOT), TIMER_ID);
-}
-
-/**
-* @tc.name: Cjson005.
-* @tc.desc: cjson.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, Cjson005, TestSize.Level0)
-{
-    auto entry1 = std::make_shared<TimerEntry>(
-            TimerEntry{TIMER_ID, 1, 1, 1, 1, true, nullptr, nullptr, 1, 1, "bundleName1"});
-    CjsonHelper::GetInstance().Insert(std::string(HOLD_ON_REBOOT), entry1);
-    CjsonHelper::GetInstance().UpdateTrigger(std::string(HOLD_ON_REBOOT), TIMER_ID, 200);
-    auto data = CjsonHelper::GetInstance().QueryAutoReboot();
-    EXPECT_TRUE(data.size() > 0);
-    CjsonHelper::GetInstance().Delete(std::string(HOLD_ON_REBOOT), TIMER_ID);
 }
 
 /**
