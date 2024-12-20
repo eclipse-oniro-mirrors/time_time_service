@@ -42,6 +42,7 @@
 #include "common_event_support.h"
 #include "power_subscriber.h"
 #include "nitz_subscriber.h"
+#include "net_conn_subscriber.h"
 #include "init_param.h"
 #include "parameters.h"
 #include "os_account.h"
@@ -225,9 +226,6 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         case POWER_MANAGER_SERVICE_ID:
             RegisterPowerStateListener();
             break;
-        case COMM_NET_CONN_MANAGER_SYS_ABILITY_ID:
-            NtpUpdateTime::GetInstance().MonitorNetwork();
-            break;
         case ABILITY_MGR_SERVICE_ID:
             AddSystemAbilityListener(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
             RemoveSystemAbilityListener(ABILITY_MGR_SERVICE_ID);
@@ -252,11 +250,7 @@ void TimeSystemAbility::RegisterScreenOnSubscriber()
     CommonEventSubscribeInfo subscriberInfo(matchingSkills);
     std::shared_ptr<PowerSubscriber> subscriberPtr = std::make_shared<PowerSubscriber>(subscriberInfo);
     bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
-    if (!subscribeResult) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Register COMMON_EVENT_SCREEN_ON failed");
-    } else {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Register COMMON_EVENT_SCREEN_ON success.");
-    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Register COMMON_EVENT_SCREEN_ON res:%{public}d", subscribeResult);
 }
 
 void TimeSystemAbility::RegisterNitzTimeSubscriber()
@@ -266,11 +260,7 @@ void TimeSystemAbility::RegisterNitzTimeSubscriber()
     CommonEventSubscribeInfo subscriberNITZInfo(matchingNITZSkills);
     std::shared_ptr<NITZSubscriber> subscriberNITZPtr = std::make_shared<NITZSubscriber>(subscriberNITZInfo);
     bool subscribeNITZResult = CommonEventManager::SubscribeCommonEvent(subscriberNITZPtr);
-    if (!subscribeNITZResult) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Register COMMON_EVENT_NITZ_TIME_CHANGED failed");
-    } else {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Register COMMON_EVENT_NITZ_TIME_CHANGED success.");
-    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Register COMMON_EVENT_NITZ_TIME_CHANGED res:%{public}d", subscribeNITZResult);
 }
 
 void TimeSystemAbility::RegisterPackageRemovedSubscriber()
@@ -285,6 +275,16 @@ void TimeSystemAbility::RegisterPackageRemovedSubscriber()
             std::make_shared<PackageRemovedSubscriber>(subscriberInfo);
     bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
     TIME_HILOGI(TIME_MODULE_SERVICE, "register res:%{public}d", subscribeResult);
+}
+
+void TimeSystemAbility::RegisterNetConnSubscriber()
+{
+    MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_CONNECTIVITY_CHANGE);
+    CommonEventSubscribeInfo subscriberInfo(matchingSkills);
+    std::shared_ptr<NetConnSubscriber> subscriberPtr = std::make_shared<NetConnSubscriber>(subscriberInfo);
+    bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Register COMMON_EVENT_CONNECTIVITY_CHANGE res:%{public}d", subscribeResult);
 }
 
 void TimeSystemAbility::RegisterCommonEventSubscriber()
@@ -303,6 +303,7 @@ void TimeSystemAbility::RegisterCommonEventSubscriber()
     RegisterScreenOnSubscriber();
     RegisterNitzTimeSubscriber();
     RegisterPackageRemovedSubscriber();
+    RegisterNetConnSubscriber();
 }
 
 void TimeSystemAbility::RegisterOsAccountSubscriber()

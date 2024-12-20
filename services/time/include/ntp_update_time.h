@@ -39,7 +39,6 @@ public:
     void UpdateNITZSetTime();
     void Stop();
     void Init();
-    int32_t MonitorNetwork();
     bool IsValidNITZTime();
     uint64_t GetNITZUpdateTime();
 

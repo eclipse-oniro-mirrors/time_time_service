@@ -112,6 +112,7 @@ private:
     void RegisterScreenOnSubscriber();
     void RegisterNitzTimeSubscriber();
     void RegisterPackageRemovedSubscriber();
+    void RegisterNetConnSubscriber();
     void RegisterOsAccountSubscriber();
     bool IsValidTime(int64_t time);
     void RecoverTimerInner(cJSON* resultSet, bool autoRestore);
