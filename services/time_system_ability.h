@@ -30,7 +30,7 @@
 #include "timer_manager.h"
 #include "shutdown/sync_shutdown_callback_stub.h"
 #include "shutdown/shutdown_client.h"
-#include "rdb_helper.h"
+#include "cjson_helper.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -115,7 +115,7 @@ private:
     void RegisterNetConnSubscriber();
     void RegisterOsAccountSubscriber();
     bool IsValidTime(int64_t time);
-    void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, bool autoRestore);
+    void RecoverTimerInner(cJSON* resultSet, bool autoRestore);
     void SetAutoReboot();
 
     ServiceRunningState state_;
