@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,8 @@
  * limitations under the License.
  */
 
-#include "power_subscriber.h"
+#include "net_conn_subscriber.h"
+#include "ntp_update_time.h"
 #include "time_common.h"
 #include "time_tick_notify.h"
 
@@ -21,21 +22,21 @@ namespace OHOS {
 namespace MiscServices {
 using namespace OHOS::EventFwk;
 using namespace OHOS::AAFwk;
-PowerSubscriber::PowerSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo)
+NetConnSubscriber::NetConnSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo)
     : CommonEventSubscriber(subscriberInfo)
 {
     memberFuncMap_ = {
-        { POWER_BROADCAST_EVENT, [this] (const CommonEventData &data) { PowerBroadcast(data); } },
+        { CONNECTED, [this] (const CommonEventData &data) { NetConnStateConnected(data); } },
     };
 }
 
-void PowerSubscriber::OnReceiveEvent(const CommonEventData &data)
+void NetConnSubscriber::OnReceiveEvent(const CommonEventData &data)
 {
     uint32_t code = UNKNOWN_BROADCAST_EVENT;
     std::string action = data.GetWant().GetAction();
     TIME_HILOGD(TIME_MODULE_SERVICE, "receive one broadcast:%{public}s", action.c_str());
-    if (action == CommonEventSupport::COMMON_EVENT_SCREEN_ON) {
-        code = POWER_BROADCAST_EVENT;
+    if (action == CommonEventSupport::COMMON_EVENT_CONNECTIVITY_CHANGE) {
+        code = data.GetCode();
     }
     auto itFunc = memberFuncMap_.find(code);
     if (itFunc != memberFuncMap_.end()) {
@@ -46,9 +47,14 @@ void PowerSubscriber::OnReceiveEvent(const CommonEventData &data)
     }
 }
 
-void PowerSubscriber::PowerBroadcast(const CommonEventData &data)
+void NetConnSubscriber::NetConnStateConnected(const CommonEventData &data)
 {
-    TimeTickNotify::GetInstance().PowerCallback();
+    if (NtpUpdateTime::GetInstance().IsValidNITZTime()) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "NITZ Time is valid.");
+        return;
+    }
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Internet ready");
+    NtpUpdateTime::SetSystemTime();
 }
 } // namespace MiscServices
 } // namespace OHOS
