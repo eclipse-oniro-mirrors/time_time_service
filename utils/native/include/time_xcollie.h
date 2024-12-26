@@ -22,7 +22,7 @@ namespace OHOS {
 namespace MiscServices {
 
 constexpr int TIME_OUT_SECONDS = 5;
-constexpr int XCOLLIE_FLAG_LOG = 3;
+constexpr int XCOLLIE_FLAG_LOG = 1;
 
 class TimeXCollie {
 public:
