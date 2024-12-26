@@ -712,7 +712,9 @@ HWTEST_F(TimeProxyTest, PidProxyTimer004, TestSize.Level1)
     pidList.insert(pid);
     /* proxy uid1 expect proxyPids_ only has one element */
     ret = timerManagerHandler_->ProxyTimer(uid1, pidList, true, true);
-    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_[pid].size(), (const unsigned int)1);
+    EXPECT_EQ(TimerProxy::GetInstance().IsPidProxy(pid, timerId1), true);
+    EXPECT_EQ(TimerProxy::GetInstance().IsPidProxy(pid, timerId2), false);
 }
 
 /**
