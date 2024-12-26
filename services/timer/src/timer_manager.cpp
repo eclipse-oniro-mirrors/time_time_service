@@ -479,7 +479,7 @@ void TimerManager::SetHandlerLocked(std::string name, uint64_t id, int type,
         TimerProxy::GetInstance().RecordProxyUidTimerMap(alarm);
         alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
-    if (TimerProxy::GetInstance().IsPidProxy(alarm->pid, alarm->id)) {
+    if (TimerProxy::GetInstance().IsPidProxy(alarm->pid)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, pid=%{public}" PRIu64 " id=%{public}" PRId64 "",
             callingPid, alarm->id);
         TimerProxy::GetInstance().RecordProxyPidTimerMap(alarm);
@@ -748,7 +748,7 @@ bool TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
             nowElapsed.time_since_epoch().count());
         SetHandlerLocked(alarm, false, false);
         return false;
-    } else if (TimerProxy::GetInstance().IsPidProxy(alarm->pid, alarm->id)) {
+    } else if (TimerProxy::GetInstance().IsPidProxy(alarm->pid)) {
         alarm->UpdateWhenElapsedFromNow(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
         TIME_HILOGD(TIME_MODULE_SERVICE, "UpdateWhenElapsed for proxy timer trigger. "
             "pid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",

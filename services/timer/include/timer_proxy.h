@@ -59,7 +59,7 @@ public:
     void RemoveUidTimerMap(const uint64_t id);
     void RemovePidTimerMap(const uint64_t id);
     bool IsUidProxy(const int32_t uid);
-    bool IsPidProxy(const int32_t pid, uint64_t timerId);
+    bool IsPidProxy(const int32_t pid);
     bool ShowProxyTimerInfo(int fd, const int64_t now);
     bool ShowPidProxyTimerInfo(int fd, const int64_t now);
     bool ShowUidTimerMapInfo(int fd, const int64_t now);
