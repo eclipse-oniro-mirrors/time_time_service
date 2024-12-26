@@ -813,7 +813,7 @@ describe('SystemDateTimeGetTest', function () {
         try {
             systemDateTime.getNtpTime();
         } catch (err) {
-            expect(err.code).assertEqual(-1);
+            expect(err.code).assertEqual(13000002);
         }
         const nowTime = new Date().getTime();
         await systemDateTime.updateNtpTime();
