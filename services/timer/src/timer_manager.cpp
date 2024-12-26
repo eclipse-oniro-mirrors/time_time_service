@@ -787,7 +787,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
             triggerList.push_back(alarm);
-            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "uid: %{public}d id:%{public}" PRId64 " name:%{public}s"
+            TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "uid: %{public}d id:%{public}" PRId64 " name:%{public}s"
                 " wk:%{public}u",
                 alarm->uid, alarm->id, alarm->bundleName.c_str(), alarm->wakeup);
 
@@ -862,7 +862,7 @@ void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
     int64_t whichBatch = (alarm->flags & static_cast<uint32_t>(STANDALONE)) ?
                          -1 :
                          AttemptCoalesceLocked(alarm->whenElapsed, alarm->maxWhenElapsed);
-    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "bat: %{public}" PRId64 " id:%{public}" PRIu64 " "
+    TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat: %{public}" PRId64 " id:%{public}" PRIu64 " "
                          "we:%{public}lld mwe:%{public}lld",
                          whichBatch, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
                          alarm->maxWhenElapsed.time_since_epoch().count());
@@ -1014,7 +1014,7 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
     }
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
     auto code = AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
-    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "trigWA ret: %{public}d", code);
+    TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "trigWA ret: %{public}d", code);
     return code == ERR_OK;
 }
 

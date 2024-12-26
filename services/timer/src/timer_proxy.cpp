@@ -115,7 +115,7 @@ int32_t TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
         }
     }
     int32_t ret = alarm->callback(alarm->id);
-    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "cb: %{public}" PRId64 " ret: %{public}d",
+    TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "cb: %{public}" PRId64 " ret: %{public}d",
                          alarm->id, ret);
     return ret;
 }
