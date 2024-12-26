@@ -96,12 +96,9 @@ bool FuzzTimerRemoveTimerMap(const uint8_t *data, size_t size)
 
 bool FuzzTimerIsProxy(const uint8_t *data, size_t size)
 {
-    FuzzedDataProvider fdp(data, size);
-    int uid = fdp.ConsumeIntegral<int>();
-    int pid = fdp.ConsumeIntegral<int>();
-    uint64_t timerId = fdp.ConsumeIntegral<uint64_t>();
-    TimerProxy::GetInstance().IsUidProxy(uid);
-    TimerProxy::GetInstance().IsPidProxy(pid, timerId);
+    auto id = static_cast<int32_t>(*data);
+    TimerProxy::GetInstance().IsUidProxy(id);
+    TimerProxy::GetInstance().IsPidProxy(id);
     return true;
 }
 

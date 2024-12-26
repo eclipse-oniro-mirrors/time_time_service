@@ -512,15 +512,11 @@ bool TimerProxy::IsUidProxy(const int32_t uid)
     return true;
 }
 
-bool TimerProxy::IsPidProxy(const int32_t pid, uint64_t timerId)
+bool TimerProxy::IsPidProxy(const int32_t pid)
 {
     std::lock_guard<std::mutex> lock(proxyPidMutex_);
-    auto pidIt = proxyPids_.find(pid);
-    if (pidIt == proxyPids_.end()) {
-        return false;
-    }
-    auto timerIt = pidIt->second.find(timerId);
-    if (timerIt == pidIt->second.end()) {
+    auto it = proxyPids_.find(pid);
+    if (it == proxyPids_.end()) {
         return false;
     }
     return true;
