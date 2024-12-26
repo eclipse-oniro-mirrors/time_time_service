@@ -76,6 +76,9 @@ static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "w
                                                    "pid", "name"};
 const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
 const std::string SUBSCRIBE_REMOVED = "UserRemoved";
+constexpr size_t INDEX_ZERO = 0;
+constexpr size_t INDEX_ONE = 1;
+constexpr size_t INDEX_TWO = 2;
 } // namespace
 
 REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
@@ -1104,14 +1107,16 @@ void TimeSystemAbility::SetAutoReboot()
     TimeSystemAbility::GetInstance()->GetWallTimeMs(currentTime);
     auto bundleList = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
     for (uint32_t i = 0; i < size; ++i) {
-        auto bundleName = resultSet[i].first;
-        uint64_t triggerTime = static_cast<uint64_t>(resultSet[i].second);
+        std::string bundleName = std::get<INDEX_ZERO>(resultSet[i]);
+        std::string name = std::get<INDEX_ONE>(resultSet[i]);
+        uint64_t triggerTime = static_cast<uint64_t>(std::get<INDEX_TWO>(resultSet[i]));
         if (triggerTime < static_cast<uint64_t>(currentTime)) {
             TIME_HILOGI(TIME_MODULE_SERVICE,
                         "triggerTime: %{public}" PRIu64" currentTime: %{public}" PRId64"", triggerTime, currentTime);
             continue;
         }
-        if (std::find(bundleList.begin(), bundleList.end(), bundleName) != bundleList.end()) {
+        if (std::find(bundleList.begin(), bundleList.end(), bundleName) != bundleList.end() ||
+            std::find(bundleList.begin(), bundleList.end(), name) != bundleList.end()) {
             int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
             if (tmfd < 0) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error: %{public}s", strerror(errno));

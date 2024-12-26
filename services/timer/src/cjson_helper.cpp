@@ -23,6 +23,7 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 const char* DB_PATH = "/data/service/el1/public/database/time/time.json";
+constexpr size_t INDEX_TWO = 2;
 }
 
 CjsonHelper &CjsonHelper::GetInstance()
@@ -114,14 +115,15 @@ bool CjsonHelper::StrToI64(std::string str, int64_t& value)
     return ec == std::errc{} && ptr == str.data() + str.size();
 }
 
-bool Compare(const std::pair<std::string, int64_t>& a, const std::pair<std::string, int64_t>& b)
+bool Compare(const std::tuple<std::string, std::string, int64_t>& a,
+             const std::tuple<std::string, std::string, int64_t>& b)
 {
-    return a.second < b.second;
+    return std::get<INDEX_TWO>(a) < std::get<INDEX_TWO>(b);
 }
 
-std::vector<std::pair<std::string, int64_t>> CjsonHelper::QueryAutoReboot()
+std::vector<std::tuple<std::string, std::string, int64_t>> CjsonHelper::QueryAutoReboot()
 {
-    std::vector<std::pair<std::string, int64_t>> result;
+    std::vector<std::tuple<std::string, std::string, int64_t>> result;
     cJSON* db = NULL;
     cJSON* table = QueryTable(HOLD_ON_REBOOT, db);
     if (table == NULL) {
@@ -144,6 +146,12 @@ std::vector<std::pair<std::string, int64_t>> CjsonHelper::QueryAutoReboot()
             }
             std::string bundleName = item->valuestring;
 
+            item = cJSON_GetObjectItem(obj, "name");
+            if (item == NULL) {
+                continue;
+            }
+            std::string name = item->valuestring;
+
             item = cJSON_GetObjectItem(obj, "triggerTime");
             if (item == NULL) {
                 continue;
@@ -152,8 +160,8 @@ std::vector<std::pair<std::string, int64_t>> CjsonHelper::QueryAutoReboot()
             if (!StrToI64(item->valuestring, triggerTime)) {
                 continue;
             }
-            std::pair<std::string, int64_t> pair(bundleName, triggerTime);
-            result.push_back(pair);
+            std::tuple<std::string, std::string, int64_t> tuple(bundleName, name, triggerTime);
+            result.push_back(tuple);
         }
     }
     cJSON_Delete(db);
