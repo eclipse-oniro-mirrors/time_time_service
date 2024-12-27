@@ -33,7 +33,7 @@ class TimerProxy {
     DECLARE_SINGLE_INSTANCE(TimerProxy)
 public:
     void RemoveProxy(uint64_t timerNumber, int32_t uid);
-    void RemovePidProxy(uint64_t timerNumber, int32_t uid);
+    void RemovePidProxy(uint64_t timerNumber, int32_t pid);
     int32_t CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm);
     bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger,
         const std::chrono::steady_clock::time_point &now,
@@ -49,7 +49,7 @@ public:
     bool ResetAllProxy(const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
     void EraseTimerFromProxyUidMap(const uint64_t id, const uint32_t uid);
-    void EraseTimerFromProxyPidMap(const uint64_t id, const int pid);
+    void EraseTimerFromProxyPidMap(const uint64_t id, const int uid, const int pid);
     void RecordUidTimerMap(const std::shared_ptr<TimerInfo> &alarm, const bool isRebatched);
     void RecordPidTimerMap(const std::shared_ptr<TimerInfo> &alarm, const bool isRebatched);
     void RecordProxyUidTimerMap(const std::shared_ptr<TimerInfo> &alarm);
@@ -59,7 +59,7 @@ public:
     void RemoveUidTimerMap(const uint64_t id);
     void RemovePidTimerMap(const uint64_t id);
     bool IsUidProxy(const int32_t uid);
-    bool IsPidProxy(const int32_t pid);
+    bool IsPidProxy(const int32_t uid, const int32_t pid);
     bool ShowProxyTimerInfo(int fd, const int64_t now);
     bool ShowPidProxyTimerInfo(int fd, const int64_t now);
     bool ShowUidTimerMapInfo(int fd, const int64_t now);
@@ -85,13 +85,13 @@ private:
     bool RestoreProxyWhenElapsedByUid(const int32_t uid,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
-    bool RestoreProxyWhenElapsedByPid(const int32_t uid,
+    bool RestoreProxyWhenElapsedByPid(const int32_t uid, const int32_t pid,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
     bool RestoreProxyWhenElapsedForProxyUidMap(const int32_t uid,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
-    bool RestoreProxyWhenElapsedForProxyPidMap(const int32_t uid,
+    bool RestoreProxyWhenElapsedForProxyPidMap(const int32_t uid, const int32_t pid,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm)> insertAlarmCallback);
     void ResetAllProxyWhenElapsed(const std::chrono::steady_clock::time_point &now,
@@ -108,7 +108,8 @@ private:
     std::mutex proxyPidMutex_;
     /* <uid, <id, trigger time>> */
     std::unordered_map<int32_t, std::unordered_map<uint64_t, std::chrono::steady_clock::time_point>> proxyUids_ {};
-    std::unordered_map<int32_t, std::unordered_map<uint64_t, std::chrono::steady_clock::time_point>> proxyPids_ {};
+    /* <(uid << 32) | pid, <id, trigger time> */
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, std::chrono::steady_clock::time_point>> proxyPids_ {};
     std::map<int32_t, std::vector<std::shared_ptr<TimerInfo>>> proxyMap_ {};
     std::map<int32_t, std::vector<std::shared_ptr<TimerInfo>>> proxyPidMap_ {};
     std::mutex adjustMutex_;
