@@ -49,6 +49,8 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
             return nullptr;
     }
 
+    std::string fdStr = "";
+    std::string typStr = "";
     for (size_t i = 0; i < fds.size(); i++) {
         fds[i] = timerfd_create(alarm_to_clock_id[i], 0);
         if (fds[i] < 0) {
@@ -60,7 +62,10 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
             }
             return nullptr;
         }
+        fdStr += std::to_string(fds[i]) + " ";
+        typStr += std::to_string(i) + " ";
     }
+    TIME_HILOGW(TIME_MODULE_SERVICE, "create fd:[%{public}s], typ:[%{public}s]", fdStr.c_str(), typStr.c_str());
 
     std::shared_ptr<TimerHandler> handler = std::shared_ptr<TimerHandler>(new TimerHandler(fds, epollfd));
     for (size_t i = 0; i < fds.size(); i++) {
@@ -77,8 +82,9 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
     itimerspec spec {};
 
     int err = timerfd_settime(fds[ALARM_TYPE_COUNT], TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET, &spec, nullptr);
-    if (err < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime() failed: %{public}s", strerror(errno));
+    TIME_HILOGW(TIME_MODULE_SERVICE, "settime fd: %{public}d, res: %{public}d, errno: %{public}s",
+        fds[ALARM_TYPE_COUNT], err, strerror(errno));
+    if (err < 0 && errno != ECANCELED) {
         return nullptr;
     }
 
