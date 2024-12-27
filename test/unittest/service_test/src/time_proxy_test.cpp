@@ -31,6 +31,7 @@ constexpr int BLOCK_TEST_TIME = 100000;
 const uint64_t TIMER_ID = 88887;
 const int UID = 999996;
 const int PID = 999997;
+const int UID_PROXY_MASK = 32;
 }
 TimerManager* timerManagerHandler_ = nullptr;
 
@@ -542,8 +543,9 @@ HWTEST_F(TimeProxyTest, PidProxyTimer001, TestSize.Level1)
     bool ret = timerManagerHandler_->ProxyTimer(uid, pidList, isProxy, needRetrigger);
     EXPECT_TRUE(ret);
     usleep(BLOCK_TEST_TIME);
+    uint64_t key = (static_cast<uint64_t>(uid) << UID_PROXY_MASK) | static_cast<uint64_t>(pid);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
-    auto it = TimerProxy::GetInstance().proxyPids_.find(pid);
+    auto it = TimerProxy::GetInstance().proxyPids_.find(key);
     EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
     EXPECT_EQ(it->second.size(), (const unsigned int)0);
 
@@ -595,12 +597,12 @@ HWTEST_F(TimeProxyTest, PidProxyTimer002, TestSize.Level1)
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
-    auto it = TimerProxy::GetInstance().proxyPids_.find(pid);
+    uint64_t key = (static_cast<uint64_t>(uid) << UID_PROXY_MASK) | static_cast<uint64_t>(pid);
+    auto it = TimerProxy::GetInstance().proxyPids_.find(key);
     EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
     EXPECT_EQ(it->second.size(), (const unsigned int)1);
 
     /* pidTimerMap_中的触发时间成功更新，proxyPid_中可以记录老的触发时间 */
-    it = TimerProxy::GetInstance().proxyPids_.find(pid);
     auto it2 = it->second.find(timerId);
     EXPECT_NE(it2, it->second.end());
     EXPECT_EQ(it2->second, time);
@@ -649,11 +651,14 @@ HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)3);
-    auto it = TimerProxy::GetInstance().proxyPids_.find(pid1);
+    uint64_t key1 = static_cast<uint64_t>(uid) << UID_PROXY_MASK | static_cast<uint64_t>(pid1);
+    uint64_t key2 = static_cast<uint64_t>(uid) << UID_PROXY_MASK | static_cast<uint64_t>(pid2);
+    uint64_t key3 = static_cast<uint64_t>(uid) << UID_PROXY_MASK | static_cast<uint64_t>(pid3);
+    auto it = TimerProxy::GetInstance().proxyPids_.find(key1);
     EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
-    it = TimerProxy::GetInstance().proxyPids_.find(pid2);
+    it = TimerProxy::GetInstance().proxyPids_.find(key2);
     EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
-    it = TimerProxy::GetInstance().proxyPids_.find(pid3);
+    it = TimerProxy::GetInstance().proxyPids_.find(key3);
     EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
     EXPECT_EQ(it->second.size(), (const unsigned int)0);
 
@@ -712,7 +717,10 @@ HWTEST_F(TimeProxyTest, PidProxyTimer004, TestSize.Level1)
     pidList.insert(pid);
     /* proxy uid1 expect proxyPids_ only has one element */
     ret = timerManagerHandler_->ProxyTimer(uid1, pidList, true, true);
-    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
+    uint64_t key = (static_cast<uint64_t>(uid1) << UID_PROXY_MASK) | static_cast<uint64_t>(pid);
+    EXPECT_EQ(TimerProxy::GetInstance().proxyPids_[key].size(), (const unsigned int)1);
+    EXPECT_EQ(TimerProxy::GetInstance().IsPidProxy(uid1, pid), true);
+    EXPECT_EQ(TimerProxy::GetInstance().IsPidProxy(uid2, pid), false);
 }
 
 /**
@@ -755,7 +763,8 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
-    auto it = TimerProxy::GetInstance().proxyPids_.find(pid);
+    uint64_t key = (static_cast<uint64_t>(uid) << UID_PROXY_MASK) | static_cast<uint64_t>(pid);
+    auto it = TimerProxy::GetInstance().proxyPids_.find(key);
     EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
     EXPECT_EQ(it->second.size(), (const unsigned int)1);
 
@@ -855,17 +864,18 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
     EXPECT_TRUE(retProxy);
     usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyPids_.size(), (const unsigned int)1);
-    auto it = TimerProxy::GetInstance().proxyPids_.find(PID);
+    uint64_t key = (static_cast<uint64_t>(uid) << UID_PROXY_MASK) | static_cast<uint64_t>(PID);
+    auto it = TimerProxy::GetInstance().proxyPids_.find(key);
     EXPECT_NE(it, TimerProxy::GetInstance().proxyPids_.end());
 
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo1 = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
-                                                  nullptr, nullptr, 0, 0, PID, "");
+                                                  nullptr, nullptr, 0, uid, PID, "");
     auto res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
     EXPECT_EQ(res, E_TIME_OK);
     auto timerInfo2 = std::make_shared<TimerInfo>(TIMER_ID + 1, 0, duration, timePoint, duration, timePoint, duration,
-                                                  nullptr, nullptr, 0, 0, PID, "");
+                                                  nullptr, nullptr, 0, uid, PID, "");
     res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo2);
     EXPECT_EQ(res, E_TIME_OK);
 
@@ -874,7 +884,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
 
     {
         std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyPidMutex_);
-        auto it = TimerProxy::GetInstance().proxyPidMap_.find(UID);
+        auto it = TimerProxy::GetInstance().proxyPidMap_.find(PID + 1);
         EXPECT_EQ(it, TimerProxy::GetInstance().proxyPidMap_.end());
     }
 
@@ -891,7 +901,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
 
     TimerProxy::GetInstance().ResetProxyPidMaps();
 
-    TimerProxy::GetInstance().EraseTimerFromProxyPidMap(0, PID);
+    TimerProxy::GetInstance().EraseTimerFromProxyPidMap(0, uid, PID);
 }
 
 /**
