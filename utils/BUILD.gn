@@ -27,6 +27,7 @@ ohos_source_set("time_utils") {
 
   sources = [
     "${time_service_path}/time_permission.cpp",
+    "${time_utils_path}/native/src/time_common.cpp",
     "${time_utils_path}/native/src/time_file_utils.cpp",
     "${time_utils_path}/native/src/time_xcollie.cpp",
   ]

@@ -193,7 +193,10 @@ void SNTPClient::CreateMessage(char *buffer)
     ConvertUnixToNtp(&ntp, &unix);
     uint64_t _ntpTs = ntp.second;
     _ntpTs = (_ntpTs << RECEIVE_TIMESTAMP_OFFSET) | ntp.fraction;
-    m_originateTimestamp = _ntpTs;
+    errno_t ret = TimeUtils::GetBootTimeMs(m_originateTimestamp);
+    if (ret != E_TIME_OK) {
+        return;
+    }
 
     SNTPMessage _sntpMsg{};
     // Important, if you don't set the version/mode, the server will ignore you.
@@ -204,7 +207,7 @@ void SNTPClient::CreateMessage(char *buffer)
     // optional (?)
     _sntpMsg._originateTimestamp = _ntpTs;
     char value[sizeof(uint64_t)];
-    errno_t ret = memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
+    ret = memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
     if (ret != EOK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);
         return;
@@ -223,12 +226,11 @@ void SNTPClient::CreateMessage(char *buffer)
 
 void SNTPClient::ReceivedMessage(char *buffer)
 {
-    struct ntp_timestamp ntp{};
-    struct timeval unix;
-    gettimeofday(&unix, NULL);
-    ConvertUnixToNtp(&ntp, &unix);
-    uint64_t _ntpTs = ntp.second;
-    _ntpTs = (_ntpTs << RECEIVE_TIMESTAMP_OFFSET) | ntp.fraction;
+    int64_t receiveBootTime = 0;
+    errno_t ret = TimeUtils::GetBootTimeMs(receiveBootTime);
+    if (ret != E_TIME_OK) {
+        return;
+    }
     SNTPMessage _sntpMsg;
     _sntpMsg.clear();
     _sntpMsg._leapIndicator = buffer[INDEX_ZERO] >> SNTP_MSG_OFFSET_SIX;
@@ -249,18 +251,14 @@ void SNTPClient::ReceivedMessage(char *buffer)
     _sntpMsg._originateTimestamp = GetNtpTimestamp64(ORIGINATE_TIMESTAMP_OFFSET, buffer);
     _sntpMsg._receiveTimestamp = GetNtpTimestamp64(RECEIVE_TIMESTAMP_OFFSET, buffer);
     _sntpMsg._transmitTimestamp = GetNtpTimestamp64(TRANSMIT_TIMESTAMP_OFFSET, buffer);
-    uint64_t _tempOriginate = m_originateTimestamp;
-    if (_sntpMsg._originateTimestamp > 0) {
-        _tempOriginate = _sntpMsg._originateTimestamp;
-    }
-    int64_t _originClient = ConvertNtpToStamp(_tempOriginate);
+    int64_t _originClient = m_originateTimestamp;
     int64_t _receiveServer = ConvertNtpToStamp(_sntpMsg._receiveTimestamp);
     int64_t _transmitServer = ConvertNtpToStamp(_sntpMsg._transmitTimestamp);
-    int64_t _receiveClient = ConvertNtpToStamp(_ntpTs);
+    int64_t _receiveClient = receiveBootTime;
     int64_t _clockOffset = (((_receiveServer - _originClient) + (_transmitServer - _receiveClient)) / INDEX_TWO);
     int64_t _roundTripDelay = (_receiveClient - _originClient) - (_transmitServer - _receiveServer);
     mRoundTripTime = _roundTripDelay;
-    mNtpTime = ConvertNtpToStamp(_ntpTs) + _clockOffset;
+    mNtpTime = receiveBootTime + _clockOffset;
     mNtpTimeReference =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
             .count();

@@ -43,7 +43,7 @@ void TimeServiceFuzzUtils::SetTimer()
     TimeSystemAbility::GetInstance()->CreateTimer(
         timerPara, [](uint64_t id) {return 0;}, timerId);
     int64_t triggerTime = 0;
-    TimeSystemAbility::GetInstance()->GetWallTimeMs(triggerTime);
+    TimeUtils::GetWallTimeMs(triggerTime);
     TimeSystemAbility::GetInstance()->StartTimer(timerId, triggerTime + DELAY_TIME);
 }
 } // namespace OHOS
