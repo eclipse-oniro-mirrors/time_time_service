@@ -129,7 +129,7 @@ private:
      */
     int64_t ConvertNtpToStamp(uint64_t _ntpTs);
     int64_t m_clockOffset;
-    uint64_t m_originateTimestamp;
+    int64_t m_originateTimestamp;
     int64_t mNtpTime;
     int64_t mNtpTimeReference;
     int64_t mRoundTripTime;
