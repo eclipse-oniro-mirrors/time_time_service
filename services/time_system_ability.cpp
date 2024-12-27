@@ -498,9 +498,9 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     }
     sptr<TimeSystemAbility> instance = TimeSystemAbility::GetInstance();
     int64_t beforeTime = 0;
-    instance->GetWallTimeMs(beforeTime);
+    TimeUtils::GetWallTimeMs(beforeTime);
     int64_t bootTime = 0;
-    instance->GetBootTimeMs(bootTime);
+    TimeUtils::GetBootTimeMs(bootTime);
     TIME_HILOGI(TIME_MODULE_SERVICE,
         "Before Current Time: %{public}s"
         " Set time: %{public}s"
@@ -513,7 +513,7 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
         return false;
     }
     int64_t currentTime = 0;
-    if (GetWallTimeMs(currentTime) != ERR_OK) {
+    if (TimeUtils::GetWallTimeMs(currentTime) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "currentTime get failed");
         return false;
     }
@@ -636,7 +636,7 @@ void TimeSystemAbility::DumpProxyTimerInfo(int fd, const std::vector<std::string
 {
     dprintf(fd, "\n - dump proxy map:\n");
     int64_t times;
-    GetBootTimeNs(times);
+    TimeUtils::GetBootTimeNs(times);
     TimerProxy::GetInstance().ShowProxyTimerInfo(fd, times);
 }
 
@@ -644,7 +644,7 @@ void TimeSystemAbility::DumpUidTimerMapInfo(int fd, const std::vector<std::strin
 {
     dprintf(fd, "\n - dump uid timer map:\n");
     int64_t times;
-    GetBootTimeNs(times);
+    TimeUtils::GetBootTimeNs(times);
     TimerProxy::GetInstance().ShowUidTimerMapInfo(fd, times);
 }
 
@@ -658,7 +658,7 @@ void TimeSystemAbility::DumpPidTimerMapInfo(int fd, const std::vector<std::strin
 {
     dprintf(fd, "\n - dump pid timer map:\n");
     int64_t times;
-    GetBootTimeNs(times);
+    TimeUtils::GetBootTimeNs(times);
     TimerProxy::GetInstance().ShowPidTimerMapInfo(fd, times);
 }
 
@@ -771,7 +771,7 @@ int32_t TimeSystemAbility::SetTimeZone(const std::string &timeZoneId, APIVersion
         return E_TIME_DEAL_FAILED;
     }
     int64_t currentTime = 0;
-    GetBootTimeMs(currentTime);
+    TimeUtils::GetBootTimeMs(currentTime);
     TimeServiceNotify::GetInstance().PublishTimeZoneChangeEvents(currentTime);
     return ERR_OK;
 }
@@ -784,36 +784,6 @@ int32_t TimeSystemAbility::GetTimeZone(std::string &timeZoneId)
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "Current timezone : %{public}s", timeZoneId.c_str());
     return ERR_OK;
-}
-
-int32_t TimeSystemAbility::GetWallTimeMs(int64_t &time)
-{
-    struct timespec tv {};
-    if (GetTimeByClockId(CLOCK_REALTIME, tv)) {
-        time = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
-        return ERR_OK;
-    }
-    return E_TIME_DEAL_FAILED;
-}
-
-int32_t TimeSystemAbility::GetBootTimeMs(int64_t &time)
-{
-    struct timespec tv {};
-    if (GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
-        time = tv.tv_sec * MILLI_TO_BASE + tv.tv_nsec / NANO_TO_MILLI;
-        return ERR_OK;
-    }
-    return E_TIME_DEAL_FAILED;
-}
-
-int32_t TimeSystemAbility::GetBootTimeNs(int64_t &time)
-{
-    struct timespec tv {};
-    if (GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
-        time = tv.tv_sec * NANO_TO_BASE + tv.tv_nsec;
-        return ERR_OK;
-    }
-    return E_TIME_DEAL_FAILED;
 }
 
 int32_t TimeSystemAbility::GetThreadTimeMs(int64_t &time)
@@ -1104,7 +1074,7 @@ void TimeSystemAbility::SetAutoReboot()
         return;
     }
     int64_t currentTime = 0;
-    TimeSystemAbility::GetInstance()->GetWallTimeMs(currentTime);
+    TimeUtils::GetWallTimeMs(currentTime);
     auto bundleList = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
     for (uint32_t i = 0; i < size; ++i) {
         std::string bundleName = std::get<INDEX_ZERO>(resultSet[i]);
