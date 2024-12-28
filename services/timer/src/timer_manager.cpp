@@ -141,8 +141,8 @@ void TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId)
     bool needRecover;
     StopTimerInnerLocked(true, oldTimerId, needRecover);
     UpdateOrDeleteDatabase(true, oldTimerId, needRecover);
-    TIME_HILOGW(TIME_MODULE_SERVICE, "name: %{public}s in %{public}d already exist, destory timer %{public}" PRId64 "",
-        name.c_str(), uid, oldTimerId);
+    TIME_HILOGW(TIME_MODULE_SERVICE, "create %{public}" PRId64 " name: %{public}s in %{public}d already exist,"
+        "destory timer %{public}" PRId64 "", timerId, name.c_str(), uid, oldTimerId);
     return;
 }
 
@@ -900,6 +900,7 @@ void TimerManager::NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer)
             if (TimerManager::GetInstance()->NotifyWantAgent(timer)) {
                 return;
             }
+            TIME_HILOGI(TIME_MODULE_SERVICE, "retry trigWA:times:%{public}d id=%{public}" PRId64 "", i, timer->id);
         }
     };
     std::thread thread(retryRegister);
