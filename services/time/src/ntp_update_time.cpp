@@ -109,7 +109,7 @@ void NtpUpdateTime::UpdateNITZSetTime()
 {
     auto bootTimeNano = steady_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
-    if (TimeSystemAbility::GetInstance()->GetBootTimeMs(lastNITZUpdateTime_) != ERR_OK) {
+    if (TimeUtils::GetBootTimeMs(lastNITZUpdateTime_) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail.");
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "nitz time changed.");
@@ -232,7 +232,7 @@ void NtpUpdateTime::SetSystemTime()
         return;
     }
     int64_t curBootTime = 0;
-    if (TimeSystemAbility::GetInstance()->GetBootTimeMs(curBootTime) != ERR_OK) {
+    if (TimeUtils::GetBootTimeMs(curBootTime) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail.");
         requestMutex_.unlock();
         return;
