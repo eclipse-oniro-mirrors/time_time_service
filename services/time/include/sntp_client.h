@@ -108,7 +108,7 @@ private:
      *
      * @param buffer the message received
      */
-    void ReceivedMessage(char *buffer);
+    bool ReceivedMessage(char *buffer);
 
     /**
      * This function returns the timestamp (64-bit) from the received
