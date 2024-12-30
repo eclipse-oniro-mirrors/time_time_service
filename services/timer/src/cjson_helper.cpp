@@ -50,7 +50,11 @@ CjsonHelper::CjsonHelper()
     cJSON* dropTable = cJSON_CreateArray();
     cJSON_AddItemToObject(root, HOLD_ON_REBOOT, holdTable);
     cJSON_AddItemToObject(root, DROP_ON_REBOOT, dropTable);
-    newFile << cJSON_Print(root);
+    char* jsonString = cJSON_Print(root);
+    if (jsonString != nullptr) {
+        newFile << jsonString;
+        free(jsonString);
+    }
     cJSON_Delete(root);
     newFile.close();
 }
@@ -346,7 +350,11 @@ void CjsonHelper::Clear(std::string tableName)
 void CjsonHelper::SaveJson(cJSON* data)
 {
     std::ofstream outFile(DB_PATH);
-    outFile << cJSON_Print(data);
+    char* jsonString = cJSON_Print(data);
+    if (jsonString != nullptr) {
+        outFile << jsonString;
+        free(jsonString);
+    }
     outFile.close();
 }
 }
