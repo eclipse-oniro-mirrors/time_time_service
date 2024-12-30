@@ -23,7 +23,6 @@ namespace OHOS {
 class TimeServiceFuzzUtils {
 public:
     static void OnRemoteRequestTest(uint32_t code, const uint8_t *rawData, size_t size);
-    static void SetTimer();
 };
 } // namespace OHOS
 #endif // TIME_SERVICE_FUZZ_UTILS_H

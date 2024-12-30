@@ -22,7 +22,6 @@
 using namespace OHOS::MiscServices;
 
 namespace OHOS {
-constexpr int32_t DELAY_TIME = 3000;
 const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscservices.time.ITimeService";
 
 void TimeServiceFuzzUtils::OnRemoteRequestTest(uint32_t code, const uint8_t *rawData, size_t size)
@@ -34,16 +33,5 @@ void TimeServiceFuzzUtils::OnRemoteRequestTest(uint32_t code, const uint8_t *raw
     MessageParcel reply;
     MessageOption option;
     TimeSystemAbility::GetInstance()->OnRemoteRequest(code, data, reply, option);
-}
-
-void TimeServiceFuzzUtils::SetTimer()
-{
-    TimerPara timerPara{ 0, 0, 0, 0 };
-    uint64_t timerId = 0;
-    TimeSystemAbility::GetInstance()->CreateTimer(
-        timerPara, [](uint64_t id) {return 0;}, timerId);
-    int64_t triggerTime = 0;
-    TimeUtils::GetWallTimeMs(triggerTime);
-    TimeSystemAbility::GetInstance()->StartTimer(timerId, triggerTime + DELAY_TIME);
 }
 } // namespace OHOS

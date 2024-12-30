@@ -38,6 +38,5 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     /* Run your code on data */
     OHOS::TimeServiceFuzzUtils::OnRemoteRequestTest(
         static_cast<uint32_t>(TimeServiceIpcInterfaceCode::DESTROY_TIMER), data, size);
-    OHOS::TimeServiceFuzzUtils::SetTimer();
     return 0;
 }
