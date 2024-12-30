@@ -112,8 +112,11 @@ bool SNTPClient::RequestTime(const std::string &host)
         close(sendSocket);
         return false;
     }
-    ReceivedMessage(bufferRx);
     close(sendSocket);
+    if (!ReceivedMessage(bufferRx)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "ReceivedMessage failed: Host: %{public}s", host.c_str());
+        return false;
+    }
     return true;
 }
 
@@ -224,12 +227,12 @@ void SNTPClient::CreateMessage(char *buffer)
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 
-void SNTPClient::ReceivedMessage(char *buffer)
+bool SNTPClient::ReceivedMessage(char *buffer)
 {
     int64_t receiveBootTime = 0;
     errno_t ret = TimeUtils::GetBootTimeMs(receiveBootTime);
     if (ret != E_TIME_OK) {
-        return;
+        return false;
     }
     SNTPMessage _sntpMsg;
     _sntpMsg.clear();
@@ -253,7 +256,13 @@ void SNTPClient::ReceivedMessage(char *buffer)
     _sntpMsg._transmitTimestamp = GetNtpTimestamp64(TRANSMIT_TIMESTAMP_OFFSET, buffer);
     int64_t _originClient = m_originateTimestamp;
     int64_t _receiveServer = ConvertNtpToStamp(_sntpMsg._receiveTimestamp);
+    if (_receiveServer == 0) {
+        return false;
+    }
     int64_t _transmitServer = ConvertNtpToStamp(_sntpMsg._transmitTimestamp);
+    if (_transmitServer == 0) {
+        return false;
+    }
     int64_t _receiveClient = receiveBootTime;
     int64_t _clockOffset = (((_receiveServer - _originClient) + (_transmitServer - _receiveClient)) / INDEX_TWO);
     int64_t _roundTripDelay = (_receiveClient - _originClient) - (_transmitServer - _receiveServer);
@@ -267,6 +276,7 @@ void SNTPClient::ReceivedMessage(char *buffer)
                 "_receiveClient:%{public}s", std::to_string(_originClient).c_str(),
                 std::to_string(_receiveServer).c_str(), std::to_string(_transmitServer).c_str(),
                 std::to_string(_receiveClient).c_str());
+    return true;
 }
 
 unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer)
