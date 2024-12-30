@@ -48,7 +48,7 @@ void PowerSubscriber::OnReceiveEvent(const CommonEventData &data)
 
 void PowerSubscriber::PowerBroadcast(const CommonEventData &data)
 {
-    TimeTickNotify::GetInstance().PowerCallback();
+    TimeTickNotify::GetInstance().Callback();
 }
 } // namespace MiscServices
 } // namespace OHOS
