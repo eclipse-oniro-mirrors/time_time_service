@@ -43,6 +43,7 @@ const std::string AUTO_TIME_STATUS_OFF = "OFF";
 constexpr uint64_t TWO_SECONDS = 2000;
 constexpr uint64_t ONE_HOUR = 3600000;
 const std::string DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
+constexpr int32_t RETRY_TIMES = 2;
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
@@ -158,18 +159,18 @@ bool NtpUpdateTime::GetNtpTimeInner(uint64_t interval)
         return true;
     }
 
-    bool ret = false;
     std::vector<std::string> ntpSpecList = SplitNtpAddrs(autoTimeInfo_.ntpServerSpec);
     std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.ntpServer);
     ntpSpecList.insert(ntpSpecList.end(), ntpList.begin(), ntpList.end());
-    for (size_t i = 0; i < ntpSpecList.size(); i++) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpSpecList[i].c_str());
-        ret = NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[i]);
-        if (ret) {
-            break;
+    for (int i = 0; i < RETRY_TIMES; i++) {
+        for (size_t i = 0; i < ntpSpecList.size(); i++) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpSpecList[i].c_str());
+            if (NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[i])) {
+                return true;
+            }
         }
     }
-    return ret;
+    return false;
 }
 
 bool NtpUpdateTime::GetRealTimeInner(int64_t &time)
