@@ -48,6 +48,7 @@ private:
 
     static int32_t GetTimezone(std::string &timezone);
     static int32_t GetDeviceTime(clockid_t clockId, bool isNano, int64_t &time);
+    static int32_t GetDeviceTime(bool isNano, int32_t timeType, int64_t &time);
 };
 } // namespace Time
 } // namespace MiscServices
