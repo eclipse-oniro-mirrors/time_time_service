@@ -38,8 +38,6 @@ ohos_shared_library("time_system_ability") {
   configs += [ "//build/config/gcc:symbol_visibility_hidden" ]
   sources = [
     "./time_system_ability.cpp",
-    "dfx/src/time_cmd_dispatcher.cpp",
-    "dfx/src/time_cmd_parse.cpp",
     "dfx/src/time_sysevent.cpp",
     "ipc/proxy/timer_call_back_proxy.cpp",
     "ipc/stub/time_service_stub.cpp",
@@ -82,6 +80,14 @@ ohos_shared_library("time_system_ability") {
     "samgr:samgr_proxy",
   ]
   defines = []
+  if (time_service_hidumper_able) {
+    defines += [ "HIDUMPER_ENABLE" ]
+    sources += [
+      "dfx/src/time_cmd_dispatcher.cpp",
+      "dfx/src/time_cmd_parse.cpp",
+    ]
+  }
+
   if (device_standby) {
     external_deps += [ "device_standby:standby_innerkits" ]
     defines += [ "DEVICE_STANDBY_ENABLE" ]
@@ -111,8 +117,6 @@ ohos_static_library("time_system_ability_static") {
   configs += [ "//build/config/gcc:symbol_visibility_hidden" ]
   sources = [
     "./time_system_ability.cpp",
-    "dfx/src/time_cmd_dispatcher.cpp",
-    "dfx/src/time_cmd_parse.cpp",
     "dfx/src/time_sysevent.cpp",
     "ipc/proxy/timer_call_back_proxy.cpp",
     "ipc/stub/time_service_stub.cpp",
@@ -155,6 +159,14 @@ ohos_static_library("time_system_ability_static") {
     "samgr:samgr_proxy",
   ]
   defines = []
+  if (time_service_hidumper_able) {
+    defines += [ "HIDUMPER_ENABLE" ]
+    sources += [
+      "dfx/src/time_cmd_dispatcher.cpp",
+      "dfx/src/time_cmd_parse.cpp",
+    ]
+  }
+
   if (device_standby) {
     external_deps += [ "device_standby:standby_innerkits" ]
     defines += [ "DEVICE_STANDBY_ENABLE" ]

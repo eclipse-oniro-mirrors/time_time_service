@@ -1327,6 +1327,7 @@ HWTEST_F(TimeServiceTest, TimerManager007, TestSize.Level0)
     TimerManager::GetInstance()->mPendingIdleUntil_ = alarm;
 }
 
+#ifdef HIDUMPER_ENABLE
 /**
 * @tc.name: TimerManager008.
 * @tc.desc: test ShowTimerEntryById TIMER_ID not in timerEntryMap_.
@@ -1356,6 +1357,7 @@ HWTEST_F(TimeServiceTest, TimerManager009, TestSize.Level0)
     TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
     EXPECT_TRUE(res);
 }
+#endif
 
 /**
 * @tc.name: TimerManager010.

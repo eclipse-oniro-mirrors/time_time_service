@@ -128,6 +128,7 @@ sptr<TimeSystemAbility> TimeSystemAbility::GetInstance()
     return instance_;
 }
 
+#ifdef HIDUMPER_ENABLE
 void TimeSystemAbility::InitDumpCmd()
 {
     auto cmdTime = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-time" }),
@@ -179,6 +180,7 @@ void TimeSystemAbility::InitDumpCmd()
         [this](int fd, const std::vector<std::string> &input) { DumpAdjustTime(fd, input); });
     TimeCmdDispatcher::GetInstance().RegisterCommand(cmdAdjustTimer);
 }
+#endif
 
 void TimeSystemAbility::OnStart()
 {
@@ -204,7 +206,9 @@ void TimeSystemAbility::OnStart()
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
     AddSystemAbilityListener(SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN);
+#ifdef HIDUMPER_ENABLE
     InitDumpCmd();
+#endif
     if (Init() != ERR_OK) {
         auto callback = [this]() {
             sleep(INIT_INTERVAL);
@@ -547,6 +551,7 @@ int32_t TimeSystemAbility::SetTime(int64_t time, APIVersion apiVersion)
     return ERR_OK;
 }
 
+#ifdef HIDUMPER_ENABLE
 int TimeSystemAbility::Dump(int fd, const std::vector<std::u16string> &args)
 {
     int uid = static_cast<int>(IPCSkeleton::GetCallingUid());
@@ -667,6 +672,7 @@ void TimeSystemAbility::DumpAdjustTime(int fd, const std::vector<std::string> &i
     dprintf(fd, "\n - dump adjust timer info:\n");
     TimerProxy::GetInstance().ShowAdjustTimerInfo(fd);
 }
+#endif
 
 int TimeSystemAbility::SetRtcTime(time_t sec)
 {

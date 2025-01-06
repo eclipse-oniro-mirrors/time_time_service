@@ -23,8 +23,10 @@
 #include "event_handler.h"
 #include "securec.h"
 #include "system_ability.h"
+#ifdef HIDUMPER_ENABLE
 #include "time_cmd_dispatcher.h"
 #include "time_cmd_parse.h"
+#endif
 #include "time_service_notify.h"
 #include "time_service_stub.h"
 #include "timer_manager.h"
@@ -72,6 +74,7 @@ public:
     bool ResetAllProxy() override;
     int32_t GetNtpTimeMs(int64_t &time) override;
     int32_t GetRealTimeMs(int64_t &time) override;
+#ifdef HIDUMPER_ENABLE
     int Dump(int fd, const std::vector<std::u16string> &args) override;
     void DumpAllTimeInfo(int fd, const std::vector<std::string> &input);
     void DumpTimerInfo(int fd, const std::vector<std::string> &input);
@@ -84,6 +87,7 @@ public:
     void DumpProxyDelayTime(int fd, const std::vector<std::string> &input);
     void DumpAdjustTime(int fd, const std::vector<std::string> &input);
     void InitDumpCmd();
+#endif
     void RegisterCommonEventSubscriber();
     bool RecoverTimer();
 

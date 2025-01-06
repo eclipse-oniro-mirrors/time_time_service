@@ -37,6 +37,7 @@ constexpr size_t THRESHOLD = 4;
 constexpr int32_t NTP_PACKAGE_SIZE = 48;
 const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscservices.time.ITimeService";
 
+#ifdef HIDUMPER_ENABLE
 bool FuzzTimeDump(const uint8_t *rawData, size_t size)
 {
     std::vector<std::u16string> args;
@@ -46,6 +47,7 @@ bool FuzzTimeDump(const uint8_t *rawData, size_t size)
     TimeSystemAbility::GetInstance()->Dump(fd, args);
     return true;
 }
+#endif
 
 bool FuzzTimeReceivedMessage(const uint8_t *data, size_t size)
 {
@@ -66,7 +68,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         return 0;
     }
     /* Run your code on data */
+#ifdef HIDUMPER_ENABLE
     OHOS::FuzzTimeDump(data, size);
+#endif
     OHOS::FuzzTimeReceivedMessage(data, size);
     return 0;
 }
