@@ -332,11 +332,8 @@ napi_value NapiSystemDateTime::GetUptime(napi_env env, napi_callback_info info)
     getUpTimeContext->GetCbInfo(env, info, inputParser, true);
     auto executor = [getUpTimeContext]() {
         int32_t innerCode;
-        if (getUpTimeContext->timeType == STARTUP) {
-            innerCode = GetDeviceTime(CLOCK_BOOTTIME, getUpTimeContext->isNanoseconds, getUpTimeContext->time);
-        } else {
-            innerCode = GetDeviceTime(CLOCK_MONOTONIC, getUpTimeContext->isNanoseconds, getUpTimeContext->time);
-        }
+        innerCode = GetDeviceTime(getUpTimeContext->isNanoseconds, getUpTimeContext->timeType,
+            getUpTimeContext->time);
         if (innerCode != JsErrorCode::ERROR_OK) {
             getUpTimeContext->errCode = innerCode;
             getUpTimeContext->status = napi_generic_failure;
@@ -527,6 +524,31 @@ int32_t NapiSystemDateTime::GetTimezone(std::string &timezone)
         return ERROR;
     }
     return ERROR_OK;
+}
+
+int32_t NapiSystemDateTime::GetDeviceTime(bool isNano, int32_t timeType, int64_t &time)
+{
+#ifdef IOS_PLATFORM
+    int64_t deviceTime = 0;
+    if (timeType == STARTUP) {
+        deviceTime = clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW);
+    } else {
+        deviceTime = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+    }
+
+    if (isNano) {
+        time = deviceTime;
+    } else {
+        time = deviceTime / NANO_TO_MILLI;
+    }
+    return ERROR_OK;
+#else
+    if (timeType == STARTUP) {
+        return GetDeviceTime(CLOCK_BOOTTIME, isNano, time);
+    } else {
+        return GetDeviceTime(CLOCK_MONOTONIC, isNano, time);
+    }
+#endif
 }
 } // namespace Time
 } // namespace MiscServices
