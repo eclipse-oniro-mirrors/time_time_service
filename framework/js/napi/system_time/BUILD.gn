@@ -25,6 +25,12 @@ ohos_shared_library("systemtime") {
     "-fPIC",
     "-g3",
   ]
+  cflags_cc = [
+    "-fvisibility=hidden",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-Os",
+  ]
 
   sources = [
     "../common/src/napi_utils.cpp",
