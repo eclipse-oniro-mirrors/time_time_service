@@ -58,7 +58,7 @@ public:
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;
     bool ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger) override;
-    bool AdjustTimer(bool isAdjust, uint32_t interval) override;
+    bool AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta) override;
     void SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
     #ifdef HIDUMPER_ENABLE
@@ -183,6 +183,7 @@ private:
     std::array<int64_t, TIMER_TYPE_BUTT> lastSetTime_ = {0};
     bool adjustPolicy_ = false;
     uint32_t adjustInterval_ = 0;
+    uint32_t adjustDelta_ = 0;
     int64_t timerOutOfRangeTimes_ = 0;
     std::chrono::steady_clock::time_point lastTimerOutOfRangeTime_;
     #ifdef POWER_MANAGER_ENABLE

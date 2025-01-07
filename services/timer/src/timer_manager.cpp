@@ -1028,16 +1028,17 @@ void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm, bool nee
     }
 }
 
-bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval)
+bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (adjustPolicy_ == isAdjust && adjustInterval_ == interval) {
+    if (adjustPolicy_ == isAdjust && adjustInterval_ == interval && adjustDelta_ == delta) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "already deal timer adjust, flag: %{public}d", isAdjust);
         return false;
     }
     std::chrono::steady_clock::time_point now = GetBootTimeNs();
     adjustPolicy_ = isAdjust;
     adjustInterval_ = interval;
+    adjustDelta_ = delta;
     auto callback = [this] (AdjustTimerCallback adjustTimer) {
         bool isChanged = false;
         auto nowElapsed = GetBootTimeNs();
@@ -1058,7 +1059,7 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval)
         }
     };
 
-    return TimerProxy::GetInstance().AdjustTimer(isAdjust, interval, now, callback);
+    return TimerProxy::GetInstance().AdjustTimer(isAdjust, interval, now, delta, callback);
 }
 
 bool TimerManager::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
@@ -1112,7 +1113,7 @@ bool TimerManager::AdjustSingleTimer(std::shared_ptr<TimerInfo> timer)
     if (!adjustPolicy_) {
         return false;
     }
-    return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, GetBootTimeNs(),
+    return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, GetBootTimeNs(), adjustDelta_,
         [this, timer] (AdjustTimerCallback adjustTimer) { adjustTimer(timer); });
 }
 

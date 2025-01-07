@@ -1066,8 +1066,8 @@ HWTEST_F(TimeClientTest, AdjustTimer001, TestSize.Level1)
     EXPECT_NE(timerId, 0);
     auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
-    TimeServiceClient::GetInstance()->AdjustTimer(true, 5);
-    TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
+    TimeServiceClient::GetInstance()->AdjustTimer(true, 5, 0);
+    TimeServiceClient::GetInstance()->AdjustTimer(false, 0, 0);
     WaitForAlarm(&g_data1, FIVE_HUNDRED * MICRO_TO_MILLISECOND);
     EXPECT_EQ(g_data1, 1);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);

@@ -316,9 +316,9 @@ HWTEST_F(TimeServiceTest, PidProxyTimer004, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, AdjustTimer001, TestSize.Level0)
 {
-    auto errCode = TimeServiceClient::GetInstance()->AdjustTimer(true, 5);
+    auto errCode = TimeServiceClient::GetInstance()->AdjustTimer(true, 5, 0);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
-    errCode = TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
+    errCode = TimeServiceClient::GetInstance()->AdjustTimer(false, 0, 0);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
@@ -1203,13 +1203,13 @@ HWTEST_F(TimeServiceTest, TimerManager006, TestSize.Level0)
         isAdjust = TimerManager::GetInstance()->adjustPolicy_;
     }
 
-    auto res = TimerManager::GetInstance()->AdjustTimer(isAdjust, intervalSet);
+    auto res = TimerManager::GetInstance()->AdjustTimer(isAdjust, intervalSet, 0);
     EXPECT_FALSE(res);
-    res = TimerManager::GetInstance()->AdjustTimer(!isAdjust, intervalSet);
+    res = TimerManager::GetInstance()->AdjustTimer(!isAdjust, intervalSet, 0);
     EXPECT_TRUE(res);
-    res = TimerManager::GetInstance()->AdjustTimer(isAdjust, intervalSet + 1);
+    res = TimerManager::GetInstance()->AdjustTimer(isAdjust, intervalSet + 1, 0);
     EXPECT_TRUE(res);
-    res = TimerManager::GetInstance()->AdjustTimer(isAdjust, intervalSet);
+    res = TimerManager::GetInstance()->AdjustTimer(isAdjust, intervalSet, 0);
     EXPECT_TRUE(res);
 
     std::lock_guard<std::mutex> lock(TimerManager::GetInstance()->mutex_);
@@ -1696,7 +1696,7 @@ HWTEST_F(TimeServiceTest, TimerInfo002, TestSize.Level0)
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo = TimerInfo("", 0, 0, duration, timePoint, duration, timePoint, duration, nullptr,
                                           nullptr, 0, false, 0, 0, "");
-    auto res = timerInfo.AdjustTimer(timePoint, 1);
+    auto res = timerInfo.AdjustTimer(timePoint, 1, 0);
     EXPECT_TRUE(res);
 }
 

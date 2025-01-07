@@ -43,8 +43,8 @@ bool FuzzTimeProxyTimer(const uint8_t *rawData, size_t size)
 bool FuzzTimeAdjustTimer(const uint8_t *rawData, size_t size)
 {
     size_t interval = static_cast<size_t>(*rawData);
-    TimeServiceClient::GetInstance()->AdjustTimer(true, interval);
-    TimeServiceClient::GetInstance()->AdjustTimer(false, 0);
+    TimeServiceClient::GetInstance()->AdjustTimer(true, interval, 0);
+    TimeServiceClient::GetInstance()->AdjustTimer(false, 0, 0);
     return true;
 }
 

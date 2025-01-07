@@ -392,7 +392,7 @@ public:
      * @param interval adjust period in seconds.
      * @return int32_t return error code.
      */
-    TIME_API int32_t AdjustTimer(bool isAdjust, uint32_t interval);
+    TIME_API int32_t AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta);
 
     /**
      * @brief SetTimerExemption

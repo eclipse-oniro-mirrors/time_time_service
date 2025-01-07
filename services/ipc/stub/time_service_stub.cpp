@@ -334,17 +334,21 @@ int32_t TimeServiceStub::OnAdjustTimer(MessageParcel &data, MessageParcel &reply
     }
     bool isAdjust = false;
     uint32_t interval = 0;
+    uint32_t delta = 0;
     if (!data.ReadBool(isAdjust)) {
         return E_TIME_READ_PARCEL_ERROR;
     }
     if (!data.ReadUint32(interval)) {
         return E_TIME_READ_PARCEL_ERROR;
     }
+    if (!data.ReadUint32(delta)) {
+        return E_TIME_READ_PARCEL_ERROR;
+    }
     if (isAdjust && interval == 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "invalid parameter: interval");
         return E_TIME_READ_PARCEL_ERROR;
     }
-    if (AdjustTimer(isAdjust, interval) != E_TIME_OK) {
+    if (AdjustTimer(isAdjust, interval, delta) != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Error adjust timer.");
         return E_TIME_DEAL_FAILED;
     }
