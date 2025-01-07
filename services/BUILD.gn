@@ -29,7 +29,13 @@ config("time_service_config") {
     "${time_service_path}",
   ]
   cflags = [ "-fvisibility=hidden" ]
-  cflags_cc = [ "-fvisibility-inlines-hidden" ]
+  cflags_cc = [
+    "-fvisibility-inlines-hidden",
+    "-fvisibility=hidden",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-Os",
+  ]
 }
 
 ohos_shared_library("time_system_ability") {

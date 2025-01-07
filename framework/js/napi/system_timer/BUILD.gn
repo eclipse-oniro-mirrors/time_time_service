@@ -15,6 +15,12 @@ import("//build/ohos.gni")
 import("../../../../time.gni")
 
 cflags = []
+cflags_cc = [
+  "-fvisibility=hidden",
+  "-ffunction-sections",
+  "-fdata-sections",
+  "-Os",
+]
 
 config("native_module_config") {
   visibility = [ ":*" ]
