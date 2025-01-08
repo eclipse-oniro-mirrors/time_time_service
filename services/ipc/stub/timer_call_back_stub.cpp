@@ -43,8 +43,7 @@ int TimerCallbackStub::OnTriggerStub(MessageParcel &data)
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     auto timerId = data.ReadUint64();
     TIME_HILOGD(TIME_MODULE_CLIENT, "id: %{public}" PRId64 "", timerId);
-    sptr<IRemoteObject> obj = data.ReadRemoteObject();
-    NotifyTimer(timerId, obj);
+    NotifyTimer(timerId);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     TimeServiceClient::GetInstance()->HandleRecoverMap(timerId);
     return ERR_OK;
