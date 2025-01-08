@@ -18,6 +18,7 @@
 #include <cinttypes>
 #include <ctime>
 #include <thread>
+#include <cmath>
 
 #include "common_timer_errors.h"
 #include "matching_skills.h"
@@ -32,8 +33,8 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr uint64_t MINUTE_TO_MILLISECOND = 60000;
-constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
-constexpr uint64_t MILLISECOND_TO_SECOND = 1000;
+constexpr uint64_t SECOND_TO_MILLISECOND = 1000;
+constexpr int64_t SECOND_TO_NANO = 1000000000;
 } // namespace
 
 TimeTickNotify &TimeTickNotify::GetInstance()
@@ -42,65 +43,58 @@ TimeTickNotify &TimeTickNotify::GetInstance()
     return instance;
 }
 
-TimeTickNotify::TimeTickNotify() : timer_("TickTimer"){};
+TimeTickNotify::TimeTickNotify() = default;
 TimeTickNotify::~TimeTickNotify() = default;
 
 void TimeTickNotify::Init()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify start.");
-    uint32_t ret = timer_.Setup();
-    if (ret != Utils::TIMER_ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Timer Setup failed: %{public}d", ret);
-        return;
-    }
-    auto callback = [this]() { this->Callback(); };
-    uint64_t nextTriggerTime = RefreshNextTriggerTime();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify triggertime: %{public}" PRId64 "", nextTriggerTime);
+    TimerPara timerPara{};
+    timerPara.timerType = static_cast<int>(ITimerManager::TimerType::RTC);
+    timerPara.windowLength = 0;
+    timerPara.interval = 0;
+    timerPara.flag = 0;
+    auto callback = [this](uint64_t id) -> int32_t {
+        this->Callback();
+        return E_TIME_OK;
+    };
     std::lock_guard<std::mutex> lock(timeridMutex_);
-    timerId_ = timer_.Register(callback, nextTriggerTime);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick timer ID: %{public}d", timerId_);
+    TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId_);
+    auto trigger = RefreshNextTriggerTime();
+    TimeSystemAbility::GetInstance()->StartTimer(timerId_, trigger.first);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Tick timer timerId: %{public}" PRIu64 "", timerId_);
 }
 
 void TimeTickNotify::Callback()
 {
     std::lock_guard<std::mutex> lock(timeridMutex_);
-    timer_.Unregister(timerId_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Unregister id: %{public}d", timerId_);
-    uint64_t nextTriggerTime = RefreshNextTriggerTime();
-    auto callback = [this]() { this->Callback(); };
-    timerId_ = timer_.Register(callback, nextTriggerTime, true);
-    if (nextTriggerTime > (MINUTE_TO_MILLISECOND - MILLISECOND_TO_SECOND)) {
+    auto trigger = RefreshNextTriggerTime();
+    TimeSystemAbility::GetInstance()->StartTimer(timerId_, trigger.first);
+    if (trigger.second) {
         auto currentTime = steady_clock::now().time_since_epoch().count();
-        TimeServiceNotify::GetInstance().PublishTimeTickEvents(currentTime);
+        if (std::abs(currentTime - lastTriggerTime_) > SECOND_TO_NANO) {
+            TimeServiceNotify::GetInstance().PublishTimeTickEvents(currentTime);
+            lastTriggerTime_ = currentTime;
+        }
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRIu64 "", timerId_);
 }
 
-void TimeTickNotify::PowerCallback()
+std::pair<uint64_t, bool> TimeTickNotify::RefreshNextTriggerTime()
 {
-    std::lock_guard<std::mutex> lock(timeridMutex_);
-    timer_.Unregister(timerId_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Unregister id: %{public}d", timerId_);
-    uint64_t nextTriggerTime = RefreshNextTriggerTime();
-    auto callback = [this]() { this->Callback(); };
-    timerId_ = timer_.Register(callback, nextTriggerTime, true);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}d triggertime: %{public}" PRId64 "", timerId_, nextTriggerTime);
-}
-
-uint64_t TimeTickNotify::RefreshNextTriggerTime()
-{
-    auto UTCTimeMicro = static_cast<uint64_t>(duration_cast<microseconds>(system_clock::now()
-        .time_since_epoch()).count());
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Time micro: %{public}" PRIu64 "", UTCTimeMicro);
-    uint64_t timeMilliseconds = (UTCTimeMicro / MICRO_TO_MILLISECOND) % MINUTE_TO_MILLISECOND;
-    uint64_t nextTriggerTime = MINUTE_TO_MILLISECOND - timeMilliseconds;
-    return nextTriggerTime;
+    int64_t time = 0;
+    TimeUtils::GetWallTimeMs(time);
+    uint64_t currTime = static_cast<uint64_t>(time);
+    uint64_t timeMilliseconds = currTime % MINUTE_TO_MILLISECOND;
+    bool isFirstSecond = timeMilliseconds < SECOND_TO_MILLISECOND;
+    uint64_t nextTriggerTime = ((currTime / MINUTE_TO_MILLISECOND) + 1) * MINUTE_TO_MILLISECOND;
+    return std::make_pair(nextTriggerTime, isFirstSecond);
 }
 
 void TimeTickNotify::Stop()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    timer_.Shutdown();
+    TimeSystemAbility::GetInstance()->DestroyTimer(timerId_, false);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 } // namespace MiscServices
