@@ -143,6 +143,10 @@ foreach(item, time_fuzztests) {
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
+
+    if (time_service_hidumper_able) {
+      defines = [ "HIDUMPER_ENABLE" ]
+    }
   }
 }
 
