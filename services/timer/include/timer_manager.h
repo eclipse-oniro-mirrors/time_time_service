@@ -54,7 +54,6 @@ public:
     int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId) override;
-    bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) override;
     bool ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger) override;
     bool AdjustTimer(bool isAdjust, uint32_t interval) override;
     void SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
@@ -140,7 +139,7 @@ private:
     void AddRunningLockRetry(long long holdLockTime);
     #endif
 
-    void UpdateTimersState(std::shared_ptr<TimerInfo> &alarm);
+    void UpdateTimersState(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger);
     bool AdjustSingleTimer(std::shared_ptr<TimerInfo> timer);
     void IncreaseTimerCount(int uid);
     void DecreaseTimerCount(int uid);

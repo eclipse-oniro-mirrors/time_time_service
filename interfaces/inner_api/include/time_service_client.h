@@ -370,27 +370,17 @@ public:
      * @return error code.
      */
     TIME_API int32_t DestroyTimerAsyncV9(uint64_t timerId);
-
-    /**
-     * @brief ProxyTimer
-     *
-     * Wake up all timers for provided uid by proxy.
-     *
-     * @param uid the uid.
-     * @param true if set proxy, false if remove proxy.
-     * @param true if need retrigger, false if not.
-     * @return true on success, false on failure.
-     */
-    TIME_API bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger);
     
     /**
      * @brief ProxyTimer
      *
      * Wake up all timers for provided pid by proxy.
      *
-     * @param pid the pid.
+     * @param uid the uid.
+     * @param pidList the pidlist. Passing an empty vector means proxy by uid.
+     *                Max size is 1024.
      * @param true if set proxy, false if remove proxy.
-     * @param true if need retrigger, false if not.
+     * @param true if need retrigger, false if not and stop timer.
      * @return true on success, false on failure.
      */
     TIME_API bool ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger);

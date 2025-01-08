@@ -363,10 +363,7 @@ int32_t TimerManager::StopTimerInnerLocked(bool needDestroy, uint64_t timerNumbe
         return E_TIME_DEAL_FAILED;
     }
     RemoveHandler(timerNumber);
-    TimerProxy::GetInstance().RemoveProxy(timerNumber, it->second->uid);
-    TimerProxy::GetInstance().RemovePidProxy(timerNumber, it->second->pid);
-    TimerProxy::GetInstance().EraseTimerFromProxyUidMap(timerNumber, it->second->uid);
-    TimerProxy::GetInstance().EraseTimerFromProxyPidMap(timerNumber, it->second->uid, it->second->pid);
+    TimerProxy::GetInstance().EraseTimerFromProxyTimerMap(timerNumber, it->second->uid, it->second->pid);
     needRecover = CheckNeedRecoverOnReboot(it->second->bundleName, it->second->type, it->second->autoRestore);
     if (needDestroy) {
         auto uid = it->second->uid;
@@ -473,16 +470,16 @@ void TimerManager::SetHandlerLocked(std::string name, uint64_t id, int type,
     auto alarm = std::make_shared<TimerInfo>(name, id, type, when, whenElapsed, windowLength, maxWhen,
                                              interval, std::move(callback), wantAgent, flags, autoRestore, callingUid,
                                              callingPid, bundleName);
-    if (TimerProxy::GetInstance().IsUidProxy(alarm->uid)) {
+    if (TimerProxy::GetInstance().IsProxy(alarm->uid, 0)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, uid=%{public}" PRIu64 " id=%{public}" PRId64 "",
             callingUid, alarm->id);
-        TimerProxy::GetInstance().RecordProxyUidTimerMap(alarm);
+        TimerProxy::GetInstance().RecordProxyTimerMap(alarm, false);
         alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
-    if (TimerProxy::GetInstance().IsPidProxy(alarm->uid, alarm->pid)) {
+    if (TimerProxy::GetInstance().IsProxy(alarm->uid, alarm->pid)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, pid=%{public}" PRIu64 " id=%{public}" PRId64 "",
             callingPid, alarm->id);
-        TimerProxy::GetInstance().RecordProxyPidTimerMap(alarm);
+        TimerProxy::GetInstance().RecordProxyTimerMap(alarm, true);
         alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
     
@@ -495,7 +492,6 @@ void TimerManager::RemoveHandler(uint64_t id)
     std::lock_guard<std::mutex> lock(mutex_);
     RemoveLocked(id, true);
     TimerProxy::GetInstance().RemoveUidTimerMap(id);
-    TimerProxy::GetInstance().RemovePidTimerMap(id);
 }
 
 // needs to acquire the lock `mutex_` before calling this method
@@ -557,7 +553,6 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start rebatching= %{public}d", rebatching);
     TimerProxy::GetInstance().RecordUidTimerMap(alarm, isRebatched);
-    TimerProxy::GetInstance().RecordPidTimerMap(alarm, isRebatched);
 
     if (!isRebatched && mPendingIdleUntil_ != nullptr && !CheckAllowWhileIdle(alarm)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Pending not-allowed alarm in idle state, id=%{public}" PRId64 "",
@@ -740,20 +735,8 @@ bool TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
     if (mPendingIdleUntil_ != nullptr && mPendingIdleUntil_->id == alarm->id) {
         TriggerIdleTimer();
     }
-    if (TimerProxy::GetInstance().IsUidProxy(alarm->uid)) {
+    if (TimerProxy::GetInstance().IsProxy(alarm->uid, 0) || TimerProxy::GetInstance().IsProxy(alarm->uid, alarm->pid) ) {
         alarm->UpdateWhenElapsedFromNow(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
-        TIME_HILOGD(TIME_MODULE_SERVICE, "UpdateWhenElapsed for proxy timer trigger. "
-            "uid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
-            alarm->uid, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
-            nowElapsed.time_since_epoch().count());
-        SetHandlerLocked(alarm, false, false);
-        return false;
-    } else if (TimerProxy::GetInstance().IsPidProxy(alarm->uid, alarm->pid)) {
-        alarm->UpdateWhenElapsedFromNow(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
-        TIME_HILOGD(TIME_MODULE_SERVICE, "UpdateWhenElapsed for proxy timer trigger. "
-            "pid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
-            alarm->pid, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
-            nowElapsed.time_since_epoch().count());
         SetHandlerLocked(alarm, false, false);
         return false;
     } else {
@@ -1020,19 +1003,16 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
 }
 
 // needs to acquire the lock `mutex_` before calling this method
-void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm)
+void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)
 {
-    RemoveLocked(alarm->id, false);
-    AdjustSingleTimer(alarm);
-    InsertAndBatchTimerLocked(alarm);
-    RescheduleKernelTimerLocked();
-}
-
-bool TimerManager::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    return TimerProxy::GetInstance().ProxyTimer(uid, isProxy, needRetrigger, GetBootTimeNs(),
-        [this] (std::shared_ptr<TimerInfo> &alarm) { UpdateTimersState(alarm); });
+    if (needRetrigger) {
+        RemoveLocked(alarm->id, false);
+        AdjustSingleTimer(alarm);
+        InsertAndBatchTimerLocked(alarm);
+        RescheduleKernelTimerLocked();
+    } else {
+        StopTimer(alarm->id);
+    }
 }
 
 bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval)
@@ -1073,8 +1053,9 @@ bool TimerManager::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, 
     std::set<int> failurePid;
     std::lock_guard<std::mutex> lock(mutex_);
     for (std::set<int>::iterator pid = pidList.begin(); pid != pidList.end(); ++pid) {
-        if (!TimerProxy::GetInstance().PidProxyTimer(uid, *pid, isProxy, needRetrigger, GetBootTimeNs(),
-            [this] (std::shared_ptr<TimerInfo> &alarm) { UpdateTimersState(alarm); })) {
+        if (!TimerProxy::GetInstance().ProxyTimer(uid, *pid, isProxy, needRetrigger, GetBootTimeNs(),
+            [this] (std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)
+            { UpdateTimersState(alarm, needRetrigger); })) {
             failurePid.insert(*pid);
         }
     }
@@ -1119,7 +1100,7 @@ bool TimerManager::ResetAllProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     return TimerProxy::GetInstance().ResetAllProxy(GetBootTimeNs(),
-        [this] (std::shared_ptr<TimerInfo> &alarm) { UpdateTimersState(alarm); });
+        [this] (std::shared_ptr<TimerInfo> &alarm, bool needRetrigger) { UpdateTimersState(alarm, true); });
 }
 
 bool TimerManager::CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm)
@@ -1388,7 +1369,6 @@ void TimerManager::HandleRepeatTimer(
             timer->wantAgent, timer->flags, timer->autoRestore, timer->uid, timer->pid, timer->bundleName);
     } else {
         TimerProxy::GetInstance().RemoveUidTimerMap(timer);
-        TimerProxy::GetInstance().RemovePidTimerMap(timer);
     }
 }
 

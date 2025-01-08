@@ -52,8 +52,6 @@ TimeServiceStub::TimeServiceStub()
             [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnDestroyTimer(data, reply); } },
         { TimeServiceIpcInterfaceCode::PROXY_TIMER,
             [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnTimerProxy(data, reply); } },
-        { TimeServiceIpcInterfaceCode::PID_PROXY_TIMER,
-            [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnPidTimerProxy(data, reply); } },
         { TimeServiceIpcInterfaceCode::ADJUST_TIMER,
             [this] (MessageParcel &data, MessageParcel &reply) -> int32_t { return OnAdjustTimer(data, reply); } },
         { TimeServiceIpcInterfaceCode::SET_TIMER_EXEMPTION,
@@ -293,29 +291,16 @@ int32_t TimeServiceStub::OnDestroyTimer(MessageParcel &data, MessageParcel &repl
 
 int32_t TimeServiceStub::OnTimerProxy(MessageParcel &data, MessageParcel &reply)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    TimeXCollie timeXCollie("TimeService::TimerProxy");
-    auto uid = data.ReadInt32();
-    if (uid == 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Error param uid.");
-        return E_TIME_READ_PARCEL_ERROR;
-    }
-    auto isProxy = data.ReadBool();
-    auto needRetrigger = data.ReadBool();
-    if (!ProxyTimer(uid, isProxy, needRetrigger)) {
-        return E_TIME_DEAL_FAILED;
-    }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
-    return ERR_OK;
-}
-
-int32_t TimeServiceStub::OnPidTimerProxy(MessageParcel &data, MessageParcel &reply)
-{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "on timer proxy start.");
     TimeXCollie timeXCollie("TimeService::PidTimerProxy");
+    if (!TimePermission::CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
+        return E_TIME_NO_PERMISSION;
+    }
     auto uid = data.ReadInt32();
     auto pidListSize = data.ReadInt32();
     std::set<int> pidList;
-    if (pidListSize == 0 || pidListSize > MAX_PID_LIST_SIZE) {
+    if (pidListSize < 0 || pidListSize > MAX_PID_LIST_SIZE) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Error pid list size.");
         return E_TIME_READ_PARCEL_ERROR;
     }

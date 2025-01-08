@@ -738,19 +738,6 @@ int32_t TimeServiceClient::GetThreadTimeNs(int64_t &time)
     return E_TIME_OK;
 }
 
-bool TimeServiceClient::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
-{
-    TIME_HILOGD(TIME_MODULE_CLIENT, "ProxyTimer start uid: %{public}d, isProxy: %{public}d", uid, isProxy);
-    if (!ConnectService()) {
-        return false;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        return false;
-    }
-    return proxy->ProxyTimer(uid, isProxy, needRetrigger);
-}
-
 bool TimeServiceClient::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
 {
     if (!ConnectService()) {
