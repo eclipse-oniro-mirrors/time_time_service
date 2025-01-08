@@ -30,6 +30,10 @@ config("module_private_config") {
   ]
   cflags = [ "-fvisibility=hidden" ]
   cflags_cc = [ "-fvisibility-inlines-hidden" ]
+
+  if (time_service_hidumper_able) {
+    defines = [ "HIDUMPER_ENABLE" ]
+  }
 }
 
 module_output_path = "time_service/native"
