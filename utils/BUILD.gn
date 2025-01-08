@@ -50,7 +50,7 @@ ohos_source_set("time_utils") {
   ]
   defines = []
 
-  if (time_hicollie_able) {
+  if (time_service_hicollie_able) {
     external_deps += [ "hicollie:libhicollie" ]
     defines += [ "HICOLLIE_ENABLE" ]
   }
