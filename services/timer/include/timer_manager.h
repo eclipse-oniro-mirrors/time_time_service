@@ -58,10 +58,12 @@ public:
     bool AdjustTimer(bool isAdjust, uint32_t interval) override;
     void SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
+#ifdef HIDUMPER_ENABLE
     bool ShowTimerEntryMap(int fd);
     bool ShowTimerEntryById(int fd, uint64_t timerId);
     bool ShowTimerTriggerById(int fd, uint64_t timerId);
     bool ShowIdleTimerInfo(int fd);
+#endif
     void OnUserRemoved(int userId);
     void OnPackageRemoved(int uid);
     ~TimerManager() override;

@@ -40,7 +40,9 @@ using namespace OHOS::MiscServices;
 using namespace OHOS::Security::AccessToken;
 
 constexpr const uint16_t EACH_LINE_LENGTH = 100;
+#ifdef HIDUMPER_ENABLE
 constexpr const char *CMD = "hidumper -s 3702 -a";
+#endif
 
 class TimeDfxTest : public testing::Test {
 public:
@@ -83,6 +85,7 @@ bool TimeDfxTest::ExecuteCmd(const std::string &cmd, std::string &result)
     return true;
 }
 
+#ifdef HIDUMPER_ENABLE
 /**
 * @tc.name: DumpAllTimeInfo001
 * @tc.desc: dump all time info
@@ -339,5 +342,6 @@ HWTEST_F(TimeDfxTest, DumpAdjustTime001, TestSize.Level0)
     EXPECT_NE(result.find("dump adjust time"), std::string::npos);
     TIME_HILOGD(TIME_MODULE_SERVICE, "-adjust -a: %{public}s", result.c_str());
 }
+#endif
 } // namespace MiscServices
 } // namespace OHOS

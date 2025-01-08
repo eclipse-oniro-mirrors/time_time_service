@@ -64,6 +64,7 @@ constexpr int ONE_HUNDRED = 100;
 constexpr int FIVE_HUNDRED = 500;
 constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
 constexpr int TIMER_ALARM_COUNT = 50;
+constexpr int64_t MINUTE_TO_MILLISECOND = 60000;
 constexpr int UID_PROXY_OFFSET = 32;
 
 static HapPolicyParams g_policyA = {
@@ -1054,47 +1055,23 @@ HWTEST_F(TimeServiceTest, NtpTrustedTime001, TestSize.Level0)
 }
 
 /**
-* @tc.name: PowerSubscriber001
-* @tc.desc: test power subscriber data is invalid.
+* @tc.name: TimeTick001
+* @tc.desc: Check RefreshNextTriggerTime().
 * @tc.type: FUNC
 * @tc.require:
 */
-HWTEST_F(TimeServiceTest, PowerSubscriber001, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimeTick001, TestSize.Level0)
 {
-    auto timerId = TimeTickNotify::GetInstance().timerId_;
-    std::string commonEvent = EventFwk::CommonEventSupport::COMMON_EVENT_USER_ADDED;
-    EventFwk::Want want;
-    want.SetAction(commonEvent);
-    int32_t code = 100;
-    std::string data(commonEvent);
-    EventFwk::CommonEventData eventData(want, code, data);
-    OHOS::EventFwk::MatchingSkills matchingSkills;
-    matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_USER_ADDED);
-    auto subscriber = std::make_shared<PowerSubscriber>(CommonEventSubscribeInfo(matchingSkills));
-    subscriber->OnReceiveEvent(eventData);
-    EXPECT_EQ(timerId, TimeTickNotify::GetInstance().timerId_);
-}
-
-/**
-* @tc.name: PowerSubscriber002
-* @tc.desc: test power subscriber data is valid.
-* @tc.type: FUNC
-* @tc.require:
-*/
-HWTEST_F(TimeServiceTest, PowerSubscriber002, TestSize.Level0)
-{
-    auto timerId = TimeTickNotify::GetInstance().timerId_;
-    std::string commonEvent = EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON;
-    EventFwk::Want want;
-    want.SetAction(commonEvent);
-    int32_t code = RESERVED_UID;
-    std::string data(commonEvent);
-    EventFwk::CommonEventData eventData(want, code, data);
-    OHOS::EventFwk::MatchingSkills matchingSkills;
-    matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON);
-    auto subscriber = std::make_shared<PowerSubscriber>(CommonEventSubscribeInfo(matchingSkills));
-    subscriber->OnReceiveEvent(eventData);
-    EXPECT_NE(timerId, TimeTickNotify::GetInstance().timerId_);
+    AddPermission();
+    int64_t time = 0;
+    TimeUtils::GetWallTimeMs(time);
+    time = (time / MINUTE_TO_MILLISECOND) * MINUTE_TO_MILLISECOND;
+    bool result = TimeServiceClient::GetInstance()->SetTime(time);
+    EXPECT_TRUE(result);
+    auto pair = TimeTickNotify::GetInstance().RefreshNextTriggerTime();
+    EXPECT_EQ(pair.first, time + MINUTE_TO_MILLISECOND);
+    EXPECT_TRUE(pair.second);
+    DeletePermission();
 }
 
 /**
@@ -1340,6 +1317,7 @@ HWTEST_F(TimeServiceTest, TimerManager007, TestSize.Level0)
     TimerManager::GetInstance()->mPendingIdleUntil_ = alarm;
 }
 
+#ifdef HIDUMPER_ENABLE
 /**
 * @tc.name: TimerManager008.
 * @tc.desc: test ShowTimerEntryById TIMER_ID not in timerEntryMap_.
@@ -1369,6 +1347,7 @@ HWTEST_F(TimeServiceTest, TimerManager009, TestSize.Level0)
     TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
     EXPECT_TRUE(res);
 }
+#endif
 
 /**
 * @tc.name: TimerManager010.

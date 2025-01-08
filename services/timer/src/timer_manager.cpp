@@ -1219,6 +1219,7 @@ steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
     return triggerAtTime + milliseconds(static_cast<long>(BATCH_WINDOW_COE * futurity.count()));
 }
 
+#ifdef HIDUMPER_ENABLE
 bool TimerManager::ShowTimerEntryMap(int fd)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
@@ -1304,6 +1305,7 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
+#endif
 
 void TimerManager::OnUserRemoved(int userId)
 {

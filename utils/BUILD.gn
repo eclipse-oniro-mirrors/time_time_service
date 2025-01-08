@@ -19,7 +19,13 @@ config("utils_config") {
     "${time_service_path}",
   ]
   cflags = [ "-fvisibility=hidden" ]
-  cflags_cc = [ "-fvisibility-inlines-hidden" ]
+  cflags_cc = [
+    "-fvisibility-inlines-hidden",
+    "-fvisibility=hidden",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-Os",
+  ]
 }
 
 ohos_source_set("time_utils") {
@@ -44,7 +50,7 @@ ohos_source_set("time_utils") {
   ]
   defines = []
 
-  if (time_hicollie_able) {
+  if (time_service_hicollie_able) {
     external_deps += [ "hicollie:libhicollie" ]
     defines += [ "HICOLLIE_ENABLE" ]
   }
