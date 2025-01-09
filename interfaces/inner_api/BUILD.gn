@@ -29,7 +29,6 @@ ohos_shared_library("time_client") {
   sources = [
     "${api_path}/src/time_service_client.cpp",
     "${time_service_path}/ipc/proxy/time_service_proxy.cpp",
-    "${time_service_path}/ipc/proxy/timer_notify_callback_proxy.cpp",
     "${time_service_path}/ipc/stub/timer_call_back_stub.cpp",
     "${time_service_path}/time/src/itimer_info.cpp",
     "${time_service_path}/time/src/timer_call_back.cpp",

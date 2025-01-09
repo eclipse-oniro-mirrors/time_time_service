@@ -28,7 +28,7 @@ class TimerCallback : public TimerCallbackStub {
 public:
     DISALLOW_COPY_AND_MOVE(TimerCallback);
     static sptr<TimerCallback> GetInstance();
-    virtual int32_t NotifyTimer(uint64_t timerId, const sptr<IRemoteObject> &timerCallback) override;
+    virtual int32_t NotifyTimer(uint64_t timerId) override;
     /**
      * Get timer callback info.
      *
