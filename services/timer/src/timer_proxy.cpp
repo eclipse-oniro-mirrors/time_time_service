@@ -161,7 +161,7 @@ void TimerProxy::EraseTimerFromProxyTimerMap(const uint64_t id, const int uid, c
     auto it = proxyTimers_.find(key);
     if (it != proxyTimers_.end()) {
         it->second.erase(std::remove_if(it->second.begin(), it->second.end(),
-            [id](uint64_t timerId){ return timerId == id; }), it->second.end());
+            [id](uint64_t timerId) { return timerId == id; }), it->second.end());
     }
 }
 

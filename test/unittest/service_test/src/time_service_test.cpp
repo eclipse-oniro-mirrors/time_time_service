@@ -43,6 +43,7 @@
 #include "time_tick_notify.h"
 #include "timer_proxy.h"
 #include "timer_notify_callback.h"
+#include "time_service_test.h"
 
 namespace {
 using namespace testing::ext;
@@ -65,7 +66,6 @@ constexpr int FIVE_HUNDRED = 500;
 constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
 constexpr int TIMER_ALARM_COUNT = 50;
 constexpr int64_t MINUTE_TO_MILLISECOND = 60000;
-constexpr int UID_PROXY_OFFSET = 32;
 
 static HapPolicyParams g_policyA = {
     .apl = APL_SYSTEM_CORE,
@@ -230,12 +230,6 @@ void WaitForAlarm(std::atomic<int> * data, int interval)
         ++i;
         usleep(ONE_HUNDRED*MICRO_TO_MILLISECOND);
     }
-}
-
-uint64_t GetProxyKey(int uid, int pid)
-{
-    uint64_t key = (static_cast<uint64_t>(uid) << UID_PROXY_OFFSET) | static_cast<uint64_t>(pid);
-    return key;
 }
 
 /**

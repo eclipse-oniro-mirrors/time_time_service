@@ -19,6 +19,7 @@
 #include "timer_manager.h"
 #include "timer_proxy.h"
 #include "time_common.h"
+#include "time_service_test.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -27,11 +28,10 @@ using namespace std::chrono;
 
 namespace {
 constexpr uint64_t NANO_TO_MILESECOND = 100000;
-constexpr int BLOCK_TEST_TIME = 100000;
 const uint64_t TIMER_ID = 88887;
 const int UID = 999996;
 const int PID = 999997;
-const int UID_PROXY_OFFSET = 32;
+const int ELAPSED_REALTIME_WAKEUP = 2;
 }
 TimerManager* timerManagerHandler_ = nullptr;
 
@@ -58,7 +58,6 @@ void TimeProxyTest::SetUp(void)
     timerManagerHandler_ = TimerManager::GetInstance();
     EXPECT_NE(timerManagerHandler_, nullptr);
     TIME_HILOGI(TIME_MODULE_SERVICE, "end SetUp.");
-    usleep(BLOCK_TEST_TIME);
 }
 
 void TimeProxyTest::TearDown(void)
@@ -71,7 +70,7 @@ void TimeProxyTest::TearDown(void)
 uint64_t CreateTimer(int uid, int pid)
 {
     TimerPara paras;
-    paras.timerType = 2;
+    paras.timerType = ELAPSED_REALTIME_WAKEUP;
     paras.windowLength = -1;
     paras.interval = 0;
     paras.flag = 0;
@@ -89,12 +88,6 @@ void StartTimer(uint64_t timerId)
     uint64_t triggerTime = 10000000 + nowElapsed;
     auto ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
-}
-
-uint64_t GetProxyKey(int uid, int pid)
-{
-    uint64_t key = (static_cast<uint64_t>(uid) << UID_PROXY_OFFSET) | static_cast<uint64_t>(pid);
-    return key;
 }
 
 /**
@@ -158,10 +151,8 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
     int32_t uid = 2000;
     int pid = 1000;
     uint64_t timerId = CreateTimer(uid, pid);
-    usleep(BLOCK_TEST_TIME);
     
     StartTimer(timerId);
-    usleep(BLOCK_TEST_TIME);
 
     std::vector<std::shared_ptr<TimerInfo>> triggerList;
     std::shared_ptr<Batch> batch = timerManagerHandler_->alarmBatches_.at(0);
@@ -169,7 +160,6 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
     batch->start_ = tpRpoch;
     auto retTrigger = timerManagerHandler_->TriggerTimersLocked(triggerList, timerManagerHandler_->GetBootTimeNs());
     EXPECT_EQ(retTrigger, true);
-    usleep(BLOCK_TEST_TIME);
     auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
     EXPECT_EQ(uidTimersMap.size(), (const unsigned int)0);
     timerManagerHandler_->DestroyTimer(timerId);
@@ -263,8 +253,9 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid003, TestSize.Level1)
     bool retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
     auto proxyTimers = TimerProxy::GetInstance().proxyTimers_;
+    auto key = GetProxyKey(uid, 0);
     EXPECT_EQ(proxyTimers.size(), (const unsigned int)1);
-    auto it = proxyTimers.find(uid);
+    auto it = proxyTimers.find(key);
     EXPECT_NE(it, proxyTimers.end());
     EXPECT_EQ(it->second.size(), (const unsigned int)0);
 
@@ -273,7 +264,8 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid003, TestSize.Level1)
     EXPECT_TRUE(retProxy);
     proxyTimers = TimerProxy::GetInstance().proxyTimers_;
     EXPECT_EQ(proxyTimers.size(), (const unsigned int)2);
-    it = proxyTimers.find(uid);
+    key = GetProxyKey(uid, 0);
+    it = proxyTimers.find(key);
     EXPECT_NE(it, proxyTimers.end());
     EXPECT_EQ(it->second.size(), (const unsigned int)0);
 
@@ -282,7 +274,8 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid003, TestSize.Level1)
     EXPECT_TRUE(retProxy);
     proxyTimers = TimerProxy::GetInstance().proxyTimers_;
     EXPECT_EQ(proxyTimers.size(), (const unsigned int)3);
-    it = proxyTimers.find(uid);
+    key = GetProxyKey(uid, 0);
+    it = proxyTimers.find(key);
     EXPECT_NE(it, proxyTimers.end());
     EXPECT_EQ(it->second.size(), (const unsigned int)0);
 
@@ -304,7 +297,6 @@ HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
     uint32_t interval = 100;
     bool ret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
     EXPECT_TRUE(ret);
-    usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
 
     /* The unified heartbeat can be deleted successfully and deleted from adjustTimers_. */
@@ -312,7 +304,6 @@ HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
     interval = 0;
     ret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
     EXPECT_TRUE(ret);
-    usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
 }
 
@@ -332,19 +323,16 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
     int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
                                                      wantAgent, uid, pid, timerId, NOT_STORE);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
-    usleep(BLOCK_TEST_TIME);
 
     /* Create a timer */
     auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
     uint64_t triggerTime = 10000000 + nowElapsed;
     ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
-    usleep(BLOCK_TEST_TIME);
 
     /* Exempt the timer of the app and update the record to adjustExemptionList_. */
     std::unordered_set<std::string> nameArr{"time_service"};
     timerManagerHandler_->SetTimerExemption(nameArr, true);
-    usleep(BLOCK_TEST_TIME);
     EXPECT_NE(TimerProxy::GetInstance().adjustExemptionList_.size(), (const unsigned int)0);
 
     /* Unified heartbeat is triggered. The heartbeat of exempted applications is not unified. */
@@ -352,7 +340,6 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
     uint32_t interval = 200;
     bool adjustRet = timerManagerHandler_->AdjustTimer(isAdjust, interval);
     EXPECT_TRUE(adjustRet);
-    usleep(BLOCK_TEST_TIME);
     EXPECT_NE(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
     bool isExemption = true;
     for (auto timer : TimerProxy::GetInstance().adjustTimers_) {
@@ -461,7 +448,6 @@ HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
     
     bool retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
-    usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyTimers_.size(), (const unsigned int)3);
     uint64_t key1 = GetProxyKey(uid, pid1);
     uint64_t key2 = GetProxyKey(uid, pid2);
@@ -513,38 +499,23 @@ HWTEST_F(TimeProxyTest, PidProxyTimer004, TestSize.Level1)
 */
 HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
 {
-    TimerPara paras;
-    paras.timerType = 2;
-    paras.windowLength = -1;
-    paras.interval = 0;
-    paras.flag = 0;
-    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2001;
     int pid = 1111;
     std::set<int> pidList;
     pidList.insert(pid);
-    uint64_t timerId = 0;
+    uint64_t timerId =  CreateTimer(uid, pid);
 
     /* clear pidTimersMap_ */
     TimerProxy::GetInstance().uidTimersMap_.clear();
     TimerProxy::GetInstance().proxyTimers_.clear();
-
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
-                                                    wantAgent, uid, pid, timerId, NOT_STORE);
-    EXPECT_EQ(ret, TimeError::E_TIME_OK);
     
     /* Start a timer. The timer can be started successfully and can be recorded in pidTimerMap_. */
-    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
-    uint64_t triggerTime = 10000000 + nowElapsed;
-    ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
-    EXPECT_EQ(ret, TimeError::E_TIME_OK);
-    usleep(BLOCK_TEST_TIME);
+    StartTimer(timerId);
     EXPECT_EQ(TimerProxy::GetInstance().uidTimersMap_.size(), (const unsigned int)1);
 
     /* The proxy of a timer is successful and can be recorded in proxyPid_. */
     bool retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
-    usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyTimers_.size(), (const unsigned int)1);
     uint64_t key = GetProxyKey(uid, pid);
     auto it = TimerProxy::GetInstance().proxyTimers_.find(key);
@@ -552,9 +523,8 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     EXPECT_EQ(it->second.size(), (const unsigned int)1);
 
     /* Cancel a proxy timer. The proxy is canceled successfully, and the proxyPid_ table is updated. */
-    ret = timerManagerHandler_->ProxyTimer(uid, pidList, false, true);
+    retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, false, true);
     EXPECT_TRUE(retProxy);
-    usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyTimers_.size(), (const unsigned int)0);
 
     /* After the proxy is disabled, determine whether unified heartbeat is required again. */
@@ -605,7 +575,6 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
     std::set<int> pidList;
     bool retProxy = timerManagerHandler_->ProxyTimer(UID, pidList, true, true);
     EXPECT_TRUE(retProxy);
-    usleep(BLOCK_TEST_TIME);
     {
         std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
         EXPECT_EQ(TimerProxy::GetInstance().proxyTimers_.size(), (const unsigned int) 1);
@@ -632,7 +601,6 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
 
     retProxy = timerManagerHandler_->ProxyTimer(UID, pidList, true, true);
     EXPECT_TRUE(retProxy);
-    usleep(BLOCK_TEST_TIME);
     res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
     EXPECT_EQ(res, E_TIME_OK);
 
@@ -654,7 +622,6 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
     pidList.insert(PID);
     bool retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
-    usleep(BLOCK_TEST_TIME);
     EXPECT_EQ(TimerProxy::GetInstance().proxyTimers_.size(), (const unsigned int)1);
     uint64_t key = GetProxyKey(uid, PID);
     auto it = TimerProxy::GetInstance().proxyTimers_.find(key);
@@ -678,7 +645,6 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
 
     retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
-    usleep(BLOCK_TEST_TIME);
     res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
     EXPECT_EQ(res, E_TIME_OK);
 
