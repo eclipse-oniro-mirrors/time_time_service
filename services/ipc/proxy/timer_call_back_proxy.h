@@ -31,7 +31,7 @@ public:
 
     ~TimerCallbackProxy();
     DISALLOW_COPY_AND_MOVE(TimerCallbackProxy);
-    int32_t NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback) override;
+    int32_t NotifyTimer(const uint64_t timerId) override;
 
 private:
     static inline BrokerDelegator<TimerCallbackProxy> delegator_;

@@ -34,7 +34,6 @@
 #include "time_common.h"
 #include "time_tick_notify.h"
 #include "time_zone_info.h"
-#include "timer_notify_callback.h"
 #include "timer_manager_interface.h"
 #include "timer_proxy.h"
 #include "time_file_utils.h"
@@ -417,18 +416,8 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     if (timerManager == nullptr) {
         return E_TIME_NULLPTR;
     }
-    auto callbackFunc = [timerCallback, timerOptions, timerManager](uint64_t id) -> int32_t {
-        #ifdef POWER_MANAGER_ENABLE
-        if (timerOptions->type == ITimerManager::TimerType::RTC_WAKEUP ||
-            timerOptions->type == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP) {
-            auto notifyCallback = TimerNotifyCallback::GetInstance(timerManager);
-            return timerCallback->NotifyTimer(id, notifyCallback->AsObject());
-        } else {
-            return timerCallback->NotifyTimer(id, nullptr);
-        }
-        #else
-        return timerCallback->NotifyTimer(id, nullptr);
-        #endif
+    auto callbackFunc = [timerCallback](uint64_t id) -> int32_t {
+        return timerCallback->NotifyTimer(id);
     };
     if ((static_cast<uint32_t>(paras.flag) & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
         !TimePermission::CheckProxyCallingPermission()) {

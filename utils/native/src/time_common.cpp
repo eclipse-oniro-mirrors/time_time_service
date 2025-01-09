@@ -29,7 +29,7 @@ int32_t TimeUtils::GetWallTimeMs(int64_t &time)
 {
     struct timespec tv {};
     if (!GetTimeByClockId(CLOCK_REALTIME, tv)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get rt failed.");
         return E_TIME_SA_DIED;
     }
     time = tv.tv_sec * MILLI_TO_SEC + tv.tv_nsec / NANO_TO_MILLI;
@@ -40,7 +40,7 @@ int32_t TimeUtils::GetBootTimeNs(int64_t &time)
 {
     struct timespec tv {};
     if (!GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get bt failed.");
         return E_TIME_SA_DIED;
     }
     time = tv.tv_sec * NANO_TO_SEC + tv.tv_nsec;
@@ -51,7 +51,7 @@ int32_t TimeUtils::GetBootTimeMs(int64_t &time)
 {
     struct timespec tv {};
     if (!GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "get failed.");
+        TIME_HILOGE(TIME_MODULE_CLIENT, "get bt failed.");
         return E_TIME_SA_DIED;
     }
     time = tv.tv_sec * MILLI_TO_SEC + tv.tv_nsec / NANO_TO_MILLI;
