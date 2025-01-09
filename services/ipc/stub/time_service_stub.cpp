@@ -292,7 +292,7 @@ int32_t TimeServiceStub::OnDestroyTimer(MessageParcel &data, MessageParcel &repl
 int32_t TimeServiceStub::OnTimerProxy(MessageParcel &data, MessageParcel &reply)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "on timer proxy start.");
-    TimeXCollie timeXCollie("TimeService::PidTimerProxy");
+    TimeXCollie timeXCollie("TimeService::TimerProxy");
     if (!TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
         return E_TIME_NO_PERMISSION;

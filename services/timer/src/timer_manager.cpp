@@ -735,7 +735,8 @@ bool TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
     if (mPendingIdleUntil_ != nullptr && mPendingIdleUntil_->id == alarm->id) {
         TriggerIdleTimer();
     }
-    if (TimerProxy::GetInstance().IsProxy(alarm->uid, 0) || TimerProxy::GetInstance().IsProxy(alarm->uid, alarm->pid) ) {
+    if (TimerProxy::GetInstance().IsProxy(alarm->uid, 0)
+        || TimerProxy::GetInstance().IsProxy(alarm->uid, alarm->pid)) {
         alarm->UpdateWhenElapsedFromNow(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
         SetHandlerLocked(alarm, false, false);
         return false;
@@ -1052,10 +1053,17 @@ bool TimerManager::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, 
 {
     std::set<int> failurePid;
     std::lock_guard<std::mutex> lock(mutex_);
+    if (pidList.size() == 0) {
+        return TimerProxy::GetInstance().ProxyTimer(uid, 0, isProxy, needRetrigger, GetBootTimeNs(),
+            [this] (std::shared_ptr<TimerInfo> &alarm, bool needRetrigger) {
+                UpdateTimersState(alarm, needRetrigger);
+            });
+    }
     for (std::set<int>::iterator pid = pidList.begin(); pid != pidList.end(); ++pid) {
         if (!TimerProxy::GetInstance().ProxyTimer(uid, *pid, isProxy, needRetrigger, GetBootTimeNs(),
-            [this] (std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)
-            { UpdateTimersState(alarm, needRetrigger); })) {
+            [this] (std::shared_ptr<TimerInfo> &alarm, bool needRetrigger) {
+                UpdateTimersState(alarm, needRetrigger);
+            })) {
             failurePid.insert(*pid);
         }
     }

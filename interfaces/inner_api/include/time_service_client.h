@@ -374,7 +374,7 @@ public:
     /**
      * @brief ProxyTimer
      *
-     * Wake up all timers for provided pid by proxy.
+     * Proxy timers when apps switch to background
      *
      * @param uid the uid.
      * @param pidList the pidlist. Passing an empty vector means proxy by uid.
