@@ -26,7 +26,7 @@ TimerCallbackProxy::~TimerCallbackProxy()
     TIME_HILOGD(TIME_MODULE_CLIENT, "TimerCallbackProxy instance destoryed");
 }
 
-int32_t TimerCallbackProxy::NotifyTimer(const uint64_t timerId, const sptr<IRemoteObject> &timerCallback)
+int32_t TimerCallbackProxy::NotifyTimer(const uint64_t timerId)
 {
     TIME_HILOGD(TIME_MODULE_CLIENT, "start id: %{public}" PRId64 "", timerId);
     sptr<IRemoteObject> remote = Remote();
@@ -45,10 +45,6 @@ int32_t TimerCallbackProxy::NotifyTimer(const uint64_t timerId, const sptr<IRemo
 
     if (!data.WriteUint64(timerId)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "write timerId failed!");
-        return E_TIME_WRITE_PARCEL_ERROR;
-    }
-    if (timerCallback != nullptr && !data.WriteRemoteObject(timerCallback)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "write timerCallback failed!");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
     int ret = remote->SendRequest(static_cast<int>(ITimerCallback::Message::NOTIFY_TIMER), data, reply, option);

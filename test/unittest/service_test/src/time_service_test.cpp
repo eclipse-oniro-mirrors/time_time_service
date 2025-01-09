@@ -42,7 +42,6 @@
 #include "ntp_trusted_time.h"
 #include "time_tick_notify.h"
 #include "timer_proxy.h"
-#include "timer_notify_callback.h"
 
 namespace {
 using namespace testing::ext;
@@ -1374,24 +1373,10 @@ HWTEST_F(TimeServiceTest, TimerManager010, TestSize.Level0)
 
 /**
 * @tc.name: TimerManager011.
-* @tc.desc: test TimerNotifyCallback GetInstance.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTest, TimerManager011, TestSize.Level0)
-{
-    auto timerManager = TimerManager::GetInstance();
-    auto res = TimerNotifyCallback::GetInstance(timerManager);
-    EXPECT_NE(res, nullptr);
-    res = TimerNotifyCallback::GetInstance(timerManager);
-    EXPECT_NE(res, nullptr);
-}
-
-/**
-* @tc.name: TimerManager012.
 * @tc.desc: test OnPackageRemoved.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager012, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager011, TestSize.Level0)
 {
     auto timerManager = TimerManager::GetInstance();
     {
@@ -1416,11 +1401,11 @@ HWTEST_F(TimeServiceTest, TimerManager012, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager013.
+* @tc.name: TimerManager012.
 * @tc.desc: test record and delete of timerCount_.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager013, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager012, TestSize.Level0)
 {
     int uid1 = UID;
     int uid2 = UID + 1;
@@ -1451,11 +1436,11 @@ HWTEST_F(TimeServiceTest, TimerManager013, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager014.
+* @tc.name: TimerManager013.
 * @tc.desc: test when create and delete timer, the change of timerOutOfRangeTimes_.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager014, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager013, TestSize.Level0)
 {
     TimerManager::GetInstance()->timerEntryMap_.clear();
     TimerManager::GetInstance()->timerCount_.clear();
@@ -1476,11 +1461,11 @@ HWTEST_F(TimeServiceTest, TimerManager014, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager015.
+* @tc.name: TimerManager014.
 * @tc.desc: test create two timer with same name.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTest, TimerManager015, TestSize.Level0)
+HWTEST_F(TimeServiceTest, TimerManager014, TestSize.Level0)
 {
     TIME_HILOGI(TIME_MODULE_CLIENT, "TimerManager015 start");
     TimerManager::GetInstance()->timerNameMap_.clear();
