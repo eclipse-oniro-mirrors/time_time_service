@@ -231,9 +231,9 @@ void TimerProxy::RecordProxyTimerMap(const std::shared_ptr<TimerInfo> &alarm, bo
     }
     auto it = proxyTimers_.find(key);
     if (it != proxyTimers_.end()) {
-        proxyTimers_.insert(std::make_pair(alarm->pid, std::vector<uint64_t>{alarm->id}));
+        proxyTimers_.insert(std::make_pair(key, std::vector<uint64_t>{alarm->id}));
     } else {
-        proxyTimers_.insert(std::make_pair(alarm->pid, std::vector<uint64_t>{alarm->id}));
+        proxyTimers_.insert(std::make_pair(key, std::vector<uint64_t>{alarm->id}));
     }
 }
 
@@ -286,11 +286,9 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
         return;
     }
 
-    bool isChanged = false;
     for (auto itTimerInfo = itUidTimersMap->second.begin(); itTimerInfo!= itUidTimersMap->second.end();
         ++itTimerInfo) {
         if (pid == 0 || pid == itTimerInfo->second->pid) {
-            isChanged = true;
             itTimerInfo->second->originWhenElapsed = itTimerInfo->second->whenElapsed;
             timerList.push_back(itTimerInfo->first);
             itTimerInfo->second->UpdateWhenElapsedFromNow(now, milliseconds(proxyDelayTime_));
@@ -311,14 +309,12 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
     bool needRetrigger)
 {
     uint64_t key = GetProxyKey(uid, pid);
-    // 在代理表格里面找
     auto itProxy = proxyTimers_.find(key);
     if (itProxy == proxyTimers_.end()) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid:%{public}d not in proxy.", uid, pid);
         return false;
     }
     
-    // 在当前uid的表格里找
     std::lock_guard<std::mutex> lockPidTimers(uidTimersMutex_);
     auto itTimer = uidTimersMap_.find(uid);
     if (uidTimersMap_.find(uid) == uidTimersMap_.end()) {
@@ -326,7 +322,6 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
         return true;
     }
 
-    // 便利代理的map
     for (int elem : itProxy->second) {
         auto itTimerInfo = itTimer->second.find(elem);
         if (itTimerInfo == itTimer->second.end()) {
@@ -370,8 +365,7 @@ void TimerProxy::ResetAllProxyWhenElapsed(const std::chrono::steady_clock::time_
     for (auto it = proxyTimers_.begin(); it != proxyTimers_.end(); ++it) {
         auto uid = static_cast<uint32_t>(it->first >> UID_PROXY_OFFSET);
         auto pid = it->first & ((static_cast<uint64_t>(1) << UID_PROXY_OFFSET) - 1);
-        RestoreProxyWhenElapsed(uid, pid, now, insertAlarmCallback, true);
-        RestoreProxyWhenElapsed(uid, 0, now, insertAlarmCallback, true);
+        RestoreProxyWhenElapsedForProxyTimers(uid, pid, now, insertAlarmCallback, true);
     }
     proxyTimers_.clear();
 }

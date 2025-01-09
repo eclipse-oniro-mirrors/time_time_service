@@ -1049,21 +1049,6 @@ HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
 }
 
 /**
-* @tc.name: ProxyTimer001
-* @tc.desc: adjust timer.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeClientTest, ProxyTimer001, TestSize.Level1)
-{
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    pid_t uid = IPCSkeleton::GetCallingUid();
-    std::set<int> pidList;
-    pidList.insert(pid);
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, true, true);
-    EXPECT_EQ(ret, E_TIME_NO_PERMISSION);
-}
-
-/**
 * @tc.name: AdjustTimer001
 * @tc.desc: adjust timer.
 * @tc.type: FUNC

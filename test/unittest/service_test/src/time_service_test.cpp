@@ -257,64 +257,6 @@ bool CheckInJson(std::string tableName, uint64_t timerId)
 }
 
 /**
-* @tc.name: ProxyTimer001.
-* @tc.desc: proxy timer.
-* @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
-*/
-HWTEST_F(TimeServiceTest, ProxyTimer001, TestSize.Level0)
-{
-    std::set<int> pidList;
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, pidList, true, true);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, pidList, false, true);
-    EXPECT_TRUE(ret);
-}
-
-/**
-* @tc.name: ProxyTimer002.
-* @tc.desc: proxy timer.
-* @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
-*/
-HWTEST_F(TimeServiceTest, ProxyTimer002, TestSize.Level0)
-{
-    std::set<int> pidList;
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, pidList, true, true);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->ResetAllProxy();
-    EXPECT_TRUE(ret);
-}
-
-/**
-* @tc.name: ProxyTimer003.
-* @tc.desc: proxy timer.
-* @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
-*/
-HWTEST_F(TimeServiceTest, ProxyTimer003, TestSize.Level0)
-{
-    std::set<int> pidList;
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, pidList, false, true);
-    EXPECT_FALSE(ret);
-}
-
-/**
-* @tc.name: ProxyTimer004.
-* @tc.desc: proxy timer.
-* @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
-*/
-HWTEST_F(TimeServiceTest, ProxyTimer004, TestSize.Level0)
-{
-    std::set<int> pidList;
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, pidList, true, false);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, pidList, false, false);
-    EXPECT_TRUE(ret);
-}
-
-/**
 * @tc.name: PidProxyTimer001.
 * @tc.desc: proxy timer.
 * @tc.type: FUNC

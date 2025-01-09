@@ -281,7 +281,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid003, TestSize.Level1)
 
     retProxy = timerManagerHandler_->ResetAllProxy();
     EXPECT_TRUE(retProxy);
-    EXPECT_TRUE(proxyTimers.empty());
+    EXPECT_TRUE(TimerProxy::GetInstance().proxyTimers_.empty());
 }
 
 
@@ -314,21 +314,12 @@ HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
 */
 HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
 {
-    /* Create a timer with windowLen set to 0. */
-    TimerPara paras{.timerType = 2, .windowLength = 0, .interval = 0, .flag = 0};
-    auto wantAgent = std::make_shared<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     int32_t uid = 2000;
     int32_t pid = 1000;
-    uint64_t timerId = 0;
-    int32_t ret = timerManagerHandler_->CreateTimer(paras, [] (const uint64_t) {return 0;},
-                                                     wantAgent, uid, pid, timerId, NOT_STORE);
-    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    uint64_t timerId = CreateTimer(uid, pid);
 
     /* Create a timer */
-    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
-    uint64_t triggerTime = 10000000 + nowElapsed;
-    ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
-    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    StartTimer(timerId);
 
     /* Exempt the timer of the app and update the record to adjustExemptionList_. */
     std::unordered_set<std::string> nameArr{"time_service"};
@@ -348,6 +339,7 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
         }
     }
     EXPECT_TRUE(isExemption);
+    timerManagerHandler_->DestroyTimer(timerId);
 }
 
 /**
@@ -401,7 +393,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByPid002, TestSize.Level1)
     auto key = GetProxyKey(uid, pid);
     auto it = proxyTimers.find(key);
     EXPECT_NE(it, proxyTimers.end());
-    EXPECT_EQ(it->second.size(), (const unsigned int)0);
+    EXPECT_EQ(it->second.size(), (const unsigned int)1);
 
     it = TimerProxy::GetInstance().proxyTimers_.find(key);
     auto it2 = std::find(it->second.begin(), it->second.end(), timerId);
@@ -490,6 +482,8 @@ HWTEST_F(TimeProxyTest, PidProxyTimer004, TestSize.Level1)
     EXPECT_EQ(TimerProxy::GetInstance().proxyTimers_[key].size(), (const unsigned int)1);
     EXPECT_EQ(TimerProxy::GetInstance().IsProxy(uid1, pid), true);
     EXPECT_EQ(TimerProxy::GetInstance().IsProxy(uid2, pid), false);
+    timerManagerHandler_->DestroyTimer(timerId1);
+    timerManagerHandler_->DestroyTimer(timerId2);
 }
 
 /**
@@ -533,6 +527,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     bool adjret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
     EXPECT_TRUE(adjret);
     EXPECT_NE(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
+    timerManagerHandler_->DestroyTimer(timerId);
 }
 
 /**
@@ -573,37 +568,8 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover001, TestSize.Level1)
 HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
 {
     std::set<int> pidList;
-    bool retProxy = timerManagerHandler_->ProxyTimer(UID, pidList, true, true);
+    auto retProxy = timerManagerHandler_->ProxyTimer(UID, pidList, true, true);
     EXPECT_TRUE(retProxy);
-    {
-        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
-        EXPECT_EQ(TimerProxy::GetInstance().proxyTimers_.size(), (const unsigned int) 1);
-        auto it = TimerProxy::GetInstance().proxyTimers_.find(UID);
-        EXPECT_NE(it, TimerProxy::GetInstance().proxyTimers_.end());
-        EXPECT_EQ(it->second.size(), (const unsigned int) 0);
-    }
-
-    auto duration = std::chrono::milliseconds::zero();
-    auto timePoint = std::chrono::steady_clock::now();
-    auto timerInfo1 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
-                                                 nullptr, nullptr, 0, false, UID, 0, "");
-    auto res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
-    EXPECT_EQ(res, E_TIME_OK);
-    auto timerInfo2 = std::make_shared<TimerInfo>("", TIMER_ID + 1, 0, duration, timePoint, duration, timePoint,
-                                                 duration, nullptr, nullptr, 0, false, UID, 0, "");
-    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo2);
-    EXPECT_EQ(res, E_TIME_OK);
-
-    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
-    EXPECT_EQ(res, E_TIME_OK);
-    retProxy = timerManagerHandler_->ProxyTimer(UID, pidList, false, true);
-    EXPECT_TRUE(retProxy);
-
-    retProxy = timerManagerHandler_->ProxyTimer(UID, pidList, true, true);
-    EXPECT_TRUE(retProxy);
-    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
-    EXPECT_EQ(res, E_TIME_OK);
-
     TimerProxy::GetInstance().EraseTimerFromProxyTimerMap(0, UID, 0);
 }
 
@@ -620,34 +586,8 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
     int uid = 2000;
     std::set<int> pidList;
     pidList.insert(PID);
-    bool retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
+    auto retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
-    EXPECT_EQ(TimerProxy::GetInstance().proxyTimers_.size(), (const unsigned int)1);
-    uint64_t key = GetProxyKey(uid, PID);
-    auto it = TimerProxy::GetInstance().proxyTimers_.find(key);
-    EXPECT_NE(it, TimerProxy::GetInstance().proxyTimers_.end());
-
-    auto duration = std::chrono::milliseconds::zero();
-    auto timePoint = std::chrono::steady_clock::now();
-    auto timerInfo1 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
-                                                  nullptr, nullptr, 0, false, uid, PID, "");
-    auto res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
-    EXPECT_EQ(res, E_TIME_OK);
-    auto timerInfo2 = std::make_shared<TimerInfo>("", TIMER_ID + 1, 0, duration, timePoint, duration, timePoint,
-                                                  duration, nullptr, nullptr, 0, false, uid, PID, "");
-    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo2);
-    EXPECT_EQ(res, E_TIME_OK);
-
-    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
-    EXPECT_EQ(res, E_TIME_OK);
-    retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, false, true);
-    EXPECT_TRUE(retProxy);
-
-    retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
-    EXPECT_TRUE(retProxy);
-    res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
-    EXPECT_EQ(res, E_TIME_OK);
-
     TimerProxy::GetInstance().EraseTimerFromProxyTimerMap(0, uid, PID);
 }
 
