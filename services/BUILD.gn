@@ -47,12 +47,10 @@ ohos_shared_library("time_system_ability") {
     "dfx/src/time_sysevent.cpp",
     "ipc/proxy/timer_call_back_proxy.cpp",
     "ipc/stub/time_service_stub.cpp",
+    "time/src/event_manager.cpp",
     "time/src/itimer_info.cpp",
-    "time/src/net_conn_subscriber.cpp",
-    "time/src/nitz_subscriber.cpp",
     "time/src/ntp_trusted_time.cpp",
     "time/src/ntp_update_time.cpp",
-    "time/src/power_subscriber.cpp",
     "time/src/simple_timer_info.cpp",
     "time/src/sntp_client.cpp",
     "time/src/time_service_notify.cpp",
@@ -60,7 +58,6 @@ ohos_shared_library("time_system_ability") {
     "time/src/time_zone_info.cpp",
     "timer/src/batch.cpp",
     "timer/src/cjson_helper.cpp",
-    "timer/src/package_subscriber.cpp",
     "timer/src/timer_handler.cpp",
     "timer/src/timer_info.cpp",
     "timer/src/timer_manager.cpp",
@@ -89,6 +86,10 @@ ohos_shared_library("time_system_ability") {
       "dfx/src/time_cmd_dispatcher.cpp",
       "dfx/src/time_cmd_parse.cpp",
     ]
+  }
+
+  if (time_service_set_auto_reboot) {
+    defines += [ "SET_AUTO_REBOOT" ]
   }
 
   if (device_standby) {
@@ -123,12 +124,10 @@ ohos_static_library("time_system_ability_static") {
     "dfx/src/time_sysevent.cpp",
     "ipc/proxy/timer_call_back_proxy.cpp",
     "ipc/stub/time_service_stub.cpp",
+    "time/src/event_manager.cpp",
     "time/src/itimer_info.cpp",
-    "time/src/net_conn_subscriber.cpp",
-    "time/src/nitz_subscriber.cpp",
     "time/src/ntp_trusted_time.cpp",
     "time/src/ntp_update_time.cpp",
-    "time/src/power_subscriber.cpp",
     "time/src/simple_timer_info.cpp",
     "time/src/sntp_client.cpp",
     "time/src/time_service_notify.cpp",
@@ -136,7 +135,6 @@ ohos_static_library("time_system_ability_static") {
     "time/src/time_zone_info.cpp",
     "timer/src/batch.cpp",
     "timer/src/cjson_helper.cpp",
-    "timer/src/package_subscriber.cpp",
     "timer/src/timer_handler.cpp",
     "timer/src/timer_info.cpp",
     "timer/src/timer_manager.cpp",
@@ -170,6 +168,10 @@ ohos_static_library("time_system_ability_static") {
   if (device_standby) {
     external_deps += [ "device_standby:standby_innerkits" ]
     defines += [ "DEVICE_STANDBY_ENABLE" ]
+  }
+
+  if (time_service_set_auto_reboot) {
+    defines += [ "SET_AUTO_REBOOT" ]
   }
 
   if (defined(global_parts_info) &&

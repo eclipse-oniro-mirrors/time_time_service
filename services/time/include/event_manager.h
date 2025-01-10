@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef NET_CONN_SUBSCRIBER_H
-#define NET_CONN_SUBSCRIBER_H
+#ifndef EVENT_MANAGER_H
+#define EVENT_MANAGER_H
 
 #include <common_event_publish_info.h>
 #include <map>
@@ -29,25 +29,30 @@
 namespace OHOS {
 namespace MiscServices {
 using namespace OHOS::EventFwk;
-class NetConnSubscriber : public CommonEventSubscriber {
+class EventManager : public CommonEventSubscriber {
 public:
-    explicit NetConnSubscriber(const CommonEventSubscribeInfo &subscriberInfo);
-    ~NetConnSubscriber() = default;
+    explicit EventManager(const CommonEventSubscribeInfo &subscriberInfo);
+    ~EventManager() = default;
     virtual void OnReceiveEvent(const CommonEventData &data);
 
 private:
-    enum NetConnectivityChangeEventType {
-        UNKNOWN_BROADCAST_EVENT = 1,
-        CONNECTING,
+    enum EventType {
+        UNKNOWN_BROADCAST_EVENT = 0,
         CONNECTED,
-        DISCONNECTING,
-        DISCONNECTED
+        POWER_BROADCAST_EVENT,
+        NITZ_TIME_CHANGED_BROADCAST_EVENT,
+        PACKAGE_REMOVED_EVENT,
     };
-    using netConnectivityChangeFunc = std::function<void(const CommonEventData &data)>;
+
+    using broadcastSubscriberFunc = std::function<void(const CommonEventData &data)>;
 
     void NetConnStateConnected(const CommonEventData &data);
-    std::map<uint32_t, netConnectivityChangeFunc> memberFuncMap_;
+    void PowerBroadcast(const CommonEventData &data);
+    void NITZTimeChangeBroadcast(const CommonEventData &data);
+    void PackageRemovedBroadcast(const CommonEventData &data);
+    std::map<uint32_t, broadcastSubscriberFunc> memberFuncMap_;
 };
 } // namespace MiscServices
 } // namespace OHOS
-#endif // NET_CONN_SUBSCRIBER_H
+
+#endif // EVENT_MANAGER_H

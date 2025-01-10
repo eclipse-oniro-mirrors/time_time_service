@@ -56,6 +56,9 @@ ohos_unittest("TimeServiceTest") {
     cfi_cross_dso = true
     debug = false
   }
+  if (time_service_set_auto_reboot) {
+    defines = [ "SET_AUTO_REBOOT" ]
+  }
   external_deps = [
     "ability_base:want",
     "ability_runtime:runtime",

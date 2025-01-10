@@ -28,6 +28,7 @@ declare_args() {
   device_standby = true
   time_service_hicollie_able = true
   time_service_hidumper_able = true
+  time_service_set_auto_reboot = true
   if (defined(global_parts_info) &&
       !defined(global_parts_info.resourceschedule_device_standby)) {
     device_standby = false
