@@ -113,14 +113,13 @@ private:
     int GetWallClockRtcId();
     void RegisterRSSDeathCallback();
     void RegisterPowerStateListener();
-    void RegisterScreenOnSubscriber();
-    void RegisterNitzTimeSubscriber();
-    void RegisterPackageRemovedSubscriber();
-    void RegisterNetConnSubscriber();
+    void RegisterSubscriber();
     void RegisterOsAccountSubscriber();
     bool IsValidTime(int64_t time);
     void RecoverTimerInner(cJSON* resultSet, bool autoRestore);
+#ifdef SET_AUTO_REBOOT
     void SetAutoReboot();
+#endif
 
     ServiceRunningState state_;
     static std::mutex instanceLock_;
