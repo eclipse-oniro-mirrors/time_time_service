@@ -30,7 +30,7 @@
 #include "want_agent.h"
 #include "timer_call_back.h"
 #include "time_common.h"
-#include "power_subscriber.h"
+#include "event_manager.h"
 #include "ntp_update_time.h"
 #include "cjson_helper.h"
 
@@ -1540,6 +1540,7 @@ HWTEST_F(TimeServiceTest, SystemAbility002, TestSize.Level0)
     CjsonHelper::GetInstance().Delete(DROP_ON_REBOOT, static_cast<int64_t>(timerId2));
 }
 
+#ifdef SET_AUTO_REBOOT
 /**
 * @tc.name: SystemAbility003.
 * @tc.desc: test SetAutoReboot.
@@ -1562,6 +1563,7 @@ HWTEST_F(TimeServiceTest, SystemAbility003, TestSize.Level0)
 
     CjsonHelper::GetInstance().Delete(HOLD_ON_REBOOT, static_cast<int64_t>(timerId1));
 }
+#endif
 
 /**
 * @tc.name: SystemAbility004.

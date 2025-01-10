@@ -39,14 +39,11 @@
 #include "time_file_utils.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
-#include "power_subscriber.h"
-#include "nitz_subscriber.h"
-#include "net_conn_subscriber.h"
 #include "init_param.h"
 #include "parameters.h"
 #include "os_account.h"
 #include "os_account_manager.h"
-#include "package_subscriber.h"
+#include "event_manager.h"
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
@@ -250,48 +247,19 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
     }
 }
 
-void TimeSystemAbility::RegisterScreenOnSubscriber()
-{
-    MatchingSkills matchingSkills;
-    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_SCREEN_ON);
-    CommonEventSubscribeInfo subscriberInfo(matchingSkills);
-    std::shared_ptr<PowerSubscriber> subscriberPtr = std::make_shared<PowerSubscriber>(subscriberInfo);
-    bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Register COMMON_EVENT_SCREEN_ON res:%{public}d", subscribeResult);
-}
-
-void TimeSystemAbility::RegisterNitzTimeSubscriber()
-{
-    MatchingSkills matchingNITZSkills;
-    matchingNITZSkills.AddEvent(CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED);
-    CommonEventSubscribeInfo subscriberNITZInfo(matchingNITZSkills);
-    std::shared_ptr<NITZSubscriber> subscriberNITZPtr = std::make_shared<NITZSubscriber>(subscriberNITZInfo);
-    bool subscribeNITZResult = CommonEventManager::SubscribeCommonEvent(subscriberNITZPtr);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Register COMMON_EVENT_NITZ_TIME_CHANGED res:%{public}d", subscribeNITZResult);
-}
-
-void TimeSystemAbility::RegisterPackageRemovedSubscriber()
-{
-    MatchingSkills matchingSkills;
-    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
-    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_BUNDLE_REMOVED);
-    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
-
-    CommonEventSubscribeInfo subscriberInfo(matchingSkills);
-    std::shared_ptr<PackageRemovedSubscriber> subscriberPtr =
-            std::make_shared<PackageRemovedSubscriber>(subscriberInfo);
-    bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "register res:%{public}d", subscribeResult);
-}
-
-void TimeSystemAbility::RegisterNetConnSubscriber()
+void TimeSystemAbility::RegisterSubscriber()
 {
     MatchingSkills matchingSkills;
     matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_CONNECTIVITY_CHANGE);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_SCREEN_ON);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_NITZ_TIME_CHANGED);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_BUNDLE_REMOVED);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
     CommonEventSubscribeInfo subscriberInfo(matchingSkills);
-    std::shared_ptr<NetConnSubscriber> subscriberPtr = std::make_shared<NetConnSubscriber>(subscriberInfo);
+    std::shared_ptr<EventManager> subscriberPtr = std::make_shared<EventManager>(subscriberInfo);
     bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Register COMMON_EVENT_CONNECTIVITY_CHANGE res:%{public}d", subscribeResult);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Register com event res:%{public}d", subscribeResult);
 }
 
 void TimeSystemAbility::RegisterCommonEventSubscriber()
@@ -307,10 +275,7 @@ void TimeSystemAbility::RegisterCommonEventSubscriber()
         std::thread thread(callback);
         thread.detach();
     }
-    RegisterScreenOnSubscriber();
-    RegisterNitzTimeSubscriber();
-    RegisterPackageRemovedSubscriber();
-    RegisterNetConnSubscriber();
+    RegisterSubscriber();
 }
 
 void TimeSystemAbility::RegisterOsAccountSubscriber()
@@ -937,7 +902,9 @@ void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
 {
     // Clears `drop_on_reboot` table.
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnSyncShutdown");
+#ifdef SET_AUTO_REBOOT
     TimeSystemAbility::GetInstance()->SetAutoReboot();
+#endif
     CjsonHelper::GetInstance().Clear(DROP_ON_REBOOT);
 }
 
@@ -1059,6 +1026,7 @@ void TimeSystemAbility::RecoverTimerInner(cJSON* resultSet, bool autoRestore)
     }
 }
 
+#ifdef SET_AUTO_REBOOT
 void TimeSystemAbility::SetAutoReboot()
 {
     auto resultSet = CjsonHelper::GetInstance().QueryAutoReboot();
@@ -1107,5 +1075,6 @@ void TimeSystemAbility::SetAutoReboot()
         }
     }
 }
+#endif
 } // namespace MiscServices
 } // namespace OHOS

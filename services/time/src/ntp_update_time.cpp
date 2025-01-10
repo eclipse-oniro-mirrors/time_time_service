@@ -144,18 +144,26 @@ std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
     return ntpList;
 }
 
-bool NtpUpdateTime::GetNtpTimeInner(uint64_t interval)
+bool NtpUpdateTime::IsInUpdateInterval()
 {
     // Determine the time interval between two NTP requests sent.
     int64_t curBootTime = std::chrono::duration_cast<std::chrono::milliseconds>(
         NtpTrustedTime::GetInstance().GetBootTimeNs().time_since_epoch()).count();
     uint64_t bootTime = static_cast<uint64_t>(curBootTime);
     auto lastBootTime = NtpTrustedTime::GetInstance().ElapsedRealtimeMillis();
-    // If the time interval is too small, do not send NTP requests.
-    if ((lastBootTime > 0) && (bootTime - static_cast<uint64_t>(lastBootTime) <= interval)) {
+    // If the time <= ONE_HOUR, do not send NTP requests.
+    if ((lastBootTime > 0) && (bootTime - static_cast<uint64_t>(lastBootTime) <= ONE_HOUR)) {
         TIME_HILOGI(TIME_MODULE_SERVICE,
-            "ntp updated within %{public}" PRId64 ", bootTime: %{public}" PRId64 ", lastBootTime: %{public}" PRId64 "",
-            interval, bootTime, lastBootTime);
+            "ntp updated bootTime: %{public}" PRId64 ", lastBootTime: %{public}" PRId64 "",
+            bootTime, lastBootTime);
+        return true;
+    }
+    return false;
+}
+
+bool NtpUpdateTime::GetNtpTimeInner()
+{
+    if (IsInUpdateInterval()) {
         return true;
     }
 
@@ -193,7 +201,7 @@ bool NtpUpdateTime::GetNtpTime(int64_t &time)
 {
     std::lock_guard<std::mutex> autoLock(requestMutex_);
 
-    if (!GetNtpTimeInner(ONE_HOUR)) {
+    if (!GetNtpTimeInner()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed.");
         return false;
     }
@@ -220,7 +228,7 @@ void NtpUpdateTime::SetSystemTime()
         return;
     }
 
-    if (!GetNtpTimeInner(ONE_HOUR)) {
+    if (!GetNtpTimeInner()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed.");
         requestMutex_.unlock();
         return;
