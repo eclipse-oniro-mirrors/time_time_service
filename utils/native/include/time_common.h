@@ -17,6 +17,7 @@
 #define SERVICES_INCLUDE_TIME_COMMON_H
 
 #include <stdint.h>
+#include <string>
 
 #include "errors.h"
 #include "time_hilog.h"
@@ -62,6 +63,14 @@ enum TimeError {
 enum DatabaseType {
     NOT_STORE = 0,
     STORE,
+};
+
+class TimeUtils {
+public:
+    static int32_t GetWallTimeMs(int64_t &time);
+    static int32_t GetBootTimeMs(int64_t &time);
+    static int32_t GetBootTimeNs(int64_t &time);
+    static bool GetTimeByClockId(clockid_t clockId, struct timespec &tv);
 };
 } // namespace MiscServices
 } // namespace OHOS
