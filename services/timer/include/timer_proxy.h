@@ -60,12 +60,14 @@ public:
     void RemovePidTimerMap(const uint64_t id);
     bool IsUidProxy(const int32_t uid);
     bool IsPidProxy(const int32_t uid, const int32_t pid);
+    #ifdef HIDUMPER_ENABLE
     bool ShowProxyTimerInfo(int fd, const int64_t now);
     bool ShowPidProxyTimerInfo(int fd, const int64_t now);
     bool ShowUidTimerMapInfo(int fd, const int64_t now);
     bool ShowPidTimerMapInfo(int fd, const int64_t now);
     bool ShowProxyDelayTime(int fd);
     void ShowAdjustTimerInfo(int fd);
+    #endif
     int64_t GetProxyDelayTime() const;
 
 private:

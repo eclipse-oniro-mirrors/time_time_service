@@ -16,6 +16,7 @@
       "SystemCapability.MiscServices.Time"
     ],
     "features": [
+      "time_service_debug_able",
       "time_service_hidumper_able"
     ],
     "hisysevent_config": [

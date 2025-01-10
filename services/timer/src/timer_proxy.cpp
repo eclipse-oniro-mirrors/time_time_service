@@ -727,6 +727,7 @@ void TimerProxy::ResetAllPidProxyWhenElapsed(const std::chrono::steady_clock::ti
     proxyPids_.clear();
 }
 
+#ifdef HIDUMPER_ENABLE
 bool TimerProxy::ShowProxyTimerInfo(int fd, const int64_t now)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
@@ -788,7 +789,6 @@ bool TimerProxy::ShowPidTimerMapInfo(int fd, const int64_t now)
     return true;
 }
 
-
 void TimerProxy::ShowAdjustTimerInfo(int fd)
 {
     std::lock_guard<std::mutex> lockProxy(adjustMutex_);
@@ -811,6 +811,7 @@ bool TimerProxy::ShowProxyDelayTime(int fd)
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
+#endif
 
 int64_t TimerProxy::GetProxyDelayTime() const
 {

@@ -83,6 +83,9 @@ ohos_shared_library("time_system_ability") {
     "samgr:samgr_proxy",
   ]
   defines = []
+  if (time_service_debug_able) {
+    defines += [ "DEBUG_ENABLE" ]
+  }
   if (time_service_hidumper_able) {
     defines += [ "HIDUMPER_ENABLE" ]
     sources += [
@@ -159,6 +162,9 @@ ohos_static_library("time_system_ability_static") {
     "samgr:samgr_proxy",
   ]
   defines = []
+  if (time_service_debug_able) {
+    defines += [ "DEBUG_ENABLE" ]
+  }
   if (time_service_hidumper_able) {
     defines += [ "HIDUMPER_ENABLE" ]
     sources += [

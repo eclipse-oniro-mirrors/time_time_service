@@ -83,10 +83,12 @@ int32_t TimeServiceStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mes
         TIME_HILOGE(TIME_MODULE_SERVICE, " end##descriptor checked fail");
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
+    #ifdef DEBUG_ENABLE
     pid_t p = IPCSkeleton::GetCallingPid();
     pid_t p1 = IPCSkeleton::GetCallingUid();
     TIME_HILOGD(TIME_MODULE_SERVICE, "CallingPid = %{public}d, CallingUid = %{public}d, code = %{public}u", p, p1,
                 code);
+    #endif
     if (code >= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::SET_TIME) &&
         code <= static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_REAL_TIME_MILLI)) {
         auto itFunc = memberFuncMap_.find(static_cast<TimeServiceIpcInterfaceCode>(code));
