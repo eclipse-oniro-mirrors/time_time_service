@@ -91,7 +91,7 @@ ohos_shared_library("time_system_ability") {
   }
 
   if (time_service_set_auto_reboot) {
-    defines += [ "SET_AUTO_REBOOT" ]
+    defines += [ "SET_AUTO_REBOOT_ENABLE" ]
   }
 
   if (time_service_multi_account) {
@@ -180,7 +180,7 @@ ohos_static_library("time_system_ability_static") {
   }
 
   if (time_service_set_auto_reboot) {
-    defines += [ "SET_AUTO_REBOOT" ]
+    defines += [ "SET_AUTO_REBOOT_ENABLE" ]
   }
 
   if (time_service_multi_account) {

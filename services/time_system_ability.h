@@ -42,11 +42,13 @@ class TimeSystemAbility : public SystemAbility, public TimeServiceStub {
     DECLARE_SYSTEM_ABILITY(TimeSystemAbility);
 
 public:
+    #ifdef SET_AUTO_REBOOT_ENABLE
     class TimePowerStateListener : public OHOS::PowerMgr::SyncShutdownCallbackStub {
     public:
         ~TimePowerStateListener() override = default;
         void OnSyncShutdown() override;
     };
+    #endif
     DISALLOW_COPY_AND_MOVE(TimeSystemAbility);
     TimeSystemAbility(int32_t systemAbilityId, bool runOnCreate);
     TimeSystemAbility();
@@ -73,7 +75,7 @@ public:
     bool ResetAllProxy() override;
     int32_t GetNtpTimeMs(int64_t &time) override;
     int32_t GetRealTimeMs(int64_t &time) override;
-#ifdef HIDUMPER_ENABLE
+    #ifdef HIDUMPER_ENABLE
     int Dump(int fd, const std::vector<std::u16string> &args) override;
     void DumpAllTimeInfo(int fd, const std::vector<std::string> &input);
     void DumpTimerInfo(int fd, const std::vector<std::string> &input);
@@ -86,7 +88,7 @@ public:
     void DumpProxyDelayTime(int fd, const std::vector<std::string> &input);
     void DumpAdjustTime(int fd, const std::vector<std::string> &input);
     void InitDumpCmd();
-#endif
+    #endif
     void RegisterCommonEventSubscriber();
     bool RecoverTimer();
 
@@ -111,16 +113,16 @@ private:
     bool CheckRtc(const std::string &rtcPath, uint64_t rtcId);
     int GetWallClockRtcId();
     void RegisterRSSDeathCallback();
-    void RegisterPowerStateListener();
     void RegisterSubscriber();
     #ifdef MULTI_ACCOUNT_ENABLE
     void RegisterOsAccountSubscriber();
     #endif
     bool IsValidTime(int64_t time);
     void RecoverTimerInner(cJSON* resultSet, bool autoRestore);
-#ifdef SET_AUTO_REBOOT
+    #ifdef SET_AUTO_REBOOT_ENABLE
+    void RegisterPowerStateListener();
     void SetAutoReboot();
-#endif
+    #endif
 
     ServiceRunningState state_;
     static std::mutex instanceLock_;

@@ -1489,7 +1489,7 @@ HWTEST_F(TimeServiceTest, SystemAbility002, TestSize.Level0)
     CjsonHelper::GetInstance().Delete(DROP_ON_REBOOT, static_cast<int64_t>(timerId2));
 }
 
-#ifdef SET_AUTO_REBOOT
+#ifdef SET_AUTO_REBOOT_ENABLE
 /**
 * @tc.name: SystemAbility003.
 * @tc.desc: test SetAutoReboot.
