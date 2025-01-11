@@ -243,36 +243,6 @@ int32_t TimeServiceProxy::GetThreadTimeNs(int64_t &times)
     return result;
 }
 
-bool TimeServiceProxy::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
-{
-    MessageParcel data, reply;
-    MessageOption option;
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write descriptor");
-        return false;
-    }
-    if (!data.WriteInt32(uid)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write uid");
-        return false;
-    }
-    if (!data.WriteBool(isProxy)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write isProxy");
-        return false;
-    }
-    if (!data.WriteBool(needRetrigger)) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write needRetrigger");
-        return false;
-    }
-
-    int32_t result =
-        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::PROXY_TIMER), data, reply, option);
-    if (result != ERR_NONE) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "ProxyTimer failed, error code is: %{public}d", result);
-        return false;
-    }
-    return true;
-}
-
 bool TimeServiceProxy::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
 {
     MessageParcel data, reply;
@@ -305,7 +275,7 @@ bool TimeServiceProxy::ProxyTimer(int32_t uid, std::set<int> pidList, bool isPro
     }
 
     int32_t result =
-        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::PID_PROXY_TIMER), data, reply, option);
+        Remote()->SendRequest(static_cast<uint32_t>(TimeServiceIpcInterfaceCode::PROXY_TIMER), data, reply, option);
     if (result != ERR_NONE) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "ProxyTimer failed, error code is: %{public}d", result);
         return false;
