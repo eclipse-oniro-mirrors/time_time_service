@@ -26,6 +26,7 @@ time_sanitize_debug = false
 
 declare_args() {
   device_standby = true
+  time_service_debug_able = true
   time_service_hicollie_able = true
   time_service_hidumper_able = true
   time_service_set_auto_reboot = true

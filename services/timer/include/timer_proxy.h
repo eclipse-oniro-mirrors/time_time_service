@@ -49,10 +49,12 @@ public:
     void RemoveUidTimerMap(const std::shared_ptr<TimerInfo> &alarm);
     void RemoveUidTimerMap(const uint64_t id);
     bool IsProxy(const int32_t uid, const int32_t pid);
+    #ifdef HIDUMPER_ENABLE
     bool ShowProxyTimerInfo(int fd, const int64_t now);
     bool ShowUidTimerMapInfo(int fd, const int64_t now);
     bool ShowProxyDelayTime(int fd);
     void ShowAdjustTimerInfo(int fd);
+    #endif
     int64_t GetProxyDelayTime() const;
 
 private:

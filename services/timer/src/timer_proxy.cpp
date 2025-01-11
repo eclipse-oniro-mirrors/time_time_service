@@ -370,6 +370,7 @@ void TimerProxy::ResetAllProxyWhenElapsed(const std::chrono::steady_clock::time_
     proxyTimers_.clear();
 }
 
+#ifdef HIDUMPER_ENABLE
 bool TimerProxy::ShowProxyTimerInfo(int fd, const int64_t now)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
@@ -426,6 +427,7 @@ bool TimerProxy::ShowProxyDelayTime(int fd)
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
     return true;
 }
+#endif
 
 int64_t TimerProxy::GetProxyDelayTime() const
 {
