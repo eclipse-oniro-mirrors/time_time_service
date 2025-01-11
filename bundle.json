@@ -18,7 +18,8 @@
     "features": [
       "time_service_debug_able",
       "time_service_hidumper_able",
-      "time_service_set_auto_reboot"
+      "time_service_set_auto_reboot",
+      "time_service_multi_account"
     ],
     "hisysevent_config": [
       "//base/time/time_service/hisysevent.yaml"

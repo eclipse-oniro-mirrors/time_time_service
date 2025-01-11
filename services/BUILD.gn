@@ -75,7 +75,6 @@ ohos_shared_library("time_system_ability") {
     "hisysevent:libhisysevent",
     "init:libbeget_proxy",
     "ipc:ipc_single",
-    "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -93,6 +92,11 @@ ohos_shared_library("time_system_ability") {
 
   if (time_service_set_auto_reboot) {
     defines += [ "SET_AUTO_REBOOT" ]
+  }
+
+  if (time_service_multi_account) {
+    defines += [ "MULTI_ACCOUNT_ENABLE" ]
+    external_deps += [ "os_account:os_account_innerkits" ]
   }
 
   if (device_standby) {
@@ -155,7 +159,6 @@ ohos_static_library("time_system_ability_static") {
     "hisysevent:libhisysevent",
     "init:libbeget_proxy",
     "ipc:ipc_single",
-    "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -178,6 +181,11 @@ ohos_static_library("time_system_ability_static") {
 
   if (time_service_set_auto_reboot) {
     defines += [ "SET_AUTO_REBOOT" ]
+  }
+
+  if (time_service_multi_account) {
+    defines += [ "MULTI_ACCOUNT" ]
+    external_deps += [ "os_account:os_account_innerkits" ]
   }
 
   if (defined(global_parts_info) &&

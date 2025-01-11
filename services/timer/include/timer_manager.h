@@ -25,7 +25,6 @@
 #include <thread>
 #include <vector>
 #include <unordered_set>
-#include <utility>
 
 #include "batch.h"
 #include "timer_handler.h"
@@ -35,6 +34,10 @@
 #ifdef POWER_MANAGER_ENABLE
 #include "completed_callback.h"
 #include "power_mgr_client.h"
+#endif
+
+#ifdef MULTI_ACCOUNT_ENABLE
+#include <utility>
 #endif
 
 namespace OHOS {
@@ -58,13 +61,15 @@ public:
     bool AdjustTimer(bool isAdjust, uint32_t interval) override;
     void SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
-#ifdef HIDUMPER_ENABLE
+    #ifdef HIDUMPER_ENABLE
     bool ShowTimerEntryMap(int fd);
     bool ShowTimerEntryById(int fd, uint64_t timerId);
     bool ShowTimerTriggerById(int fd, uint64_t timerId);
     bool ShowIdleTimerInfo(int fd);
-#endif
+    #endif
+    #ifdef MULTI_ACCOUNT_ENABLE
     void OnUserRemoved(int userId);
+    #endif
     void OnPackageRemoved(int uid);
     ~TimerManager() override;
     void HandleRSSDeath();
@@ -128,7 +133,9 @@ private:
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
     int32_t StopTimerInnerLocked(bool needDestroy, uint64_t timerNumber, bool &needRecover);
     void UpdateOrDeleteDatabase(bool needDestroy, uint64_t timerNumber, bool needRecover);
+    #ifdef MULTI_ACCOUNT_ENABLE
     int32_t CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &timer);
+    #endif
     bool NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer);
     bool CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm);
     bool AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm);

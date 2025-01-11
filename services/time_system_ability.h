@@ -113,7 +113,9 @@ private:
     void RegisterRSSDeathCallback();
     void RegisterPowerStateListener();
     void RegisterSubscriber();
+    #ifdef MULTI_ACCOUNT_ENABLE
     void RegisterOsAccountSubscriber();
+    #endif
     bool IsValidTime(int64_t time);
     void RecoverTimerInner(cJSON* resultSet, bool autoRestore);
 #ifdef SET_AUTO_REBOOT
