@@ -156,11 +156,6 @@ void TimeSystemAbility::InitDumpCmd()
         [this](int fd, const std::vector<std::string> &input) { DumpProxyTimerInfo(fd, input); });
     TimeCmdDispatcher::GetInstance().RegisterCommand(cmdProxyTimer);
 
-    auto cmdPidTimer = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-PidTimer", "-l" }),
-        "dump pid timer map.",
-        [this](int fd, const std::vector<std::string> &input) { DumpPidTimerMapInfo(fd, input); });
-    TimeCmdDispatcher::GetInstance().RegisterCommand(cmdPidTimer);
-
     auto cmdUidTimer = std::make_shared<TimeCmdParse>(std::vector<std::string>({ "-UidTimer", "-l" }),
         "dump uid timer map.",
         [this](int fd, const std::vector<std::string> &input) { DumpUidTimerMapInfo(fd, input); });
@@ -612,14 +607,6 @@ void TimeSystemAbility::DumpProxyDelayTime(int fd, const std::vector<std::string
     TimerProxy::GetInstance().ShowProxyDelayTime(fd);
 }
 
-void TimeSystemAbility::DumpPidTimerMapInfo(int fd, const std::vector<std::string> &input)
-{
-    dprintf(fd, "\n - dump pid timer map:\n");
-    int64_t times;
-    TimeUtils::GetBootTimeNs(times);
-    TimerProxy::GetInstance().ShowPidTimerMapInfo(fd, times);
-}
-
 void TimeSystemAbility::DumpAdjustTime(int fd, const std::vector<std::string> &input)
 {
     dprintf(fd, "\n - dump adjust timer info:\n");
@@ -784,20 +771,6 @@ bool TimeSystemAbility::GetTimeByClockId(clockid_t clockId, struct timespec &tv)
     return true;
 }
 
-bool TimeSystemAbility::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
-{
-    if (!TimePermission::CheckProxyCallingPermission()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
-        return false;
-    }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "ProxyTimer service start uid: %{public}d, isProxy: %{public}d", uid, isProxy);
-    auto timerManager = TimerManager::GetInstance();
-    if (timerManager == nullptr) {
-        return false;
-    }
-    return timerManager->ProxyTimer(uid, isProxy, needRetrigger);
-}
-
 int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval)
 {
     auto timerManager = TimerManager::GetInstance();
@@ -812,10 +785,6 @@ int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval)
 
 bool TimeSystemAbility::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
 {
-    if (!TimePermission::CheckProxyCallingPermission()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
-        return false;
-    }
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
         return false;

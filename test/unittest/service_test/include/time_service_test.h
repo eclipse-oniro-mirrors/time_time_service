@@ -18,6 +18,8 @@
 
 #include <atomic>
 
+constexpr int UID_PROXY_OFFSET = 32;
+
 std::atomic<int> g_data1(0);
 void TimeOutCallback1(void)
 {
@@ -28,6 +30,12 @@ std::atomic<int> g_data2(0);
 void TimeOutCallback2(void)
 {
     g_data2 += 1;
+}
+
+uint64_t GetProxyKey(int uid, int pid)
+{
+    uint64_t key = (static_cast<uint64_t>(uid) << UID_PROXY_OFFSET) | static_cast<uint64_t>(pid);
+    return key;
 }
 
 #endif // TIME_SERVICE_TEST_H

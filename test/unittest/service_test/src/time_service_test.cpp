@@ -42,6 +42,7 @@
 #include "ntp_trusted_time.h"
 #include "time_tick_notify.h"
 #include "timer_proxy.h"
+#include "time_service_test.h"
 
 namespace {
 using namespace testing::ext;
@@ -256,60 +257,6 @@ bool CheckInJson(std::string tableName, uint64_t timerId)
 }
 
 /**
-* @tc.name: ProxyTimer001.
-* @tc.desc: proxy timer.
-* @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
-*/
-HWTEST_F(TimeServiceTest, ProxyTimer001, TestSize.Level0)
-{
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, true, true);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, false, true);
-    EXPECT_TRUE(ret);
-}
-
-/**
-* @tc.name: ProxyTimer002.
-* @tc.desc: proxy timer.
-* @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
-*/
-HWTEST_F(TimeServiceTest, ProxyTimer002, TestSize.Level0)
-{
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, true, true);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->ResetAllProxy();
-    EXPECT_TRUE(ret);
-}
-
-/**
-* @tc.name: ProxyTimer003.
-* @tc.desc: proxy timer.
-* @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
-*/
-HWTEST_F(TimeServiceTest, ProxyTimer003, TestSize.Level0)
-{
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, false, true);
-    EXPECT_FALSE(ret);
-}
-
-/**
-* @tc.name: ProxyTimer004.
-* @tc.desc: proxy timer.
-* @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
-*/
-HWTEST_F(TimeServiceTest, ProxyTimer004, TestSize.Level0)
-{
-    auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, true, false);
-    EXPECT_TRUE(ret);
-    ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, false, false);
-    EXPECT_TRUE(ret);
-}
-
-/**
 * @tc.name: PidProxyTimer001.
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
@@ -329,6 +276,7 @@ HWTEST_F(TimeServiceTest, PidProxyTimer001, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTest, PidProxyTimer002, TestSize.Level0)
 {
+    std::set<int> pidList;
     auto ret = TimeServiceClient::GetInstance()->ProxyTimer(RESERVED_UID, RESERVED_PIDLIST, true, true);
     EXPECT_TRUE(ret);
     ret = TimeServiceClient::GetInstance()->ResetAllProxy();
@@ -1172,36 +1120,37 @@ HWTEST_F(TimeServiceTest, TimerManager004, TestSize.Level0)
     auto entry = std::make_shared<TimerEntry>(
             TimerEntry{"", TIMER_ID, 0, 0, 0, 0, false, nullptr, nullptr, UID, PID, "bundleName"});
     TimerManager::GetInstance()->ReCreateTimer(TIMER_ID, entry);
-
+    auto key1 = GetProxyKey(UID, 0);
+    auto key2 = GetProxyKey(UID, PID);
     {
         std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
-        std::unordered_map<uint64_t, std::chrono::steady_clock::time_point> timePointMap {};
-        TimerProxy::GetInstance().proxyUids_.insert(std::make_pair(UID, timePointMap));
+        std::vector<uint64_t> timerList;
+        TimerProxy::GetInstance().proxyTimers_.insert(std::make_pair(key1, timerList));
     }
     auto res = TimerManager::GetInstance()->StartTimer(TIMER_ID, 0);
     EXPECT_EQ(res, E_TIME_OK);
 
     {
         std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
-        auto map = TimerProxy::GetInstance().proxyUids_;
-        auto it = map.find(UID);
+        auto map = TimerProxy::GetInstance().proxyTimers_;
+        auto it = map.find(key1);
         if (it != map.end()) {
             map.erase(it);
         }
     }
     {
-        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyPidMutex_);
-        auto map = TimerProxy::GetInstance().proxyPids_;
-        std::unordered_map<uint64_t, std::chrono::steady_clock::time_point> timePointMap {};
-        map.insert(std::make_pair(UID, timePointMap));
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
+        auto map = TimerProxy::GetInstance().proxyTimers_;
+        std::vector<uint64_t> timerList;
+        TimerProxy::GetInstance().proxyTimers_.insert(std::make_pair(key2, timerList));
     }
     res = TimerManager::GetInstance()->StartTimer(TIMER_ID, 0);
     EXPECT_EQ(res, E_TIME_OK);
 
     {
-        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyPidMutex_);
-        auto map = TimerProxy::GetInstance().proxyPids_;
-        auto it = map.find(PID);
+        std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
+        auto map = TimerProxy::GetInstance().proxyTimers_;
+        auto it = map.find(key2);
         if (it != map.end()) {
             map.erase(it);
         }

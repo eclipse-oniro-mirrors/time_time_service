@@ -30,11 +30,6 @@ constexpr size_t U32_AT_SIZE = 4;
 bool FuzzTimeProxyTimer(const uint8_t *rawData, size_t size)
 {
     int32_t uid = static_cast<int32_t>(*rawData);
-    TimeServiceClient::GetInstance()->ProxyTimer(uid, true, true);
-    TimeServiceClient::GetInstance()->ProxyTimer(uid, true, false);
-    TimeServiceClient::GetInstance()->ProxyTimer(uid, false, false);
-    TimeServiceClient::GetInstance()->ProxyTimer(uid, false, true);
-
     std::set<int> pidList;
     pidList.insert(uid);
     TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, true, true);

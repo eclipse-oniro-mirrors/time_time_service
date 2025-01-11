@@ -109,17 +109,10 @@ public:
     /**
      * ProxyTimer
      * @param uid the uid
+     * @param pidList the pidlist. Passing an empty vector means proxy by uid.
+     *                Max size is 1024.
      * @param isProxy true if proxy, false if not proxy
-     * @param needRetrigger true if need retrigger, false if not.
-     * @return bool true on success, false on failure.
-     */
-    virtual bool ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger) = 0;
-
-    /**
-     * ProxyTimer
-     * @param pidList the pidlist
-     * @param isProxy true if proxy, false if not proxy
-     * @param needRetrigger true if need retrigger, false if not.
+     * @param needRetrigger true if need retrigger, false if not and stop timer.
      * @return bool true on success, false on failure.
      */
     virtual bool ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger) = 0;
