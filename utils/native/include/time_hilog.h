@@ -71,7 +71,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel TIME_MODULE_LABEL[TIME_MODULE_BUTT]
 #define TIME_HILOGD(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_DEBUG, TIME_MODULE_LABEL[module].domain, \
 TIME_MODULE_LABEL[module].tag, "%{public}s# " fmt, __FUNCTION__, ##__VA_ARGS__)
 #else
-#define TIME_HILOGD(module, fmt, ...) 
+#define TIME_HILOGD(module, fmt, ...)
 #endif
 
 #define TIME_SIMPLIFY_HILOGI(module, fmt, ...) (void)HILOG_IMPL(LOG_CORE, LOG_INFO, TIME_MODULE_LABEL[module].domain, \
