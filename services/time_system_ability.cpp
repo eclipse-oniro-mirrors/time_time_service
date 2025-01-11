@@ -68,15 +68,18 @@ static constexpr int32_t STR_MAX_LENGTH = 64;
 constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t ONE_MILLI = 1000;
-constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
-const std::string SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime", \
                                                    "pid", "name"};
 const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
+#ifdef SET_AUTO_REBOOT_ENABLE
+constexpr int64_t MILLISECOND_TO_NANO = 1000000;
+constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
+const std::string SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 constexpr size_t INDEX_ZERO = 0;
 constexpr size_t INDEX_ONE = 1;
 constexpr size_t INDEX_TWO = 2;
+#endif
 
 #ifdef MULTI_ACCOUNT_ENABLE
 const std::string SUBSCRIBE_REMOVED = "UserRemoved";
@@ -202,7 +205,9 @@ void TimeSystemAbility::OnStart()
     AddSystemAbilityListener(ABILITY_MGR_SERVICE_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
+    #ifdef SET_AUTO_REBOOT_ENABLE
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
+    #endif
     AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
     #ifdef MULTI_ACCOUNT_ENABLE
     AddSystemAbilityListener(SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN);
@@ -232,9 +237,11 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         case DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID:
             RegisterRSSDeathCallback();
             break;
+        #ifdef SET_AUTO_REBOOT_ENABLE
         case POWER_MANAGER_SERVICE_ID:
             RegisterPowerStateListener();
             break;
+        #endif
         case ABILITY_MGR_SERVICE_ID:
             AddSystemAbilityListener(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
             RemoveSystemAbilityListener(ABILITY_MGR_SERVICE_ID);
@@ -881,13 +888,12 @@ void TimeSystemAbility::RegisterRSSDeathCallback()
     systemAbility->AddDeathRecipient(deathRecipient_);
 }
 
+#ifdef SET_AUTO_REBOOT_ENABLE
 void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
 {
     // Clears `drop_on_reboot` table.
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnSyncShutdown");
-#ifdef SET_AUTO_REBOOT
     TimeSystemAbility::GetInstance()->SetAutoReboot();
-#endif
     CjsonHelper::GetInstance().Clear(DROP_ON_REBOOT);
 }
 
@@ -903,6 +909,7 @@ void TimeSystemAbility::RegisterPowerStateListener()
     powerManagerClient.RegisterShutdownCallback(syncShutdownCallback, PowerMgr::ShutdownPriority::HIGH);
     TIME_HILOGI(TIME_MODULE_CLIENT, "RegisterPowerStateListener end");
 }
+#endif
 
 bool TimeSystemAbility::RecoverTimer()
 {
@@ -1009,7 +1016,7 @@ void TimeSystemAbility::RecoverTimerInner(cJSON* resultSet, bool autoRestore)
     }
 }
 
-#ifdef SET_AUTO_REBOOT
+#ifdef SET_AUTO_REBOOT_ENABLE
 void TimeSystemAbility::SetAutoReboot()
 {
     auto resultSet = CjsonHelper::GetInstance().QueryAutoReboot();

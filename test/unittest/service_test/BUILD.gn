@@ -57,7 +57,7 @@ ohos_unittest("TimeServiceTest") {
     debug = false
   }
   if (time_service_set_auto_reboot) {
-    defines = [ "SET_AUTO_REBOOT" ]
+    defines = [ "SET_AUTO_REBOOT_ENABLE" ]
   }
   external_deps = [
     "ability_base:want",
