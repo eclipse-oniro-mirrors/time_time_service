@@ -23,20 +23,24 @@
 #include <vector>
 
 #include "system_ability_definition.h"
-#ifdef DEVICE_STANDBY_ENABLE
-#include "allow_type.h"
-#include "standby_service_client.h"
-#endif
 #include "ipc_skeleton.h"
 #include "time_file_utils.h"
 #include "time_permission.h"
 #include "timer_proxy.h"
 #include "time_sysevent.h"
-#include "os_account.h"
-#include "os_account_manager.h"
 #include "cjson_helper.h"
+#ifdef DEVICE_STANDBY_ENABLE
+#include "allow_type.h"
+#include "standby_service_client.h"
+#endif
+
 #ifdef POWER_MANAGER_ENABLE
 #include "time_system_ability.h"
+#endif
+
+#ifdef MULTI_ACCOUNT_ENABLE
+#include "os_account.h"
+#include "os_account_manager.h"
 #endif
 
 namespace OHOS {
@@ -59,7 +63,6 @@ const int NANO_TO_SECOND =  1000000000;
 const int WANTAGENT_CODE_ELEVEN = 11;
 const int WANT_RETRY_TIMES = 6;
 const int WANT_RETRY_INTERVAL = 1;
-const int SYSTEM_USER_ID  = 0;
 // an error code of ipc which means peer end is dead
 constexpr int PEER_END_DEAD = 29189;
 constexpr int TIMER_ALARM_COUNT = 50;
@@ -70,6 +73,9 @@ const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_app
 const std::string SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
+#ifdef MULTI_ACCOUNT_ENABLE
+const int SYSTEM_USER_ID  = 0;
+#endif
 
 #ifdef POWER_MANAGER_ENABLE
 constexpr int64_t USE_LOCK_ONE_SEC_IN_NANO = 1 * NANO_TO_SECOND;
@@ -891,6 +897,7 @@ void TimerManager::NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer)
     thread.detach();
 }
 
+#ifdef MULTI_ACCOUNT_ENABLE
 int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &timer)
 {
     auto bundleList = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
@@ -917,6 +924,7 @@ int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &tim
         return E_TIME_ACCOUNT_NOT_MATCH;
     }
 }
+#endif
 
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
@@ -964,6 +972,7 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
     auto wantAgent = timer->wantAgent;
     std::shared_ptr<AAFwk::Want> want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
     if (want == nullptr) {
+        #ifdef MULTI_ACCOUNT_ENABLE
         switch (CheckUserIdForNotify(timer)) {
             case E_TIME_ACCOUNT_NOT_MATCH:
                 // No need to retry.
@@ -974,12 +983,14 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
             default:
                 break;
         }
+        #endif
         auto wantStr = CjsonHelper::GetInstance().QueryWant(HOLD_ON_REBOOT, timer->id);
         if (wantStr == "") {
             TIME_HILOGE(TIME_MODULE_SERVICE, "db query failed");
             return false;
         }
         wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(wantStr);
+        #ifdef MULTI_ACCOUNT_ENABLE
         switch (CheckUserIdForNotify(timer)) {
             case E_TIME_ACCOUNT_NOT_MATCH:
                 TIME_HILOGI(TIME_MODULE_SERVICE, "user sw after FS, id=%{public}" PRId64 "", timer->id);
@@ -991,6 +1002,7 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
             default:
                 break;
         }
+        #endif
         want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
         if (want == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr, id=%{public}" PRId64 "", timer->id);
@@ -1315,6 +1327,7 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
 }
 #endif
 
+#ifdef MULTI_ACCOUNT_ENABLE
 void TimerManager::OnUserRemoved(int userId)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Removed userId: %{public}d", userId);
@@ -1333,6 +1346,7 @@ void TimerManager::OnUserRemoved(int userId)
         DestroyTimer((*it)->id);
     }
 }
+#endif
 
 void TimerManager::OnPackageRemoved(int uid)
 {

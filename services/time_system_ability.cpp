@@ -41,9 +41,12 @@
 #include "common_event_support.h"
 #include "init_param.h"
 #include "parameters.h"
+#include "event_manager.h"
+
+#ifdef MULTI_ACCOUNT_ENABLE
 #include "os_account.h"
 #include "os_account_manager.h"
-#include "event_manager.h"
+#endif
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
@@ -71,10 +74,13 @@ static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "w
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime", \
                                                    "pid", "name"};
 const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
-const std::string SUBSCRIBE_REMOVED = "UserRemoved";
 constexpr size_t INDEX_ZERO = 0;
 constexpr size_t INDEX_ONE = 1;
 constexpr size_t INDEX_TWO = 2;
+
+#ifdef MULTI_ACCOUNT_ENABLE
+const std::string SUBSCRIBE_REMOVED = "UserRemoved";
+#endif
 } // namespace
 
 REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
@@ -82,6 +88,7 @@ REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
 std::mutex TimeSystemAbility::instanceLock_;
 sptr<TimeSystemAbility> TimeSystemAbility::instance_;
 
+#ifdef MULTI_ACCOUNT_ENABLE
 class UserRemovedSubscriber : public AccountSA::OsAccountSubscriber {
 public:
     explicit UserRemovedSubscriber(const AccountSA::OsAccountSubscribeInfo &subscribeInfo)
@@ -99,6 +106,7 @@ public:
 
     void OnAccountsSwitch(const int &newId, const int &oldId) {}
 };
+#endif
 
 TimeSystemAbility::TimeSystemAbility(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), state_(ServiceRunningState::STATE_NOT_START),
@@ -196,10 +204,12 @@ void TimeSystemAbility::OnStart()
     AddSystemAbilityListener(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
+    #ifdef MULTI_ACCOUNT_ENABLE
     AddSystemAbilityListener(SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN);
-#ifdef HIDUMPER_ENABLE
+    #endif
+    #ifdef HIDUMPER_ENABLE
     InitDumpCmd();
-#endif
+    #endif
     if (Init() != ERR_OK) {
         auto callback = [this]() {
             sleep(INIT_INTERVAL);
@@ -233,9 +243,11 @@ void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::s
             RecoverTimer();
             RemoveSystemAbilityListener(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
             break;
+        #ifdef MULTI_ACCOUNT_ENABLE
         case SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN:
             RegisterOsAccountSubscriber();
             break;
+        #endif
         default:
             TIME_HILOGE(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId is not valid, id is %{public}d",
                 systemAbilityId);
@@ -273,6 +285,7 @@ void TimeSystemAbility::RegisterCommonEventSubscriber()
     RegisterSubscriber();
 }
 
+#ifdef MULTI_ACCOUNT_ENABLE
 void TimeSystemAbility::RegisterOsAccountSubscriber()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "RegisterOsAccountSubscriber Started");
@@ -283,6 +296,7 @@ void TimeSystemAbility::RegisterOsAccountSubscriber()
         TIME_HILOGE(TIME_MODULE_SERVICE, "Subscribe user removed event failed, errcode: %{public}d", err);
     }
 }
+#endif
 
 int32_t TimeSystemAbility::Init()
 {
