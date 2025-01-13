@@ -231,7 +231,7 @@ void TimerProxy::RecordProxyTimerMap(const std::shared_ptr<TimerInfo> &alarm, bo
     }
     auto it = proxyTimers_.find(key);
     if (it != proxyTimers_.end()) {
-        proxyTimers_.insert(std::make_pair(key, std::vector<uint64_t>{alarm->id}));
+        proxyTimers_[key].push_back(alarm->id);
     } else {
         proxyTimers_.insert(std::make_pair(key, std::vector<uint64_t>{alarm->id}));
     }
@@ -365,7 +365,7 @@ void TimerProxy::ResetAllProxyWhenElapsed(const std::chrono::steady_clock::time_
     for (auto it = proxyTimers_.begin(); it != proxyTimers_.end(); ++it) {
         auto uid = static_cast<uint32_t>(it->first >> UID_PROXY_OFFSET);
         auto pid = it->first & ((static_cast<uint64_t>(1) << UID_PROXY_OFFSET) - 1);
-        RestoreProxyWhenElapsedForProxyTimers(uid, pid, now, insertAlarmCallback, true);
+        RestoreProxyWhenElapsed(uid, pid, now, insertAlarmCallback, true);
     }
     proxyTimers_.clear();
 }
