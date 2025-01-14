@@ -509,6 +509,7 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     if (currentTime < (time - ONE_MILLI) || currentTime > (time + ONE_MILLI)) {
         TimeServiceNotify::GetInstance().PublishTimeChangeEvents(currentTime);
     }
+    TimeTickNotify::GetInstance().Callback();
     return true;
 }
 
