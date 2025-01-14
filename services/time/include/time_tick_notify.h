@@ -18,8 +18,6 @@
 
 #include <mutex>
 
-#include "timer.h"
-
 namespace OHOS {
 namespace MiscServices {
 class TimeTickNotify {
@@ -30,13 +28,12 @@ public:
     void Init();
     void Callback();
     void Stop();
-    void PowerCallback();
 
 private:
-    uint64_t RefreshNextTriggerTime();
-    Utils::Timer timer_;
-    uint32_t timerId_;
+    std::pair<uint64_t, bool> RefreshNextTriggerTime();
+    uint64_t timerId_;
     std::mutex timeridMutex_;
+    int64_t lastTriggerTime_ = 0;
 };
 } // namespace MiscServices
 } // namespace OHOS
