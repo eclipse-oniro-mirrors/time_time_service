@@ -94,7 +94,7 @@ std::pair<uint64_t, bool> TimeTickNotify::RefreshNextTriggerTime()
 void TimeTickNotify::Stop()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
-    TimeSystemAbility::GetInstance()->DestroyTimer(timerId_, false);
+    TimeSystemAbility::GetInstance()->DestroyTimer(timerId_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
 }
 } // namespace MiscServices

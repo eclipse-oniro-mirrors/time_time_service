@@ -20,7 +20,6 @@
 #include <string_ex.h>
 
 #include "time_service_fuzz_utils.h"
-#include "time_service_ipc_interface_code.h"
 #include "timer_proxy.h"
 #include <fuzzer/FuzzedDataProvider.h>
 

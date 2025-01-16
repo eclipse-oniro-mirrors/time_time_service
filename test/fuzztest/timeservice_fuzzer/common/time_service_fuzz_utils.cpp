@@ -22,7 +22,7 @@
 using namespace OHOS::MiscServices;
 
 namespace OHOS {
-const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscservices.time.ITimeService";
+const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"OHOS.MiscServices.ITimeService";
 
 void TimeServiceFuzzUtils::OnRemoteRequestTest(uint32_t code, const uint8_t *rawData, size_t size)
 {

@@ -1162,7 +1162,9 @@ HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
     std::set<int> pidList;
     pidList.insert(pid);
     TimeServiceClient::GetInstance()->ProxyTimer(uid, pidList, true, true);
-    TimeSystemAbility::GetInstance()->ProxyTimer(uid, pidList, false, true);
+    std::vector<int> pidVector;
+    pidVector.push_back(pid);
+    TimeSystemAbility::GetInstance()->ProxyTimer(uid, pidVector, false, true);
 
     struct timeval currentTime {};
     gettimeofday(&currentTime, nullptr);
