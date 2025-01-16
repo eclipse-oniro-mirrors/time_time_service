@@ -295,14 +295,14 @@ HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
     /* The system timers can be aligned to a unified time and recorded in adjustTimers_. */
     bool isAdjust = true;
     uint32_t interval = 100;
-    bool ret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
+    bool ret = timerManagerHandler_->AdjustTimer(isAdjust, interval, 0);
     EXPECT_TRUE(ret);
     EXPECT_EQ(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
 
     /* The unified heartbeat can be deleted successfully and deleted from adjustTimers_. */
     isAdjust = false;
     interval = 0;
-    ret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
+    ret = timerManagerHandler_->AdjustTimer(isAdjust, interval, 0);
     EXPECT_TRUE(ret);
     EXPECT_EQ(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
 }
@@ -329,7 +329,7 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
     /* Unified heartbeat is triggered. The heartbeat of exempted applications is not unified. */
     bool isAdjust = true;
     uint32_t interval = 200;
-    bool adjustRet = timerManagerHandler_->AdjustTimer(isAdjust, interval);
+    bool adjustRet = timerManagerHandler_->AdjustTimer(isAdjust, interval, 0);
     EXPECT_TRUE(adjustRet);
     EXPECT_NE(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
     bool isExemption = true;
@@ -524,7 +524,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
     /* After the proxy is disabled, determine whether unified heartbeat is required again. */
     bool isAdjust = true;
     uint32_t interval = 300;
-    bool adjret = timerManagerHandler_->AdjustTimer(isAdjust, interval);
+    bool adjret = timerManagerHandler_->AdjustTimer(isAdjust, interval, 0);
     EXPECT_TRUE(adjret);
     EXPECT_NE(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
     timerManagerHandler_->DestroyTimer(timerId);

@@ -793,13 +793,13 @@ bool TimeSystemAbility::GetTimeByClockId(clockid_t clockId, struct timespec &tv)
     return true;
 }
 
-int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval)
+int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
 {
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
         return E_TIME_NULLPTR;
     }
-    if (!timerManager->AdjustTimer(isAdjust, interval)) {
+    if (!timerManager->AdjustTimer(isAdjust, interval, delta)) {
         return E_TIME_NO_TIMER_ADJUST;
     }
     return E_TIME_OK;

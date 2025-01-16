@@ -123,7 +123,7 @@ public:
      * @param interval adjust period.
      * @return int32_t return error code.
      */
-    virtual int32_t AdjustTimer(bool isAdjust, uint32_t interval) = 0;
+    virtual int32_t AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta) = 0;
 
     /**
      * SetTimerExemption

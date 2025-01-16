@@ -70,7 +70,7 @@ public:
     int32_t StopTimer(uint64_t timerId) override;
     int32_t DestroyTimer(uint64_t timerId, bool isAsync) override;
     bool ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger) override;
-    int32_t AdjustTimer(bool isAdjust, uint32_t interval) override;
+    int32_t AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta) override;
     int32_t SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
     bool ResetAllProxy() override;
     int32_t GetNtpTimeMs(int64_t &time) override;

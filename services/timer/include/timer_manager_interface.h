@@ -68,7 +68,7 @@ public:
     virtual int32_t DestroyTimer(uint64_t timerId) = 0;
     virtual ~ITimerManager() = default;
     virtual bool ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger) = 0;
-    virtual bool AdjustTimer(bool isAdjust, uint32_t interval) = 0;
+    virtual bool AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta) = 0;
     virtual void SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) = 0;
     virtual bool ResetAllProxy() = 0;
 }; // ITimerManager

@@ -37,7 +37,7 @@ public:
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)> insertAlarmCallback);
     bool AdjustTimer(bool isAdjust, uint32_t interval,
-        const std::chrono::steady_clock::time_point &now,
+        const std::chrono::steady_clock::time_point &now, uint32_t delta,
         std::function<void(AdjustTimerCallback adjustTimer)> updateTimerDeliveries);
     bool SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption);
     bool IsTimerExemption(std::shared_ptr<TimerInfo> time);
@@ -63,7 +63,7 @@ private:
     void UpdateProxyWhenElapsedForProxyTimers(const int32_t uid, const int32_t pid,
         const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)> insertAlarmCallback);
-    bool UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_point &now,
+    bool UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_point &now,  uint32_t delta,
         uint32_t interval, std::shared_ptr<TimerInfo> &timer);
     bool RestoreAdjustWhenElapsed(std::shared_ptr<TimerInfo> &timer);
     bool RestoreProxyWhenElapsed(const int32_t uid, const int32_t pid,

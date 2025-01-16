@@ -283,7 +283,7 @@ bool TimeServiceProxy::ProxyTimer(int32_t uid, std::set<int> pidList, bool isPro
     return true;
 }
 
-int32_t TimeServiceProxy::AdjustTimer(bool isAdjust, uint32_t interval)
+int32_t TimeServiceProxy::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -298,6 +298,10 @@ int32_t TimeServiceProxy::AdjustTimer(bool isAdjust, uint32_t interval)
     }
     if (!data.WriteUint32(interval)) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write interval");
+        return E_TIME_WRITE_PARCEL_ERROR;
+    }
+    if (!data.WriteUint32(delta)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write delta");
         return E_TIME_WRITE_PARCEL_ERROR;
     }
     int32_t result =
