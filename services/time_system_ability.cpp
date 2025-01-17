@@ -347,13 +347,13 @@ void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerO
         paras.timerType = ITimerManager::TimerType::RTC;
     }
     if ((uIntType & TIMER_TYPE_IDLE_MASK) > 0) {
-        paras.flag |= ITimerManager::TimerFlag::IDLE_UNTIL;
+        paras.flag |= static_cast<int>(ITimerManager::TimerFlag::IDLE_UNTIL);
     }
     if ((uIntType & TIMER_TYPE_INEXACT_REMINDER_MASK) > 0) {
-        paras.flag |= ITimerManager::TimerFlag::INEXACT_REMINDER;
+        paras.flag |= static_cast<int>(ITimerManager::TimerFlag::INEXACT_REMINDER);
     }
     if (timerOptions->disposable) {
-        paras.flag |= ITimerManager::TimerFlag::IS_DISPOSABLE;
+        paras.flag |= static_cast<int>(ITimerManager::TimerFlag::IS_DISPOSABLE);
     }
     if (timerOptions->name != "") {
         paras.name = timerOptions->name;
@@ -408,7 +408,7 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     if ((static_cast<uint32_t>(paras.flag) & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
         !TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer.");
-        paras.flag &= ~ITimerManager::TimerFlag::IDLE_UNTIL;
+        paras.flag &= static_cast<int>(~ITimerManager::TimerFlag::IDLE_UNTIL);
     }
     return timerManager->CreateTimer(paras, callbackFunc, timerOptions->wantAgent,
                                      uid, pid, timerId, type);
