@@ -263,12 +263,14 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
             timerInfo->interval, timerInfo->flag, timerInfo->autoRestore, timerInfo->callback, timerInfo->wantAgent,
             timerInfo->uid, timerInfo->pid, timerInfo->bundleName);
     }
-    auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type, timerInfo->autoRestore)
-                      ? HOLD_ON_REBOOT
-                      : DROP_ON_REBOOT);
-    CjsonHelper::GetInstance().UpdateTrigger(tableName,
-                                             static_cast<int64_t>(timerId),
-                                             static_cast<int64_t>(triggerTime));
+    if (timerInfo->wantAgent) {
+        auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type, timerInfo->autoRestore)
+            ? HOLD_ON_REBOOT
+            : DROP_ON_REBOOT);
+        CjsonHelper::GetInstance().UpdateTrigger(tableName,
+            static_cast<int64_t>(timerId),
+            static_cast<int64_t>(triggerTime));
+    }
     return E_TIME_OK;
 }
 

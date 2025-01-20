@@ -68,8 +68,8 @@ void TimeTickNotify::Init()
 void TimeTickNotify::Callback()
 {
     std::lock_guard<std::mutex> lock(timeridMutex_);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRIu64 "", timerId_);
     auto trigger = RefreshNextTriggerTime();
-    TimeSystemAbility::GetInstance()->StartTimer(timerId_, trigger.first);
     if (trigger.second) {
         auto currentTime = steady_clock::now().time_since_epoch().count();
         if (std::abs(currentTime - lastTriggerTime_) > SECOND_TO_NANO) {
@@ -77,7 +77,7 @@ void TimeTickNotify::Callback()
             lastTriggerTime_ = currentTime;
         }
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRIu64 "", timerId_);
+    TimeSystemAbility::GetInstance()->StartTimer(timerId_, trigger.first);
 }
 
 std::pair<uint64_t, bool> TimeTickNotify::RefreshNextTriggerTime()
