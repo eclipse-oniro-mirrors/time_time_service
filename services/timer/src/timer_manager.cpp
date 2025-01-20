@@ -144,7 +144,7 @@ void TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId)
     }
     auto oldTimerId = timerNameMap_[uid][name];
     timerNameMap_[uid][name] = timerId;
-    bool needRecover;
+    bool needRecover =  false;
     StopTimerInnerLocked(true, oldTimerId, needRecover);
     UpdateOrDeleteDatabase(true, oldTimerId, needRecover);
     TIME_HILOGW(TIME_MODULE_SERVICE, "create %{public}" PRId64 " name: %{public}s in %{public}d already exist,"
