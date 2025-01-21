@@ -46,9 +46,10 @@ const std::string AUTO_TIME_STATUS_ON = "ON";
 const std::string AUTO_TIME_STATUS_OFF = "OFF";
 constexpr uint64_t TWO_SECONDS = 2000;
 constexpr uint64_t ONE_MINUTES = 60000;
-constexpr int32_t RETRY_TIMES = 3;
+constexpr int32_t NET_RETRY_TIMES = 3;
 constexpr uint32_t RETRY_INTERVAL = 1;
 const std::string DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
+constexpr int32_t RETRY_TIMES = 2;
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
@@ -117,7 +118,7 @@ int32_t NtpUpdateTime::MonitorNetwork()
         return nRet;
     }
     auto retryRegister = [specifier, observer]() {
-        for (int i = 0; i < RETRY_TIMES; i++) {
+        for (int i = 0; i < NET_RETRY_TIMES; i++) {
             sleep(RETRY_INTERVAL);
             int nRet = NetConnClient::GetInstance().RegisterNetConnCallback(specifier, observer, 0);
             TIME_HILOGI(TIME_MODULE_SERVICE, "RegisterNetConnCallback retcode= %{public}d", nRet);
@@ -190,18 +191,18 @@ std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
 
 bool NtpUpdateTime::GetNtpTimeInner()
 {
-    bool ret = false;
     std::vector<std::string> ntpSpecList = SplitNtpAddrs(autoTimeInfo_.ntpServerSpec);
     std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.ntpServer);
     ntpSpecList.insert(ntpSpecList.end(), ntpList.begin(), ntpList.end());
-    for (size_t i = 0; i < ntpSpecList.size(); i++) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpSpecList[i].c_str());
-        ret = NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[i]);
-        if (ret) {
-            break;
+    for (int i = 0; i < RETRY_TIMES; i++) {
+        for (size_t i = 0; i < ntpSpecList.size(); i++) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpSpecList[i].c_str());
+            if (NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[i])) {
+                return true;
+            }
         }
     }
-    return ret;
+    return false;
 }
 
 bool NtpUpdateTime::GetNtpTime(int64_t &time)

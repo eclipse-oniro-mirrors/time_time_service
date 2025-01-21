@@ -30,7 +30,6 @@ namespace MiscServices {
 namespace {
 constexpr int64_t TIME_RESULT_UNINITED = -1;
 constexpr int64_t HALF = 2;
-constexpr int32_t RETRY_TIMES = 2;
 } // namespace
 
 NtpTrustedTime &NtpTrustedTime::GetInstance()
@@ -43,16 +42,14 @@ bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
     SNTPClient client;
-    for (int i = 0; i < RETRY_TIMES; i++) {
-        if (client.RequestTime(ntpServer)) {
-            if (mTimeResult != nullptr) {
-                mTimeResult->Clear();
-            }
-            int64_t ntpCertainty = client.getRoundTripTime() / HALF;
-            mTimeResult = std::make_shared<TimeResult>(client.getNtpTime(), client.getNtpTimeReference(), ntpCertainty);
-            TIME_HILOGD(TIME_MODULE_SERVICE, "Get Ntp time result");
-            return true;
+    if (client.RequestTime(ntpServer)) {
+        if (mTimeResult != nullptr) {
+            mTimeResult->Clear();
         }
+        int64_t ntpCertainty = client.getRoundTripTime() / HALF;
+        mTimeResult = std::make_shared<TimeResult>(client.getNtpTime(), client.getNtpTimeReference(), ntpCertainty);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Get Ntp time result");
+        return true;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "false end.");
     return false;
