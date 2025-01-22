@@ -33,7 +33,7 @@ struct TimerPara {
     uint64_t interval;
     bool disposable;
     bool autoRestore;
-    int flag;
+    uint32_t flag;
 };
 
 enum TimeModule {
