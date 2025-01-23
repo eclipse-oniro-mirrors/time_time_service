@@ -182,7 +182,7 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
                                   DatabaseType type)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE,
-                "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}d"
+                "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}u"
                 "uid:%{public}d pid:%{public}d timerId:%{public}" PRId64 "", paras.timerType, paras.windowLength,
                 paras.interval, paras.flag, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid(), timerId);
     std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
@@ -352,7 +352,7 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", needDestroy: %{public}d", timerNumber, needDestroy);
     int32_t ret;
-    bool needRecover;
+    bool needRecover = false;
     std::string name = "";
     {
         std::lock_guard<std::mutex> lock(entryMapMutex_);
@@ -408,7 +408,7 @@ void TimerManager::SetHandler(std::string name,
                               uint64_t triggerAtTime,
                               int64_t windowLength,
                               uint64_t interval,
-                              int flag,
+                              uint32_t flag,
                               bool autoRestore,
                               std::function<int32_t (const uint64_t)> callback,
                               std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
@@ -453,7 +453,7 @@ void TimerManager::SetHandler(std::string name,
                      intervalDuration,
                      std::move(callback),
                      wantAgent,
-                     static_cast<uint32_t>(flag),
+                     flag,
                      autoRestore,
                      uid,
                      pid,
@@ -1254,7 +1254,7 @@ bool TimerManager::ShowTimerEntryMap(int fd)
         dprintf(fd, " * timer name          = %s\n", iter->second->name.c_str());
         dprintf(fd, " * timer id            = %lu\n", iter->second->id);
         dprintf(fd, " * timer type          = %d\n", iter->second->type);
-        dprintf(fd, " * timer flag          = %lu\n", iter->second->flag);
+        dprintf(fd, " * timer flag          = %u\n", iter->second->flag);
         dprintf(fd, " * timer window Length = %lld\n", iter->second->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
@@ -1307,7 +1307,7 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
     if (mPendingIdleUntil_ != nullptr) {
         dprintf(fd, " - dump idle timer id  = %lu\n", mPendingIdleUntil_->id);
         dprintf(fd, " * timer type          = %d\n", mPendingIdleUntil_->type);
-        dprintf(fd, " * timer flag          = %lu\n", mPendingIdleUntil_->flags);
+        dprintf(fd, " * timer flag          = %u\n", mPendingIdleUntil_->flags);
         dprintf(fd, " * timer window Length = %lu\n", mPendingIdleUntil_->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", mPendingIdleUntil_->repeatInterval);
         dprintf(fd, " * timer whenElapsed   = %lu\n", mPendingIdleUntil_->whenElapsed);
@@ -1316,7 +1316,7 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
     for (const auto &pendingTimer : pendingDelayTimers_) {
         dprintf(fd, " - dump pending delay timer id  = %lu\n", pendingTimer->id);
         dprintf(fd, " * timer type          = %d\n", pendingTimer->type);
-        dprintf(fd, " * timer flag          = %lu\n", pendingTimer->flags);
+        dprintf(fd, " * timer flag          = %u\n", pendingTimer->flags);
         dprintf(fd, " * timer window Length = %lu\n", pendingTimer->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", pendingTimer->repeatInterval);
         dprintf(fd, " * timer whenElapsed   = %lu\n", pendingTimer->whenElapsed);

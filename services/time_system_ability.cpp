@@ -347,13 +347,13 @@ void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerO
         paras.timerType = ITimerManager::TimerType::RTC;
     }
     if ((uIntType & TIMER_TYPE_IDLE_MASK) > 0) {
-        paras.flag |= static_cast<int>(ITimerManager::TimerFlag::IDLE_UNTIL);
+        paras.flag |= ITimerManager::TimerFlag::IDLE_UNTIL;
     }
     if ((uIntType & TIMER_TYPE_INEXACT_REMINDER_MASK) > 0) {
-        paras.flag |= static_cast<int>(ITimerManager::TimerFlag::INEXACT_REMINDER);
+        paras.flag |= ITimerManager::TimerFlag::INEXACT_REMINDER;
     }
     if (timerOptions->disposable) {
-        paras.flag |= static_cast<int>(ITimerManager::TimerFlag::IS_DISPOSABLE);
+        paras.flag |= ITimerManager::TimerFlag::IS_DISPOSABLE;
     }
     if (timerOptions->name != "") {
         paras.name = timerOptions->name;
@@ -405,10 +405,10 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     auto callbackFunc = [timerCallback](uint64_t id) -> int32_t {
         return timerCallback->NotifyTimer(id);
     };
-    if ((static_cast<uint32_t>(paras.flag) & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
+    if ((paras.flag & ITimerManager::TimerFlag::IDLE_UNTIL) > 0 &&
         !TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer.");
-        paras.flag &= static_cast<int>(~ITimerManager::TimerFlag::IDLE_UNTIL);
+        paras.flag &= ~ITimerManager::TimerFlag::IDLE_UNTIL;
     }
     return timerManager->CreateTimer(paras, callbackFunc, timerOptions->wantAgent,
                                      uid, pid, timerId, type);
@@ -959,7 +959,7 @@ std::shared_ptr<TimerEntry> GetEntry(cJSON* obj, bool autoRestore)
     uint64_t interval = static_cast<uint64_t>(item->valueint);
     item = cJSON_GetObjectItem(obj, "flag");
     if (item == NULL) return nullptr;
-    int flag = item->valueint;
+    uint32_t flag = static_cast<uint32_t>(item->valueint);
     item = cJSON_GetObjectItem(obj, "wantAgent");
     if (item == NULL) return nullptr;
     auto wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(item->valuestring);

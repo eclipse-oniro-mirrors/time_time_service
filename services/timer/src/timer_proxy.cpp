@@ -327,7 +327,7 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
         return true;
     }
 
-    for (int elem : itProxy->second) {
+    for (auto elem : itProxy->second) {
         auto itTimerInfo = itTimer->second.find(elem);
         if (itTimerInfo == itTimer->second.end()) {
             continue;
