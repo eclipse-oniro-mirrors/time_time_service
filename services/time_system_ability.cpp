@@ -1069,37 +1069,38 @@ bool TimeSystemAbility::RecoverTimer()
 
 std::shared_ptr<TimerEntry> GetEntry(cJSON* obj, bool autoRestore)
 {
+    auto cjson = CjsonHelper::GetInstance();
     auto item = cJSON_GetObjectItem(obj, "name");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsString(item)) return nullptr;
     auto name = item->valuestring;
     item = cJSON_GetObjectItem(obj, "timerId");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsString(item)) return nullptr;
     int64_t tmp;
-    if (!CjsonHelper::GetInstance().StrToI64(item->valuestring, tmp)) return nullptr;
+    if (!cjson.StrToI64(item->valuestring, tmp)) return nullptr;
     auto timerId = static_cast<uint64_t>(tmp);
     item = cJSON_GetObjectItem(obj, "type");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     int type = item->valueint;
     item = cJSON_GetObjectItem(obj, "windowLength");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     uint64_t windowLength = static_cast<uint64_t>(item->valueint);
     item = cJSON_GetObjectItem(obj, "interval");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     uint64_t interval = static_cast<uint64_t>(item->valueint);
     item = cJSON_GetObjectItem(obj, "flag");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     uint32_t flag = static_cast<uint32_t>(item->valueint);
     item = cJSON_GetObjectItem(obj, "wantAgent");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsString(item)) return nullptr;
     auto wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(item->valuestring);
     item = cJSON_GetObjectItem(obj, "uid");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     int uid = item->valueint;
     item = cJSON_GetObjectItem(obj, "pid");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     int pid = item->valueint;
     item = cJSON_GetObjectItem(obj, "bundleName");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsString(item)) return nullptr;
     auto bundleName = item->valuestring;
     return std::make_shared<TimerEntry>(TimerEntry {name, timerId, type, windowLength, interval, flag, autoRestore,
                                                     nullptr, wantAgent, uid, pid, bundleName});
@@ -1127,14 +1128,14 @@ void TimeSystemAbility::RecoverTimerInner(cJSON* resultSet, bool autoRestore)
         timerManager->ReCreateTimer(timerInfo->id, timerInfo);
         // 'state'
         auto item = cJSON_GetObjectItem(obj, "state");
-        if (item == NULL) {
+        if (!CjsonHelper::GetInstance().IsNumber(item)) {
             continue;
         }
         auto state = static_cast<uint8_t>(item->valueint);
         if (state == 1) {
             // 'triggerTime'
             item = cJSON_GetObjectItem(obj, "triggerTime");
-            if (item == NULL) {
+            if (!CjsonHelper::GetInstance().IsString(item)) {
                 continue;
             }
             int64_t triggerTime;
