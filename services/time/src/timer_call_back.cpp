@@ -14,6 +14,7 @@
  */
 
 #include "timer_call_back.h"
+#include "time_service_client.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -88,6 +89,7 @@ int32_t TimerCallback::NotifyTimer(const uint64_t timerId)
         timerInfo->OnTrigger();
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TimeServiceClient::GetInstance()->HandleRecoverMap(timerId);
     return E_TIME_OK;
 }
 } // namespace MiscServices

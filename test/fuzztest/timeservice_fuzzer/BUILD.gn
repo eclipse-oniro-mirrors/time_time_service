@@ -99,6 +99,7 @@ foreach(item, time_fuzztests) {
     module_out_path = "time_service/time"
 
     fuzz_config_file = "${time_root_path}/test/fuzztest/timeservice_fuzzer/${item.configFuzzer}"
+    configs = [ "${time_service_path}:time_service_gen_config" ]
 
     include_dirs = [
       "${time_service_path}",

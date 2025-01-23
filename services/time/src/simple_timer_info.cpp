@@ -14,11 +14,25 @@
  */
 
 #include "simple_timer_info.h"
+#include "time_hilog.h"
 
 namespace OHOS {
 namespace MiscServices {
-SimpleTimerInfo::SimpleTimerInfo()
+SimpleTimerInfo::SimpleTimerInfo(std::string _name,
+                                 int _type,
+                                 bool _repeat,
+                                 bool _disposable,
+                                 bool _autoRestore,
+                                 uint64_t _interval,
+                                 std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent)
 {
+    name = _name;
+    type = _type;
+    repeat = _repeat;
+    disposable = _disposable;
+    autoRestore = _autoRestore;
+    interval = _interval;
+    wantAgent = _wantAgent;
 }
 SimpleTimerInfo::~SimpleTimerInfo()
 {
@@ -42,6 +56,69 @@ void SimpleTimerInfo::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAge
 }
 void SimpleTimerInfo::OnTrigger()
 {
+}
+
+bool SimpleTimerInfo::Marshalling(Parcel& parcel) const
+{
+    if (!parcel.WriteString(name)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write name");
+        return false;
+    }
+    if (!parcel.WriteInt32(type)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write type");
+        return false;
+    }
+    if (!parcel.WriteBool(repeat)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write repeat");
+        return false;
+    }
+    if (!parcel.WriteBool(disposable)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write disposable");
+        return false;
+    }
+    if (!parcel.WriteBool(autoRestore)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write autoRestore");
+        return false;
+    }
+    if (!parcel.WriteUint64(interval)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write interval");
+        return false;
+    }
+    if (!parcel.WriteBool(wantAgent != nullptr)) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write wantAgent status");
+        return false;
+    }
+    if (wantAgent != nullptr && !parcel.WriteParcelable(&(*wantAgent))) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Failed to write wantAgent");
+        return false;
+    }
+    return true;
+}
+
+SimpleTimerInfo *SimpleTimerInfo::Unmarshalling(Parcel& parcel)
+{
+    auto name = parcel.ReadString();
+    auto type = parcel.ReadInt32();
+    auto repeat = parcel.ReadBool();
+    auto disposable = parcel.ReadBool();
+    auto autoRestore = parcel.ReadBool();
+    auto interval = parcel.ReadUint64();
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent{ nullptr };
+    if (parcel.ReadBool()) {
+        wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>(
+                parcel.ReadParcelable<OHOS::AbilityRuntime::WantAgent::WantAgent>());
+        if (!wantAgent) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Input wantagent nullptr");
+            return nullptr;
+        }
+    }
+    SimpleTimerInfo *simpleTimerInfo = new (std::nothrow) SimpleTimerInfo(name, type, repeat, disposable, autoRestore,
+                                                                          interval, wantAgent);
+    if (simpleTimerInfo == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SimpleTimerInfo nullptr");
+        return nullptr;
+    }
+    return simpleTimerInfo;
 }
 } // namespace MiscServices
 } // namespace OHOS

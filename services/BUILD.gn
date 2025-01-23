@@ -11,21 +11,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build/config/components/idl_tool/idl.gni")
 import("../time.gni")
+
+config("time_service_gen_config") {
+  include_dirs = [ "${target_gen_dir}" ]
+}
 
 config("time_service_config") {
   visibility = [ ":*" ]
   include_dirs = [
+    "${target_gen_dir}",
     "${api_path}/include",
     "../utils/native/include",
     "time/include",
     "time/include/inner_api_include",
     "timer/include",
     "dfx/include",
-    "ipc/base",
-    "ipc/proxy",
-    "ipc/stub",
-    "ipc/stub/inner_api_include",
     "${time_service_path}",
   ]
   cflags = [ "-fvisibility=hidden" ]
@@ -38,6 +40,37 @@ config("time_service_config") {
   ]
 }
 
+idl_gen_interface("timeservice_interface") {
+  sources = [ "ITimeService.idl" ]
+  sources_callback = [ "ITimerCallback.idl" ]
+  log_domainid = "0xD0001C41"
+  log_tag = "TimeClient"
+  subsystem_name = "time"
+  part_name = "time_service"
+}
+
+ohos_source_set("timeservice_proxy") {
+  configs = [ ":time_service_config" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  output_values = get_target_outputs(":timeservice_interface")
+  sources = filter_include(output_values, [ "*callback_stub.cpp" ])
+  sources += filter_include(output_values, [ "*service_proxy.cpp" ])
+
+  deps = [ ":timeservice_interface" ]
+  external_deps = [
+    "ability_runtime:wantagent_innerkits",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "samgr:samgr_proxy",
+  ]
+  subsystem_name = "time"
+  part_name = "time_service"
+}
+
 ohos_shared_library("time_system_ability") {
   configs = [ "${time_utils_path}:utils_config" ]
   configs += [ ":time_service_config" ]
@@ -45,8 +78,6 @@ ohos_shared_library("time_system_ability") {
   sources = [
     "./time_system_ability.cpp",
     "dfx/src/time_sysevent.cpp",
-    "ipc/proxy/timer_call_back_proxy.cpp",
-    "ipc/stub/time_service_stub.cpp",
     "time/src/event_manager.cpp",
     "time/src/itimer_info.cpp",
     "time/src/ntp_trusted_time.cpp",
@@ -63,8 +94,14 @@ ohos_shared_library("time_system_ability") {
     "timer/src/timer_manager.cpp",
     "timer/src/timer_proxy.cpp",
   ]
+  output_values = get_target_outputs(":timeservice_interface")
+  sources += filter_include(output_values, [ "*service_stub.cpp" ])
+  sources += filter_include(output_values, [ "*callback_proxy.cpp" ])
 
-  deps = [ "${time_utils_path}:time_utils" ]
+  deps = [
+    ":timeservice_interface",
+    "${time_utils_path}:time_utils",
+  ]
   external_deps = [
     "ability_runtime:wantagent_innerkits",
     "access_token:libaccesstoken_sdk",
@@ -129,8 +166,6 @@ ohos_static_library("time_system_ability_static") {
   sources = [
     "./time_system_ability.cpp",
     "dfx/src/time_sysevent.cpp",
-    "ipc/proxy/timer_call_back_proxy.cpp",
-    "ipc/stub/time_service_stub.cpp",
     "time/src/event_manager.cpp",
     "time/src/itimer_info.cpp",
     "time/src/ntp_trusted_time.cpp",
@@ -147,8 +182,15 @@ ohos_static_library("time_system_ability_static") {
     "timer/src/timer_manager.cpp",
     "timer/src/timer_proxy.cpp",
   ]
+  output_values = get_target_outputs(":timeservice_interface")
+  print("time_system_ability_static output_values:", output_values)
+  sources += filter_include(output_values, [ "*service_stub.cpp" ])
+  sources += filter_include(output_values, [ "*callback_proxy.cpp" ])
 
-  deps = [ "${time_utils_path}:time_utils" ]
+  deps = [
+    ":timeservice_interface",
+    "${time_utils_path}:time_utils",
+  ]
   external_deps = [
     "ability_runtime:wantagent_innerkits",
     "access_token:libaccesstoken_sdk",

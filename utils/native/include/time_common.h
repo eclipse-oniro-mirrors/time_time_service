@@ -72,6 +72,11 @@ enum DatabaseType {
     STORE,
 };
 
+enum APIVersion : int8_t {
+    API_VERSION_7 = 0,
+    API_VERSION_9 = 1,
+};
+
 class TimeUtils {
 public:
     static int32_t GetWallTimeMs(int64_t &time);

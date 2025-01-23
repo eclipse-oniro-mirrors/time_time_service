@@ -17,18 +17,28 @@
 #define SIMPLE_TIMER_INFO_H
 
 #include "itimer_info.h"
+#include "parcel.h"
 
 namespace OHOS {
 namespace MiscServices {
-class SimpleTimerInfo : public ITimerInfo {
+class SimpleTimerInfo : public ITimerInfo, public Parcelable {
 public:
-    SimpleTimerInfo();
+    SimpleTimerInfo(std::string _name,
+                    int _type,
+                    bool _repeat,
+                    bool _disposable,
+                    bool _autoRestore,
+                    uint64_t _interval,
+                    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent);
     virtual ~SimpleTimerInfo();
     void OnTrigger() override;
     void SetType(const int &type) override;
     void SetRepeat(bool repeat) override;
     void SetInterval(const uint64_t &interval) override;
     void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) override;
+
+    bool Marshalling(Parcel& parcel) const override;
+    static SimpleTimerInfo *Unmarshalling(Parcel& parcel);
 };
 } // namespace MiscServices
 } // namespace OHOS
