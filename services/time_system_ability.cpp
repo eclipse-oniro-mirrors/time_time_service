@@ -36,6 +36,7 @@
 #include "time_zone_info.h"
 #include "timer_manager_interface.h"
 #include "timer_proxy.h"
+#include "timer_database.h"
 #include "time_file_utils.h"
 #include "time_xcollie.h"
 #include "common_event_manager.h"
@@ -81,8 +82,6 @@ static const uint32_t MAX_EXEMPTION_SIZE = 1000;
 constexpr int64_t MILLISECOND_TO_NANO = 1000000;
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
 const std::string SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
-constexpr size_t INDEX_ZERO = 0;
-constexpr size_t INDEX_ONE = 1;
 constexpr size_t INDEX_TWO = 2;
 #endif
 
@@ -205,7 +204,7 @@ void TimeSystemAbility::OnStart()
     std::string bootCompleted = system::GetParameter(BOOTEVENT_PARAMETER, "");
     TIME_HILOGI(TIME_MODULE_SERVICE, "bootCompleted: %{public}s", bootCompleted.c_str());
     if (bootCompleted != "true") {
-        CjsonHelper::GetInstance().Clear(DROP_ON_REBOOT);
+        TimeDatabase::GetInstance().ClearDropOnReboot();
     }
     AddSystemAbilityListener(ABILITY_MGR_SERVICE_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
@@ -1024,7 +1023,7 @@ void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
     // Clears `drop_on_reboot` table.
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnSyncShutdown");
     TimeSystemAbility::GetInstance()->SetAutoReboot();
-    CjsonHelper::GetInstance().Clear(DROP_ON_REBOOT);
+    TimeDatabase::GetInstance().ClearDropOnReboot();
 }
 
 void TimeSystemAbility::RegisterPowerStateListener()
@@ -1050,7 +1049,7 @@ bool TimeSystemAbility::RecoverTimer()
     } else {
         int count = cJSON_GetArraySize(holdResult);
         TIME_HILOGI(TIME_MODULE_SERVICE, "hold result rows count: %{public}d", count);
-        RecoverTimerInner(holdResult, true);
+        CjsonIntoDatabase(holdResult, true, HOLD_ON_REBOOT);
     }
     cJSON_Delete(holdDb);
 
@@ -1061,10 +1060,89 @@ bool TimeSystemAbility::RecoverTimer()
     } else {
         int count = cJSON_GetArraySize(dropResult);
         TIME_HILOGI(TIME_MODULE_SERVICE, "drop result rows count: %{public}d", count);
-        RecoverTimerInner(dropResult, false);
+        CjsonIntoDatabase(dropResult, false, DROP_ON_REBOOT);
     }
     cJSON_Delete(dropDb);
+
+    auto database = TimeDatabase::GetInstance();
+    OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
+    auto holdResultSet = database.Query(holdRdbPredicates, ALL_DATA);
+    if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result set is nullptr or go to first row failed");
+    } else {
+        int count;
+        holdResultSet->GetRowCount(count);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result rows count: %{public}d", count);
+        RecoverTimerInner(holdResultSet, true);
+    }
+    if (holdResultSet != nullptr) {
+        holdResultSet->Close();
+    }
+
+    OHOS::NativeRdb::RdbPredicates dropRdbPredicates(DROP_ON_REBOOT);
+    auto dropResultSet = database.Query(dropRdbPredicates, ALL_DATA);
+    if (dropResultSet == nullptr || dropResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result set is nullptr or go to first row failed");
+    } else {
+        int count;
+        dropResultSet->GetRowCount(count);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result rows count: %{public}d", count);
+        RecoverTimerInner(dropResultSet, false);
+    }
+    if (dropResultSet != nullptr) {
+        dropResultSet->Close();
+    }
     return true;
+}
+
+void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, bool autoRestore)
+{
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return;
+    }
+    do {
+        auto timerId = static_cast<uint64_t>(GetLong(resultSet, 0));
+        auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
+            // line 11 is 'name'
+            GetString(resultSet, 11),
+            // Line 0 is 'timerId'
+            timerId,
+            // Line 1 is 'type'
+            GetInt(resultSet, 1),
+            // Line 3 is 'windowLength'
+            static_cast<uint64_t>(GetLong(resultSet, 3)),
+            // Line 4 is 'interval'
+            static_cast<uint64_t>(GetLong(resultSet, 4)),
+            // Line 2 is 'flag'
+            GetInt(resultSet, 2),
+            // autoRestore depends on the table type
+            autoRestore,
+            // Callback can't recover.
+            nullptr,
+            // Line 7 is 'wantAgent'
+            OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(resultSet, 7)),
+            // Line 5 is 'uid'
+            GetInt(resultSet, 5),
+            // Line 10 is 'pid'
+            GetInt(resultSet, 10),
+            // Line 6 is 'bundleName'
+            GetString(resultSet, 6)
+        });
+        if (timerInfo->wantAgent == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "wantAgent is nullptr, uid=%{public}d, id=%{public}" PRId64 "",
+                timerInfo->uid, timerInfo->id);
+            continue;
+        }
+        timerManager->ReCreateTimer(timerId, timerInfo);
+        // Line 8 is 'state'
+        auto state = static_cast<uint8_t>(GetInt(resultSet, 8));
+        if (state == 1) {
+            // Line 9 is 'triggerTime'
+            auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
+            timerManager->StartTimer(timerId, triggerTime);
+        }
+    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
 }
 
 std::shared_ptr<TimerEntry> GetEntry(cJSON* obj, bool autoRestore)
@@ -1106,12 +1184,8 @@ std::shared_ptr<TimerEntry> GetEntry(cJSON* obj, bool autoRestore)
                                                     nullptr, wantAgent, uid, pid, bundleName});
 }
 
-void TimeSystemAbility::RecoverTimerInner(cJSON* resultSet, bool autoRestore)
+void TimeSystemAbility::CjsonIntoDatabase(cJSON* resultSet, bool autoRestore, const std::string &table)
 {
-    auto timerManager = TimerManager::GetInstance();
-    if (timerManager == nullptr) {
-        return;
-    }
     int size = cJSON_GetArraySize(resultSet);
     for (int i = 0; i < size; ++i) {
         // Get data row
@@ -1125,54 +1199,65 @@ void TimeSystemAbility::RecoverTimerInner(cJSON* resultSet, bool autoRestore)
                 timerInfo->uid, timerInfo->id);
             continue;
         }
-        timerManager->ReCreateTimer(timerInfo->id, timerInfo);
-        // 'state'
         auto item = cJSON_GetObjectItem(obj, "state");
         if (!CjsonHelper::GetInstance().IsNumber(item)) {
             continue;
+        };
+        auto state = item->valueint;
+        item = cJSON_GetObjectItem(obj, "triggerTime");
+        if (!CjsonHelper::GetInstance().IsString(item)) {
+            continue;
         }
-        auto state = static_cast<uint8_t>(item->valueint);
-        if (state == 1) {
-            // 'triggerTime'
-            item = cJSON_GetObjectItem(obj, "triggerTime");
-            if (!CjsonHelper::GetInstance().IsString(item)) {
-                continue;
-            }
-            int64_t triggerTime;
-            if (!CjsonHelper::GetInstance().StrToI64(item->valuestring, triggerTime)) {
-                continue;
-            }
-            timerManager->StartTimer(timerInfo->id, static_cast<uint64_t>(triggerTime));
+        int64_t triggerTime;
+        if (!CjsonHelper::GetInstance().StrToI64(item->valuestring, triggerTime)) {
+            continue;
         }
+        OHOS::NativeRdb::ValuesBucket insertValues;
+        insertValues.PutLong("timerId", timerInfo->id);
+        insertValues.PutInt("type", timerInfo->type);
+        insertValues.PutInt("flag", timerInfo->flag);
+        insertValues.PutLong("windowLength", timerInfo->windowLength);
+        insertValues.PutLong("interval", timerInfo->interval);
+        insertValues.PutInt("uid", timerInfo->uid);
+        insertValues.PutString("bundleName", timerInfo->bundleName);
+        insertValues.PutString("wantAgent",
+            OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(timerInfo->wantAgent));
+        insertValues.PutInt("state", state);
+        insertValues.PutLong("triggerTime", triggerTime);
+        insertValues.PutInt("pid", timerInfo->pid);
+        insertValues.PutString("name", timerInfo->name);
+        TimeDatabase::GetInstance().Insert(table, insertValues);
     }
+    CjsonHelper::GetInstance().Clear(std::string(table));
 }
 
 #ifdef SET_AUTO_REBOOT_ENABLE
 void TimeSystemAbility::SetAutoReboot()
 {
-    auto resultSet = CjsonHelper::GetInstance().QueryAutoReboot();
-    auto size = resultSet.size();
-    if (size == 0) {
+    auto database = TimeDatabase::GetInstance();
+    OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
+    holdRdbPredicates.EqualTo("state", 1)->OrderByAsc("triggerTime");
+    auto resultSet = database.Query(holdRdbPredicates, { "bundleName", "triggerTime", "name" });
+    if (resultSet == nullptr) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "no need to set RTC");
         return;
     }
     int64_t currentTime = 0;
     TimeUtils::GetWallTimeMs(currentTime);
     auto bundleList = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
-    for (uint32_t i = 0; i < size; ++i) {
-        std::string bundleName = std::get<INDEX_ZERO>(resultSet[i]);
-        std::string name = std::get<INDEX_ONE>(resultSet[i]);
-        uint64_t triggerTime = static_cast<uint64_t>(std::get<INDEX_TWO>(resultSet[i]));
+    do {
+        uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 1));
         if (triggerTime < static_cast<uint64_t>(currentTime)) {
             TIME_HILOGI(TIME_MODULE_SERVICE,
                         "triggerTime: %{public}" PRIu64" currentTime: %{public}" PRId64"", triggerTime, currentTime);
             continue;
         }
-        if (std::find(bundleList.begin(), bundleList.end(), bundleName) != bundleList.end() ||
-            std::find(bundleList.begin(), bundleList.end(), name) != bundleList.end()) {
+        if (std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, 0)) != bundleList.end() ||
+            std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, INDEX_TWO)) != bundleList.end()) {
             int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
             if (tmfd < 0) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error: %{public}s", strerror(errno));
+                resultSet->Close();
                 return;
             }
             if (static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > triggerTime) {
@@ -1192,9 +1277,11 @@ void TimeSystemAbility::SetAutoReboot()
                 TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error: %{public}s", strerror(errno));
                 close(tmfd);
             }
+            resultSet->Close();
             return;
         }
-    }
+    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
+    resultSet->Close();
 }
 #endif
 } // namespace MiscServices

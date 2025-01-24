@@ -25,12 +25,10 @@
 #include <cJSON.h>
 #include "time_hilog.h"
 #include "timer_manager_interface.h"
+#include "timer_database.h"
 
 namespace OHOS {
 namespace MiscServices {
-constexpr int CLOCK_POWEROFF_ALARM = 12;
-constexpr const char *HOLD_ON_REBOOT = "hold_on_reboot";
-constexpr const char *DROP_ON_REBOOT = "drop_on_reboot";
 
 class CjsonHelper {
 public:
