@@ -71,17 +71,22 @@ bool TimerProxy::ProxyTimer(int32_t uid, int pid, bool isProxy, bool needRetrigg
 }
 
 bool TimerProxy::AdjustTimer(bool isAdjust, uint32_t interval,
-    const std::chrono::steady_clock::time_point &now,
+    const std::chrono::steady_clock::time_point &now, uint32_t delta,
     std::function<void(AdjustTimerCallback adjustTimer)> updateTimerDeliveries)
 {
     std::lock_guard<std::mutex> lockProxy(adjustMutex_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "adjust timer state: %{public}d, interval: %{public}d", isAdjust, interval);
-    auto callback = [this, isAdjust, interval, now] (std::shared_ptr<TimerInfo> timer) {
+    TIME_HILOGD(TIME_MODULE_SERVICE, "adjust timer state: %{public}d, interval: %{public}d, delta: %{public}d",
+        isAdjust, interval, delta);
+    auto callback = [=] (std::shared_ptr<TimerInfo> timer) {
         if (timer == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "adjust timer is nullptr!");
             return false;
         }
-        return isAdjust ? UpdateAdjustWhenElapsed(now, interval, timer) : RestoreAdjustWhenElapsed(timer);
+        bool isOverdue = (now > timer->originWhenElapsed);
+        if (isAdjust && !isOverdue) {
+            return UpdateAdjustWhenElapsed(now, interval, delta, timer);
+        }
+        return RestoreAdjustWhenElapsed(timer);
     };
     updateTimerDeliveries(callback);
     if (!isAdjust) {
@@ -91,7 +96,7 @@ bool TimerProxy::AdjustTimer(bool isAdjust, uint32_t interval,
 }
 
 bool TimerProxy::UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_point &now,
-    uint32_t interval, std::shared_ptr<TimerInfo> &timer)
+    uint32_t interval, uint32_t delta, std::shared_ptr<TimerInfo> &timer)
 {
     if (IsTimerExemption(timer)) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "adjust exemption timer bundleName: %{public}s",
@@ -102,7 +107,7 @@ bool TimerProxy::UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_p
         "uid: %{public}d, bundleName: %{public}s",
         timer->id, timer->uid, timer->bundleName.c_str());
     adjustTimers_.push_back(timer);
-    return timer->AdjustTimer(now, interval);
+    return timer->AdjustTimer(now, interval, delta);
 }
 
 bool TimerProxy::RestoreAdjustWhenElapsed(std::shared_ptr<TimerInfo> &timer)
@@ -178,7 +183,7 @@ void TimerProxy::EraseAlarmItem(
 int32_t TimerProxy::CountUidTimerMapByUid(int32_t uid)
 {
     std::lock_guard<std::mutex> lock(uidTimersMutex_);
-    auto it = uidTimersMap_.find(alarm->uid);
+    auto it = uidTimersMap_.find(uid);
     if (it == uidTimersMap_.end()) {
         return 0;
     }
@@ -286,10 +291,11 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
         TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid: %{public}d is already proxy", uid, pid);
         return;
     }
+    std::unordered_map<int32_t, std::unordered_map<uint64_t, std::shared_ptr<TimerInfo>>>::iterator itUidTimersMap;
+    std::vector<uint64_t> timerList;
     {
         std::lock_guard<std::mutex> lockUidTimers(uidTimersMutex_);
-        std::vector<uint64_t> timerList;
-        auto itUidTimersMap = uidTimersMap_.find(uid);
+        itUidTimersMap = uidTimersMap_.find(uid);
         if (itUidTimersMap == uidTimersMap_.end()) {
             TIME_HILOGD(TIME_MODULE_SERVICE, "uid: %{public}d in map not found", uid);
             proxyTimers_[key] = timerList;
@@ -325,17 +331,17 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
         TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid:%{public}d not in proxy.", uid, pid);
         return false;
     }
-    
+    std::unordered_map<int32_t, std::unordered_map<uint64_t, std::shared_ptr<TimerInfo>>>::iterator itTimer;
     {
         std::lock_guard<std::mutex> lockPidTimers(uidTimersMutex_);
-        auto itTimer = uidTimersMap_.find(uid);
+        itTimer = uidTimersMap_.find(uid);
         if (uidTimersMap_.find(uid) == uidTimersMap_.end()) {
             TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d timer info not found, erase proxy map. ", uid);
             return true;
         }
     }
 
-    for (int elem : itProxy->second) {
+    for (auto elem : itProxy->second) {
         auto itTimerInfo = itTimer->second.find(elem);
         if (itTimerInfo == itTimer->second.end()) {
             continue;
@@ -354,7 +360,6 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
             now.time_since_epoch().count());
         insertAlarmCallback(itTimerInfo->second, needRetrigger);
     }
-
     return true;
 }
 

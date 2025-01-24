@@ -37,11 +37,13 @@
 #include "timer_manager_interface.h"
 #include "timer_proxy.h"
 #include "time_file_utils.h"
+#include "time_xcollie.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
 #include "init_param.h"
 #include "parameters.h"
 #include "event_manager.h"
+#include "simple_timer_info.h"
 
 #ifdef MULTI_ACCOUNT_ENABLE
 #include "os_account.h"
@@ -50,6 +52,7 @@
 
 using namespace std::chrono;
 using namespace OHOS::EventFwk;
+using namespace OHOS::HiviewDFX;
 
 namespace OHOS {
 namespace MiscServices {
@@ -72,6 +75,8 @@ static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "w
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime", \
                                                    "pid", "name"};
 const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
+static const int MAX_PID_LIST_SIZE = 1024;
+static const uint32_t MAX_EXEMPTION_SIZE = 1000;
 #ifdef SET_AUTO_REBOOT_ENABLE
 constexpr int64_t MILLISECOND_TO_NANO = 1000000;
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
@@ -373,7 +378,24 @@ int32_t TimeSystemAbility::CheckTimerPara(const DatabaseType type, const TimerPa
     return E_TIME_OK;
 }
 
-int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
+int32_t TimeSystemAbility::CreateTimer(const SimpleTimerInfo& simpleTimerInfo,
+                                       const sptr<IRemoteObject> &timerCallback,
+                                       uint64_t &timerId)
+{
+    TimeXCollie timeXCollie("TimeService::CreateTimer");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
+    auto timerInfo = std::make_shared<SimpleTimerInfo>(simpleTimerInfo);
+    auto ret = CreateTimer(timerInfo, timerCallback, timerId);
+    if (ret != E_TIME_OK) {
+        return E_TIME_DEAL_FAILED;
+    }
+    return E_TIME_OK;
+}
+
+int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, const sptr<IRemoteObject> &obj,
     uint64_t &timerId)
 {
     if (obj == nullptr) {
@@ -405,7 +427,7 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     auto callbackFunc = [timerCallback](uint64_t id) -> int32_t {
         return timerCallback->NotifyTimer(id);
     };
-    if ((static_cast<uint32_t>(paras.flag) & static_cast<uint32_t>(ITimerManager::TimerFlag::IDLE_UNTIL)) > 0 &&
+    if ((paras.flag & ITimerManager::TimerFlag::IDLE_UNTIL) > 0 &&
         !TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer.");
         paras.flag &= ~ITimerManager::TimerFlag::IDLE_UNTIL;
@@ -426,32 +448,64 @@ int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<int32_t (
 
 int32_t TimeSystemAbility::StartTimer(uint64_t timerId, uint64_t triggerTime)
 {
+    TimeXCollie timeXCollie("TimeService::StartTimer");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
         return E_TIME_NULLPTR;
     }
     auto ret = timerManager->StartTimer(timerId, triggerTime);
+    if (ret != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to start timer");
+        return E_TIME_DEAL_FAILED;
+    }
     return ret;
 }
 
 int32_t TimeSystemAbility::StopTimer(uint64_t timerId)
 {
+    TimeXCollie timeXCollie("TimeService::StopTimer");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
         return E_TIME_NULLPTR;
     }
     auto ret = timerManager->StopTimer(timerId);
+    if (ret != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to stop timer");
+        return E_TIME_DEAL_FAILED;
+    }
     return ret;
 }
 
-int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId, bool isAsync)
+int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId)
 {
+    TimeXCollie timeXCollie("TimeService::DestroyTimer");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
         return E_TIME_NULLPTR;
     }
     auto ret = timerManager->DestroyTimer(timerId);
+    if (ret != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to destory timer");
+        return E_TIME_DEAL_FAILED;
+    }
     return ret;
+}
+
+int32_t TimeSystemAbility::DestroyTimerAsync(uint64_t timerId)
+{
+    return DestroyTimer(timerId);
 }
 
 bool TimeSystemAbility::IsValidTime(int64_t time)
@@ -516,8 +570,19 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     return true;
 }
 
-int32_t TimeSystemAbility::SetTime(int64_t time, APIVersion apiVersion)
+int32_t TimeSystemAbility::SetTime(int64_t time, int8_t apiVersion)
 {
+    TimeXCollie timeXCollie("TimeService::SetTime");
+    if (apiVersion == APIVersion::API_VERSION_9) {
+        if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+            return E_TIME_NOT_SYSTEM_APP;
+        }
+    }
+    if (!TimePermission::CheckCallingPermission(TimePermission::setTime)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
+        return E_TIME_NO_PERMISSION;
+    }
     if (!SetRealTime(time)) {
         return E_TIME_DEAL_FAILED;
     }
@@ -735,8 +800,19 @@ int TimeSystemAbility::GetWallClockRtcId()
     return -1;
 }
 
-int32_t TimeSystemAbility::SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion)
+int32_t TimeSystemAbility::SetTimeZone(const std::string &timeZoneId, int8_t apiVersion)
 {
+    TimeXCollie timeXCollie("TimeService::SetTimeZone");
+    if (apiVersion == APIVersion::API_VERSION_9) {
+        if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+            return E_TIME_NOT_SYSTEM_APP;
+        }
+    }
+    if (!TimePermission::CheckCallingPermission(TimePermission::setTimeZone)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
+        return E_TIME_NO_PERMISSION;
+    }
     if (!TimeZoneInfo::GetInstance().SetTimezone(timeZoneId)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone failed :%{public}s", timeZoneId.c_str());
         return E_TIME_DEAL_FAILED;
@@ -749,6 +825,7 @@ int32_t TimeSystemAbility::SetTimeZone(const std::string &timeZoneId, APIVersion
 
 int32_t TimeSystemAbility::GetTimeZone(std::string &timeZoneId)
 {
+    TimeXCollie timeXCollie("TimeService::GetTimeZone");
     if (!TimeZoneInfo::GetInstance().GetTimezone(timeZoneId)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get timezone failed");
         return E_TIME_DEAL_FAILED;
@@ -759,6 +836,7 @@ int32_t TimeSystemAbility::GetTimeZone(std::string &timeZoneId)
 
 int32_t TimeSystemAbility::GetThreadTimeMs(int64_t &time)
 {
+    TimeXCollie timeXCollie("TimeService::GetThreadTimeMs");
     struct timespec tv {};
     clockid_t cid;
     int ret = pthread_getcpuclockid(pthread_self(), &cid);
@@ -774,6 +852,7 @@ int32_t TimeSystemAbility::GetThreadTimeMs(int64_t &time)
 
 int32_t TimeSystemAbility::GetThreadTimeNs(int64_t &time)
 {
+    TimeXCollie timeXCollie("TimeService::GetThreadTimeNs");
     struct timespec tv {};
     clockid_t cid;
     int ret = pthread_getcpuclockid(pthread_self(), &cid);
@@ -796,53 +875,99 @@ bool TimeSystemAbility::GetTimeByClockId(clockid_t clockId, struct timespec &tv)
     return true;
 }
 
-int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval)
+int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
 {
+    TimeXCollie timeXCollie("TimeService::AdjustTimer");
+    if (!TimePermission::CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Adjust Timer permission check failed");
+        return E_TIME_NO_PERMISSION;
+    }
+    if (isAdjust && interval == 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid parameter: interval");
+        return E_TIME_READ_PARCEL_ERROR;
+    }
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
         return E_TIME_NULLPTR;
     }
-    if (!timerManager->AdjustTimer(isAdjust, interval)) {
-        return E_TIME_NO_TIMER_ADJUST;
+    if (!timerManager->AdjustTimer(isAdjust, interval, delta)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error adjust timer.");
+        return E_TIME_DEAL_FAILED;
     }
     return E_TIME_OK;
 }
 
-bool TimeSystemAbility::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
+int32_t TimeSystemAbility::ProxyTimer(int32_t uid, const std::vector<int>& pidList, bool isProxy, bool needRetrigger)
 {
-    auto timerManager = TimerManager::GetInstance();
-    if (timerManager == nullptr) {
-        return false;
+    TimeXCollie timeXCollie("TimeService::TimerProxy");
+    if (!TimePermission::CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
+        return E_TIME_NO_PERMISSION;
     }
-    return timerManager->ProxyTimer(uid, pidList, isProxy, needRetrigger);
-}
-
-int32_t TimeSystemAbility::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)
-{
+    if (pidList.size() > MAX_PID_LIST_SIZE) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error pid list size.");
+        return E_TIME_PARAMETERS_INVALID;
+    }
+    if (pidList.size() == 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error pidList.");
+        return E_TIME_PARAMETERS_INVALID;
+    }
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
         return E_TIME_NULLPTR;
     }
-    timerManager->SetTimerExemption(nameArr, isExemption);
+    std::set<int> pidSet;
+    std::copy(pidList.begin(), pidList.end(), std::insert_iterator<std::set<int>>(pidSet, pidSet.begin()));
+    auto ret = timerManager->ProxyTimer(uid, pidSet, isProxy, needRetrigger);
+    if (!ret) {
+        return E_TIME_DEAL_FAILED;
+    }
+    return ERR_OK;
+}
+
+int32_t TimeSystemAbility::SetTimerExemption(const std::vector<std::string> &nameArr, bool isExemption)
+{
+    TimeXCollie timeXCollie("TimeService::SetTimerExemption");
+    if (!TimePermission::CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Set Timer Exemption permission check failed");
+        return E_TIME_NO_PERMISSION;
+    }
+    if (nameArr.size() > MAX_EXEMPTION_SIZE) {
+        return E_TIME_PARAMETERS_INVALID;
+    }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    std::unordered_set<std::string> nameSet;
+    std::copy(nameArr.begin(), nameArr.end(), std::inserter(nameSet, nameSet.begin()));
+    timerManager->SetTimerExemption(nameSet, isExemption);
     return E_TIME_OK;
 }
 
-bool TimeSystemAbility::ResetAllProxy()
+int32_t TimeSystemAbility::ResetAllProxy()
 {
     if (!TimePermission::CheckProxyCallingPermission()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ResetAllProxy permission check failed");
-        return false;
+        return E_TIME_NO_PERMISSION;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "ResetAllProxy service");
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
-        return false;
+        return E_TIME_NULLPTR;
     }
-    return timerManager->ResetAllProxy();
+    if (!timerManager->ResetAllProxy()) {
+        return E_TIME_DEAL_FAILED;
+    }
+    return E_TIME_OK;
 }
 
 int32_t TimeSystemAbility::GetNtpTimeMs(int64_t &time)
 {
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto ret = NtpUpdateTime::GetInstance().GetNtpTime(time);
     if (!ret) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "GetNtpTimeMs failed");
@@ -853,6 +978,10 @@ int32_t TimeSystemAbility::GetNtpTimeMs(int64_t &time)
 
 int32_t TimeSystemAbility::GetRealTimeMs(int64_t &time)
 {
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
     auto ret = NtpUpdateTime::GetInstance().GetRealTime(time);
     if (!ret) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "GetRealTimeMs failed");
@@ -943,37 +1072,38 @@ bool TimeSystemAbility::RecoverTimer()
 
 std::shared_ptr<TimerEntry> GetEntry(cJSON* obj, bool autoRestore)
 {
+    auto cjson = CjsonHelper::GetInstance();
     auto item = cJSON_GetObjectItem(obj, "name");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsString(item)) return nullptr;
     auto name = item->valuestring;
     item = cJSON_GetObjectItem(obj, "timerId");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsString(item)) return nullptr;
     int64_t tmp;
-    if (!CjsonHelper::GetInstance().StrToI64(item->valuestring, tmp)) return nullptr;
+    if (!cjson.StrToI64(item->valuestring, tmp)) return nullptr;
     auto timerId = static_cast<uint64_t>(tmp);
     item = cJSON_GetObjectItem(obj, "type");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     int type = item->valueint;
     item = cJSON_GetObjectItem(obj, "windowLength");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     uint64_t windowLength = static_cast<uint64_t>(item->valueint);
     item = cJSON_GetObjectItem(obj, "interval");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     uint64_t interval = static_cast<uint64_t>(item->valueint);
     item = cJSON_GetObjectItem(obj, "flag");
-    if (item == NULL) return nullptr;
-    int flag = item->valueint;
+    if (!cjson.IsNumber(item)) return nullptr;
+    uint32_t flag = static_cast<uint32_t>(item->valueint);
     item = cJSON_GetObjectItem(obj, "wantAgent");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsString(item)) return nullptr;
     auto wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(item->valuestring);
     item = cJSON_GetObjectItem(obj, "uid");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     int uid = item->valueint;
     item = cJSON_GetObjectItem(obj, "pid");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsNumber(item)) return nullptr;
     int pid = item->valueint;
     item = cJSON_GetObjectItem(obj, "bundleName");
-    if (item == NULL) return nullptr;
+    if (!cjson.IsString(item)) return nullptr;
     auto bundleName = item->valuestring;
     return std::make_shared<TimerEntry>(TimerEntry {name, timerId, type, windowLength, interval, flag, autoRestore,
                                                     nullptr, wantAgent, uid, pid, bundleName});
@@ -1001,14 +1131,14 @@ void TimeSystemAbility::RecoverTimerInner(cJSON* resultSet, bool autoRestore)
         timerManager->ReCreateTimer(timerInfo->id, timerInfo);
         // 'state'
         auto item = cJSON_GetObjectItem(obj, "state");
-        if (item == NULL) {
+        if (!CjsonHelper::GetInstance().IsNumber(item)) {
             continue;
         }
         auto state = static_cast<uint8_t>(item->valueint);
         if (state == 1) {
             // 'triggerTime'
             item = cJSON_GetObjectItem(obj, "triggerTime");
-            if (item == NULL) {
+            if (!CjsonHelper::GetInstance().IsString(item)) {
                 continue;
             }
             int64_t triggerTime;

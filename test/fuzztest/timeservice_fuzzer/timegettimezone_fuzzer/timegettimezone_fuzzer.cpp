@@ -20,7 +20,6 @@
 #include <string_ex.h>
 
 #include "time_service_fuzz_utils.h"
-#include "time_service_ipc_interface_code.h"
 
 using namespace OHOS::MiscServices;
 
@@ -37,6 +36,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
     /* Run your code on data */
     OHOS::TimeServiceFuzzUtils::OnRemoteRequestTest(
-        static_cast<uint32_t>(TimeServiceIpcInterfaceCode::GET_TIME_ZONE), data, size);
+        static_cast<uint32_t>(ITimeServiceIpcCode::COMMAND_GET_TIME_ZONE), data, size);
     return 0;
 }

@@ -24,6 +24,7 @@
 #include "time_common.h"
 #include "time_service_proxy.h"
 #include "timer_call_back.h"
+#include "simple_timer_info.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -64,7 +65,12 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
         auto iter = recoverTimer.begin();
         for (; iter != recoverTimer.end(); iter++) {
             auto timerId = iter->first;
-            proxy->CreateTimer(iter->second->timerInfo, timerCallbackInfoObject, timerId);
+            auto timerInfo = iter->second->timerInfo;
+            SimpleTimerInfo *simpleTimerInfo = new (std::nothrow) SimpleTimerInfo(timerInfo->name, timerInfo->type,
+                timerInfo->repeat, timerInfo->disposable, timerInfo->autoRestore, timerInfo->interval,
+                timerInfo->wantAgent);
+            if (simpleTimerInfo == nullptr) { return; }
+            proxy->CreateTimer(*simpleTimerInfo, timerCallbackInfoObject, timerId);
             if (iter->second->state == 1) {
                 proxy->StartTimer(timerId, iter->second->triggerTime);
             }
@@ -179,7 +185,7 @@ bool TimeServiceClient::SetTime(int64_t time)
     if (proxy == nullptr) {
         return false;
     }
-    return proxy->SetTime(time) == ERR_OK;
+    return proxy->SetTime(time, APIVersion::API_VERSION_7) == ERR_OK;
 }
 
 bool TimeServiceClient::SetTime(int64_t milliseconds, int32_t &code)
@@ -193,7 +199,8 @@ bool TimeServiceClient::SetTime(int64_t milliseconds, int32_t &code)
         code = E_TIME_NULLPTR;
         return false;
     }
-    code = proxy->SetTime(milliseconds);
+    code = proxy->SetTime(milliseconds, APIVersion::API_VERSION_7);
+    code = ConvertErrCode(code);
     return code == ERR_OK;
 }
 
@@ -206,7 +213,9 @@ int32_t TimeServiceClient::SetTimeV9(int64_t time)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    return proxy->SetTime(time, ITimeService::API_VERSION_9);
+    int32_t code = proxy->SetTime(time, APIVersion::API_VERSION_9);
+    code = ConvertErrCode(code);
+    return code;
 }
 
 bool TimeServiceClient::SetTimeZone(const std::string &timezoneId)
@@ -218,7 +227,7 @@ bool TimeServiceClient::SetTimeZone(const std::string &timezoneId)
     if (proxy == nullptr) {
         return false;
     }
-    return proxy->SetTimeZone(timezoneId) == ERR_OK;
+    return proxy->SetTimeZone(timezoneId, APIVersion::API_VERSION_7) == ERR_OK;
 }
 
 bool TimeServiceClient::SetTimeZone(const std::string &timezoneId, int32_t &code)
@@ -232,7 +241,8 @@ bool TimeServiceClient::SetTimeZone(const std::string &timezoneId, int32_t &code
         code =  E_TIME_NULLPTR;
         return false;
     }
-    code = proxy->SetTimeZone(timezoneId);
+    code = proxy->SetTimeZone(timezoneId, APIVersion::API_VERSION_7);
+    code = ConvertErrCode(code);
     TIME_HILOGD(TIME_MODULE_CLIENT, "settimezone end");
     return code == ERR_OK;
 }
@@ -246,7 +256,9 @@ int32_t TimeServiceClient::SetTimeZoneV9(const std::string &timezoneId)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    return proxy->SetTimeZone(timezoneId, ITimeService::API_VERSION_9);
+    int32_t code = proxy->SetTimeZone(timezoneId, APIVersion::API_VERSION_9);
+    code = ConvertErrCode(code);
+    return code;
 }
 
 uint64_t TimeServiceClient::CreateTimer(std::shared_ptr<ITimerInfo> timerOptions)
@@ -299,8 +311,13 @@ int32_t TimeServiceClient::CreateTimerV9(std::shared_ptr<ITimerInfo> timerOption
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    auto errCode = proxy->CreateTimer(timerOptions, timerCallbackInfoObject, timerId);
+    SimpleTimerInfo *simpleTimerInfo = new (std::nothrow) SimpleTimerInfo(timerOptions->name, timerOptions->type,
+        timerOptions->repeat, timerOptions->disposable, timerOptions->autoRestore, timerOptions->interval,
+        timerOptions->wantAgent);
+    if (simpleTimerInfo == nullptr) { return E_TIME_NULLPTR; }
+    int32_t errCode = proxy->CreateTimer(*simpleTimerInfo, timerCallbackInfoObject, timerId);
     if (errCode != E_TIME_OK) {
+        errCode = ConvertErrCode(errCode);
         TIME_HILOGE(TIME_MODULE_CLIENT, "create timer failed, errCode=%{public}d", errCode);
         return errCode;
     }
@@ -324,8 +341,7 @@ int32_t TimeServiceClient::CreateTimerV9(std::shared_ptr<ITimerInfo> timerOption
     }
 
     TIME_HILOGD(TIME_MODULE_CLIENT, "CreateTimer id: %{public}" PRId64 "", timerId);
-    auto ret = TimerCallback::GetInstance()->InsertTimerCallbackInfo(timerId, timerOptions);
-    if (!ret) {
+    if (!TimerCallback::GetInstance()->InsertTimerCallbackInfo(timerId, timerOptions)) {
         return E_TIME_DEAL_FAILED;
     }
     return errCode;
@@ -351,6 +367,7 @@ int32_t TimeServiceClient::StartTimerV9(uint64_t timerId, uint64_t triggerTime)
     }
     auto startRet = proxy->StartTimer(timerId, triggerTime);
     if (startRet != 0) {
+        startRet = ConvertErrCode(startRet);
         TIME_HILOGE(TIME_MODULE_CLIENT, "start timer failed: %{public}d", startRet);
         return startRet;
     }
@@ -383,6 +400,7 @@ int32_t TimeServiceClient::StopTimerV9(uint64_t timerId)
     }
     auto stopRet = proxy->StopTimer(timerId);
     if (stopRet != 0) {
+        stopRet = ConvertErrCode(stopRet);
         TIME_HILOGE(TIME_MODULE_CLIENT, "stop timer failed: %{public}d", stopRet);
         return stopRet;
     }
@@ -412,8 +430,9 @@ int32_t TimeServiceClient::DestroyTimerV9(uint64_t timerId)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    auto errCode = proxy->DestroyTimer(timerId, false);
+    auto errCode = proxy->DestroyTimer(timerId);
     if (errCode != 0) {
+        errCode = ConvertErrCode(errCode);
         TIME_HILOGE(TIME_MODULE_CLIENT, "destroy timer failed: %{public}d", errCode);
         return errCode;
     }
@@ -451,7 +470,7 @@ int32_t TimeServiceClient::DestroyTimerAsyncV9(uint64_t timerId)
         return E_TIME_NULLPTR;
     }
     
-    auto errCode = proxy->DestroyTimer(timerId, true);
+    auto errCode = proxy->DestroyTimerAsync(timerId);
     if (errCode != 0) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "destroy timer failed: %{public}d", errCode);
         return errCode;
@@ -747,10 +766,13 @@ bool TimeServiceClient::ProxyTimer(int32_t uid, std::set<int> pidList, bool isPr
     if (proxy == nullptr) {
         return false;
     }
-    return proxy->ProxyTimer(uid, pidList, isProxy, needRetrigger);
+    std::vector<int> pidVector;
+    std::copy(pidList.begin(), pidList.end(), std::back_inserter(pidVector));
+    auto errCode = proxy->ProxyTimer(uid, pidVector, isProxy, needRetrigger);
+    return errCode == E_TIME_OK;
 }
 
-int32_t TimeServiceClient::AdjustTimer(bool isAdjust, uint32_t interval)
+int32_t TimeServiceClient::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
 {
     TIME_HILOGD(TIME_MODULE_CLIENT, "Adjust Timer isAdjust: %{public}d", isAdjust);
     if (!ConnectService()) {
@@ -760,7 +782,9 @@ int32_t TimeServiceClient::AdjustTimer(bool isAdjust, uint32_t interval)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    return proxy->AdjustTimer(isAdjust, interval);
+    auto code = proxy->AdjustTimer(isAdjust, interval, delta);
+    code = ConvertErrCode(code);
+    return code;
 }
 
 int32_t TimeServiceClient::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)
@@ -773,7 +797,15 @@ int32_t TimeServiceClient::SetTimerExemption(const std::unordered_set<std::strin
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    return proxy->SetTimerExemption(nameArr, isExemption);
+    if (nameArr.empty()) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Nothing need cache");
+        return E_TIME_NOT_FOUND;
+    }
+    std::vector<std::string> nameVector;
+    std::copy(nameArr.begin(), nameArr.end(), std::back_inserter(nameVector));
+    auto code = proxy->SetTimerExemption(nameVector, isExemption);
+    code = ConvertErrCode(code);
+    return code;
 }
 
 bool TimeServiceClient::ResetAllProxy()
@@ -787,7 +819,8 @@ bool TimeServiceClient::ResetAllProxy()
     if (proxy == nullptr) {
         return false;
     }
-    return proxy->ResetAllProxy();
+    auto code = proxy->ResetAllProxy();
+    return code == ERR_OK;
 }
 
 int32_t TimeServiceClient::GetNtpTimeMs(int64_t &time)
@@ -799,7 +832,9 @@ int32_t TimeServiceClient::GetNtpTimeMs(int64_t &time)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    return proxy->GetNtpTimeMs(time);
+    auto code = proxy->GetNtpTimeMs(time);
+    code = ConvertErrCode(code);
+    return code;
 }
 
 int32_t TimeServiceClient::GetRealTimeMs(int64_t &time)
@@ -811,7 +846,23 @@ int32_t TimeServiceClient::GetRealTimeMs(int64_t &time)
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    return proxy->GetRealTimeMs(time);
+    auto code = proxy->GetRealTimeMs(time);
+    code = ConvertErrCode(code);
+    return code;
+}
+
+int32_t TimeServiceClient::ConvertErrCode(int32_t errCode)
+{
+    switch (errCode) {
+        case ERR_INVALID_VALUE:
+            return E_TIME_WRITE_PARCEL_ERROR;
+        case ERR_INVALID_DATA:
+            return E_TIME_WRITE_PARCEL_ERROR;
+        case E_TIME_NULLPTR:
+            return E_TIME_DEAL_FAILED;
+        default:
+            return errCode;
+    }
 }
 
 sptr<ITimeService> TimeServiceClient::GetProxy()

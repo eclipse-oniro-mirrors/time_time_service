@@ -20,7 +20,6 @@
 #include <string_ex.h>
 
 #include "time_service_fuzz_utils.h"
-#include "time_service_ipc_interface_code.h"
 #include "timer_proxy.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
@@ -49,8 +48,8 @@ bool FuzzTimerAdjustTimer(const uint8_t *data, size_t size)
     auto interval = static_cast<uint32_t>(*data);
     auto now = std::chrono::steady_clock::now();
     auto callback = [] (AdjustTimerCallback adjustTimer) {};
-    TimerProxy::GetInstance().AdjustTimer(true, interval, now, callback);
-    TimerProxy::GetInstance().AdjustTimer(false, interval, now, callback);
+    TimerProxy::GetInstance().AdjustTimer(true, interval, now, 0, callback);
+    TimerProxy::GetInstance().AdjustTimer(false, interval, now, 0, callback);
     return true;
 }
 

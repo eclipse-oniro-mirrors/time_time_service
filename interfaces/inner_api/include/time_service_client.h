@@ -22,7 +22,7 @@
 
 #include "itimer_info.h"
 #include "refbase.h"
-#include "time_service_interface.h"
+#include "itime_service.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "system_ability_status_change_stub.h"
@@ -392,7 +392,7 @@ public:
      * @param interval adjust period in seconds.
      * @return int32_t return error code.
      */
-    TIME_API int32_t AdjustTimer(bool isAdjust, uint32_t interval);
+    TIME_API int32_t AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta);
 
     /**
      * @brief SetTimerExemption
@@ -469,6 +469,7 @@ private:
     sptr<ITimeService> GetProxy();
     void SetProxy(sptr<ITimeService> proxy);
     void CheckNameLocked(std::string name);
+    int32_t ConvertErrCode(int32_t errCode);
 
     sptr<TimeServiceListener> listener_;
     static std::mutex instanceLock_;

@@ -43,12 +43,14 @@ public:
     bool Delete(std::string tableName, int64_t timerId);
     void Clear(std::string tableName);
     bool StrToI64(std::string str, int64_t& value);
+    bool IsNumber(cJSON* item);
+    bool IsString(cJSON* item);
     static CjsonHelper &GetInstance();
 
 private:
     CjsonHelper();
     void SaveJson(cJSON* data);
-    std::mutex mutex_;
+    static std::mutex mutex_;
 };
 } // namespace MiscServices
 } // namespace OHOS

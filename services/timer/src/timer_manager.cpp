@@ -70,7 +70,7 @@ constexpr int MAX_TIMER_ALARM_COUNT = 100;
 constexpr int TIMER_ALRAM_INTERVAL = 60;
 constexpr int TIMER_COUNT_TOP_NUM = 5;
 const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
-const std::string SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
+const std::string TIMER_ACROSS_ACCOUNTS = "persist.time.timer_across_accounts";
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
 #ifdef MULTI_ACCOUNT_ENABLE
@@ -144,7 +144,7 @@ void TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId)
     }
     auto oldTimerId = timerNameMap_[uid][name];
     timerNameMap_[uid][name] = timerId;
-    bool needRecover;
+    bool needRecover =  false;
     StopTimerInnerLocked(true, oldTimerId, needRecover);
     UpdateOrDeleteDatabase(true, oldTimerId, needRecover);
     TIME_HILOGW(TIME_MODULE_SERVICE, "create %{public}" PRId64 " name: %{public}s in %{public}d already exist,"
@@ -182,7 +182,7 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
                                   DatabaseType type)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE,
-                "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}d"
+                "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}u"
                 "uid:%{public}d pid:%{public}d timerId:%{public}" PRId64 "", paras.timerType, paras.windowLength,
                 paras.interval, paras.flag, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid(), timerId);
     std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
@@ -263,12 +263,14 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
             timerInfo->interval, timerInfo->flag, timerInfo->autoRestore, timerInfo->callback, timerInfo->wantAgent,
             timerInfo->uid, timerInfo->pid, timerInfo->bundleName);
     }
-    auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type, timerInfo->autoRestore)
-                      ? HOLD_ON_REBOOT
-                      : DROP_ON_REBOOT);
-    CjsonHelper::GetInstance().UpdateTrigger(tableName,
-                                             static_cast<int64_t>(timerId),
-                                             static_cast<int64_t>(triggerTime));
+    if (timerInfo->wantAgent) {
+        auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type, timerInfo->autoRestore)
+            ? HOLD_ON_REBOOT
+            : DROP_ON_REBOOT);
+        CjsonHelper::GetInstance().UpdateTrigger(tableName,
+            static_cast<int64_t>(timerId),
+            static_cast<int64_t>(triggerTime));
+    }
     return E_TIME_OK;
 }
 
@@ -345,7 +347,6 @@ void TimerManager::ShowTimerCountByUid(int count)
         uidArr[i] = 0;
         createTimerCountArr[i] = 0;
         startTimerCountArr[i] = 0;
-        
     }
     TimerCountStaticReporter(count, uidArr, createTimerCountArr, startTimerCountArr);
     TIME_HILOGI(TIME_MODULE_SERVICE, "Top uid:[%{public}s], nums:[%{public}s]", uidStr.c_str(), countStr.c_str());
@@ -365,7 +366,7 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", needDestroy: %{public}d", timerNumber, needDestroy);
     int32_t ret;
-    bool needRecover;
+    bool needRecover = false;
     std::string name = "";
     {
         std::lock_guard<std::mutex> lock(entryMapMutex_);
@@ -421,7 +422,7 @@ void TimerManager::SetHandler(std::string name,
                               uint64_t triggerAtTime,
                               int64_t windowLength,
                               uint64_t interval,
-                              int flag,
+                              uint32_t flag,
                               bool autoRestore,
                               std::function<int32_t (const uint64_t)> callback,
                               std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
@@ -466,7 +467,7 @@ void TimerManager::SetHandler(std::string name,
                      intervalDuration,
                      std::move(callback),
                      wantAgent,
-                     static_cast<uint32_t>(flag),
+                     flag,
                      autoRestore,
                      uid,
                      pid,
@@ -915,8 +916,9 @@ void TimerManager::NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer)
 #ifdef MULTI_ACCOUNT_ENABLE
 int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &timer)
 {
-    auto bundleList = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
-    if (!bundleList.empty() && timer->bundleName == bundleList[0]) {
+    auto bundleList = TimeFileUtils::GetParameterList(TIMER_ACROSS_ACCOUNTS);
+    if (!bundleList.empty() &&
+        std::find(bundleList.begin(), bundleList.end(), timer->bundleName) != bundleList.end()) {
         return E_TIME_OK;
     }
     int userIdOfTimer = -1;
@@ -984,7 +986,6 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
 
 bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "trigger wantAgent.");
     auto wantAgent = timer->wantAgent;
     std::shared_ptr<AAFwk::Want> want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
     if (want == nullptr) {
@@ -1028,6 +1029,9 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
     auto code = AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
     TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "trigWA ret: %{public}d", code);
+    if (code != ERR_OK) {
+        TimeServiceFaultReporter(ReportEventCode::TIMER_WANTAGENT_FAULT_REPORT, code, "");
+    }
     return code == ERR_OK;
 }
 
@@ -1044,16 +1048,17 @@ void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm, bool nee
     }
 }
 
-bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval)
+bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (adjustPolicy_ == isAdjust && adjustInterval_ == interval) {
+    if (adjustPolicy_ == isAdjust && adjustInterval_ == interval && adjustDelta_ == delta) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "already deal timer adjust, flag: %{public}d", isAdjust);
         return false;
     }
     std::chrono::steady_clock::time_point now = GetBootTimeNs();
     adjustPolicy_ = isAdjust;
     adjustInterval_ = interval;
+    adjustDelta_ = delta;
     auto callback = [this] (AdjustTimerCallback adjustTimer) {
         bool isChanged = false;
         auto nowElapsed = GetBootTimeNs();
@@ -1074,7 +1079,7 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval)
         }
     };
 
-    return TimerProxy::GetInstance().AdjustTimer(isAdjust, interval, now, callback);
+    return TimerProxy::GetInstance().AdjustTimer(isAdjust, interval, now, delta, callback);
 }
 
 bool TimerManager::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
@@ -1128,7 +1133,7 @@ bool TimerManager::AdjustSingleTimer(std::shared_ptr<TimerInfo> timer)
     if (!adjustPolicy_) {
         return false;
     }
-    return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, GetBootTimeNs(),
+    return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, GetBootTimeNs(), adjustDelta_,
         [this, timer] (AdjustTimerCallback adjustTimer) { adjustTimer(timer); });
 }
 
@@ -1266,7 +1271,7 @@ bool TimerManager::ShowTimerEntryMap(int fd)
         dprintf(fd, " * timer name          = %s\n", iter->second->name.c_str());
         dprintf(fd, " * timer id            = %lu\n", iter->second->id);
         dprintf(fd, " * timer type          = %d\n", iter->second->type);
-        dprintf(fd, " * timer flag          = %lu\n", iter->second->flag);
+        dprintf(fd, " * timer flag          = %u\n", iter->second->flag);
         dprintf(fd, " * timer window Length = %lld\n", iter->second->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
@@ -1319,7 +1324,7 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
     if (mPendingIdleUntil_ != nullptr) {
         dprintf(fd, " - dump idle timer id  = %lu\n", mPendingIdleUntil_->id);
         dprintf(fd, " * timer type          = %d\n", mPendingIdleUntil_->type);
-        dprintf(fd, " * timer flag          = %lu\n", mPendingIdleUntil_->flags);
+        dprintf(fd, " * timer flag          = %u\n", mPendingIdleUntil_->flags);
         dprintf(fd, " * timer window Length = %lu\n", mPendingIdleUntil_->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", mPendingIdleUntil_->repeatInterval);
         dprintf(fd, " * timer whenElapsed   = %lu\n", mPendingIdleUntil_->whenElapsed);
@@ -1328,7 +1333,7 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
     for (const auto &pendingTimer : pendingDelayTimers_) {
         dprintf(fd, " - dump pending delay timer id  = %lu\n", pendingTimer->id);
         dprintf(fd, " * timer type          = %d\n", pendingTimer->type);
-        dprintf(fd, " * timer flag          = %lu\n", pendingTimer->flags);
+        dprintf(fd, " * timer flag          = %u\n", pendingTimer->flags);
         dprintf(fd, " * timer window Length = %lu\n", pendingTimer->windowLength);
         dprintf(fd, " * timer interval      = %lu\n", pendingTimer->repeatInterval);
         dprintf(fd, " * timer whenElapsed   = %lu\n", pendingTimer->whenElapsed);

@@ -86,20 +86,22 @@ bool TimerInfo::UpdateWhenElapsedFromNow(std::chrono::steady_clock::time_point n
     return (oldWhenElapsed != whenElapsed) || (oldMaxWhenElapsed != maxWhenElapsed);
 }
 
-bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now, const uint32_t interval)
+bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now,
+                            const uint32_t interval, const uint32_t delta)
 {
     auto oldWhenElapsed = whenElapsed;
     auto oldMaxWhenElapsed = maxWhenElapsed;
     std::chrono::duration<int, std::ratio<1, HALF_SECEND>> halfIntervalSec(interval);
     std::chrono::duration<int, std::ratio<1, 1>> intervalSec(interval);
+    std::chrono::duration<int, std::ratio<1, 1>> deltaSec(delta);
     auto oldTimeSec = std::chrono::duration_cast<std::chrono::seconds>(whenElapsed.time_since_epoch());
-    auto timeSec = ((oldTimeSec + halfIntervalSec) / intervalSec) * intervalSec;
+    auto timeSec = ((oldTimeSec + halfIntervalSec) / intervalSec) * intervalSec + deltaSec;
     whenElapsed = std::chrono::steady_clock::time_point(timeSec);
     if (windowLength == std::chrono::milliseconds::zero()) {
         maxWhenElapsed = whenElapsed;
     } else {
         auto oldMaxTimeSec = std::chrono::duration_cast<std::chrono::seconds>(maxWhenElapsed.time_since_epoch());
-        auto maxTimeSec = ((oldMaxTimeSec + halfIntervalSec) / intervalSec) * intervalSec;
+        auto maxTimeSec = ((oldMaxTimeSec + halfIntervalSec) / intervalSec) * intervalSec + deltaSec;
         maxWhenElapsed = std::chrono::steady_clock::time_point(maxTimeSec);
     }
     if (whenElapsed < now) {
@@ -108,9 +110,9 @@ bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now, co
     if (maxWhenElapsed < now) {
         maxWhenElapsed += std::chrono::duration_cast<std::chrono::milliseconds>(intervalSec);
     }
-    auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
+    auto elapsedDelta = std::chrono::duration_cast<std::chrono::milliseconds>(
         whenElapsed.time_since_epoch() - oldWhenElapsed.time_since_epoch());
-    when = when + delta;
+    when = when + elapsedDelta;
     return (oldWhenElapsed != whenElapsed) || (oldMaxWhenElapsed != maxWhenElapsed);
 }
 

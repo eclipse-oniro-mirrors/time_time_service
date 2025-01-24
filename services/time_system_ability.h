@@ -33,6 +33,10 @@
 #include "shutdown/sync_shutdown_callback_stub.h"
 #include "shutdown/shutdown_client.h"
 #include "cjson_helper.h"
+#include "itimer_info.h"
+#include "ipc_skeleton.h"
+#include "time_permission.h"
+#include "simple_timer_info.h"
 #include "time_sysevent.h"
 
 namespace OHOS {
@@ -55,25 +59,29 @@ public:
     TimeSystemAbility();
     ~TimeSystemAbility();
     static sptr<TimeSystemAbility> GetInstance();
-    int32_t SetTime(int64_t time, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
+    int32_t SetTime(int64_t time, int8_t apiVersion = APIVersion::API_VERSION_7) override;
     bool SetRealTime(int64_t time);
-    int32_t SetTimeZone(const std::string &timeZoneId, APIVersion apiVersion = APIVersion::API_VERSION_7) override;
+    int32_t SetTimeZone(const std::string &timeZoneId, int8_t apiVersion = APIVersion::API_VERSION_7) override;
     int32_t GetTimeZone(std::string &timeZoneId) override;
     int32_t GetWallTimeMs(int64_t &time);
     int32_t GetBootTimeMs(int64_t &time);
     int32_t GetBootTimeNs(int64_t &time);
     int32_t GetThreadTimeMs(int64_t &time) override;
     int32_t GetThreadTimeNs(int64_t &time) override;
-    int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, sptr<IRemoteObject> &obj,
-        uint64_t &timerId) override;
+    int32_t CreateTimer(const SimpleTimerInfo& simpleTimerInfo,
+                        const sptr<IRemoteObject> &timerCallback,
+                        uint64_t &timerId) override;
+    int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, const sptr<IRemoteObject> &obj,
+        uint64_t &timerId);
     int32_t CreateTimer(TimerPara &paras, std::function<int32_t (const uint64_t)> callback, uint64_t &timerId);
     int32_t StartTimer(uint64_t timerId, uint64_t triggerTime) override;
     int32_t StopTimer(uint64_t timerId) override;
-    int32_t DestroyTimer(uint64_t timerId, bool isAsync) override;
-    bool ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger) override;
-    int32_t AdjustTimer(bool isAdjust, uint32_t interval) override;
-    int32_t SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
-    bool ResetAllProxy() override;
+    int32_t DestroyTimer(uint64_t timerId) override;
+    int32_t DestroyTimerAsync(uint64_t timerId) override;
+    int32_t ProxyTimer(int32_t uid, const std::vector<int>& pidList, bool isProxy, bool needRetrigger) override;
+    int32_t AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta) override;
+    int32_t SetTimerExemption(const std::vector<std::string> &nameArr, bool isExemption) override;
+    int32_t ResetAllProxy() override;
     int32_t GetNtpTimeMs(int64_t &time) override;
     int32_t GetRealTimeMs(int64_t &time) override;
     #ifdef HIDUMPER_ENABLE

@@ -23,7 +23,7 @@ namespace OHOS {
 namespace MiscServices {
 constexpr int32_t START_TIMER_OFFSET = 0x00000000;
 constexpr int32_t TRIGGER_TIMER_OFFSET = 0x00000100;
-constexpr int32_t TIMER_COUNT_OFFSET = 0x00000200;
+constexpr int32_t TIMER_FAULT_OFFSET = 0x00000200;
 constexpr int32_t MODIFY_TIME_OFFSET = 0x01000000;
 constexpr int32_t EXACT_OFFSET = 4;
 
@@ -44,7 +44,7 @@ enum ReportEventCode : int32_t {
     RTC_NONWAKEUP_NONEXACT_TIMER_TRIGGER,
     REALTIME_WAKEUP_NONEXACT_TIMER_TRIGGER,
     REALTIME_NONWAKEUP_NONEXACT_TIMER_TRIGGER,
-    TIMER_COUNT_REPORT = TIMER_COUNT_OFFSET,
+    TIMER_WANTAGENT_FAULT_REPORT = TIMER_FAULT_OFFSET,
     SET_TIME = MODIFY_TIME_OFFSET,
     NTP_REFRESH,
     SET_TIMEZONE,
@@ -53,6 +53,7 @@ void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer);
 void TimeBehaviorReport(ReportEventCode eventCode, std::string originTime, std::string newTime, int64_t ntpTime);
 void TimerBehaviorReport(std::shared_ptr<TimerInfo> timer, bool isStart);
 void TimerCountStaticReporter(int count, int* uidArr, int* createTimerCountArr, int* startTimerCountArr);
+void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, std::string extraInfo);
 } // namespace MiscServices
 } // namespace OHOS
 #endif // TIME_SYSEVENT_H

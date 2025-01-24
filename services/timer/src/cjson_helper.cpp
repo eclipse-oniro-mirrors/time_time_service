@@ -25,6 +25,7 @@ namespace {
 const char* DB_PATH = "/data/service/el1/public/database/time/time.json";
 constexpr size_t INDEX_TWO = 2;
 }
+std::mutex CjsonHelper::mutex_;
 
 CjsonHelper &CjsonHelper::GetInstance()
 {
@@ -75,12 +76,12 @@ std::string CjsonHelper::QueryWant(std::string tableName, uint64_t timerId)
         cJSON* obj = cJSON_GetArrayItem(table, i);
 
         auto item = cJSON_GetObjectItem(obj, "timerId");
-        if (item == NULL) {
+        if (!IsString(item)) {
             continue;
         }
         if (item->valuestring == std::to_string(timerId)) {
             item = cJSON_GetObjectItem(obj, "wantAgent");
-            if (item != NULL) {
+            if (IsString(item)) {
                 data = item->valuestring;
             }
             break;
@@ -140,24 +141,24 @@ std::vector<std::tuple<std::string, std::string, int64_t>> CjsonHelper::QueryAut
         cJSON* obj = cJSON_GetArrayItem(table, i);
 
         auto state = cJSON_GetObjectItem(obj, "state");
-        if (state == NULL) {
+        if (!IsNumber(state)) {
             continue;
         }
         if (state->valueint == 1) {
             auto item = cJSON_GetObjectItem(obj, "bundleName");
-            if (item == NULL) {
+            if (!IsString(item)) {
                 continue;
             }
             std::string bundleName = item->valuestring;
 
             item = cJSON_GetObjectItem(obj, "name");
-            if (item == NULL) {
+            if (!IsString(item)) {
                 continue;
             }
             std::string name = item->valuestring;
 
             item = cJSON_GetObjectItem(obj, "triggerTime");
-            if (item == NULL) {
+            if (!IsString(item)) {
                 continue;
             }
             int64_t triggerTime;
@@ -195,6 +196,7 @@ bool CjsonHelper::Insert(std::string tableName, std::shared_ptr<TimerEntry> time
     std::ifstream file(DB_PATH);
     if (!file.good()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "open json file fail!");
+        cJSON_Delete(newLine);
         return false;
     }
     std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -203,6 +205,7 @@ bool CjsonHelper::Insert(std::string tableName, std::shared_ptr<TimerEntry> time
     if (table == NULL) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get fail!", tableName.c_str());
         cJSON_Delete(db);
+        cJSON_Delete(newLine);
         return false;
     }
     cJSON_AddItemToArray(table, newLine);
@@ -234,7 +237,7 @@ bool CjsonHelper::UpdateTrigger(std::string tableName, int64_t timerId, int64_t 
         cJSON* obj = cJSON_GetArrayItem(table, i);
 
         auto timerIdObj = cJSON_GetObjectItem(obj, "timerId");
-        if (timerIdObj == NULL) {
+        if (!IsString(timerIdObj)) {
             continue;
         }
         if (timerIdObj->valuestring == std::to_string(timerId)) {
@@ -272,7 +275,7 @@ bool CjsonHelper::UpdateState(std::string tableName, int64_t timerId)
 
         auto timerIdObj = cJSON_GetObjectItem(obj, "timerId");
         auto stateObj = cJSON_GetObjectItem(obj, "state");
-        if (timerIdObj == NULL || stateObj == NULL) {
+        if (!IsString(timerIdObj) || !IsNumber(stateObj)) {
             continue;
         }
         if (timerIdObj->valuestring == std::to_string(timerId) && stateObj->valueint == 1) {
@@ -308,7 +311,7 @@ bool CjsonHelper::Delete(std::string tableName, int64_t timerId)
         cJSON* obj = cJSON_GetArrayItem(table, i);
 
         auto timerIdObj = cJSON_GetObjectItem(obj, "timerId");
-        if (timerIdObj == NULL) {
+        if (!IsString(timerIdObj)) {
             continue;
         }
         if (timerIdObj->valuestring == std::to_string(timerId)) {
@@ -356,6 +359,16 @@ void CjsonHelper::SaveJson(cJSON* data)
         free(jsonString);
     }
     outFile.close();
+}
+
+bool CjsonHelper::IsNumber(cJSON* item)
+{
+    return (item != NULL && cJSON_IsNumber(item));
+}
+
+bool CjsonHelper::IsString(cJSON* item)
+{
+    return (item != NULL && cJSON_IsString(item));
 }
 }
 }

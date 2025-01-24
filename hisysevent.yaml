@@ -24,34 +24,34 @@ MISC_TIME_STATISTIC_REPORT:
   TIMER_SIZE: {type: INT32, desc: Number of trigger with the same timestamp}
 
 ALARM_COUNT:
-__BASE: {type: STATISTIC, level: CRITICAL, desc: Timer quantity statistics, preserve: true}
-TIMER_NUM: {type: INT32, desc: timer number}
-TOP_UID: {type: INT32, arrsize: 5, desc: The top five UID with the highest timer quantity}
-TOP_NUM: {type: INT32, arrsize: 5, desc: The top five timer quantity}
-TOP_STRATED_NUM: {type: INT32, arrsize: 5, desc: The number of timers started under the top five UID with the highest quantity}
+  __BASE: {type: STATISTIC, level: CRITICAL, desc: Timer quantity statistics, preserve: true}
+  TIMER_NUM: {type: INT32, desc: timer number}
+  TOP_UID: {type: INT32, arrsize: 5, desc: The top five UID with the highest timer quantity}
+  TOP_NUM: {type: INT32, arrsize: 5, desc: The top five timer quantity}
+  TOP_STRATED_NUM: {type: INT32, arrsize: 5, desc: The number of timers started under the top five UID with the highest quantity}
 
 BEHAVIOR_TIME:
-__BASE: {type: BEHAVIOR, level: CRITICAL, desc: time or timezone behavior, preserve: true}
-EVENT_CODE: {type: INT32, desc: event code}
-CALLER_UID: {type: INT32, desc: caller uid}
-CALLER_NAME: {type: STRING, desc: caller bundle name or process name}
-ORIGINAL_TIME: {type: STRING, desc: original time or timezone}
-SET_TIME: {type: STRING, desc: set time or timezone}
-NTP_TIME: {type: INT64, desc: NTP time}
+  __BASE: {type: BEHAVIOR, level: CRITICAL, desc: time or timezone behavior, preserve: true}
+  EVENT_CODE: {type: INT32, desc: event code}
+  CALLER_UID: {type: INT32, desc: caller uid}
+  CALLER_NAME: {type: STRING, desc: caller bundle name or process name}
+  ORIGINAL_TIME: {type: STRING, desc: original time or timezone}
+  SET_TIME: {type: STRING, desc: set time or timezone}
+  NTP_TIME: {type: INT64, desc: NTP time}
 
 BEHAVIOR_TIMER:
-__BASE: {type: BEHAVIOR, level: CRITICAL, desc: timer behavior, preserve: true}
-EVENT_CODE: {type: INT32, desc: event code}
-TIMER_ID: {type: UINT32, desc: timer id}
-TRIGGER_TIME: {type: INT64, desc: trigger time}
-CALLER_UID: {type: INT32, desc: caller uid}
-CALLER_NAME: {type: STRING, desc: caller bundle or process name}
-INTERVAL: {type: UINT32, desc: trigger interval}
+  __BASE: {type: BEHAVIOR, level: CRITICAL, desc: timer behavior, preserve: true}
+  EVENT_CODE: {type: INT32, desc: event code}
+  TIMER_ID: {type: UINT32, desc: timer id}
+  TRIGGER_TIME: {type: INT64, desc: trigger time}
+  CALLER_UID: {type: INT32, desc: caller uid}
+  CALLER_NAME: {type: STRING, desc: caller bundle or process name}
+  INTERVAL: {type: UINT32, desc: trigger interval}
 
 FUNC_FAULT:
-__BASE: {type: FAULT, level: CRITICAL, desc: Time fault error, preserve: true}
-EVENT_CODE: {type: INT32, desc: event code}
-ERR_CODE: {type: INT32, desc: error code or system error}
-CALLER_UID: {type: INT32, desc: caller uid}
-CALLER_NAME: {type: STRING, desc: caller bundle name or process name}
-EXTRA: {type: STRING, desc: extra infomation}
+  __BASE: {type: FAULT, level: CRITICAL, desc: Time fault error, preserve: true}
+  EVENT_CODE: {type: INT32, desc: event code}
+  ERR_CODE: {type: INT32, desc: error code or system error}
+  CALLER_UID: {type: INT32, desc: caller uid}
+  CALLER_NAME: {type: STRING, desc: caller bundle name or process name}
+  EXTRA: {type: STRING, desc: extra infomation}

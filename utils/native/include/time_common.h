@@ -33,7 +33,7 @@ struct TimerPara {
     uint64_t interval;
     bool disposable;
     bool autoRestore;
-    int flag;
+    uint32_t flag;
 };
 
 enum TimeModule {
@@ -70,6 +70,11 @@ enum TimeError {
 enum DatabaseType {
     NOT_STORE = 0,
     STORE,
+};
+
+enum APIVersion : int8_t {
+    API_VERSION_7 = 0,
+    API_VERSION_9 = 1,
 };
 
 class TimeUtils {

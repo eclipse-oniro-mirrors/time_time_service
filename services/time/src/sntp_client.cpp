@@ -258,11 +258,8 @@ bool SNTPClient::ReceivedMessage(char *buffer)
     _sntpMsg._transmitTimestamp = GetNtpTimestamp64(TRANSMIT_TIMESTAMP_OFFSET, buffer);
     int64_t _originClient = m_originateTimestamp;
     int64_t _receiveServer = ConvertNtpToStamp(_sntpMsg._receiveTimestamp);
-    if (_receiveServer == 0) {
-        return false;
-    }
     int64_t _transmitServer = ConvertNtpToStamp(_sntpMsg._transmitTimestamp);
-    if (_transmitServer == 0) {
+    if (_transmitServer == 0 || _receiveServer == 0) {
         return false;
     }
     int64_t _receiveClient = receiveBootTime;
