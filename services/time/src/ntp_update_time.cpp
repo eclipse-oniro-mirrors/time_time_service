@@ -211,7 +211,7 @@ bool NtpUpdateTime::GetNtpTime(int64_t &time)
     }
 
     if (autoTimeInfo_.status == AUTO_TIME_STATUS_ON) {
-        TimeSystemAbility::GetInstance()->SetTime(time);
+        TimeSystemAbility::GetInstance()->SetTimeInner(time);
     }
     return true;
 }
@@ -253,7 +253,7 @@ void NtpUpdateTime::SetSystemTime()
         return;
     }
 
-    TimeSystemAbility::GetInstance()->SetTime(currentTime);
+    TimeSystemAbility::GetInstance()->SetTimeInner(currentTime);
     requestMutex_.unlock();
 }
 

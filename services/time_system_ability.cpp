@@ -580,6 +580,11 @@ int32_t TimeSystemAbility::SetTime(int64_t time, int8_t apiVersion)
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
+    return SetTimeInner(time, apiVersion);
+}
+
+int32_t TimeSystemAbility::SetTimeInner(int64_t time, int8_t apiVersion)
+{
     if (!SetRealTime(time)) {
         return E_TIME_DEAL_FAILED;
     }
@@ -810,6 +815,11 @@ int32_t TimeSystemAbility::SetTimeZone(const std::string &timeZoneId, int8_t api
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
+    return SetTimeZoneInner(timeZoneId, apiVersion);
+}
+
+int32_t TimeSystemAbility::SetTimeZoneInner(const std::string &timeZoneId, int8_t apiVersion)
+{
     if (!TimeZoneInfo::GetInstance().SetTimezone(timeZoneId)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Set timezone failed :%{public}s", timeZoneId.c_str());
         return E_TIME_DEAL_FAILED;
