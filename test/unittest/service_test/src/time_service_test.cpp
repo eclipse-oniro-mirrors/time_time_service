@@ -1175,14 +1175,26 @@ HWTEST_F(TimeServiceTest, TimerManager005, TestSize.Level0)
     auto res = TimerManager::GetInstance()->NotifyWantAgent(timerInfo);
     EXPECT_FALSE(res);
 
-    auto entry = std::make_shared<TimerEntry>(
-            TimerEntry{"", TIMER_ID, 0, 0, 0, 0, false, nullptr, nullptr, 0, 0, "bundleName"});
-    CjsonHelper::GetInstance().Insert(HOLD_ON_REBOOT, entry);
+    OHOS::NativeRdb::ValuesBucket insertValues;
+    insertValues.PutLong("timerId", TIMER_ID);
+    insertValues.PutInt("type", 0);
+    insertValues.PutInt("flag", 0);
+    insertValues.PutLong("windowLength", 0);
+    insertValues.PutLong("interval", 0);
+    insertValues.PutInt("uid", 0);
+    insertValues.PutString("bundleName", "");
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent = nullptr;
+    insertValues.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues.PutInt("state", 0);
+    insertValues.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
+    TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues);
 
     res = TimerManager::GetInstance()->NotifyWantAgent(timerInfo);
     EXPECT_FALSE(res);
 
-    CjsonHelper::GetInstance().Delete(HOLD_ON_REBOOT, TIMER_ID);
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(HOLD_ON_REBOOT);
+    rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(TIMER_ID));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
 }
 
 /**
@@ -1470,13 +1482,33 @@ HWTEST_F(TimeServiceTest, SystemAbility002, TestSize.Level0)
         map.erase(it);
     }
 
-    auto entry1 = std::make_shared<TimerEntry>(
-            TimerEntry{"", timerId1, 0, 0, 0, 0, true, nullptr, nullptr, 0, 0, "bundleName1"});
-    CjsonHelper::GetInstance().Insert(HOLD_ON_REBOOT, entry1);
+    OHOS::NativeRdb::ValuesBucket insertValues1;
+    insertValues1.PutLong("timerId", timerId1);
+    insertValues1.PutInt("type", 0);
+    insertValues1.PutInt("flag", 0);
+    insertValues1.PutLong("windowLength", 0);
+    insertValues1.PutLong("interval", 0);
+    insertValues1.PutInt("uid", 0);
+    insertValues1.PutString("bundleName", "");
+    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent = nullptr;
+    insertValues1.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues1.PutInt("state", 0);
+    insertValues1.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
+    TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues1);
 
-    auto entry2 = std::make_shared<TimerEntry>(
-            TimerEntry{"", timerId2, 0, 0, 0, 0, false, nullptr, nullptr, 0, 0, "bundleName1"});
-    CjsonHelper::GetInstance().Insert(DROP_ON_REBOOT, entry2);
+    OHOS::NativeRdb::ValuesBucket insertValues2;
+    insertValues2.PutLong("timerId", timerId2);
+    insertValues2.PutInt("type", 0);
+    insertValues2.PutInt("flag", 0);
+    insertValues2.PutLong("windowLength", 0);
+    insertValues2.PutLong("interval", 0);
+    insertValues2.PutInt("uid", 0);
+    insertValues2.PutString("bundleName", "");
+    wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    insertValues2.PutString("wantAgent", OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(wantAgent));
+    insertValues2.PutInt("state", 0);
+    insertValues2.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
+    TimeDatabase::GetInstance().Insert(DROP_ON_REBOOT, insertValues2);
 
     TimeSystemAbility::GetInstance()->RecoverTimer();
 
@@ -1485,8 +1517,13 @@ HWTEST_F(TimeServiceTest, SystemAbility002, TestSize.Level0)
     it = map.find(timerId2);
     EXPECT_EQ(it, map.end());
 
-    CjsonHelper::GetInstance().Delete(HOLD_ON_REBOOT, static_cast<int64_t>(timerId1));
-    CjsonHelper::GetInstance().Delete(DROP_ON_REBOOT, static_cast<int64_t>(timerId2));
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete1(HOLD_ON_REBOOT);
+    rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
+
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete2(DROP_ON_REBOOT);
+    rdbPredicatesDelete2.EqualTo("timerId", static_cast<int64_t>(timerId2));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete2);
 }
 
 #ifdef SET_AUTO_REBOOT_ENABLE
@@ -1501,16 +1538,25 @@ HWTEST_F(TimeServiceTest, SystemAbility003, TestSize.Level0)
 
     TimeSystemAbility::GetInstance()->SetAutoReboot();
 
-    auto entry1 = std::make_shared<TimerEntry>(
-            TimerEntry{"", timerId1, 0, 0, 0, 0, true, nullptr, nullptr, 0, 0, "anything"});
-    auto res = CjsonHelper::GetInstance().Insert(HOLD_ON_REBOOT, entry1);
-    EXPECT_EQ(res, true);
-    res = CjsonHelper::GetInstance().UpdateTrigger(HOLD_ON_REBOOT, timerId1, 0);
+    OHOS::NativeRdb::ValuesBucket insertValues1;
+    insertValues1.PutLong("timerId", timerId1);
+    insertValues1.PutInt("type", 0);
+    insertValues1.PutInt("flag", 0);
+    insertValues1.PutLong("windowLength", 0);
+    insertValues1.PutLong("interval", 0);
+    insertValues1.PutInt("uid", 0);
+    insertValues1.PutString("bundleName", "anything");
+    insertValues1.PutString("wantAgent", "");
+    insertValues1.PutInt("state", 1);
+    insertValues1.PutLong("triggerTime", static_cast<int64_t>(0));
+    auto res = TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues1);
     EXPECT_EQ(res, true);
 
     TimeSystemAbility::GetInstance()->SetAutoReboot();
 
-    CjsonHelper::GetInstance().Delete(HOLD_ON_REBOOT, static_cast<int64_t>(timerId1));
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete1(HOLD_ON_REBOOT);
+    rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
 }
 #endif
 
@@ -1522,6 +1568,47 @@ HWTEST_F(TimeServiceTest, SystemAbility003, TestSize.Level0)
 HWTEST_F(TimeServiceTest, SystemAbility004, TestSize.Level0)
 {
     auto res = TimeSystemAbility::GetInstance()->SetRealTime(-1);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimeDatabase001.
+* @tc.desc: test TimeDatabase Insert.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimeDatabase001, TestSize.Level0)
+{
+    OHOS::NativeRdb::ValuesBucket insertValues;
+    insertValues.PutLong("something", 0);
+    auto res = TimeDatabase::GetInstance().Insert(DROP_ON_REBOOT, insertValues);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimeDatabase002.
+* @tc.desc: test TimeDatabase Update.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimeDatabase002, TestSize.Level0)
+{
+    OHOS::NativeRdb::ValuesBucket values;
+    values.PutInt("something", 1);
+    OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
+    rdbPredicates.EqualTo("something", 0)->And()->EqualTo("something", static_cast<int64_t>(0));
+    auto res = TimeDatabase::GetInstance().Update(values, rdbPredicates);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: TimeDatabase003.
+* @tc.desc: test TimeDatabase Delete.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimeDatabase003, TestSize.Level0)
+{
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(DROP_ON_REBOOT);
+    rdbPredicatesDelete.EqualTo("something", static_cast<int64_t>(0));
+    auto res = TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
     EXPECT_FALSE(res);
 }
 

@@ -37,6 +37,7 @@
 #include "ipc_skeleton.h"
 #include "time_permission.h"
 #include "simple_timer_info.h"
+#include "rdb_helper.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -128,7 +129,8 @@ private:
     void RegisterOsAccountSubscriber();
     #endif
     bool IsValidTime(int64_t time);
-    void RecoverTimerInner(cJSON* resultSet, bool autoRestore);
+    void CjsonIntoDatabase(cJSON* resultSet, bool autoRestore, const std::string &table);
+    void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, bool autoRestore);
     #ifdef SET_AUTO_REBOOT_ENABLE
     void RegisterPowerStateListener();
     void SetAutoReboot();
