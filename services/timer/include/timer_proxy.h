@@ -48,6 +48,7 @@ public:
     void RecordProxyTimerMap(const std::shared_ptr<TimerInfo> &alarm, bool isPid);
     void RemoveUidTimerMap(const std::shared_ptr<TimerInfo> &alarm);
     void RemoveUidTimerMap(const uint64_t id);
+    int32_t CountUidTimerMapByUid(int32_t uid);
     bool IsProxy(const int32_t uid, const int32_t pid);
     #ifdef HIDUMPER_ENABLE
     bool ShowProxyTimerInfo(int fd, const int64_t now);

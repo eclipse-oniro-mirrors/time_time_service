@@ -305,7 +305,7 @@ void TimerManager::CheckTimerCount()
     if (count > (timerOutOfRangeTimes_ + 1) * TIMER_ALARM_COUNT) {
         timerOutOfRangeTimes_ += 1;
         TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}d timer in system", count);
-        ShowTimerCountByUid();
+        ShowTimerCountByUid(count);
         lastTimerOutOfRangeTime_ = GetBootTimeNs();
         return;
     }
@@ -313,26 +313,41 @@ void TimerManager::CheckTimerCount()
     if (count > MAX_TIMER_ALARM_COUNT &&
         currentBootTime - lastTimerOutOfRangeTime_ > std::chrono::minutes(TIMER_ALRAM_INTERVAL)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}d timer in system", count);
-        ShowTimerCountByUid();
+        ShowTimerCountByUid(count);
         lastTimerOutOfRangeTime_ = currentBootTime;
         return;
     }
 }
 
-void TimerManager::ShowTimerCountByUid()
+void TimerManager::ShowTimerCountByUid(int count)
 {
     std::string uidStr = "";
     std::string countStr = "";
+    int* uidArr = new int[TIMER_COUNT_TOP_NUM];
+    int* createTimerCountArr = new int[TIMER_COUNT_TOP_NUM];
+    int* startTimerCountArr = new int[TIMER_COUNT_TOP_NUM];
     auto size = static_cast<int>(timerCount_.size());
     std::sort(timerCount_.begin(), timerCount_.end(),
         [](const std::pair<int32_t, int32_t>& a, const std::pair<int32_t, int32_t>& b) {
             return a.second > b.second;
         });
     auto limitedSize = (size > TIMER_COUNT_TOP_NUM) ? TIMER_COUNT_TOP_NUM : size;
-    for (auto it = timerCount_.begin(); it != timerCount_.begin() + limitedSize; ++it) {
-        uidStr = uidStr + std::to_string(it->first) + " ";
-        countStr = countStr + std::to_string(it->second) + " ";
+    for (int i = 0; i < TIMER_COUNT_TOP_NUM; i++) {
+        if (i < limitedSize) {
+            int uid = timerCount_[i].first;
+            int createTimerCount = timerCount_[i].second;
+            uidStr = uidStr + std::to_string(uid) + " ";
+            countStr = countStr + std::to_string(createTimerCount) + " ";
+            uidArr[i] = uid;
+            createTimerCountArr[i] = createTimerCount;
+            startTimerCountArr[i] = TimerProxy::GetInstance().CountUidTimerMapByUid(uid);
+        }
+        uidArr[i] = 0;
+        createTimerCountArr[i] = 0;
+        startTimerCountArr[i] = 0;
+        
     }
+    TimerCountStaticReporter(count, uidArr, createTimerCountArr, startTimerCountArr);
     TIME_HILOGI(TIME_MODULE_SERVICE, "Top uid:[%{public}s], nums:[%{public}s]", uidStr.c_str(), countStr.c_str());
 }
 
@@ -930,13 +945,14 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
 {
     auto wakeupNums = std::count_if(triggerList.begin(), triggerList.end(), [](auto timer) {return timer->wakeup;});
     for (const auto &timer : triggerList) {
+        TimerBehaviorReport(timer, false);
         if (timer->wakeup) {
             #ifdef POWER_MANAGER_ENABLE
             TIME_HILOGD(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", uid: %{public}d bundleName: %{public}s",
                         timer->id, timer->uid, timer->bundleName.c_str());
             AddRunningLock(USE_LOCK_ONE_SEC_IN_NANO);
             #endif
-            StatisticReporter(IPCSkeleton::GetCallingPid(), wakeupNums, timer);
+            StatisticReporter(wakeupNums, timer);
         }
         if (timer->callback) {
             if (TimerProxy::GetInstance().CallbackAlarmIfNeed(timer) == PEER_END_DEAD

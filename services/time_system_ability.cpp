@@ -510,6 +510,9 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
         TimeServiceNotify::GetInstance().PublishTimeChangeEvents(currentTime);
     }
     TimeTickNotify::GetInstance().Callback();
+    int64_t curtime = 0;
+    TimeSystemAbility::GetNtpTimeMs(curtime);
+    TimeBehaviorReport(ReportEventCode::SET_TIME, std::to_string(beforeTime), std::to_string(time), curtime);
     return true;
 }
 

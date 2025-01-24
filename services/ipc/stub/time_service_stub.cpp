@@ -19,6 +19,7 @@
 #include "time_service_stub.h"
 #include "ntp_update_time.h"
 #include "ntp_trusted_time.h"
+#include "time_sysevent.h"
 
 namespace OHOS {
 namespace MiscServices {
