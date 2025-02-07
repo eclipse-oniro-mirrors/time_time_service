@@ -950,8 +950,6 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
         TimerBehaviorReport(timer, false);
         if (timer->wakeup) {
             #ifdef POWER_MANAGER_ENABLE
-            TIME_HILOGD(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", uid: %{public}d bundleName: %{public}s",
-                        timer->id, timer->uid, timer->bundleName.c_str());
             AddRunningLock(USE_LOCK_ONE_SEC_IN_NANO);
             #endif
             StatisticReporter(wakeupNums, timer);
