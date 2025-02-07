@@ -23,18 +23,22 @@
 #include <vector>
 
 #include "system_ability_definition.h"
-#include "rdb_errno.h"
-#include "rdb_helper.h"
-#include "rdb_open_callback.h"
-#include "rdb_predicates.h"
-#include "rdb_store.h"
 #include "ipc_skeleton.h"
 #include "time_file_utils.h"
 #include "time_permission.h"
 #include "timer_proxy.h"
 #include "time_sysevent.h"
-#include "timer_database.h"
 #include "cjson_helper.h"
+
+#ifdef RDB_ENABLE
+#include "rdb_errno.h"
+#include "rdb_helper.h"
+#include "rdb_open_callback.h"
+#include "rdb_predicates.h"
+#include "rdb_store.h"
+#include "timer_database.h"
+#endif
+
 #ifdef DEVICE_STANDBY_ENABLE
 #include "allow_type.h"
 #include "standby_service_client.h"
@@ -77,8 +81,12 @@ constexpr int TIMER_ALRAM_INTERVAL = 60;
 constexpr int TIMER_COUNT_TOP_NUM = 5;
 const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
 const std::string TIMER_ACROSS_ACCOUNTS = "persist.time.timer_across_accounts";
+
+#ifdef RDB_ENABLE
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime" };
+#endif
+
 #ifdef MULTI_ACCOUNT_ENABLE
 const int SYSTEM_USER_ID  = 0;
 #endif
@@ -140,6 +148,7 @@ TimerManager* TimerManager::GetInstance()
     return instance_;
 }
 
+#ifdef RDB_ENABLE
 OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerInfo, TimerPara &paras)
 {
     OHOS::NativeRdb::ValuesBucket insertValues;
@@ -158,6 +167,7 @@ OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerI
     insertValues.PutString("name", timerInfo->name);
     return insertValues;
 }
+#endif
 
 // needs to acquire the lock `entryMapMutex_` before calling this method
 void TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId)
@@ -244,13 +254,15 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     }
     if (type == NOT_STORE) {
         return E_TIME_OK;
-    } else if (CheckNeedRecoverOnReboot(bundleName, paras.timerType, paras.autoRestore)) {
-        TimeDatabase::GetInstance().Insert(std::string(HOLD_ON_REBOOT),
-                                           GetInsertValues(timerInfo, paras));
-    } else {
-        TimeDatabase::GetInstance().Insert(std::string(DROP_ON_REBOOT),
-                                           GetInsertValues(timerInfo, paras));
     }
+    auto tableName = (CheckNeedRecoverOnReboot(bundleName, paras.timerType, paras.autoRestore)
+                      ? HOLD_ON_REBOOT
+                      : DROP_ON_REBOOT);
+    #ifdef RDB_ENABLE
+    TimeDatabase::GetInstance().Insert(tableName, GetInsertValues(timerInfo, paras));
+    #else
+    CjsonHelper::GetInstance().Insert(tableName, timerInfo);
+    #endif
     return E_TIME_OK;
 }
 
@@ -294,12 +306,17 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
         auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type, timerInfo->autoRestore)
             ? HOLD_ON_REBOOT
             : DROP_ON_REBOOT);
+        #ifdef RDB_ENABLE
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 1);
         values.PutLong("triggerTime", static_cast<int64_t>(triggerTime));
         OHOS::NativeRdb::RdbPredicates rdbPredicates(tableName);
         rdbPredicates.EqualTo("state", 0)->And()->EqualTo("timerId", static_cast<int64_t>(timerId));
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
+        #else
+        CjsonHelper::GetInstance().UpdateTrigger(tableName, static_cast<int64_t>(timerId),
+            static_cast<int64_t>(triggerTime));
+        #endif
     }
     return E_TIME_OK;
 }
@@ -417,28 +434,25 @@ int32_t TimerManager::StopTimerInnerLocked(bool needDestroy, uint64_t timerNumbe
 
 void TimerManager::UpdateOrDeleteDatabase(bool needDestroy, uint64_t timerNumber, bool needRecover)
 {
-    if (needRecover) {
-        OHOS::NativeRdb::ValuesBucket values;
-        values.PutInt("state", 0);
-        OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
-        rdbPredicates.EqualTo("state", 1)->And()->EqualTo("timerId", static_cast<int64_t>(timerNumber));
-        TimeDatabase::GetInstance().Update(values, rdbPredicates);
-        if (needDestroy) {
-            OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(HOLD_ON_REBOOT);
-            rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
-            TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
-        }
+    auto tableName = (needRecover ? HOLD_ON_REBOOT : DROP_ON_REBOOT);
+    if (needDestroy) {
+        #ifdef RDB_ENABLE
+        OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(tableName);
+        rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
+        TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
+        #else
+        CjsonHelper::GetInstance().Delete(tableName, static_cast<int64_t>(timerNumber));
+        #endif
     } else {
+        #ifdef RDB_ENABLE
         OHOS::NativeRdb::ValuesBucket values;
         values.PutInt("state", 0);
-        OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
+        OHOS::NativeRdb::RdbPredicates rdbPredicates(tableName);
         rdbPredicates.EqualTo("state", 1)->And()->EqualTo("timerId", static_cast<int64_t>(timerNumber));
         TimeDatabase::GetInstance().Update(values, rdbPredicates);
-        if (needDestroy) {
-            OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(DROP_ON_REBOOT);
-            rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(timerNumber));
-            TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
-        }
+        #else
+        CjsonHelper::GetInstance().UpdateState(tableName, static_cast<int64_t>(timerNumber));
+        #endif
     }
 }
 
@@ -996,29 +1010,52 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             if (timer->repeatInterval != milliseconds::zero()) {
                 continue;
             }
-            if (CheckNeedRecoverOnReboot(timer->bundleName, timer->type, timer->autoRestore)) {
-                OHOS::NativeRdb::ValuesBucket values;
-                values.PutInt("state", 0);
-                OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
-                rdbPredicates.EqualTo("state", 1)
-                    ->And()
-                    ->EqualTo("timerId", static_cast<int64_t>(timer->id));
-                TimeDatabase::GetInstance().Update(values, rdbPredicates);
-            } else {
-                OHOS::NativeRdb::ValuesBucket values;
-                values.PutInt("state", 0);
-                OHOS::NativeRdb::RdbPredicates rdbPredicates(DROP_ON_REBOOT);
-                rdbPredicates.EqualTo("state", 1)
-                    ->And()
-                    ->EqualTo("timerId", static_cast<int64_t>(timer->id));
-                TimeDatabase::GetInstance().Update(values, rdbPredicates);
-            }
+            auto tableName = (CheckNeedRecoverOnReboot(timer->bundleName, timer->type, timer->autoRestore)
+                              ? HOLD_ON_REBOOT
+                              : DROP_ON_REBOOT);
+            #ifdef RDB_ENABLE
+            OHOS::NativeRdb::ValuesBucket values;
+            values.PutInt("state", 0);
+            OHOS::NativeRdb::RdbPredicates rdbPredicates(tableName);
+            rdbPredicates.EqualTo("state", 1)
+                ->And()
+                ->EqualTo("timerId", static_cast<int64_t>(timer->id));
+            TimeDatabase::GetInstance().Update(values, rdbPredicates);
+            #else
+            CjsonHelper::GetInstance().UpdateState(tableName, static_cast<int64_t>(timer->id));
+            #endif
         }
         if (((timer->flags & static_cast<uint32_t>(IS_DISPOSABLE)) > 0) &&
             (timer->repeatInterval == milliseconds::zero())) {
             DestroyTimer(timer->id);
         }
     }
+}
+
+std::string GetWantString(int64_t timerId)
+{
+    #ifdef RDB_ENABLE
+    OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
+    holdRdbPredicates.EqualTo("timerId", timerId);
+    auto holdResultSet = TimeDatabase::GetInstance().Query(holdRdbPredicates, ALL_DATA);
+    if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "db query failed nullptr");
+        if (holdResultSet != nullptr) {
+            holdResultSet->Close();
+        }
+        return "";
+    }
+    // Line 7 is 'wantAgent'
+    auto wantStr = GetString(holdResultSet, 7);
+    holdResultSet->Close();
+    #else
+    auto wantStr = CjsonHelper::GetInstance().QueryWant(HOLD_ON_REBOOT, timerId);
+    if (wantStr == "") {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "db query failed");
+        return "";
+    }
+    #endif
+    return wantStr;
 }
 
 bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
@@ -1038,19 +1075,11 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
                 break;
         }
         #endif
-        OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
-        holdRdbPredicates.EqualTo("timerId", static_cast<int64_t>(timer->id));
-        auto holdResultSet = TimeDatabase::GetInstance().Query(holdRdbPredicates, ALL_DATA);
-        if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "db query failed nullptr");
-            if (holdResultSet != nullptr) {
-                holdResultSet->Close();
-            }
+        auto wantStr = GetWantString(static_cast<int64_t>(timer->id));
+        if (wantStr == "") {
             return false;
         }
-        // Line 7 is 'wantAgent'
-        wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(holdResultSet, 7));
-        holdResultSet->Close();
+        wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(wantStr);
         #ifdef MULTI_ACCOUNT_ENABLE
         switch (CheckUserIdForNotify(timer)) {
             case E_TIME_ACCOUNT_NOT_MATCH:
