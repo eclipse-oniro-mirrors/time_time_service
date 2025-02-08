@@ -73,6 +73,8 @@ ohos_unittest("TimeServiceTest") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "power_manager:powermgr_client",
+    "relational_store:native_dataability",
+    "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -109,6 +111,8 @@ ohos_unittest("TimeClientTest") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "power_manager:powermgr_client",
+    "relational_store:native_dataability",
+    "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -146,6 +150,8 @@ ohos_unittest("TimeDfxTest") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "power_manager:powermgr_client",
+    "relational_store:native_dataability",
+    "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]

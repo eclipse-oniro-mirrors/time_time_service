@@ -39,6 +39,7 @@
         "ipc",
         "ability_base",
         "ability_runtime",
+        "relational_store",
         "hilog",
         "hicollie",
         "safwk",

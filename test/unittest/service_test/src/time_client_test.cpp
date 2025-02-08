@@ -34,6 +34,7 @@
 #define private public
 #include "time_system_ability.h"
 #include "time_service_client.h"
+#include "timer_database.h"
 
 namespace {
 using namespace testing::ext;
@@ -850,6 +851,43 @@ HWTEST_F(TimeClientTest, StartTimer006, TestSize.Level1)
     sleep(1);
     errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+}
+
+/**
+* @tc.name: StartTimer007
+* @tc.desc: Start a loop timer at an early point in time and trigger a rearrangement. It will trigger as expected.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
+{
+    g_data1 = 0;
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT | timerInfo->TIMER_TYPE_WAKEUP);
+    timerInfo->SetRepeat(true);
+    timerInfo->SetInterval(3600000);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
+    auto time = TimeServiceClient::GetInstance()->GetWallTimeMs() - 86400000;
+    bool result = TimeServiceClient::GetInstance()->SetTime(time);
+    EXPECT_TRUE(result);
+    TimeServiceClient::GetInstance()->StartTimerV9(timerId, time + 100000);
+    // First trigger
+    time += 86400000;
+    result = TimeServiceClient::GetInstance()->SetTime(time);
+    EXPECT_TRUE(result);
+    usleep(FIVE_HUNDRED * MICRO_TO_MILLISECOND);
+    EXPECT_EQ(g_data1, 1);
+    //Trigger a rearrangement
+    time += 10000;
+    result = TimeServiceClient::GetInstance()->SetTime(time);
+    EXPECT_TRUE(result);
+    usleep(FIVE_HUNDRED * MICRO_TO_MILLISECOND);
+    EXPECT_EQ(g_data1, 1);
+    TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
 
 /**

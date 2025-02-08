@@ -38,6 +38,7 @@
 #include "time_permission.h"
 #include "simple_timer_info.h"
 #include "time_sysevent.h"
+#include "rdb_helper.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -60,8 +61,10 @@ public:
     ~TimeSystemAbility();
     static sptr<TimeSystemAbility> GetInstance();
     int32_t SetTime(int64_t time, int8_t apiVersion = APIVersion::API_VERSION_7) override;
+    int32_t SetTimeInner(int64_t time, int8_t apiVersion = APIVersion::API_VERSION_7);
     bool SetRealTime(int64_t time);
     int32_t SetTimeZone(const std::string &timeZoneId, int8_t apiVersion = APIVersion::API_VERSION_7) override;
+    int32_t SetTimeZoneInner(const std::string &timeZoneId, int8_t apiVersion = APIVersion::API_VERSION_7);
     int32_t GetTimeZone(std::string &timeZoneId) override;
     int32_t GetWallTimeMs(int64_t &time);
     int32_t GetBootTimeMs(int64_t &time);
@@ -127,7 +130,8 @@ private:
     void RegisterOsAccountSubscriber();
     #endif
     bool IsValidTime(int64_t time);
-    void RecoverTimerInner(cJSON* resultSet, bool autoRestore);
+    void CjsonIntoDatabase(cJSON* resultSet, bool autoRestore, const std::string &table);
+    void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, bool autoRestore);
     #ifdef SET_AUTO_REBOOT_ENABLE
     void RegisterPowerStateListener();
     void SetAutoReboot();
