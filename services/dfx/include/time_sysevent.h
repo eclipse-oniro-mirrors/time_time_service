@@ -26,6 +26,7 @@ constexpr int32_t TRIGGER_TIMER_OFFSET = 0x00000100;
 constexpr int32_t TIMER_FAULT_OFFSET = 0x00000200;
 constexpr int32_t MODIFY_TIME_OFFSET = 0x01000000;
 constexpr int32_t EXACT_OFFSET = 4;
+static const int COUNT_REPORT_ARRAY_LENGTH = 5;
 
 enum ReportEventCode : int32_t {
     RTC_WAKEUP_EXACT_TIMER_START = START_TIMER_OFFSET,
@@ -52,7 +53,8 @@ enum ReportEventCode : int32_t {
 void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer);
 void TimeBehaviorReport(ReportEventCode eventCode, std::string originTime, std::string newTime, int64_t ntpTime);
 void TimerBehaviorReport(std::shared_ptr<TimerInfo> timer, bool isStart);
-void TimerCountStaticReporter(int count, int* uidArr, int* createTimerCountArr, int* startTimerCountArr);
+void TimerCountStaticReporter(int count, int (&uidArr)[COUNT_REPORT_ARRAY_LENGTH],
+    int (&createTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH], int (&startTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH]);
 void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, std::string extraInfo);
 } // namespace MiscServices
 } // namespace OHOS

@@ -26,7 +26,6 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 using HiSysEventNameSpace = OHOS::HiviewDFX::HiSysEvent;
-static const int COUNT_REPORT_ARRAY_LENGTH = 5;
 } // namespace
 
 std::string GetBundleOrProcessName()
@@ -50,13 +49,13 @@ void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer)
     int64_t triggerTime = timer->whenElapsed.time_since_epoch().count();
     auto interval = static_cast<uint64_t>(timer->repeatInterval.count());
     struct HiSysEventParam params[] = {
-        {"CALLER_PID",             HISYSEVENT_INT32,  {callerPid},                                           0},
-        {"CALLER_UID",             HISYSEVENT_INT32,  {callerUid},                                           0},
+        {"CALLER_PID",             HISYSEVENT_INT32,  {.i32 = callerPid},                                    0},
+        {"CALLER_UID",             HISYSEVENT_INT32,  {.i32 = callerUid},                                    0},
         {"BUNDLE_OR_PROCESS_NAME", HISYSEVENT_STRING, {.s = const_cast<char*>(bundleOrProcessName.c_str())}, 0},
-        {"TIMER_SIZE",             HISYSEVENT_INT32,  {size},                                                0},
-        {"TIMER_TYPE",             HISYSEVENT_INT32,  {type},                                                0},
-        {"TRIGGER_TIME",           HISYSEVENT_INT64,  {triggerTime},                                         0},
-        {"INTERVAL",               HISYSEVENT_UINT64, {interval},                                            0}
+        {"TIMER_SIZE",             HISYSEVENT_INT32,  {.i32 = size},                                         0},
+        {"TIMER_TYPE",             HISYSEVENT_INT32,  {.i32 = type},                                         0},
+        {"TRIGGER_TIME",           HISYSEVENT_INT64,  {.i64 = triggerTime},                                  0},
+        {"INTERVAL",               HISYSEVENT_UINT64, {.ui64 = interval},                                    0}
     };
     int ret = OH_HiSysEvent_Write("TIME", "MISC_TIME_STATISTIC_REPORT", HISYSEVENT_STATISTIC, params,
         sizeof(params)/sizeof(params[0]));
@@ -71,12 +70,12 @@ void TimeBehaviorReport(ReportEventCode eventCode, std::string originTime, std::
 {
     std::string bundleOrProcessName = GetBundleOrProcessName();
     struct HiSysEventParam params[] = {
-        {"EVENT_CODE",    HISYSEVENT_INT32,  {eventCode},                                            0},
-        {"CALLER_UID",    HISYSEVENT_INT32,  {IPCSkeleton::GetCallingUid()},                         0},
-        {"CALLER_NAME",   HISYSEVENT_STRING, {.s = const_cast<char*>(bundleOrProcessName.c_str())},  0},
-        {"ORIGINAL_TIME", HISYSEVENT_STRING, {.s = const_cast<char*>(originTime.c_str())},           0},
-        {"SET_TIME",      HISYSEVENT_STRING, {.s = const_cast<char*>(newTime.c_str())},              0},
-        {"NTP_TIME",      HISYSEVENT_INT64,  {ntpTime},                                              0}
+        {"EVENT_CODE",    HISYSEVENT_INT32,  {.i32 = eventCode},                                    0},
+        {"CALLER_UID",    HISYSEVENT_INT32,  {.i32 = IPCSkeleton::GetCallingUid()},                 0},
+        {"CALLER_NAME",   HISYSEVENT_STRING, {.s = const_cast<char*>(bundleOrProcessName.c_str())}, 0},
+        {"ORIGINAL_TIME", HISYSEVENT_STRING, {.s = const_cast<char*>(originTime.c_str())},          0},
+        {"SET_TIME",      HISYSEVENT_STRING, {.s = const_cast<char*>(newTime.c_str())},             0},
+        {"NTP_TIME",      HISYSEVENT_INT64,  {.i64 = ntpTime},                                      0}
     };
     int ret = OH_HiSysEvent_Write("TIME", "BEHAVIOR_TIME", HISYSEVENT_BEHAVIOR, params,
         sizeof(params)/sizeof(params[0]));
@@ -97,12 +96,12 @@ void TimerBehaviorReport(std::shared_ptr<TimerInfo> timer, bool isStart)
     auto bundleOrProcessName = timer->bundleName;
     auto interval = static_cast<uint32_t>(timer->repeatInterval.count());
     struct HiSysEventParam params[] = {
-        {"EVENT_CODE",   HISYSEVENT_INT32,  {eventCode},                                           0},
-        {"TIMER_ID",     HISYSEVENT_UINT32, {timer->id},                                           0},
-        {"TRIGGER_TIME", HISYSEVENT_INT64,  {timer->when.count()},                                 0},
-        {"CALLER_UID",   HISYSEVENT_INT32,  {timer->uid},                                          0},
+        {"EVENT_CODE",   HISYSEVENT_INT32,  {.i32 = eventCode},                                    0},
+        {"TIMER_ID",     HISYSEVENT_UINT32, {.ui32 = timer->id},                                   0},
+        {"TRIGGER_TIME", HISYSEVENT_INT64,  {.i64 = timer->when.count()},                         0},
+        {"CALLER_UID",   HISYSEVENT_INT32,  {.i32 = timer->uid},                                   0},
         {"CALLER_NAME",  HISYSEVENT_STRING, {.s = const_cast<char*>(bundleOrProcessName.c_str())}, 0},
-        {"INTERVAL",     HISYSEVENT_UINT32, {interval},                                            0}
+        {"INTERVAL",     HISYSEVENT_UINT32, {.ui32 =interval},                                     0}
     };
     int ret = OH_HiSysEvent_Write("TIME", "BEHAVIOR_TIMER", HISYSEVENT_BEHAVIOR, params,
         sizeof(params)/sizeof(params[0]));
@@ -113,13 +112,14 @@ void TimerBehaviorReport(std::shared_ptr<TimerInfo> timer, bool isStart)
     }
 }
 
-void TimerCountStaticReporter(int count, int* uidArr, int* createTimerCountArr, int* startTimerCountArr)
+void TimerCountStaticReporter(int count, int (&uidArr)[COUNT_REPORT_ARRAY_LENGTH],
+    int (&createTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH], int (&startTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH])
 {
     struct HiSysEventParam params[] = {
-        {"TIMER_NUM",     HISYSEVENT_INT32,       {count},               0},
-        {"TOP_UID",       HISYSEVENT_INT32_ARRAY, {uidArr},              COUNT_REPORT_ARRAY_LENGTH},
-        {"TOP_NUM",       HISYSEVENT_INT32_ARRAY, {createTimerCountArr}, COUNT_REPORT_ARRAY_LENGTH},
-        {"TOP_STRAT_NUM", HISYSEVENT_INT32_ARRAY, {startTimerCountArr},  COUNT_REPORT_ARRAY_LENGTH}
+        {"TIMER_NUM",     HISYSEVENT_INT32,       {.i32 = count},                 0},
+        {"TOP_UID",       HISYSEVENT_INT32_ARRAY, {.array = uidArr},              COUNT_REPORT_ARRAY_LENGTH},
+        {"TOP_NUM",       HISYSEVENT_INT32_ARRAY, {.array = createTimerCountArr}, COUNT_REPORT_ARRAY_LENGTH},
+        {"TOP_STRAT_NUM", HISYSEVENT_INT32_ARRAY, {.array = startTimerCountArr},  COUNT_REPORT_ARRAY_LENGTH}
     };
     int ret = OH_HiSysEvent_Write("TIME", "ALARM_COUNT", HISYSEVENT_STATISTIC,
         params, sizeof(params)/sizeof(params[0]));
@@ -132,7 +132,7 @@ void TimerCountStaticReporter(int count, int* uidArr, int* createTimerCountArr, 
             createCountStr = createCountStr + std::to_string(createTimerCountArr[i]) + " ";
             startCountStr = startCountStr + std::to_string(startTimerCountArr[i]) + " ";
         }
-        TIME_HILOGE(TIME_MODULE_SERVICE, "hisysevent Statistic failed! count:%{public}d, uid:[%{public}s],"
+        TIME_HILOGE(TIME_MODULE_SERVICE, "TimerCountStaticReporter failed! count:%{public}d, uid:[%{public}s],"
             "create count:[%{public}s], startcount:[%{public}s]", count, uidStr.c_str(), createCountStr.c_str(),
             startCountStr.c_str());
     }
@@ -143,16 +143,16 @@ void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, std::strin
     int uid = IPCSkeleton::GetCallingUid();
     std::string bundleOrProcessName = GetBundleOrProcessName();
     struct HiSysEventParam params[] = {
-        {"EVENT_CODE",  HISYSEVENT_INT32,  {eventCode},                                           0},
-        {"ERR_CODE",    HISYSEVENT_INT32,  {errCode},                                             0},
-        {"CALLER_UID",  HISYSEVENT_INT32,  {uid},                                                 0},
+        {"EVENT_CODE",  HISYSEVENT_INT32,  {.i32 = eventCode},                                    0},
+        {"ERR_CODE",    HISYSEVENT_INT32,  {.i32 = errCode},                                      0},
+        {"CALLER_UID",  HISYSEVENT_INT32,  {.i32 = uid},                                          0},
         {"CALLER_NAME", HISYSEVENT_STRING, {.s = const_cast<char*>(bundleOrProcessName.c_str())}, 0},
         {"EXTRA",       HISYSEVENT_STRING, {.s = const_cast<char*>(extraInfo.c_str())},           0}
     };
-    int ret = OH_HiSysEvent_Write("TIME", "ALARM_COUNT", HISYSEVENT_STATISTIC,
+    int ret = OH_HiSysEvent_Write("TIME", "FUNC_FAULT", HISYSEVENT_FAULT,
         params, sizeof(params)/sizeof(params[0]));
     if (ret != 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "hisysevent Statistic failed! eventCode:%{public}d errorcode:%{public}d"
+        TIME_HILOGE(TIME_MODULE_SERVICE, "TimeServiceFaultReporter failed! eventCode:%{public}d errorcode:%{public}d"
             "callname:%{public}s", eventCode, errCode, bundleOrProcessName.c_str());
     }
 }

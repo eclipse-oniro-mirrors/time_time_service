@@ -291,16 +291,13 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
         TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid: %{public}d is already proxy", uid, pid);
         return;
     }
-    std::unordered_map<int32_t, std::unordered_map<uint64_t, std::shared_ptr<TimerInfo>>>::iterator itUidTimersMap;
+    std::lock_guard<std::mutex> lockUidTimers(uidTimersMutex_);
     std::vector<uint64_t> timerList;
-    {
-        std::lock_guard<std::mutex> lockUidTimers(uidTimersMutex_);
-        itUidTimersMap = uidTimersMap_.find(uid);
-        if (itUidTimersMap == uidTimersMap_.end()) {
-            TIME_HILOGD(TIME_MODULE_SERVICE, "uid: %{public}d in map not found", uid);
-            proxyTimers_[key] = timerList;
-            return;
-        }
+    auto itUidTimersMap = uidTimersMap_.find(uid);
+    if (itUidTimersMap == uidTimersMap_.end()) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "uid: %{public}d in map not found", uid);
+        proxyTimers_[key] = timerList;
+        return;
     }
 
     for (auto itTimerInfo = itUidTimersMap->second.begin(); itTimerInfo!= itUidTimersMap->second.end();
@@ -331,14 +328,11 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
         TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid:%{public}d not in proxy.", uid, pid);
         return false;
     }
-    std::unordered_map<int32_t, std::unordered_map<uint64_t, std::shared_ptr<TimerInfo>>>::iterator itTimer;
-    {
-        std::lock_guard<std::mutex> lockPidTimers(uidTimersMutex_);
-        itTimer = uidTimersMap_.find(uid);
-        if (uidTimersMap_.find(uid) == uidTimersMap_.end()) {
-            TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d timer info not found, erase proxy map. ", uid);
-            return true;
-        }
+    std::lock_guard<std::mutex> lockPidTimers(uidTimersMutex_);
+    auto itTimer = uidTimersMap_.find(uid);
+    if (uidTimersMap_.find(uid) == uidTimersMap_.end()) {
+        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d timer info not found, erase proxy map. ", uid);
+        return true;
     }
 
     for (auto elem : itProxy->second) {

@@ -26,7 +26,6 @@
 #include "parameters.h"
 #include "time_common.h"
 #include "time_system_ability.h"
-#include "time_sysevent.h"
 
 using namespace std::chrono;
 
