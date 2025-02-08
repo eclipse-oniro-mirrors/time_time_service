@@ -29,9 +29,6 @@ constexpr int DATABASE_OPEN_VERSION_3 = 3;
 constexpr int CHECK_VERSION_FAILED = -1;
 constexpr int API12_5_0_RELEASE = 50;
 constexpr int INVALID_VERSION = -50;
-constexpr int CLOCK_POWEROFF_ALARM = 12;
-constexpr const char *HOLD_ON_REBOOT = "hold_on_reboot";
-constexpr const char *DROP_ON_REBOOT = "drop_on_reboot";
 
 int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
 int64_t GetLong(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);

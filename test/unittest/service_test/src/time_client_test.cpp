@@ -34,7 +34,6 @@
 #define private public
 #include "time_system_ability.h"
 #include "time_service_client.h"
-#include "timer_database.h"
 
 namespace {
 using namespace testing::ext;

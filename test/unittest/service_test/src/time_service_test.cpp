@@ -1174,7 +1174,7 @@ HWTEST_F(TimeServiceTest, TimerManager005, TestSize.Level0)
                                                  nullptr, nullptr, 0, false, 0, 0, "");
     auto res = TimerManager::GetInstance()->NotifyWantAgent(timerInfo);
     EXPECT_FALSE(res);
-
+    #ifdef RDB_ENABLE
     OHOS::NativeRdb::ValuesBucket insertValues;
     insertValues.PutLong("timerId", TIMER_ID);
     insertValues.PutInt("type", 0);
@@ -1188,13 +1188,20 @@ HWTEST_F(TimeServiceTest, TimerManager005, TestSize.Level0)
     insertValues.PutInt("state", 0);
     insertValues.PutLong("triggerTime", static_cast<int64_t>(std::numeric_limits<int64_t>::max()));
     TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues);
-
+    #else
+    auto entry = std::make_shared<TimerEntry>(
+            TimerEntry{"", TIMER_ID, 0, 0, 0, 0, false, nullptr, nullptr, 0, 0, "bundleName"});
+    CjsonHelper::GetInstance().Insert(HOLD_ON_REBOOT, entry);
+    #endif
     res = TimerManager::GetInstance()->NotifyWantAgent(timerInfo);
     EXPECT_FALSE(res);
-
+    #ifdef RDB_ENABLE
     OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete(HOLD_ON_REBOOT);
     rdbPredicatesDelete.EqualTo("timerId", static_cast<int64_t>(TIMER_ID));
     TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
+    #else
+    CjsonHelper::GetInstance().Delete(HOLD_ON_REBOOT, TIMER_ID);
+    #endif
 }
 
 /**
@@ -1462,6 +1469,7 @@ HWTEST_F(TimeServiceTest, SystemAbility001, TestSize.Level0)
     EXPECT_EQ(TimeSystemAbility::GetInstance()->state_, ServiceRunningState::STATE_NOT_START);
 }
 
+#ifdef RDB_ENABLE
 /**
 * @tc.name: SystemAbility002.
 * @tc.desc: test RecoverTimer.
@@ -1525,6 +1533,7 @@ HWTEST_F(TimeServiceTest, SystemAbility002, TestSize.Level0)
     rdbPredicatesDelete2.EqualTo("timerId", static_cast<int64_t>(timerId2));
     TimeDatabase::GetInstance().Delete(rdbPredicatesDelete2);
 }
+#endif
 
 #ifdef SET_AUTO_REBOOT_ENABLE
 /**
@@ -1571,6 +1580,7 @@ HWTEST_F(TimeServiceTest, SystemAbility004, TestSize.Level0)
     EXPECT_FALSE(res);
 }
 
+#ifdef RDB_ENABLE
 /**
 * @tc.name: TimeDatabase001.
 * @tc.desc: test TimeDatabase Insert.
@@ -1611,6 +1621,7 @@ HWTEST_F(TimeServiceTest, TimeDatabase003, TestSize.Level0)
     auto res = TimeDatabase::GetInstance().Delete(rdbPredicatesDelete);
     EXPECT_FALSE(res);
 }
+#endif
 
 /**
 * @tc.name: TimerInfo001.
