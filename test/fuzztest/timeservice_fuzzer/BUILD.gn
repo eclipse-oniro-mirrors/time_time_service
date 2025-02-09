@@ -141,11 +141,16 @@ foreach(item, time_fuzztests) {
       "init:libbegetutil",
       "ipc:ipc_single",
       "power_manager:powermgr_client",
-      "relational_store:native_dataability",
-      "relational_store:native_rdb",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
+
+    if (time_service_rdb_enable) {
+      external_deps += [
+        "relational_store:native_dataability",
+        "relational_store:native_rdb",
+      ]
+    }
 
     if (time_service_hidumper_able) {
       defines = [ "HIDUMPER_ENABLE" ]

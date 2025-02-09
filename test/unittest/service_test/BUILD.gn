@@ -56,8 +56,9 @@ ohos_unittest("TimeServiceTest") {
     cfi_cross_dso = true
     debug = false
   }
+  defines = []
   if (time_service_set_auto_reboot) {
-    defines = [ "SET_AUTO_REBOOT_ENABLE" ]
+    defines += [ "SET_AUTO_REBOOT_ENABLE" ]
   }
   external_deps = [
     "ability_base:want",
@@ -73,11 +74,16 @@ ohos_unittest("TimeServiceTest") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "power_manager:powermgr_client",
-    "relational_store:native_dataability",
-    "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+  if (time_service_rdb_enable) {
+    defines += [ "RDB_ENABLE" ]
+    external_deps += [
+      "relational_store:native_dataability",
+      "relational_store:native_rdb",
+    ]
+  }
 }
 
 ohos_unittest("TimeClientTest") {
@@ -111,8 +117,6 @@ ohos_unittest("TimeClientTest") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "power_manager:powermgr_client",
-    "relational_store:native_dataability",
-    "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -150,8 +154,6 @@ ohos_unittest("TimeDfxTest") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "power_manager:powermgr_client",
-    "relational_store:native_dataability",
-    "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]

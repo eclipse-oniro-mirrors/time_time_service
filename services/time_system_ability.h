@@ -38,7 +38,10 @@
 #include "time_permission.h"
 #include "simple_timer_info.h"
 #include "time_sysevent.h"
+#ifdef RDB_ENABLE
 #include "rdb_helper.h"
+#include "timer_database.h"
+#endif
 
 namespace OHOS {
 namespace MiscServices {
@@ -103,6 +106,7 @@ public:
     #endif
     void RegisterCommonEventSubscriber();
     bool RecoverTimer();
+    void RecoverTimerCjson(std::string tableName);
 
 protected:
     void OnStart() override;
@@ -130,8 +134,12 @@ private:
     void RegisterOsAccountSubscriber();
     #endif
     bool IsValidTime(int64_t time);
+    #ifdef RDB_ENABLE
     void CjsonIntoDatabase(cJSON* resultSet, bool autoRestore, const std::string &table);
     void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, bool autoRestore);
+    #else
+    void RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestore);
+    #endif
     #ifdef SET_AUTO_REBOOT_ENABLE
     void RegisterPowerStateListener();
     void SetAutoReboot();
