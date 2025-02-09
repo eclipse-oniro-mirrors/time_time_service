@@ -180,6 +180,16 @@ void TimerProxy::EraseAlarmItem(
     }
 }
 
+int32_t TimerProxy::CountUidTimerMapByUid(int32_t uid)
+{
+    std::lock_guard<std::mutex> lock(uidTimersMutex_);
+    auto it = uidTimersMap_.find(uid);
+    if (it == uidTimersMap_.end()) {
+        return 0;
+    }
+    return it->second.size();
+}
+
 void TimerProxy::RecordUidTimerMap(const std::shared_ptr<TimerInfo> &alarm, const bool isRebatched)
 {
     if (isRebatched) {
@@ -281,7 +291,6 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
         TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid: %{public}d is already proxy", uid, pid);
         return;
     }
-
     std::lock_guard<std::mutex> lockUidTimers(uidTimersMutex_);
     std::vector<uint64_t> timerList;
     auto itUidTimersMap = uidTimersMap_.find(uid);
@@ -319,7 +328,6 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
         TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid:%{public}d not in proxy.", uid, pid);
         return false;
     }
-    
     std::lock_guard<std::mutex> lockPidTimers(uidTimersMutex_);
     auto itTimer = uidTimersMap_.find(uid);
     if (uidTimersMap_.find(uid) == uidTimersMap_.end()) {
@@ -346,7 +354,6 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
             now.time_since_epoch().count());
         insertAlarmCallback(itTimerInfo->second, needRetrigger);
     }
-
     return true;
 }
 

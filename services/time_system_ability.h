@@ -37,6 +37,7 @@
 #include "ipc_skeleton.h"
 #include "time_permission.h"
 #include "simple_timer_info.h"
+#include "time_sysevent.h"
 #ifdef RDB_ENABLE
 #include "rdb_helper.h"
 #include "timer_database.h"

@@ -153,7 +153,7 @@ private:
     void IncreaseTimerCount(int uid);
     void DecreaseTimerCount(int uid);
     void CheckTimerCount();
-    void ShowTimerCountByUid();
+    void ShowTimerCountByUid(int count);
     void AddTimerName(int uid, std::string name, uint64_t timerId);
     void DeleteTimerName(int uid, std::string name, uint64_t timerId);
 

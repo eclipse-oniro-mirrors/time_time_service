@@ -20,6 +20,7 @@
 #include "time_zone_info.h"
 #include "ipc_skeleton.h"
 #include "time_file_utils.h"
+#include "time_sysevent.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -78,6 +79,7 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
         return false;
     }
     curTimezoneId_ = timezoneId;
+    TimeBehaviorReport(ReportEventCode::SET_TIMEZONE, curTimezoneId_, timezoneId, 0);
     return true;
 }
 
