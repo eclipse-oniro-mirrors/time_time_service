@@ -814,11 +814,11 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo1 = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
-                                                 nullptr, nullptr, 0, UID, 0, "");
+                                                 nullptr, nullptr, 0, false, UID, 0, "");
     auto res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
     EXPECT_EQ(res, E_TIME_OK);
     auto timerInfo2 = std::make_shared<TimerInfo>(TIMER_ID + 1, 0, duration, timePoint, duration, timePoint, duration,
-                                                 nullptr, nullptr, 0, UID, 0, "");
+                                                 nullptr, nullptr, 0, false, UID, 0, "");
     res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo2);
     EXPECT_EQ(res, E_TIME_OK);
 
@@ -871,11 +871,11 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo1 = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
-                                                  nullptr, nullptr, 0, uid, PID, "");
+                                                  nullptr, nullptr, 0, false, uid, PID, "");
     auto res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo1);
     EXPECT_EQ(res, E_TIME_OK);
     auto timerInfo2 = std::make_shared<TimerInfo>(TIMER_ID + 1, 0, duration, timePoint, duration, timePoint, duration,
-                                                  nullptr, nullptr, 0, uid, PID, "");
+                                                  nullptr, nullptr, 0, false, uid, PID, "");
     res = TimerProxy::GetInstance().CallbackAlarmIfNeed(timerInfo2);
     EXPECT_EQ(res, E_TIME_OK);
 
@@ -917,7 +917,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover004, TestSize.Level1)
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo = std::make_shared<TimerInfo>(TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
-                                                  nullptr, nullptr, 0, UID, PID, "");
+                                                  nullptr, nullptr, 0, false, UID, PID, "");
     TimerProxy::GetInstance().RecordUidTimerMap(timerInfo, false);
     {
         std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().uidTimersMutex_);
