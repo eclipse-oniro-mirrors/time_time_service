@@ -1108,7 +1108,9 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
     auto code = AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
     TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "trigWA ret: %{public}d", code);
     if (code != ERR_OK) {
-        TimeServiceFaultReporter(ReportEventCode::TIMER_WANTAGENT_FAULT_REPORT, code, "");
+        auto extraInfo = "timer id:" + std::to_string(timer->id);
+        TimeServiceFaultReporter(ReportEventCode::TIMER_WANTAGENT_FAULT_REPORT, code, timer->uid, timer->bundleName,
+            extraInfo);
     }
     return code == ERR_OK;
 }

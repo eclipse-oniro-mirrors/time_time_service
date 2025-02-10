@@ -138,10 +138,9 @@ void TimerCountStaticReporter(int count, int (&uidArr)[COUNT_REPORT_ARRAY_LENGTH
     }
 }
 
-void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, std::string extraInfo)
+void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, int uid, std::string bundleOrProcessName,
+    std::string extraInfo)
 {
-    int uid = IPCSkeleton::GetCallingUid();
-    std::string bundleOrProcessName = GetBundleOrProcessName();
     struct HiSysEventParam params[] = {
         {"EVENT_CODE",  HISYSEVENT_INT32,  {.i32 = eventCode},                                    0},
         {"ERR_CODE",    HISYSEVENT_INT32,  {.i32 = errCode},                                      0},

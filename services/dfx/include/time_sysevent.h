@@ -55,7 +55,8 @@ void TimeBehaviorReport(ReportEventCode eventCode, std::string originTime, std::
 void TimerBehaviorReport(std::shared_ptr<TimerInfo> timer, bool isStart);
 void TimerCountStaticReporter(int count, int (&uidArr)[COUNT_REPORT_ARRAY_LENGTH],
     int (&createTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH], int (&startTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH]);
-void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, std::string extraInfo);
+void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, int uid, std::string bundleOrProcessName,
+    std::string extraInfo);
 } // namespace MiscServices
 } // namespace OHOS
 #endif // TIME_SYSEVENT_H
