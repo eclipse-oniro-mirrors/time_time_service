@@ -24,7 +24,7 @@ namespace OHOS {
 namespace MiscServices {
 using namespace OHOS::EventFwk;
 using namespace OHOS::AAFwk;
-static const uint32_t CONNECTED_EVENT = 3;
+static constexpr uint32_t CONNECTED_EVENT = 3;
 
 EventManager::EventManager(const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo)
     : CommonEventSubscriber(subscriberInfo)

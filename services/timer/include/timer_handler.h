@@ -26,8 +26,8 @@
 
 namespace OHOS {
 namespace MiscServices {
-static const size_t ALARM_TYPE_COUNT = 5;
-static const size_t N_TIMER_FDS = ALARM_TYPE_COUNT + 1;
+static constexpr size_t ALARM_TYPE_COUNT = 5;
+static constexpr size_t N_TIMER_FDS = ALARM_TYPE_COUNT + 1;
 typedef std::array<int, N_TIMER_FDS> TimerFds;
 
 class TimerHandler {

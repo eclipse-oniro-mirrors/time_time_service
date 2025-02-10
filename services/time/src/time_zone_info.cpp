@@ -28,9 +28,9 @@ namespace {
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
 constexpr const char *TIMEZONE_LIST_CONFIG_PATH = "/system/etc/zoneinfo/timezone_list.cfg";
 constexpr const char *DISTRO_TIMEZONE_LIST_CONFIG = "/system/etc/tzdata_distro/timezone_list.cfg";
-const int TIMEZONE_OK = 0;
-const int CONFIG_LEN = 35;
-const int HOUR_TO_MIN = 60;
+constexpr int TIMEZONE_OK = 0;
+constexpr int CONFIG_LEN = 35;
+constexpr int HOUR_TO_MIN = 60;
 } // namespace
 
 TimeZoneInfo &TimeZoneInfo::GetInstance()

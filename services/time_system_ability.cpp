@@ -58,15 +58,15 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 // Unit of measure conversion , BASE: second
-static const int MILLI_TO_BASE = 1000LL;
-static const int MICR_TO_BASE = 1000000LL;
-static const int NANO_TO_BASE = 1000000000LL;
-static const std::int32_t INIT_INTERVAL = 10L;
-static const uint32_t TIMER_TYPE_REALTIME_MASK = 1 << 0;
-static const uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
-static const uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
-static const uint32_t TIMER_TYPE_IDLE_MASK = 1 << 3;
-static const uint32_t TIMER_TYPE_INEXACT_REMINDER_MASK = 1 << 4;
+static constexpr int MILLI_TO_BASE = 1000LL;
+static constexpr int MICR_TO_BASE = 1000000LL;
+static constexpr int NANO_TO_BASE = 1000000000LL;
+static constexpr std::int32_t INIT_INTERVAL = 10L;
+static constexpr uint32_t TIMER_TYPE_REALTIME_MASK = 1 << 0;
+static constexpr uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
+static constexpr uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
+static constexpr uint32_t TIMER_TYPE_IDLE_MASK = 1 << 3;
+static constexpr uint32_t TIMER_TYPE_INEXACT_REMINDER_MASK = 1 << 4;
 static constexpr int32_t STR_MAX_LENGTH = 64;
 constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
@@ -74,19 +74,20 @@ constexpr int32_t ONE_MILLI = 1000;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime", \
                                                    "pid", "name"};
-const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
-static const int MAX_PID_LIST_SIZE = 1024;
-static const uint32_t MAX_EXEMPTION_SIZE = 1000;
+constexpr const char* BOOTEVENT_PARAMETER = "bootevent.boot.completed";
+static constexpr int MAX_PID_LIST_SIZE = 1024;
+static constexpr uint32_t MAX_EXEMPTION_SIZE = 1000;
+
 #ifdef SET_AUTO_REBOOT_ENABLE
 constexpr int64_t MILLISECOND_TO_NANO = 1000000;
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
-const std::string SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
+constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 constexpr int CLOCK_POWEROFF_ALARM = 12;
 constexpr size_t INDEX_TWO = 2;
 #endif
 
 #ifdef MULTI_ACCOUNT_ENABLE
-const std::string SUBSCRIBE_REMOVED = "UserRemoved";
+constexpr const char* SUBSCRIBE_REMOVED = "UserRemoved";
 #endif
 } // namespace
 

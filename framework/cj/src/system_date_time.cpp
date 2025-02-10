@@ -25,7 +25,11 @@ namespace CJSystemapi {
 namespace SystemDateTime {
 
 using namespace MiscServices;
-const std::string TIMEZONE_KEY = "persist.time.timezone";
+constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
+constexpr int32_t STARTUP = 0;
+constexpr int64_t SECONDS_TO_NANO = 1000000000;
+constexpr int64_t SECONDS_TO_MILLI = 1000;
+constexpr int64_t NANO_TO_MILLI = SECONDS_TO_NANO / SECONDS_TO_MILLI;
 
 int SystemDateTimeImpl::SetTime(int64_t time)
 {

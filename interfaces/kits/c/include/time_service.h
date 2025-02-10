@@ -43,7 +43,7 @@ extern "C" {
  *
  * @since 12
  */
-typedef enum TimeService_ErrCode {
+typedef enum TimeService_ErrCode : int32_t {
     /** @error Success.*/
     TIMESERVICE_ERR_OK = 0,
 

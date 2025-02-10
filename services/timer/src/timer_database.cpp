@@ -51,6 +51,9 @@ constexpr const char *HOLD_ON_REBOOT_ADD_PID_COLUMN = "ALTER TABLE hold_on_reboo
 constexpr const char *HOLD_ON_REBOOT_ADD_NAME_COLUMN = "ALTER TABLE hold_on_reboot ADD COLUMN name TEXT";
 constexpr const char *DROP_ON_REBOOT_ADD_PID_COLUMN = "ALTER TABLE drop_on_reboot ADD COLUMN pid INTEGER";
 constexpr const char *DROP_ON_REBOOT_ADD_NAME_COLUMN = "ALTER TABLE drop_on_reboot ADD COLUMN name TEXT";
+constexpr const char *DB_NAME = "/data/service/el1/public/database/time/time.db";
+constexpr int DATABASE_OPEN_VERSION_2 = 2;
+constexpr int DATABASE_OPEN_VERSION_3 = 3;
 TimeDatabase::TimeDatabase()
 {
     int errCode = OHOS::NativeRdb::E_OK;

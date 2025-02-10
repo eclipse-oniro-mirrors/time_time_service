@@ -30,7 +30,7 @@ namespace MiscServices {
 namespace {
 constexpr int64_t TIME_RESULT_UNINITED = -1;
 constexpr int64_t HALF = 2;
-const int NANO_TO_SECOND =  1000000000;
+constexpr int NANO_TO_SECOND =  1000000000;
 } // namespace
 
 NtpTrustedTime &NtpTrustedTime::GetInstance()

@@ -23,11 +23,6 @@ namespace OHOS {
 namespace CJSystemapi {
 namespace SystemDateTime {
 
-constexpr int32_t STARTUP = 0;
-constexpr int32_t ACTIVE = 1;
-constexpr int64_t SECONDS_TO_NANO = 1000000000;
-constexpr int64_t SECONDS_TO_MILLI = 1000;
-constexpr int64_t NANO_TO_MILLI = SECONDS_TO_NANO / SECONDS_TO_MILLI;
 class SystemDateTimeImpl {
 public:
     static int SetTime(int64_t time);

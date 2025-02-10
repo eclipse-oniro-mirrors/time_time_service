@@ -36,7 +36,7 @@ public:
     virtual void OnReceiveEvent(const CommonEventData &data);
 
 private:
-    enum EventType {
+    enum EventType : int8_t {
         UNKNOWN_BROADCAST_EVENT = 0,
         CONNECTED,
         POWER_BROADCAST_EVENT,

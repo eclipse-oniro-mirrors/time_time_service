@@ -61,26 +61,26 @@ namespace {
 constexpr uint32_t TIME_CHANGED_BITS = 16;
 constexpr uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
 constexpr int64_t MAX_MILLISECOND = std::numeric_limits<int64_t>::max() / 1000000;
-const int ONE_THOUSAND = 1000;
-const float_t BATCH_WINDOW_COE = 0.75;
+constexpr int ONE_THOUSAND = 1000;
+constexpr float_t BATCH_WINDOW_COE = 0.75;
 const auto ZERO_FUTURITY = seconds(0);
 const auto MIN_INTERVAL_ONE_SECONDS = seconds(1);
 const auto MAX_INTERVAL = hours(24 * 365);
 const auto INTERVAL_HOUR = hours(1);
 const auto INTERVAL_HALF_DAY = hours(12);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
-const int NANO_TO_SECOND =  1000000000;
-const int WANTAGENT_CODE_ELEVEN = 11;
-const int WANT_RETRY_TIMES = 6;
-const int WANT_RETRY_INTERVAL = 1;
+constexpr int NANO_TO_SECOND =  1000000000;
+constexpr int WANTAGENT_CODE_ELEVEN = 11;
+constexpr int WANT_RETRY_TIMES = 6;
+constexpr int WANT_RETRY_INTERVAL = 1;
 // an error code of ipc which means peer end is dead
 constexpr int PEER_END_DEAD = 29189;
 constexpr int TIMER_ALARM_COUNT = 50;
 constexpr int MAX_TIMER_ALARM_COUNT = 100;
 constexpr int TIMER_ALRAM_INTERVAL = 60;
 constexpr int TIMER_COUNT_TOP_NUM = 5;
-const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
-const std::string TIMER_ACROSS_ACCOUNTS = "persist.time.timer_across_accounts";
+constexpr const char* AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
+constexpr const char* TIMER_ACROSS_ACCOUNTS = "persist.time.timer_across_accounts";
 
 #ifdef RDB_ENABLE
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
@@ -88,7 +88,7 @@ static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "w
 #endif
 
 #ifdef MULTI_ACCOUNT_ENABLE
-const int SYSTEM_USER_ID  = 0;
+constexpr int SYSTEM_USER_ID  = 0;
 #endif
 
 #ifdef POWER_MANAGER_ENABLE
@@ -96,13 +96,13 @@ constexpr int64_t USE_LOCK_ONE_SEC_IN_NANO = 1 * NANO_TO_SECOND;
 constexpr int64_t USE_LOCK_TIME_IN_NANO = 2 * NANO_TO_SECOND;
 constexpr int32_t NANO_TO_MILLI = 1000000;
 constexpr int64_t ONE_HUNDRED_MILLI = 100000000; // 100ms
-const int POWER_RETRY_TIMES = 10;
-const int POWER_RETRY_INTERVAL = 10000;
+constexpr int POWER_RETRY_TIMES = 10;
+constexpr int POWER_RETRY_INTERVAL = 10000;
 #endif
 
 #ifdef DEVICE_STANDBY_ENABLE
-const int REASON_NATIVE_API = 0;
-const int REASON_APP_API = 1;
+constexpr int REASON_NATIVE_API = 0;
+constexpr int REASON_APP_API = 1;
 #endif
 }
 
@@ -555,7 +555,7 @@ void TimerManager::SetHandlerLocked(std::string name, uint64_t id, int type,
         TimerProxy::GetInstance().RecordProxyTimerMap(alarm, true);
         alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
-    
+
     SetHandlerLocked(alarm, false, false);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }

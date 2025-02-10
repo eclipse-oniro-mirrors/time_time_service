@@ -26,8 +26,8 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
-static const uint32_t ALARM_TIME_CHANGE_MASK = 1 << 16;
-static const clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
+static constexpr uint32_t ALARM_TIME_CHANGE_MASK = 1 << 16;
+static constexpr clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
     CLOCK_REALTIME_ALARM,
     CLOCK_REALTIME,
     CLOCK_BOOTTIME_ALARM,

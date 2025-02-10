@@ -20,8 +20,8 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
-static const int MILLI_TO_SEC = 1000LL;
-static const int NANO_TO_SEC = 1000000000LL;
+static constexpr int MILLI_TO_SEC = 1000LL;
+static constexpr int NANO_TO_SEC = 1000000000LL;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_SEC / MILLI_TO_SEC;
 }
 
