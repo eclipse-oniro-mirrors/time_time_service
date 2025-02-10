@@ -129,7 +129,7 @@ void SNTPClient::SetClockOffset(int clockOffset)
 
 uint64_t SNTPClient::GetNtpTimestamp64(int offset, const char *buffer)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     const int _len = sizeof(uint64_t);
     char valueRx[_len];
     errno_t ret = memset_s(valueRx, sizeof(uint64_t), 0, sizeof(uint64_t));
@@ -154,12 +154,12 @@ uint64_t SNTPClient::GetNtpTimestamp64(int offset, const char *buffer)
 
 void SNTPClient::ConvertUnixToNtp(struct ntp_timestamp *ntpTs, struct timeval *unixTs)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     // 0x83AA7E80; the seconds from Jan 1, 1900 to Jan 1, 1970
     ntpTs->second = unixTs->tv_sec + SECONDS_SINCE_FIRST_EPOCH; // 0x83AA7E80;
     ntpTs->fraction =
         static_cast<uint64_t>((unixTs->tv_usec + 1) * (1LL << RECEIVE_TIMESTAMP_OFFSET) * TEN_TO_MINUS_SIX_POWER);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 /*
@@ -189,7 +189,7 @@ int64_t SNTPClient::ConvertNtpToStamp(uint64_t _ntpTs)
 
 void SNTPClient::CreateMessage(char *buffer)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     struct ntp_timestamp ntp{};
     struct timeval unix;
 
@@ -226,7 +226,7 @@ void SNTPClient::CreateMessage(char *buffer)
     // create the 1-byte info in one go... the result should be 27 :)
     buffer[INDEX_ZERO] = (_sntpMsg._leapIndicator << SNTP_MSG_OFFSET_SIX) |
                          (_sntpMsg._versionNumber << SNTP_MSG_OFFSET_THREE) | _sntpMsg._mode;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 bool SNTPClient::ReceivedMessage(char *buffer)
@@ -282,7 +282,7 @@ bool SNTPClient::ReceivedMessage(char *buffer)
 
 unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     const int _len = sizeof(int);
     char valueRx[_len];
     errno_t ret = memset_s(valueRx, _len, 0, _len);
@@ -302,25 +302,25 @@ unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer)
         TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", retValue);
         return false;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return milliseconds;
 }
 
 void SNTPClient::GetReferenceId(int offset, char *buffer, int *_outArray)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     const int _len = sizeof(int);
     int num = 0;
     for (int loop = offset; loop < offset + _len; loop++) {
         _outArray[num] = buffer[loop];
         num++;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
 void SNTPClient::SNTPMessage::clear()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     errno_t ret = memset_s(this, sizeof(*this), 0, sizeof(*this));
     if (ret != EOK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);

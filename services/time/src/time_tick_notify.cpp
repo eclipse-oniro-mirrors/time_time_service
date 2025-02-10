@@ -48,7 +48,7 @@ TimeTickNotify::~TimeTickNotify() = default;
 
 void TimeTickNotify::Init()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Tick notify start");
     TimerPara timerPara{};
     timerPara.timerType = static_cast<int>(ITimerManager::TimerType::RTC);
     timerPara.windowLength = 0;
@@ -93,9 +93,9 @@ std::pair<uint64_t, bool> TimeTickNotify::RefreshNextTriggerTime()
 
 void TimeTickNotify::Stop()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     TimeSystemAbility::GetInstance()->DestroyTimer(timerId_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 } // namespace MiscServices
 } // namespace OHOS

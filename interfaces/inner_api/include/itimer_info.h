@@ -38,27 +38,27 @@ public:
     /**
     * Indicates the timing policy the timer use, which can be REALTIME or UTC.
     */
-    static constexpr int TIMER_TYPE_REALTIME = 1 << 0;
+    const int TIMER_TYPE_REALTIME = 1 << 0;
 
     /**
     * Describes whether a timer will wake the device up.
     */
-    static constexpr int TIMER_TYPE_WAKEUP = 1 << 1;
+    const int TIMER_TYPE_WAKEUP = 1 << 1;
 
     /**
     * Describes whether a timer will be delivered precisely at a scheduled time.
     */
-    static constexpr int TIMER_TYPE_EXACT = 1 << 2;
+    const int TIMER_TYPE_EXACT = 1 << 2;
 
     /**
     * Indicates whether the timer waking up the system is supported in low-power mode.
     */
-    static constexpr int TIMER_TYPE_IDLE = 1 << 3;
+    const int TIMER_TYPE_IDLE = 1 << 3;
 
     /**
     * Indicates whether the timer is from inexact reminder agent.
     */
-    static constexpr int TIMER_TYPE_INEXACT_REMINDER = 1 << 4;
+    const int TIMER_TYPE_INEXACT_REMINDER = 1 << 4;
     /**
      * SetType set timer type
      * @para: type: TIMER_TYPE_REALTIME | TIMER_TYPE_WAKEUP

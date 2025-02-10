@@ -119,7 +119,7 @@ int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when, std::chrono:
     itimerspec spec {timespec {}, ts};
     int ret = timerfd_settime(fds_[type], TFD_TIMER_ABSTIME, &spec, nullptr);
     if (ret != 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Set timer to kernel. ret: %{public}d. error: %{public}s.",
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Set timer to kernel. ret: %{public}d. error: %{public}s",
                     ret, strerror(errno));
     }
     return ret;

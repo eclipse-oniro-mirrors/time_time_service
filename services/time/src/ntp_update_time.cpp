@@ -59,12 +59,12 @@ NtpUpdateTime& NtpUpdateTime::GetInstance()
 
 void NtpUpdateTime::Init()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp Update Time start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp Update Time start");
     std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, DEFAULT_NTP_SERVER);
     std::string ntpServerSpec = system::GetParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER, "");
     std::string autoTime = system::GetParameter(AUTO_TIME_SYSTEM_PARAMETER, "ON");
     if ((ntpServer.empty() && ntpServerSpec.empty()) || autoTime.empty()) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "No found parameter from system parameter.");
+        TIME_HILOGW(TIME_MODULE_SERVICE, "No found parameter from system parameter");
         return;
     }
     RegisterSystemParameterListener();
@@ -111,9 +111,9 @@ void NtpUpdateTime::UpdateNITZSetTime()
     auto bootTimeNano = steady_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
     if (TimeUtils::GetBootTimeMs(lastNITZUpdateTime_) != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail");
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "nitz time changed.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "nitz time changed");
     nitzUpdateTimeMilli_ = static_cast<uint64_t>(bootTimeMilli);
 }
 
@@ -202,7 +202,7 @@ bool NtpUpdateTime::GetNtpTime(int64_t &time)
     std::lock_guard<std::mutex> autoLock(requestMutex_);
 
     if (!GetNtpTimeInner()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed");
         return false;
     }
 
@@ -224,12 +224,12 @@ void NtpUpdateTime::SetSystemTime()
     }
 
     if (!requestMutex_.try_lock()) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "The NTP request is in progress.");
+        TIME_HILOGW(TIME_MODULE_SERVICE, "The NTP request is in progress");
         return;
     }
 
     if (!GetNtpTimeInner()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed");
         requestMutex_.unlock();
         return;
     }
@@ -242,7 +242,7 @@ void NtpUpdateTime::SetSystemTime()
     }
     int64_t curBootTime = 0;
     if (TimeUtils::GetBootTimeMs(curBootTime) != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail");
         requestMutex_.unlock();
         return;
     }
@@ -288,7 +288,7 @@ void NtpUpdateTime::StartTimer()
 
 void NtpUpdateTime::Stop()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     TimeSystemAbility::GetInstance()->DestroyTimer(timerId_);
 }
 
@@ -318,7 +318,7 @@ void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, 
     std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, DEFAULT_NTP_SERVER);
     std::string ntpServerSpec = system::GetParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER, "");
     if (ntpServer.empty() && ntpServerSpec.empty()) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter.");
+        TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter");
         return;
     }
     autoTimeInfo_.ntpServer = ntpServer;
