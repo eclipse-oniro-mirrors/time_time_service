@@ -113,7 +113,7 @@ private:
     std::map<int32_t, std::vector<std::shared_ptr<TimerInfo>>> proxyMap_ {};
     std::map<int32_t, std::vector<std::shared_ptr<TimerInfo>>> proxyPidMap_ {};
     std::mutex adjustMutex_;
-    std::unordered_set<std::string> adjustExemptionList_ {};
+    std::unordered_set<std::string> adjustExemptionList_ { "time_service" };
     std::vector<std::shared_ptr<TimerInfo>> adjustTimers_ {};
     /* ms for 3 days */
     int64_t proxyDelayTime_ = 3 * 24 * 60 * 60 * 1000;
