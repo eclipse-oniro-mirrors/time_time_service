@@ -62,14 +62,17 @@ static const uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
 static const uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
 static const uint32_t TIMER_TYPE_IDLE_MASK = 1 << 3;
 static const uint32_t TIMER_TYPE_INEXACT_REMINDER_MASK = 1 << 4;
+static constexpr int32_t STR_MAX_LENGTH = 64;
 constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t ONE_MILLI = 1000;
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
+const std::string SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime", \
-                                                   "pid"};
+                                                   "pid", "name"};
 const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
+constexpr size_t INDEX_TWO = 2;
 } // namespace
 
 REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
@@ -314,6 +317,9 @@ void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerO
     if (timerOptions->disposable) {
         paras.flag |= ITimerManager::TimerFlag::IS_DISPOSABLE;
     }
+    if (timerOptions->name != "") {
+        paras.name = timerOptions->name;
+    }
     paras.interval = timerOptions->repeat ? timerOptions->interval : 0;
 }
 
@@ -322,6 +328,9 @@ int32_t TimeSystemAbility::CheckTimerPara(const DatabaseType type, const TimerPa
     if (paras.autoRestore && (paras.timerType == ITimerManager::TimerType::ELAPSED_REALTIME ||
         paras.timerType == ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP || type == DatabaseType::NOT_STORE)) {
         return E_TIME_AUTO_RESTORE_ERROR;
+    }
+    if (paras.name.size() > STR_MAX_LENGTH) {
+        return E_TIME_PARAMETERS_INVALID;
     }
     return E_TIME_OK;
 }
@@ -938,6 +947,8 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
     do {
         auto timerId = static_cast<uint64_t>(GetLong(resultSet, 0));
         auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
+            // line 11 is 'name'
+            GetString(resultSet, 11),
             // Line 0 is 'timerId'
             timerId,
             // Line 1 is 'type'
@@ -982,23 +993,23 @@ void TimeSystemAbility::SetAutoReboot()
     auto database = TimeDatabase::GetInstance();
     OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
     holdRdbPredicates.EqualTo("state", 1)->OrderByAsc("triggerTime");
-    auto resultSet = database.Query(holdRdbPredicates, { "bundleName", "triggerTime" });
+    auto resultSet = database.Query(holdRdbPredicates, { "bundleName", "triggerTime", "name" });
     if (resultSet == nullptr) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "no need to set RTC");
         return;
     }
     int64_t currentTime = 0;
     TimeUtils::GetWallTimeMs(currentTime);
-    auto bundleList = TimeFileUtils::GetBundleList();
+    auto bundleList = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
     do {
-        auto bundleName = GetString(resultSet, 0);
         uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 1));
         if (triggerTime < static_cast<uint64_t>(currentTime)) {
             TIME_HILOGI(TIME_MODULE_SERVICE,
                         "triggerTime: %{public}" PRIu64" currentTime: %{public}" PRId64"", triggerTime, currentTime);
             continue;
         }
-        if (bundleName == (bundleList.empty() ? "" : bundleList[0])) {
+        if (std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, 0)) != bundleList.end() ||
+            std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, INDEX_TWO)) != bundleList.end()) {
             int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
             if (tmfd < 0) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error: %{public}s", strerror(errno));

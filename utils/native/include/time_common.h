@@ -27,6 +27,7 @@ namespace MiscServices {
 #define TIME_SERVICE_NAME "TimeService"
 
 struct TimerPara {
+    std::string name;
     int timerType;
     int64_t windowLength;
     uint64_t interval;

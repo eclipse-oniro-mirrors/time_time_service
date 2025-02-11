@@ -27,6 +27,7 @@ static const uint32_t HALF_SECEND = 2;
 
 class TimerInfo {
 public:
+    const std::string name;
     const uint64_t id;
     const int type;
     const std::chrono::milliseconds origWhen;
@@ -48,7 +49,7 @@ public:
     std::chrono::milliseconds offset;
     std::string bundleName;
 
-    TimerInfo(uint64_t id, int type,
+    TimerInfo(std::string name, uint64_t id, int type,
         std::chrono::milliseconds when,
         std::chrono::steady_clock::time_point whenElapsed,
         std::chrono::milliseconds windowLength,

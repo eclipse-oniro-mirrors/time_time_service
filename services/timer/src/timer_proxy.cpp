@@ -273,7 +273,10 @@ bool TimerProxy::SetTimerExemption(const std::unordered_set<std::string> &nameAr
 
 bool TimerProxy::IsTimerExemption(std::shared_ptr<TimerInfo> timer)
 {
-    if (adjustExemptionList_.find(timer->bundleName) != adjustExemptionList_.end()
+    auto key = timer->bundleName + "|" + timer->name;
+    TIME_HILOGD(TIME_MODULE_SERVICE, "key is: %{public}s", key.c_str());
+    if ((adjustExemptionList_.find(timer->bundleName) != adjustExemptionList_.end()
+        || adjustExemptionList_.find(key) != adjustExemptionList_.end())
         && timer->windowLength == milliseconds::zero()) {
         return true;
     }
