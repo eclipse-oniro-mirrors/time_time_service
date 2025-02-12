@@ -31,6 +31,7 @@
 #include "shutdown/sync_shutdown_callback_stub.h"
 #include "shutdown/shutdown_client.h"
 #include "rdb_helper.h"
+#include "time_sysevent.h"
 
 namespace OHOS {
 namespace MiscServices {

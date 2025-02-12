@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include "time_common.h"
+#include "time_sysevent.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -257,11 +258,8 @@ bool SNTPClient::ReceivedMessage(char *buffer)
     _sntpMsg._transmitTimestamp = GetNtpTimestamp64(TRANSMIT_TIMESTAMP_OFFSET, buffer);
     int64_t _originClient = m_originateTimestamp;
     int64_t _receiveServer = ConvertNtpToStamp(_sntpMsg._receiveTimestamp);
-    if (_receiveServer == 0) {
-        return false;
-    }
     int64_t _transmitServer = ConvertNtpToStamp(_sntpMsg._transmitTimestamp);
-    if (_transmitServer == 0) {
+    if (_transmitServer == 0 || _receiveServer == 0) {
         return false;
     }
     int64_t _receiveClient = receiveBootTime;
@@ -276,6 +274,9 @@ bool SNTPClient::ReceivedMessage(char *buffer)
                 "_receiveClient:%{public}s", std::to_string(_originClient).c_str(),
                 std::to_string(_receiveServer).c_str(), std::to_string(_transmitServer).c_str(),
                 std::to_string(_receiveClient).c_str());
+    TimeBehaviorReport(ReportEventCode::NTP_REFRESH,
+        std::to_string(_originClient) + "|" + std::to_string(_receiveClient),
+        std::to_string(_transmitServer) + "|" + std::to_string(_receiveServer), mNtpTime);
     return true;
 }
 

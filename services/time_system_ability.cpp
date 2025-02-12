@@ -481,6 +481,9 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     if (currentTime < (time - ONE_MILLI) || currentTime > (time + ONE_MILLI)) {
         TimeServiceNotify::GetInstance().PublishTimeChangeEvents(currentTime);
     }
+    TimeTickNotify::GetInstance().Callback();
+    int64_t curtime = NtpTrustedTime::GetInstance().CurrentTimeMillis();
+    TimeBehaviorReport(ReportEventCode::SET_TIME, std::to_string(beforeTime), std::to_string(time), curtime);
     return true;
 }
 
