@@ -234,7 +234,7 @@ ohos_static_library("time_system_ability_static") {
   }
 
   if (time_service_multi_account) {
-    defines += [ "MULTI_ACCOUNT" ]
+    defines += [ "MULTI_ACCOUNT_ENABLE" ]
     external_deps += [ "os_account:os_account_innerkits" ]
   }
   if (time_service_rdb_enable) {

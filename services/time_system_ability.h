@@ -130,6 +130,7 @@ private:
     int GetWallClockRtcId();
     void RegisterRSSDeathCallback();
     void RegisterSubscriber();
+    std::shared_ptr<TimerEntry> GetEntry(cJSON* obj, bool autoRestore);
     #ifdef MULTI_ACCOUNT_ENABLE
     void RegisterOsAccountSubscriber();
     #endif
