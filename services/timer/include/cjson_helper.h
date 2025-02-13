@@ -41,6 +41,7 @@ public:
     bool UpdateTrigger(std::string tableName, int64_t timerId, int64_t triggerTime);
     bool UpdateState(std::string tableName, int64_t timerId);
     bool Delete(std::string tableName, int64_t timerId);
+    bool ClearInvaildDataInHoldOnReboot();
     void Clear(std::string tableName);
     bool StrToI64(std::string str, int64_t& value);
     bool IsNumber(cJSON* item);

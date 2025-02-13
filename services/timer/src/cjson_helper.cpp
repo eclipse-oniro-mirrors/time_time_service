@@ -18,6 +18,7 @@
 
 #include "cjson_helper.h"
 #include "want_agent_helper.h"
+#include "timer_manager_interface.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -320,6 +321,44 @@ bool CjsonHelper::Delete(std::string tableName, int64_t timerId)
             break;
         }
     }
+    cJSON_Delete(db);
+    return true;
+}
+
+bool CjsonHelper::ClearInvaildDataInHoldOnReboot()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    std::ifstream file(DB_PATH);
+    if (!file.good()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "open json file fail!");
+        return false;
+    }
+    std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    cJSON* db = cJSON_Parse(fileContent.c_str());
+    cJSON* table = cJSON_GetObjectItem(db, HOLD_ON_REBOOT);
+    if (table == NULL) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "HOLD_ON_REBOOT get fail!");
+        cJSON_Delete(db);
+        return false;
+    }
+
+    int size = cJSON_GetArraySize(table);
+    for (int i = size - 1; i >= 0; --i) {
+        cJSON* obj = cJSON_GetArrayItem(table, i);
+
+        auto stateObj = cJSON_GetObjectItem(obj, "state");
+        auto typeObj = cJSON_GetObjectItem(obj, "type");
+        if (!IsNumber(stateObj) || !IsNumber(typeObj)) {
+            continue;
+        }
+        if (stateObj->valueint == 0
+            || typeObj->valueint == ITimerManager::ELAPSED_REALTIME_WAKEUP
+            || typeObj->valueint == ITimerManager::ELAPSED_REALTIME) {
+            cJSON_DeleteItemFromArray(table, i);
+        }
+    }
+    SaveJson(db);
     cJSON_Delete(db);
     return true;
 }

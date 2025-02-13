@@ -230,6 +230,29 @@ void TimeDatabase::ClearDropOnReboot()
     }
 }
 
+void TimeDatabase::ClearInvaildDataInHoldOnReboot()
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Clears hold_on_reboot table");
+    if (store_ == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
+        return;
+    }
+    int ret = store_->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
+    if (ret != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Clears hold_on_reboot table failed");
+        if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
+            return;
+        }
+        if (!RecoverDataBase()) {
+            return;
+        }
+        ret = store_->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
+        if (ret != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret: %{public}d", ret);
+        }
+    }
+}
+
 int TimeDBCreateTables(OHOS::NativeRdb::RdbStore &store)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Creates hold_on_reboot table");
