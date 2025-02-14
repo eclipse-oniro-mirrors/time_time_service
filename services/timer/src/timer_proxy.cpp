@@ -743,7 +743,9 @@ bool TimerProxy::ShowProxyTimerInfo(int fd, const int64_t now)
     std::lock_guard<std::mutex> lockPidProxy(proxyPidMutex_);
     dprintf(fd, "current time %lld\n", now);
     for (auto itProxyPids = proxyPids_.begin(); itProxyPids != proxyPids_.end(); ++itProxyPids) {
-        dprintf(fd, " - proxy pid = %lu\n", itProxyPids->first);
+        auto uid = static_cast<uint32_t>(itProxyPids->first >> UID_PROXY_OFFSET);
+        auto pid = itProxyPids->first & ((static_cast<uint64_t>(1) << UID_PROXY_OFFSET) -1);
+        dprintf(fd, " - proxy uid = %lu pid = %lu\n", uid, pid);
         for (auto itTimerIdMap = itProxyPids->second.begin(); itTimerIdMap != itProxyPids->second.end();
             ++itTimerIdMap) {
             dprintf(fd, "   * save timer id          = %llu\n", itTimerIdMap->first);
