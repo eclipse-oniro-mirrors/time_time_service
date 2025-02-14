@@ -29,6 +29,7 @@ public:
     bool PublishTimeChangeEvents(int64_t eventTime);
     bool PublishTimeZoneChangeEvents(int64_t eventTime);
     bool PublishTimeTickEvents(int64_t eventTime);
+    bool PublishTimeStartEvents();
     bool RepublishEvents();
 
 private:
