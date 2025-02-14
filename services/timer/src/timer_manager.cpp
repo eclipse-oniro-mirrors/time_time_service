@@ -26,6 +26,7 @@
 #include "ipc_skeleton.h"
 #include "time_file_utils.h"
 #include "time_permission.h"
+#include "time_service_notify.h"
 #include "timer_proxy.h"
 #include "time_sysevent.h"
 #include "cjson_helper.h"
@@ -992,6 +993,9 @@ int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &tim
 void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList)
 {
     auto wakeupNums = std::count_if(triggerList.begin(), triggerList.end(), [](auto timer) {return timer->wakeup;});
+    if (wakeupNums > 0) {
+        TimeServiceNotify::GetInstance().PublishTimeStartEvents();
+    }
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
             #ifdef POWER_MANAGER_ENABLE
