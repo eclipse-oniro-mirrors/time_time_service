@@ -64,7 +64,7 @@ bool TimerProxy::ProxyTimer(int32_t uid, int pid, bool isProxy, bool needRetrigg
     }
 
     if (!RestoreProxyWhenElapsedForProxyTimers(uid, pid, now, insertAlarmCallback, needRetrigger)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Pid: %{public}d doesn't exist in the proxy list." PRId64 "", pid);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Pid: %{public}d doesn't exist in the proxy list" PRId64 "", pid);
         return false;
     }
     return true;
@@ -325,13 +325,13 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
     uint64_t key = GetProxyKey(uid, pid);
     auto itProxy = proxyTimers_.find(key);
     if (itProxy == proxyTimers_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid:%{public}d not in proxy.", uid, pid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid:%{public}d not in proxy", uid, pid);
         return false;
     }
     std::lock_guard<std::mutex> lockPidTimers(uidTimersMutex_);
     auto itTimer = uidTimersMap_.find(uid);
     if (uidTimersMap_.find(uid) == uidTimersMap_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d timer info not found, erase proxy map. ", uid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d timer info not found, erase proxy map", uid);
         return true;
     }
 
@@ -347,7 +347,7 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
         } else {
             itTimerInfo->second->UpdateWhenElapsedFromNow(now, milliseconds(MILLI_TO_SECOND));
         }
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Restore proxy WhenElapsed by pid. "
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Restore proxy WhenElapsed by pid"
             "pid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
             itTimerInfo->second->pid, itTimerInfo->second->id,
             itTimerInfo->second->whenElapsed.time_since_epoch().count(),
@@ -385,7 +385,7 @@ void TimerProxy::ResetAllProxyWhenElapsed(const std::chrono::steady_clock::time_
 #ifdef HIDUMPER_ENABLE
 bool TimerProxy::ShowProxyTimerInfo(int fd, const int64_t now)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lockPidProxy(proxyMutex_);
     dprintf(fd, "current time %lld\n", now);
     for (auto itProxyPids = proxyTimers_.begin(); itProxyPids != proxyTimers_.end(); ++itProxyPids) {
@@ -396,13 +396,13 @@ bool TimerProxy::ShowProxyTimerInfo(int fd, const int64_t now)
             dprintf(fd, "   * save timer id          = %llu\n", elem);
         }
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return true;
 }
 
 bool TimerProxy::ShowUidTimerMapInfo(int fd, const int64_t now)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lockProxy(uidTimersMutex_);
     dprintf(fd, "current time %lld\n", now);
     for (auto itTimerInfoMap = uidTimersMap_.begin(); itTimerInfoMap != uidTimersMap_.end(); ++itTimerInfoMap) {
@@ -413,7 +413,7 @@ bool TimerProxy::ShowUidTimerMapInfo(int fd, const int64_t now)
             dprintf(fd, "   * timer whenElapsed = %lld\n", itTimerInfo->second->whenElapsed.time_since_epoch().count());
         }
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return true;
 }
 
@@ -434,9 +434,9 @@ void TimerProxy::ShowAdjustTimerInfo(int fd)
 
 bool TimerProxy::ShowProxyDelayTime(int fd)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     dprintf(fd, "proxy delay time: %lld ms\n", proxyDelayTime_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return true;
 }
 #endif

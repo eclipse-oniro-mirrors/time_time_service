@@ -23,7 +23,6 @@
 
 namespace OHOS {
 namespace MiscServices {
-static const uint32_t HALF_SECEND = 2;
 
 class TimerInfo {
 public:

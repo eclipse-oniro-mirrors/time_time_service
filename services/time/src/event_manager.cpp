@@ -24,7 +24,7 @@ namespace OHOS {
 namespace MiscServices {
 using namespace OHOS::EventFwk;
 using namespace OHOS::AAFwk;
-static const uint32_t CONNECTED_EVENT = 3;
+static constexpr uint32_t CONNECTED_EVENT = 3;
 
 EventManager::EventManager(const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo)
     : CommonEventSubscriber(subscriberInfo)
@@ -71,7 +71,7 @@ void EventManager::OnReceiveEvent(const CommonEventData &data)
 void EventManager::NetConnStateConnected(const CommonEventData &data)
 {
     if (NtpUpdateTime::GetInstance().IsValidNITZTime()) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "NITZ Time is valid.");
+        TIME_HILOGW(TIME_MODULE_SERVICE, "NITZ Time is valid");
         return;
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Internet ready");

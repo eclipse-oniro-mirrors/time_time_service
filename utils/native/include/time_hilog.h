@@ -17,11 +17,12 @@
 #define TIME_HILOG_WRAPPER_H
 
 #include "hilog/log.h"
+#include <cstdint>
 
 namespace OHOS {
 namespace MiscServices {
 // param of log interface, such as TIME_HILOGF.
-enum TimeSubModule {
+enum TimeSubModule : int8_t {
     TIME_MODULE_INNERKIT = 0,
     TIME_MODULE_CLIENT,
     TIME_MODULE_SERVICE,
@@ -34,7 +35,7 @@ enum TimeSubModule {
 
 static constexpr unsigned int BASE_TIME_DOMAIN_ID = 0xD001C40;
 
-enum TimeDomainId {
+enum TimeDomainId : int32_t {
     TIME_INNERKIT_DOMAIN = BASE_TIME_DOMAIN_ID + TIME_MODULE_INNERKIT,
     TIME_CLIENT_DOMAIN,
     TIME_SERVICE_DOMAIN,

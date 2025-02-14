@@ -30,7 +30,7 @@ namespace MiscServices {
 namespace {
 constexpr int64_t TIME_RESULT_UNINITED = -1;
 constexpr int64_t HALF = 2;
-const int NANO_TO_SECOND =  1000000000;
+constexpr int NANO_TO_SECOND =  1000000000;
 } // namespace
 
 NtpTrustedTime &NtpTrustedTime::GetInstance()
@@ -41,7 +41,7 @@ NtpTrustedTime &NtpTrustedTime::GetInstance()
 
 bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     SNTPClient client;
     if (client.RequestTime(ntpServer)) {
         if (mTimeResult != nullptr) {
@@ -52,29 +52,29 @@ bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
         TIME_HILOGD(TIME_MODULE_SERVICE, "Get Ntp time result");
         return true;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "false end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "false end");
     return false;
 }
 
 int64_t NtpTrustedTime::CurrentTimeMillis()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     if (mTimeResult == nullptr) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "Missing authoritative time source");
         return TIME_RESULT_UNINITED;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return mTimeResult->CurrentTimeMillis();
 }
 
 int64_t NtpTrustedTime::ElapsedRealtimeMillis()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     if (mTimeResult == nullptr) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "Missing authoritative time source");
         return TIME_RESULT_UNINITED;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return mTimeResult->GetElapsedRealtimeMillis();
 }
 

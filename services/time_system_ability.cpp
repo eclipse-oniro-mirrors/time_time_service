@@ -58,15 +58,15 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 // Unit of measure conversion , BASE: second
-static const int MILLI_TO_BASE = 1000LL;
-static const int MICR_TO_BASE = 1000000LL;
-static const int NANO_TO_BASE = 1000000000LL;
-static const std::int32_t INIT_INTERVAL = 10L;
-static const uint32_t TIMER_TYPE_REALTIME_MASK = 1 << 0;
-static const uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
-static const uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
-static const uint32_t TIMER_TYPE_IDLE_MASK = 1 << 3;
-static const uint32_t TIMER_TYPE_INEXACT_REMINDER_MASK = 1 << 4;
+static constexpr int MILLI_TO_BASE = 1000LL;
+static constexpr int MICR_TO_BASE = 1000000LL;
+static constexpr int NANO_TO_BASE = 1000000000LL;
+static constexpr std::int32_t INIT_INTERVAL = 10L;
+static constexpr uint32_t TIMER_TYPE_REALTIME_MASK = 1 << 0;
+static constexpr uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
+static constexpr uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
+static constexpr uint32_t TIMER_TYPE_IDLE_MASK = 1 << 3;
+static constexpr uint32_t TIMER_TYPE_INEXACT_REMINDER_MASK = 1 << 4;
 static constexpr int32_t STR_MAX_LENGTH = 64;
 constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
@@ -74,19 +74,20 @@ constexpr int32_t ONE_MILLI = 1000;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime", \
                                                    "pid", "name"};
-const std::string BOOTEVENT_PARAMETER = "bootevent.boot.completed";
-static const int MAX_PID_LIST_SIZE = 1024;
-static const uint32_t MAX_EXEMPTION_SIZE = 1000;
+constexpr const char* BOOTEVENT_PARAMETER = "bootevent.boot.completed";
+static constexpr int MAX_PID_LIST_SIZE = 1024;
+static constexpr uint32_t MAX_EXEMPTION_SIZE = 1000;
+
 #ifdef SET_AUTO_REBOOT_ENABLE
 constexpr int64_t MILLISECOND_TO_NANO = 1000000;
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
-const std::string SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
+constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 constexpr int CLOCK_POWEROFF_ALARM = 12;
 constexpr size_t INDEX_TWO = 2;
 #endif
 
 #ifdef MULTI_ACCOUNT_ENABLE
-const std::string SUBSCRIBE_REMOVED = "UserRemoved";
+constexpr const char* SUBSCRIBE_REMOVED = "UserRemoved";
 #endif
 } // namespace
 
@@ -119,7 +120,7 @@ TimeSystemAbility::TimeSystemAbility(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), state_(ServiceRunningState::STATE_NOT_START),
       rtcId(GetWallClockRtcId())
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, " TimeSystemAbility Start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, " TimeSystemAbility Start");
 }
 
 TimeSystemAbility::TimeSystemAbility() : state_(ServiceRunningState::STATE_NOT_START), rtcId(GetWallClockRtcId())
@@ -190,9 +191,9 @@ void TimeSystemAbility::InitDumpCmd()
 
 void TimeSystemAbility::OnStart()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "TimeSystemAbility OnStart.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "TimeSystemAbility OnStart");
     if (state_ == ServiceRunningState::STATE_RUNNING) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "TimeSystemAbility is already running.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "TimeSystemAbility is already running");
         return;
     }
     TimerManager::GetInstance();
@@ -230,13 +231,13 @@ void TimeSystemAbility::OnStart()
         };
         std::thread thread(callback);
         thread.detach();
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Init failed. Try again 10s later.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Init failed. Try again 10s later");
     }
 }
 
 void TimeSystemAbility::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId:%{public}d added!", systemAbilityId);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "OnAddSystemAbility systemAbilityId:%{public}d added", systemAbilityId);
     switch (systemAbilityId) {
         case COMMON_EVENT_SERVICE_ID:
             RegisterCommonEventSubscriber();
@@ -317,24 +318,24 @@ int32_t TimeSystemAbility::Init()
 {
     bool ret = Publish(TimeSystemAbility::GetInstance());
     if (!ret) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Init Failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Init Failed");
         return E_TIME_PUBLISH_FAIL;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Init success.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Init success");
     state_ = ServiceRunningState::STATE_RUNNING;
     return ERR_OK;
 }
 
 void TimeSystemAbility::OnStop()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "OnStop Started.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "OnStop Started");
     if (state_ != ServiceRunningState::STATE_RUNNING) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "state is running.");
+        TIME_HILOGI(TIME_MODULE_SERVICE, "state is running");
         return;
     }
     TimeTickNotify::GetInstance().Stop();
     state_ = ServiceRunningState::STATE_NOT_START;
-    TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End");
 }
 
 void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerOptions, TimerPara &paras)
@@ -402,12 +403,12 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     uint64_t &timerId)
 {
     if (obj == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Input nullptr.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Input nullptr");
         return E_TIME_NULLPTR;
     }
     sptr<ITimerCallback> timerCallback = iface_cast<ITimerCallback>(obj);
     if (timerCallback == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "ITimerCallback nullptr.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "ITimerCallback nullptr");
         return E_TIME_NULLPTR;
     }
     auto type = DatabaseType::NOT_STORE;
@@ -432,7 +433,7 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     };
     if ((paras.flag & ITimerManager::TimerFlag::IDLE_UNTIL) > 0 &&
         !TimePermission::CheckProxyCallingPermission()) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer.");
+        TIME_HILOGW(TIME_MODULE_SERVICE, "App not support create idle timer");
         paras.flag &= ~ITimerManager::TimerFlag::IDLE_UNTIL;
     }
     return timerManager->CreateTimer(paras, callbackFunc, timerOptions->wantAgent,
@@ -559,7 +560,7 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     }
     auto ret = SetRtcTime(tv.tv_sec);
     if (ret == E_TIME_SET_RTC_FAILED) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "set rtc fail: %{public}d.", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "set rtc fail: %{public}d", ret);
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "getting currentTime to milliseconds: %{public}" PRId64 "", currentTime);
@@ -881,7 +882,7 @@ int32_t TimeSystemAbility::GetThreadTimeNs(int64_t &time)
 bool TimeSystemAbility::GetTimeByClockId(clockid_t clockId, struct timespec &tv)
 {
     if (clock_gettime(clockId, &tv) < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed clock_gettime.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed clock_gettime");
         return false;
     }
     return true;
@@ -903,7 +904,7 @@ int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval, uint32_
         return E_TIME_NULLPTR;
     }
     if (!timerManager->AdjustTimer(isAdjust, interval, delta)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Error adjust timer.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error adjust timer");
         return E_TIME_DEAL_FAILED;
     }
     return E_TIME_OK;
@@ -917,11 +918,11 @@ int32_t TimeSystemAbility::ProxyTimer(int32_t uid, const std::vector<int>& pidLi
         return E_TIME_NO_PERMISSION;
     }
     if (pidList.size() > MAX_PID_LIST_SIZE) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Error pid list size.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error pid list size");
         return E_TIME_PARAMETERS_INVALID;
     }
     if (pidList.size() == 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Error pidList.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error pidList");
         return E_TIME_PARAMETERS_INVALID;
     }
     auto timerManager = TimerManager::GetInstance();
@@ -1016,13 +1017,13 @@ void TimeSystemAbility::RegisterRSSDeathCallback()
     TIME_HILOGD(TIME_MODULE_SERVICE, "register rss death callback");
     auto systemAbilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (systemAbilityManager == nullptr) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Getting SystemAbilityManager failed.");
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Getting SystemAbilityManager failed");
         return;
     }
 
     auto systemAbility = systemAbilityManager->GetSystemAbility(DEVICE_STANDBY_SERVICE_SYSTEM_ABILITY_ID);
     if (systemAbility == nullptr) {
-        TIME_HILOGE(TIME_MODULE_CLIENT, "Get SystemAbility failed.");
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Get SystemAbility failed");
         return;
     }
 
@@ -1052,7 +1053,7 @@ void TimeSystemAbility::RegisterPowerStateListener()
     auto& powerManagerClient = OHOS::PowerMgr::ShutdownClient::GetInstance();
     sptr<OHOS::PowerMgr::ISyncShutdownCallback> syncShutdownCallback = new TimePowerStateListener();
     if (!syncShutdownCallback) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Get TimePowerStateListener failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get TimePowerStateListener failed");
         return;
     }
     powerManagerClient.RegisterShutdownCallback(syncShutdownCallback, PowerMgr::ShutdownPriority::HIGH);

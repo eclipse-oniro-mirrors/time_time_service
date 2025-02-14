@@ -40,7 +40,7 @@ struct TimerEntry {
 
 class ITimerManager {
 public:
-    enum TimerFlag : uint32_t {
+    enum TimerFlag : uint8_t {
         STANDALONE = 1 << 0,
         WAKE_FROM_IDLE = 1 << 1,
         ALLOW_WHILE_IDLE = 1 << 2,
@@ -50,7 +50,7 @@ public:
         IS_DISPOSABLE = 1 << 6,
     };
 
-    enum TimerType {
+    enum TimerType : uint8_t {
         RTC_WAKEUP = 0,
         RTC = 1,
         ELAPSED_REALTIME_WAKEUP = 2,

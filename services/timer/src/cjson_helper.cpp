@@ -22,7 +22,7 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
-const char* DB_PATH = "/data/service/el1/public/database/time/time.json";
+constexpr const char* DB_PATH = "/data/service/el1/public/database/time/time.json";
 constexpr size_t INDEX_TWO = 2;
 }
 std::mutex CjsonHelper::mutex_;

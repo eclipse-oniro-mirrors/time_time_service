@@ -32,7 +32,7 @@ constexpr int64_t SECONDS_TO_MILLI = 1000;
 constexpr int64_t NANO_TO_MILLI = SECONDS_TO_NANO / SECONDS_TO_MILLI;
 constexpr int32_t STARTUP = 0;
 constexpr int32_t ACTIVE = 1;
-const std::string TIMEZONE_KEY = "persist.time.timezone";
+constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
 
 napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value exports)
 {

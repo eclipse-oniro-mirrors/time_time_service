@@ -28,9 +28,9 @@ namespace {
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
 constexpr const char *TIMEZONE_LIST_CONFIG_PATH = "/system/etc/zoneinfo/timezone_list.cfg";
 constexpr const char *DISTRO_TIMEZONE_LIST_CONFIG = "/system/etc/tzdata_distro/timezone_list.cfg";
-const int TIMEZONE_OK = 0;
-const int CONFIG_LEN = 35;
-const int HOUR_TO_MIN = 60;
+constexpr int TIMEZONE_OK = 0;
+constexpr int CONFIG_LEN = 35;
+constexpr int HOUR_TO_MIN = 60;
 } // namespace
 
 TimeZoneInfo &TimeZoneInfo::GetInstance()
@@ -41,13 +41,13 @@ TimeZoneInfo &TimeZoneInfo::GetInstance()
 
 void TimeZoneInfo::Init()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Start");
     char value[CONFIG_LEN] = "Asia/Shanghai";
     if (GetParameter(TIMEZONE_KEY, "", value, CONFIG_LEN) < TIMEZONE_OK) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "No found timezone from system parameter.");
+        TIME_HILOGW(TIME_MODULE_SERVICE, "No found timezone from system parameter");
     }
     if (!SetTimezone(value)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Init Set kernel failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Init Set kernel failed");
     }
     curTimezoneId_ = value;
     TIME_HILOGD(TIME_MODULE_SERVICE, "Timezone value: %{public}s", value);
@@ -57,7 +57,7 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
 {
     std::lock_guard<std::mutex> lock(timezoneMutex_);
     if (curTimezoneId_ == timezoneId) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Same Timezone has been set.");
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Same Timezone has been set");
         return true;
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone : %{public}s, Current timezone : %{public}s, uid: %{public}d",
@@ -70,7 +70,7 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
     setenv("TZ", timezoneId.c_str(), 1);
     tzset();
     if (!SetTimezoneToKernel()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone Set kernel failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone Set kernel failed");
         return false;
     }
     auto errNo = SetParameter(TIMEZONE_KEY, timezoneId.c_str());
@@ -91,12 +91,12 @@ std::set<std::string> TimeZoneInfo::GetTimeZoneAvailableIDs()
         DISTRO_TIMEZONE_LIST_CONFIG : TIMEZONE_LIST_CONFIG_PATH;
     std::unique_ptr<char[]> resolvedPath = std::make_unique<char[]>(PATH_MAX + 1);
     if (realpath(tzIdConfigPath, resolvedPath.get()) == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Get realpath failed, errno: %{public}d.", errno);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get realpath failed, errno: %{public}d", errno);
         return availableTimeZoneIDs;
     }
     std::ifstream file(resolvedPath.get());
     if (!file.good()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Open timezone list config file failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Open timezone list config file failed");
         return availableTimeZoneIDs;
     }
     std::string line;
@@ -123,17 +123,17 @@ bool TimeZoneInfo::SetTimezoneToKernel()
     struct tm *localTime = localtime(&t);
     struct timezone tz {};
     if (localTime == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "localtime is nullptr errornum: %{public}s.", strerror(errno));
+        TIME_HILOGE(TIME_MODULE_SERVICE, "localtime is nullptr errornum: %{public}s", strerror(errno));
         return false;
     }
     tz.tz_minuteswest = -localTime->tm_gmtoff / HOUR_TO_MIN;
     tz.tz_dsttime = 0;
     int result = settimeofday(nullptr, &tz);
     if (result < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Settimeofday timezone fail: %{public}d.", result);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Settimeofday timezone fail: %{public}d", result);
         return false;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Settimeofday timezone success ");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Settimeofday timezone success");
     return true;
 }
 } // namespace MiscServices

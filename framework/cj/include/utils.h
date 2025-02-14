@@ -19,7 +19,7 @@ namespace OHOS {
 namespace CJSystemapi {
 namespace SystemDateTime {
 
-enum CjErrorCode : int {
+enum CjErrorCode : int16_t {
     ERROR_OK = 0,
     ERROR = -1,
     PERMISSION_ERROR = 201,

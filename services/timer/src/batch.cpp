@@ -17,7 +17,7 @@
 
 namespace OHOS {
 namespace MiscServices {
-const auto TYPE_NONWAKEUP_MASK = 0x1;
+constexpr auto TYPE_NONWAKEUP_MASK = 0x1;
 
 Batch::Batch()
     : start_ {std::chrono::steady_clock::time_point::min()},

@@ -26,8 +26,8 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
-static const uint32_t ALARM_TIME_CHANGE_MASK = 1 << 16;
-static const clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
+static constexpr uint32_t ALARM_TIME_CHANGE_MASK = 1 << 16;
+static constexpr clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
     CLOCK_REALTIME_ALARM,
     CLOCK_REALTIME,
     CLOCK_BOOTTIME_ALARM,
@@ -119,7 +119,7 @@ int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when, std::chrono:
     itimerspec spec {timespec {}, ts};
     int ret = timerfd_settime(fds_[type], TFD_TIMER_ABSTIME, &spec, nullptr);
     if (ret != 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Set timer to kernel. ret: %{public}d. error: %{public}s.",
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Set timer to kernel. ret: %{public}d. error: %{public}s",
                     ret, strerror(errno));
     }
     return ret;

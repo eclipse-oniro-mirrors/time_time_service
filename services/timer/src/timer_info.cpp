@@ -21,6 +21,7 @@
 
 namespace OHOS {
 namespace MiscServices {
+static constexpr uint32_t HALF_SECEND = 2;
 bool TimerInfo::operator==(const TimerInfo &other) const
 {
     return this->id == other.id;

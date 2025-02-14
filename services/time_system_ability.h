@@ -45,7 +45,7 @@
 
 namespace OHOS {
 namespace MiscServices {
-enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
+enum class ServiceRunningState : int8_t { STATE_NOT_START, STATE_RUNNING };
 
 class TimeSystemAbility : public SystemAbility, public TimeServiceStub {
     DECLARE_SYSTEM_ABILITY(TimeSystemAbility);

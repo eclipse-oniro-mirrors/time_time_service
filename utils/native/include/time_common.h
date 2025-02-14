@@ -36,13 +36,13 @@ struct TimerPara {
     uint32_t flag;
 };
 
-enum TimeModule {
+enum TimeModule : uint8_t {
     TIME_MODULE_SERVICE_ID = 0x04,
 };
 // time error offset, used only in this file.
 constexpr ErrCode TIME_ERR_OFFSET = ErrCodeOffset(SUBSYS_SMALLSERVICES, TIME_MODULE_SERVICE_ID);
 
-enum TimeError {
+enum TimeError : int32_t {
     E_TIME_OK = 0,
     // 77856768
     E_TIME_SA_DIED = TIME_ERR_OFFSET,
@@ -67,7 +67,7 @@ enum TimeError {
     E_TIME_AUTO_RESTORE_ERROR,
 };
 
-enum DatabaseType {
+enum DatabaseType : int8_t {
     NOT_STORE = 0,
     STORE,
 };

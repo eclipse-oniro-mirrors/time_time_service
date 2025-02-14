@@ -61,26 +61,25 @@ namespace {
 constexpr uint32_t TIME_CHANGED_BITS = 16;
 constexpr uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
 constexpr int64_t MAX_MILLISECOND = std::numeric_limits<int64_t>::max() / 1000000;
-const int ONE_THOUSAND = 1000;
-const float_t BATCH_WINDOW_COE = 0.75;
+constexpr int ONE_THOUSAND = 1000;
+constexpr float_t BATCH_WINDOW_COE = 0.75;
 const auto ZERO_FUTURITY = seconds(0);
 const auto MIN_INTERVAL_ONE_SECONDS = seconds(1);
 const auto MAX_INTERVAL = hours(24 * 365);
 const auto INTERVAL_HOUR = hours(1);
 const auto INTERVAL_HALF_DAY = hours(12);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
-const int NANO_TO_SECOND =  1000000000;
-const int WANTAGENT_CODE_ELEVEN = 11;
-const int WANT_RETRY_TIMES = 6;
-const int WANT_RETRY_INTERVAL = 1;
+constexpr int NANO_TO_SECOND =  1000000000;
+constexpr int WANTAGENT_CODE_ELEVEN = 11;
+constexpr int WANT_RETRY_TIMES = 6;
+constexpr int WANT_RETRY_INTERVAL = 1;
 // an error code of ipc which means peer end is dead
 constexpr int PEER_END_DEAD = 29189;
 constexpr int TIMER_ALARM_COUNT = 50;
 constexpr int MAX_TIMER_ALARM_COUNT = 100;
 constexpr int TIMER_ALRAM_INTERVAL = 60;
 constexpr int TIMER_COUNT_TOP_NUM = 5;
-const std::string AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
-const std::string TIMER_ACROSS_ACCOUNTS = "persist.time.timer_across_accounts";
+constexpr const char* AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
 
 #ifdef RDB_ENABLE
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
@@ -88,7 +87,8 @@ static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "w
 #endif
 
 #ifdef MULTI_ACCOUNT_ENABLE
-const int SYSTEM_USER_ID  = 0;
+constexpr int SYSTEM_USER_ID  = 0;
+constexpr const char* TIMER_ACROSS_ACCOUNTS = "persist.time.timer_across_accounts";
 #endif
 
 #ifdef POWER_MANAGER_ENABLE
@@ -96,13 +96,13 @@ constexpr int64_t USE_LOCK_ONE_SEC_IN_NANO = 1 * NANO_TO_SECOND;
 constexpr int64_t USE_LOCK_TIME_IN_NANO = 2 * NANO_TO_SECOND;
 constexpr int32_t NANO_TO_MILLI = 1000000;
 constexpr int64_t ONE_HUNDRED_MILLI = 100000000; // 100ms
-const int POWER_RETRY_TIMES = 10;
-const int POWER_RETRY_INTERVAL = 10000;
+constexpr int POWER_RETRY_TIMES = 10;
+constexpr int POWER_RETRY_INTERVAL = 10000;
 #endif
 
 #ifdef DEVICE_STANDBY_ENABLE
-const int REASON_NATIVE_API = 0;
-const int REASON_APP_API = 1;
+constexpr int REASON_NATIVE_API = 0;
+constexpr int REASON_APP_API = 1;
 #endif
 }
 
@@ -132,7 +132,7 @@ TimerManager* TimerManager::GetInstance()
         if (instance_ == nullptr) {
             auto impl = TimerHandler::Create();
             if (impl == nullptr) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "Create Timer handle failed.");
+                TIME_HILOGE(TIME_MODULE_SERVICE, "Create Timer handle failed");
                 return nullptr;
             }
             instance_ = new TimerManager(impl);
@@ -143,7 +143,7 @@ TimerManager* TimerManager::GetInstance()
         }
     }
     if (instance_ == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Create Timer manager failed.");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Create Timer manager failed");
     }
     return instance_;
 }
@@ -555,7 +555,7 @@ void TimerManager::SetHandlerLocked(std::string name, uint64_t id, int type,
         TimerProxy::GetInstance().RecordProxyTimerMap(alarm, true);
         alarm->UpdateWhenElapsedFromNow(GetBootTimeNs(), milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
-    
+
     SetHandlerLocked(alarm, false, false);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
@@ -595,7 +595,7 @@ void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
         }), pendingDelayTimers_.end());
     delayedTimers_.erase(id);
     if (mPendingIdleUntil_ != nullptr && id == mPendingIdleUntil_->id) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm removed.");
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm removed");
         mPendingIdleUntil_ = nullptr;
         bool isAdjust = AdjustTimersBasedOnDeviceIdle();
         delayedTimers_.clear();
@@ -775,7 +775,7 @@ steady_clock::time_point TimerManager::GetBootTimeNs()
 // needs to acquire the lock `mutex_` before calling this method
 void TimerManager::TriggerIdleTimer()
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers.");
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Idle alarm triggers");
     mPendingIdleUntil_ = nullptr;
     delayedTimers_.clear();
     std::for_each(pendingDelayTimers_.begin(), pendingDelayTimers_.end(),
@@ -1343,7 +1343,7 @@ steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
 #ifdef HIDUMPER_ENABLE
 bool TimerManager::ShowTimerEntryMap(int fd)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lock(entryMapMutex_);
     auto iter = timerEntryMap_.begin();
     for (; iter != timerEntryMap_.end(); iter++) {
@@ -1356,17 +1356,17 @@ bool TimerManager::ShowTimerEntryMap(int fd)
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return true;
 }
 
 bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lock(entryMapMutex_);
     auto iter = timerEntryMap_.find(timerId);
     if (iter == timerEntryMap_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+        TIME_HILOGD(TIME_MODULE_SERVICE, "end");
         return false;
     } else {
         dprintf(fd, " - dump timer number   = %lu\n", iter->first);
@@ -1376,13 +1376,13 @@ bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
         dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return true;
 }
 
 bool TimerManager::ShowTimerTriggerById(int fd, uint64_t timerId)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lock(mutex_);
     for (size_t i = 0; i < alarmBatches_.size(); i++) {
         for (size_t j = 0; j < alarmBatches_[i]->Size(); j++) {
@@ -1392,13 +1392,13 @@ bool TimerManager::ShowTimerTriggerById(int fd, uint64_t timerId)
             }
         }
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return true;
 }
 
 bool TimerManager::ShowIdleTimerInfo(int fd)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lock(mutex_);
     dprintf(fd, " - dump idle state         = %d\n", (mPendingIdleUntil_ != nullptr));
     if (mPendingIdleUntil_ != nullptr) {
@@ -1423,7 +1423,7 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
         dprintf(fd, " - dump delayed timer id = %lu\n", delayedTimer.first);
         dprintf(fd, " * timer whenElapsed     = %lu\n", delayedTimer.second);
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "end.");
+    TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return true;
 }
 #endif
@@ -1468,7 +1468,7 @@ void TimerManager::OnPackageRemoved(int uid)
 
 void TimerManager::HandleRSSDeath()
 {
-    TIME_HILOGI(TIME_MODULE_CLIENT, "RSSSaDeathRecipient died.");
+    TIME_HILOGI(TIME_MODULE_CLIENT, "RSSSaDeathRecipient died");
     uint64_t id = 0;
     {
         std::lock_guard <std::mutex> lock(mutex_);
