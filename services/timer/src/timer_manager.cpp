@@ -994,7 +994,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
 {
     auto wakeupNums = std::count_if(triggerList.begin(), triggerList.end(), [](auto timer) {return timer->wakeup;});
     if (wakeupNums > 0) {
-        TimeServiceNotify::GetInstance().PublishTimeStartEvents();
+        TimeServiceNotify::GetInstance().PublishTimerTriggerEvents();
     }
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
