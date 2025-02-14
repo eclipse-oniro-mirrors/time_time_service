@@ -26,6 +26,7 @@
 #include "ipc_skeleton.h"
 #include "time_file_utils.h"
 #include "time_permission.h"
+#include "time_service_notify.h"
 #include "timer_proxy.h"
 #include "time_sysevent.h"
 #include "cjson_helper.h"
