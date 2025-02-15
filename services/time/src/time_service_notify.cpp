@@ -25,7 +25,7 @@ using namespace OHOS::EventFwk;
 namespace OHOS {
 namespace MiscServices {
 namespace {
-    const std::string COMMON_EVENT_TIMER_START = "common.event.TIMER_START";
+    const std::string COMMON_EVENT_TIMER_TRIGGER = "common.event.TIMER_TRIGGER";
     const int UID_RSS = 1096;
 }
 TimeServiceNotify &TimeServiceNotify::GetInstance()
@@ -76,10 +76,10 @@ bool TimeServiceNotify::PublishTimeTickEvents(int64_t eventTime)
     return PublishEvents(eventTime, timeTickWant, CommonEventPublishInfo());
 }
 
-bool TimeServiceNotify::PublishTimeStartEvents()
+bool TimeServiceNotify::PublishTimerTriggerEvents()
 {
     IntentWant timeTickWant;
-    timeTickWant.SetAction(COMMON_EVENT_TIMER_START);
+    timeTickWant.SetAction(COMMON_EVENT_TIMER_TRIGGER);
     auto currentTime = std::chrono::steady_clock::now().time_since_epoch().count();
     PublishInfo publishInfo = CommonEventPublishInfo();
     publishInfo.SetSubscriberUid({UID_RSS});
