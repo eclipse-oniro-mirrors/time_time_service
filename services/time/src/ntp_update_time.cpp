@@ -33,7 +33,7 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr int64_t NANO_TO_MILLISECOND = 1000000;
-constexpr int64_t DAY_TO_MILLISECOND = 86400000;
+constexpr int64_t HALF_DAY_TO_MILLISECOND = 43200000;
 constexpr const char* NTP_SERVER_SYSTEM_PARAMETER = "persist.time.ntpserver";
 constexpr const char* NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER = "persist.time.ntpserver_specific";
 constexpr uint32_t NTP_MAX_SIZE = 5;
@@ -78,7 +78,7 @@ void NtpUpdateTime::Init()
     TimerPara timerPara{};
     timerPara.timerType = static_cast<int>(ITimerManager::TimerType::ELAPSED_REALTIME);
     timerPara.windowLength = 0;
-    timerPara.interval = DAY_TO_MILLISECOND;
+    timerPara.interval = HALF_DAY_TO_MILLISECOND;
     timerPara.flag = 0;
     TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId_);
     RefreshNextTriggerTime();
@@ -261,7 +261,7 @@ void NtpUpdateTime::RefreshNextTriggerTime()
 {
     auto bootTimeNano = steady_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
-    nextTriggerTime_ = static_cast<uint64_t>(bootTimeMilli + DAY_TO_MILLISECOND);
+    nextTriggerTime_ = static_cast<uint64_t>(bootTimeMilli + HALF_DAY_TO_MILLISECOND);
 }
 
 bool NtpUpdateTime::CheckStatus()
@@ -278,7 +278,7 @@ bool NtpUpdateTime::IsValidNITZTime()
     int64_t bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
     TIME_HILOGI(TIME_MODULE_SERVICE, "nitz update time: %{public}" PRIu64 " currentTime: %{public}" PRId64 "",
         nitzUpdateTimeMilli_, bootTimeMilli);
-    return (bootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMilli_)) < DAY_TO_MILLISECOND;
+    return (bootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMilli_)) < HALF_DAY_TO_MILLISECOND;
 }
 
 void NtpUpdateTime::StartTimer()
