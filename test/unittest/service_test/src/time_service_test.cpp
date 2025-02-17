@@ -1331,7 +1331,7 @@ HWTEST_F(TimeServiceTest, TimerManager010, TestSize.Level0)
     TimerManager::GetInstance()->ReCreateTimer(TIMER_ID, entry);
     TimerManager::GetInstance()->HandleRSSDeath();
     auto res = TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
-    EXPECT_EQ(res, E_TIME_DEAL_FAILED);
+    EXPECT_EQ(res, E_TIME_NOT_FOUND);
 
     {
         std::lock_guard <std::mutex> lock(TimerManager::GetInstance()->mutex_);
