@@ -427,7 +427,7 @@ int32_t TimerManager::StopTimerInnerLocked(bool needDestroy, uint64_t timerNumbe
     auto it = timerEntryMap_.find(timerNumber);
     if (it == timerEntryMap_.end()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "timer not exist");
-        return E_TIME_DEAL_FAILED;
+        return E_TIME_NOT_FOUND;
     }
     RemoveHandler(timerNumber);
     TimerProxy::GetInstance().EraseTimerFromProxyTimerMap(timerNumber, it->second->uid, it->second->pid);
