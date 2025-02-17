@@ -1042,8 +1042,10 @@ void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
     TimeSystemAbility::GetInstance()->SetAutoReboot();
     #ifdef RDB_ENABLE
     TimeDatabase::GetInstance().ClearDropOnReboot();
+    TimeDatabase::GetInstance().ClearInvaildDataInHoldOnReboot();
     #else
     CjsonHelper::GetInstance().Clear(DROP_ON_REBOOT);
+    CjsonHelper::GetInstance().ClearInvaildDataInHoldOnReboot();
     #endif
 }
 

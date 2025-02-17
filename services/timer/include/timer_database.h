@@ -37,6 +37,7 @@ public:
         const OHOS::NativeRdb::AbsRdbPredicates &predicates, const std::vector<std::string> &columns);
     bool Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates);
     void ClearDropOnReboot();
+    void ClearInvaildDataInHoldOnReboot();
 
 private:
     bool RecoverDataBase();
