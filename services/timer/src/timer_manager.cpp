@@ -179,12 +179,14 @@ void TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId)
         return;
     }
     auto oldTimerId = timerNameMap_[uid][name];
-    timerNameMap_[uid][name] = timerId;
-    bool needRecover =  false;
-    StopTimerInnerLocked(true, oldTimerId, needRecover);
-    UpdateOrDeleteDatabase(true, oldTimerId, needRecover);
-    TIME_HILOGW(TIME_MODULE_SERVICE, "create %{public}" PRId64 " name: %{public}s in %{public}d already exist,"
-        "destory timer %{public}" PRId64 "", timerId, name.c_str(), uid, oldTimerId);
+    if (timerId != oldTimerId) {
+        bool needRecover =  false;
+        StopTimerInnerLocked(true, oldTimerId, needRecover);
+        UpdateOrDeleteDatabase(true, oldTimerId, needRecover);
+        timerNameMap_[uid][name] = timerId;
+        TIME_HILOGW(TIME_MODULE_SERVICE, "create %{public}" PRId64 " name: %{public}s in %{public}d already exist,"
+            "destory timer %{public}" PRId64 "", timerId, name.c_str(), uid, oldTimerId);
+    }
     return;
 }
 
@@ -233,22 +235,12 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
             // random_() needs to be protected in a lock.
             timerId = random_();
         }
-        timerInfo = std::make_shared<TimerEntry>(TimerEntry {
-            timerName,
-            timerId,
-            paras.timerType,
-            paras.windowLength,
-            paras.interval,
-            paras.flag,
-            paras.autoRestore,
-            std::move(callback),
-            wantAgent,
-            uid,
-            pid,
-            bundleName
-        });
+        timerInfo = std::make_shared<TimerEntry>(TimerEntry {timerName, timerId, paras.timerType, paras.windowLength,
+            paras.interval, paras.flag, paras.autoRestore, std::move(callback), wantAgent, uid, pid, bundleName});
+        if (timerEntryMap_.find(timerId) == timerEntryMap_.end()) {
+            IncreaseTimerCount(uid);
+        }
         timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
-        IncreaseTimerCount(uid);
         if (timerName != "") {
             AddTimerName(uid, timerName, timerId);
         }

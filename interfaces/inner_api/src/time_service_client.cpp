@@ -90,6 +90,7 @@ void TimeServiceClient::TimeServiceListener::OnRemoveSystemAbility(
 TimeServiceClient::TimeServiceClient()
 {
     listener_ = new (std::nothrow) TimeServiceListener();
+    ConnectService();
 }
 
 TimeServiceClient::~TimeServiceClient()
