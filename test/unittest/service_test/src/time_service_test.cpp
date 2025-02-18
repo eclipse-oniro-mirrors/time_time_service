@@ -298,7 +298,7 @@ HWTEST_F(TimeServiceTest, PidProxyTimer003, TestSize.Level0)
 * @tc.name: PidProxyTimer004.
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
+* @tc.require:
 */
 HWTEST_F(TimeServiceTest, PidProxyTimer004, TestSize.Level0)
 {
@@ -312,7 +312,7 @@ HWTEST_F(TimeServiceTest, PidProxyTimer004, TestSize.Level0)
 * @tc.name: AdjustTimer001.
 * @tc.desc: adjust timer.
 * @tc.type: FUNC
-* @tc.require: AR20240306656104
+* @tc.require:
 */
 HWTEST_F(TimeServiceTest, AdjustTimer001, TestSize.Level0)
 {
@@ -326,7 +326,7 @@ HWTEST_F(TimeServiceTest, AdjustTimer001, TestSize.Level0)
 * @tc.name: AdjustTimer002.
 * @tc.desc: exemption timer.
 * @tc.type: FUNC
-* @tc.require: AR20240306656104
+* @tc.require:
 */
 HWTEST_F(TimeServiceTest, AdjustTimer002, TestSize.Level0)
 {
