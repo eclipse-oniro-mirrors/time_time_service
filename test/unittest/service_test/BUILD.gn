@@ -84,6 +84,10 @@ ohos_unittest("TimeServiceTest") {
       "relational_store:native_rdb",
     ]
   }
+  if (time_service_multi_account) {
+    defines += [ "MULTI_ACCOUNT_ENABLE" ]
+    external_deps += [ "os_account:os_account_innerkits" ]
+  }
 }
 
 ohos_unittest("TimeClientTest") {

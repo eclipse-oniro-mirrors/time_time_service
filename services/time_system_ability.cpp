@@ -1119,7 +1119,7 @@ bool TimeSystemAbility::RecoverTimer()
     return true;
 }
 
-std::shared_ptr<TimerEntry> GetEntry(cJSON* obj, bool autoRestore)
+std::shared_ptr<TimerEntry> TimeSystemAbility::GetEntry(cJSON* obj, bool autoRestore)
 {
     auto cjson = CjsonHelper::GetInstance();
     auto item = cJSON_GetObjectItem(obj, "name");
