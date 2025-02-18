@@ -281,6 +281,17 @@ bool TimerProxy::IsProxy(const int32_t uid, const int32_t pid)
     return true;
 }
 
+// needs to acquire the lock `proxyMutex_` before calling this method
+bool TimerProxy::IsProxyLocked(const int32_t uid, const int32_t pid)
+{
+    uint64_t key = GetProxyKey(uid, pid);
+    auto it = proxyTimers_.find(key);
+    if (it == proxyTimers_.end()) {
+        return false;
+    }
+    return true;
+}
+
 void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
     const std::chrono::steady_clock::time_point &now,
     std::function<void(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)> insertAlarmCallback)
@@ -303,7 +314,7 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
     for (auto itTimerInfo = itUidTimersMap->second.begin(); itTimerInfo!= itUidTimersMap->second.end();
         ++itTimerInfo) {
         if (pid == 0 || pid == itTimerInfo->second->pid) {
-            itTimerInfo->second->originWhenElapsed = itTimerInfo->second->whenElapsed;
+            itTimerInfo->second->originProxyWhenElapsed = itTimerInfo->second->whenElapsed;
             timerList.push_back(itTimerInfo->first);
             itTimerInfo->second->UpdateWhenElapsedFromNow(now, milliseconds(proxyDelayTime_));
             TIME_HILOGD(TIME_MODULE_SERVICE, "Update proxy WhenElapsed for proxy pid map. "
@@ -340,7 +351,7 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
         if (itTimerInfo == itTimer->second.end()) {
             continue;
         }
-        auto originTriggerTime = itTimerInfo->second->originWhenElapsed;
+        auto originTriggerTime = itTimerInfo->second->originProxyWhenElapsed;
         if (originTriggerTime > now + milliseconds(MILLI_TO_SECOND)) {
             auto interval = std::chrono::duration_cast<std::chrono::nanoseconds>(originTriggerTime - now);
             itTimerInfo->second->UpdateWhenElapsedFromNow(now, interval);

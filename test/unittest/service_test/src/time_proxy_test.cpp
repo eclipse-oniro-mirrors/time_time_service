@@ -221,7 +221,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid002, TestSize.Level1)
     auto it2 = std::find(it->second.begin(), it->second.end(), timerId);
     EXPECT_NE(it2, it->second.end());
     uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
-    std::chrono::steady_clock::time_point time = uidTimersMap[uid][timerId]->originWhenElapsed;
+    std::chrono::steady_clock::time_point time = uidTimersMap[uid][timerId]->originProxyWhenElapsed;
     EXPECT_EQ(originTime, time);
     auto it3 = uidTimersMap.find(uid);
     EXPECT_NE(it3, uidTimersMap.end());
@@ -399,7 +399,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByPid002, TestSize.Level1)
     auto it2 = std::find(it->second.begin(), it->second.end(), timerId);
     EXPECT_NE(it2, it->second.end());
     uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
-    std::chrono::steady_clock::time_point time = uidTimersMap[uid][timerId]->originWhenElapsed;
+    std::chrono::steady_clock::time_point time = uidTimersMap[uid][timerId]->originProxyWhenElapsed;
     EXPECT_EQ(originTime, time);
 
     auto it3 = uidTimersMap.find(uid);

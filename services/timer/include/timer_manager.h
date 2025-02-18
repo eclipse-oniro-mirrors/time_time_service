@@ -150,6 +150,7 @@ private:
 
     void UpdateTimersState(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger);
     bool AdjustSingleTimer(std::shared_ptr<TimerInfo> timer);
+    bool AdjustSingleTimerLocked(std::shared_ptr<TimerInfo> timer);
     void IncreaseTimerCount(int uid);
     void DecreaseTimerCount(int uid);
     void CheckTimerCount();

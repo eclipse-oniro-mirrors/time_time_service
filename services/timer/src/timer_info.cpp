@@ -65,6 +65,8 @@ TimerInfo::TimerInfo(std::string _name, uint64_t _id, int _type,
 {
     originWhenElapsed = _whenElapsed;
     originMaxWhenElapsed = _maxWhen;
+    originProxyWhenElapsed = _whenElapsed;
+    originProxyMaxWhenElapsed = _maxWhen;
 }
 
 /* Please make sure that the first param is current boottime */

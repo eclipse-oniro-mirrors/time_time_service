@@ -50,6 +50,7 @@ public:
     void RemoveUidTimerMap(const uint64_t id);
     int32_t CountUidTimerMapByUid(int32_t uid);
     bool IsProxy(const int32_t uid, const int32_t pid);
+    bool IsProxyLocked(const int32_t uid, const int32_t pid);
     #ifdef HIDUMPER_ENABLE
     bool ShowProxyTimerInfo(int fd, const int64_t now);
     bool ShowUidTimerMapInfo(int fd, const int64_t now);
