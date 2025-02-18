@@ -42,6 +42,8 @@ public:
     std::chrono::milliseconds windowLength;
     std::chrono::steady_clock::time_point originWhenElapsed;
     std::chrono::steady_clock::time_point originMaxWhenElapsed;
+    std::chrono::steady_clock::time_point originProxyWhenElapsed;
+    std::chrono::steady_clock::time_point originProxyMaxWhenElapsed;
     std::chrono::steady_clock::time_point whenElapsed;
     std::chrono::steady_clock::time_point maxWhenElapsed;
     std::chrono::milliseconds repeatInterval;

@@ -1116,7 +1116,7 @@ void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm, bool nee
 {
     if (needRetrigger) {
         RemoveLocked(alarm->id, false);
-        AdjustSingleTimer(alarm);
+        AdjustSingleTimerLocked(alarm);
         InsertAndBatchTimerLocked(alarm);
         RescheduleKernelTimerLocked();
     } else {
@@ -1206,7 +1206,19 @@ void TimerManager::SetTimerExemption(const std::unordered_set<std::string> &name
 
 bool TimerManager::AdjustSingleTimer(std::shared_ptr<TimerInfo> timer)
 {
-    if (!adjustPolicy_) {
+    if (!adjustPolicy_ || TimerProxy::GetInstance().IsProxy(timer->uid, 0)
+        || TimerProxy::GetInstance().IsProxy(timer->uid, timer->pid)) {
+        return false;
+    }
+    return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, GetBootTimeNs(), adjustDelta_,
+        [this, timer] (AdjustTimerCallback adjustTimer) { adjustTimer(timer); });
+}
+
+// needs to acquire the lock `proxyMutex_` before calling this method
+bool TimerManager::AdjustSingleTimerLocked(std::shared_ptr<TimerInfo> timer)
+{
+    if (!adjustPolicy_|| TimerProxy::GetInstance().IsProxyLocked(timer->uid, 0)
+        || TimerProxy::GetInstance().IsProxyLocked(timer->uid, timer->pid)) {
         return false;
     }
     return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, GetBootTimeNs(), adjustDelta_,
