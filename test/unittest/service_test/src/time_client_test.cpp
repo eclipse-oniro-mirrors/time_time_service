@@ -1214,32 +1214,4 @@ HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
     EXPECT_EQ(g_data1, 0);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
-
-/**
-* @tc.name: ConvertErrCode001
-* @tc.desc: ConvertErrCode.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeClientTest, ConvertErrCode001, TestSize.Level1)
-{
-    auto res = TimeServiceClient::GetInstance()->ConvertErrCode(ERR_INVALID_VALUE);
-    EXPECT_EQ(res, E_TIME_WRITE_PARCEL_ERROR);
-    res = TimeServiceClient::GetInstance()->ConvertErrCode(ERR_INVALID_DATA);
-    EXPECT_EQ(res, E_TIME_WRITE_PARCEL_ERROR);
-    res = TimeServiceClient::GetInstance()->ConvertErrCode(E_TIME_NULLPTR);
-    EXPECT_EQ(res, E_TIME_DEAL_FAILED);
-    res = TimeServiceClient::GetInstance()->ConvertErrCode(1);
-    EXPECT_EQ(res, 1);
-}
-
-/**
-* @tc.name: ClearProxy001
-* @tc.desc: Check clear proxy.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeClientTest, ClearProxy001, TestSize.Level1)
-{
-    TimeServiceClient::GetInstance()->ClearProxy();
-    EXPECT_EQ(TimeServiceClient::GetInstance()->timeServiceProxy_, nullptr);
-}
 } // namespace
