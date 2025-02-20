@@ -139,7 +139,7 @@ private:
     void CjsonIntoDatabase(cJSON* resultSet, bool autoRestore, const std::string &table);
     void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, bool autoRestore);
     #else
-    void RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestore);
+    void RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestore, std::string tableName);
     #endif
     #ifdef SET_AUTO_REBOOT_ENABLE
     void RegisterPowerStateListener();

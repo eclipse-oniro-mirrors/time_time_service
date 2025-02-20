@@ -252,6 +252,49 @@ bool CjsonHelper::UpdateTrigger(std::string tableName, int64_t timerId, int64_t 
     return true;
 }
 
+bool CjsonHelper::UpdateTriggerGroup(std::string tableName, std::vector<std::pair<uint64_t, uint64_t>> timerVec)
+{
+    if (timerVec.empty()) {
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    std::ifstream file(DB_PATH);
+    if (!file.good()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "open json file fail!");
+        return false;
+    }
+    std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    cJSON* db = cJSON_Parse(fileContent.c_str());
+    cJSON* table = cJSON_GetObjectItem(db, tableName.c_str());
+    if (table == NULL) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get fail!", tableName.c_str());
+        cJSON_Delete(db);
+        return false;
+    }
+
+    int size = cJSON_GetArraySize(table);
+    for (int i = 0; i < size; ++i) {
+        cJSON* obj = cJSON_GetArrayItem(table, i);
+
+        auto timerIdObj = cJSON_GetObjectItem(obj, "timerId");
+        if (!IsString(timerIdObj)) {
+            continue;
+        }
+        for (auto it = timerVec.begin(); it != timerVec.end(); ++it) {
+            std::string timerId = std::to_string(it->first);
+            if (timerIdObj->valuestring == timerId) {
+                cJSON_ReplaceItemInObject(obj, "state", cJSON_CreateNumber(1));
+                std::string triggerTime = std::to_string(it->second);
+                cJSON_ReplaceItemInObject(obj, "triggerTime", cJSON_CreateString(triggerTime.c_str()));
+            }
+        }
+    }
+    SaveJson(db);
+    cJSON_Delete(db);
+    return true;
+}
+
 bool CjsonHelper::UpdateState(std::string tableName, int64_t timerId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
