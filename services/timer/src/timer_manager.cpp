@@ -679,21 +679,13 @@ std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono
         auto offset = when - systemTimeNow;
         TIME_HILOGD(TIME_MODULE_SERVICE, "systemTimeNow : %{public}lld offset : %{public}lld",
                     systemTimeNow.count(), offset.count());
-        if (offset.count() <= 0) {
-            return bootTimePoint;
-        } else {
-            return bootTimePoint + offset;
-        }
+        return bootTimePoint + offset;
     }
     auto bootTimeNow = bootTimePoint.time_since_epoch();
     auto offset = when - bootTimeNow;
     TIME_HILOGD(TIME_MODULE_SERVICE, "bootTimeNow : %{public}lld offset : %{public}lld",
                 bootTimeNow.count(), offset.count());
-    if (offset.count() <= 0) {
-        return bootTimePoint;
-    } else {
-        return bootTimePoint + offset;
-    }
+    return bootTimePoint + offset;
 }
 
 void TimerManager::TimerLooper()
@@ -900,6 +892,9 @@ std::shared_ptr<Batch> TimerManager::FindFirstWakeupBatchLocked()
 
 void TimerManager::SetLocked(int type, std::chrono::nanoseconds when, std::chrono::steady_clock::time_point bootTime)
 {
+    if (when.count() <= 0) {
+        when = bootTime.time_since_epoch();
+    }
     handler_->Set(static_cast<uint32_t>(type), when, bootTime);
 }
 
