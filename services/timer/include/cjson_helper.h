@@ -39,6 +39,7 @@ public:
     std::vector<std::tuple<std::string, std::string, int64_t>> QueryAutoReboot();
     bool Insert(std::string tableName, std::shared_ptr<TimerEntry> timerInfo);
     bool UpdateTrigger(std::string tableName, int64_t timerId, int64_t triggerTime);
+    bool UpdateTriggerGroup(std::string tableName, std::vector<std::pair<uint64_t, uint64_t>> timerVec);
     bool UpdateState(std::string tableName, int64_t timerId);
     bool Delete(std::string tableName, int64_t timerId);
     bool ClearInvaildDataInHoldOnReboot();

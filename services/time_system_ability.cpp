@@ -1075,7 +1075,7 @@ void TimeSystemAbility::RecoverTimerCjson(std::string tableName)
         #ifdef RDB_ENABLE
         CjsonIntoDatabase(result, true, tableName);
         #else
-        RecoverTimerInnerCjson(result, true);
+        RecoverTimerInnerCjson(result, true, tableName);
         #endif
     }
     cJSON_Delete(db);
@@ -1257,12 +1257,13 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
 }
 
 #else
-void TimeSystemAbility::RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestore)
+void TimeSystemAbility::RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestore, std::string tableName)
 {
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
         return;
     }
+    std::vector<std::pair<uint64_t, uint64_t>> timerVec;
     int size = cJSON_GetArraySize(resultSet);
     for (int i = 0; i < size; ++i) {
         // Get data row
@@ -1293,9 +1294,10 @@ void TimeSystemAbility::RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestor
             if (!CjsonHelper::GetInstance().StrToI64(item->valuestring, triggerTime)) {
                 continue;
             }
-            timerManager->StartTimer(timerInfo->id, static_cast<uint64_t>(triggerTime));
+            timerVec.push_back(std::make_pair(timerInfo->id, static_cast<uint64_t>(triggerTime)));
         }
     }
+    timerManager->StartTimerGroup(timerVec, tableName);
 }
 #endif
 

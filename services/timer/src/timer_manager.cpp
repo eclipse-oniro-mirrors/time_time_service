@@ -314,6 +314,40 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
     return E_TIME_OK;
 }
 
+#ifndef RDB_ENABLE
+int32_t TimerManager::StartTimerGroup(std::vector<std::pair<uint64_t, uint64_t>> timerVec, std::string tableName)
+{
+    std::lock_guard<std::mutex> lock(entryMapMutex_);
+    for (auto iter = timerVec.begin(); iter != timerVec.end(); ++iter) {
+        uint64_t timerId = iter->first;
+        uint64_t triggerTime = iter->second;
+        std::shared_ptr<TimerEntry> timerInfo;
+        auto it = timerEntryMap_.find(timerId);
+        if (it == timerEntryMap_.end()) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
+            continue;
+        }
+        timerInfo = it->second;
+        TIME_HILOGI(TIME_MODULE_SERVICE,
+            "id: %{public}" PRIu64 " typ:%{public}d len: %{public}" PRId64 " int: %{public}" PRId64 " "
+            "flg :%{public}d trig: %{public}s uid:%{public}d pid:%{public}d",
+            timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
+            std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
+        {
+            // To prevent the same ID from being started repeatedly,
+            // the later start overwrites the earlier start.
+            std::lock_guard<std::mutex> lock(mutex_);
+            RemoveLocked(timerId, false);
+        }
+        SetHandler(timerInfo->name, timerInfo->id, timerInfo->type, triggerTime, timerInfo->windowLength,
+            timerInfo->interval, timerInfo->flag, timerInfo->autoRestore, timerInfo->callback, timerInfo->wantAgent,
+            timerInfo->uid, timerInfo->pid, timerInfo->bundleName);
+    }
+    CjsonHelper::GetInstance().UpdateTriggerGroup(tableName, timerVec);
+    return E_TIME_OK;
+}
+#endif
+
 void TimerManager::IncreaseTimerCount(int uid)
 {
     auto it = std::find_if(timerCount_.begin(), timerCount_.end(),
