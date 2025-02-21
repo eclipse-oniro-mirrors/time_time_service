@@ -65,7 +65,7 @@ std::string CjsonHelper::QueryWant(std::string tableName, uint64_t timerId)
 {
     std::string data = "";
     cJSON* db = NULL;
-    cJSON* table = QueryTable(tableName, db);
+    cJSON* table = QueryTable(tableName, &db);
     if (table == NULL) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "QueryTable fail!");
         cJSON_Delete(db);
@@ -93,7 +93,7 @@ std::string CjsonHelper::QueryWant(std::string tableName, uint64_t timerId)
 }
 
 // must cJSON_Delete(db) after use, avoid memory leak.
-cJSON* CjsonHelper::QueryTable(std::string tableName, cJSON* db)
+cJSON* CjsonHelper::QueryTable(std::string tableName, cJSON** db)
 {
     cJSON* data = NULL;
     std::lock_guard<std::mutex> lock(mutex_);
@@ -104,8 +104,8 @@ cJSON* CjsonHelper::QueryTable(std::string tableName, cJSON* db)
         return data;
     }
     std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    db = cJSON_Parse(fileContent.c_str());
-    cJSON* table = cJSON_GetObjectItem(db, tableName.c_str());
+    *db = cJSON_Parse(fileContent.c_str());
+    cJSON* table = cJSON_GetObjectItem(*db, tableName.c_str());
     if (table == NULL) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get fail!", tableName.c_str());
         return data;
@@ -131,7 +131,7 @@ std::vector<std::tuple<std::string, std::string, int64_t>> CjsonHelper::QueryAut
 {
     std::vector<std::tuple<std::string, std::string, int64_t>> result;
     cJSON* db = NULL;
-    cJSON* table = QueryTable(HOLD_ON_REBOOT, db);
+    cJSON* table = QueryTable(HOLD_ON_REBOOT, &db);
     if (table == NULL) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "QueryTable fail!");
         cJSON_Delete(db);

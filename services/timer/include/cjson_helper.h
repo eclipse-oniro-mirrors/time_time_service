@@ -35,7 +35,7 @@ constexpr const char *DROP_ON_REBOOT = "drop_on_reboot";
 class CjsonHelper {
 public:
     std::string QueryWant(std::string tableName, uint64_t timerId);
-    cJSON* QueryTable(std::string tableName, cJSON* db);
+    cJSON* QueryTable(std::string tableName, cJSON** db);
     std::vector<std::tuple<std::string, std::string, int64_t>> QueryAutoReboot();
     bool Insert(std::string tableName, std::shared_ptr<TimerEntry> timerInfo);
     bool UpdateTrigger(std::string tableName, int64_t timerId, int64_t triggerTime);

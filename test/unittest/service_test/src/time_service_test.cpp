@@ -242,7 +242,7 @@ bool CheckInJson(std::string tableName, uint64_t timerId)
 {
     bool flag = false;
     cJSON* db1 = NULL;
-    cJSON* data1 = CjsonHelper::GetInstance().QueryTable(tableName, db1);
+    cJSON* data1 = CjsonHelper::GetInstance().QueryTable(tableName, &db1);
     if (data1 != NULL) {
         int size = cJSON_GetArraySize(data1);
         for (int i = 0; i < size; ++i) {
@@ -1872,7 +1872,7 @@ HWTEST_F(TimeServiceTest, Cjson003, TestSize.Level0)
 
     bool flag = false;
     cJSON* db1 = NULL;
-    cJSON* data1 = CjsonHelper::GetInstance().QueryTable(DROP_ON_REBOOT, db1);
+    cJSON* data1 = CjsonHelper::GetInstance().QueryTable(DROP_ON_REBOOT, &db1);
     if (data1 != NULL) {
         int size = cJSON_GetArraySize(data1);
         for (int i = 0; i < size; ++i) {
@@ -1893,7 +1893,7 @@ HWTEST_F(TimeServiceTest, Cjson003, TestSize.Level0)
     CjsonHelper::GetInstance().UpdateState(std::string(DROP_ON_REBOOT), TIMER_ID);
     flag = false;
     db1 = NULL;
-    data1 = CjsonHelper::GetInstance().QueryTable(DROP_ON_REBOOT, db1);
+    data1 = CjsonHelper::GetInstance().QueryTable(DROP_ON_REBOOT, &db1);
     if (data1 != NULL) {
         int size = cJSON_GetArraySize(data1);
         for (int i = 0; i < size; ++i) {

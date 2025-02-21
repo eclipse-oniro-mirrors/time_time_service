@@ -1066,7 +1066,7 @@ void TimeSystemAbility::RegisterPowerStateListener()
 void TimeSystemAbility::RecoverTimerCjson(std::string tableName)
 {
     cJSON* db = NULL;
-    auto result = CjsonHelper::GetInstance().QueryTable(tableName, db);
+    auto result = CjsonHelper::GetInstance().QueryTable(tableName, &db);
     if (result == NULL) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}s get table failed", tableName.c_str());
     } else {
