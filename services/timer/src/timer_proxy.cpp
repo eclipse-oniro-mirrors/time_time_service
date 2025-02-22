@@ -38,6 +38,13 @@ uint64_t GetProxyKey(int uid, int pid)
     return key;
 }
 
+std::pair<int, int> ParseProxyKey(uint64_t key)
+{
+    auto uid = static_cast<uint32_t>(key >> UID_PROXY_OFFSET);
+    auto pid = key & ((static_cast<uint64_t>(1) << UID_PROXY_OFFSET) - 1);
+    return std::make_pair(uid, pid);
+}
+
 int32_t TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
 {
     if (alarm == nullptr) {
@@ -386,9 +393,8 @@ void TimerProxy::ResetAllProxyWhenElapsed(const std::chrono::steady_clock::time_
 {
     std::lock_guard<std::mutex> lockProxy(proxyMutex_);
     for (auto it = proxyTimers_.begin(); it != proxyTimers_.end(); ++it) {
-        auto uid = static_cast<uint32_t>(it->first >> UID_PROXY_OFFSET);
-        auto pid = it->first & ((static_cast<uint64_t>(1) << UID_PROXY_OFFSET) - 1);
-        RestoreProxyWhenElapsed(uid, pid, now, insertAlarmCallback, true);
+        auto resPair = ParseProxyKey(it->first);
+        RestoreProxyWhenElapsed(resPair.first, resPair.second, now, insertAlarmCallback, true);
     }
     proxyTimers_.clear();
 }
@@ -400,9 +406,8 @@ bool TimerProxy::ShowProxyTimerInfo(int fd, const int64_t now)
     std::lock_guard<std::mutex> lockPidProxy(proxyMutex_);
     dprintf(fd, "current time %lld\n", now);
     for (auto itProxyPids = proxyTimers_.begin(); itProxyPids != proxyTimers_.end(); ++itProxyPids) {
-        auto uid = static_cast<uint32_t>(itProxyPids->first >> UID_PROXY_OFFSET);
-        auto pid = itProxyPids->first & ((static_cast<uint64_t>(1) << UID_PROXY_OFFSET) - 1);
-        dprintf(fd, " - proxy uid = %lu pid = %lu\n", uid, pid);
+        auto resPair = ParseProxyKey(itProxyPids->first);
+        dprintf(fd, " - proxy uid = %lu pid = %lu\n", resPair.first, resPair.second);
         for (auto elem : itProxyPids->second) {
             dprintf(fd, "   * save timer id          = %llu\n", elem);
         }
