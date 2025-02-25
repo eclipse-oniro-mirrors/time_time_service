@@ -66,9 +66,9 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
         for (; iter != recoverTimer.end(); iter++) {
             auto timerId = iter->first;
             auto timerInfo = iter->second->timerInfo;
-            SimpleTimerInfo *simpleTimerInfo = new (std::nothrow) SimpleTimerInfo(timerInfo->name, timerInfo->type,
-                timerInfo->repeat, timerInfo->disposable, timerInfo->autoRestore, timerInfo->interval,
-                timerInfo->wantAgent);
+            std::shared_ptr<SimpleTimerInfo> simpleTimerInfo = std::make_shared<SimpleTimerInfo>(
+                timerInfo->name, timerInfo->type, timerInfo->repeat, timerInfo->disposable,
+                timerInfo->autoRestore, timerInfo->interval, timerInfo->wantAgent);
             if (simpleTimerInfo == nullptr) { return; }
             proxy->CreateTimer(*simpleTimerInfo, timerCallbackInfoObject, timerId);
             if (iter->second->state == 1) {
@@ -312,9 +312,9 @@ int32_t TimeServiceClient::CreateTimerV9(std::shared_ptr<ITimerInfo> timerOption
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    SimpleTimerInfo *simpleTimerInfo = new (std::nothrow) SimpleTimerInfo(timerOptions->name, timerOptions->type,
-        timerOptions->repeat, timerOptions->disposable, timerOptions->autoRestore, timerOptions->interval,
-        timerOptions->wantAgent);
+    std::shared_ptr<SimpleTimerInfo> simpleTimerInfo = std::make_shared<SimpleTimerInfo>(
+        timerOptions->name, timerOptions->type, timerOptions->repeat, timerOptions->disposable,
+        timerOptions->autoRestore, timerOptions->interval, timerOptions->wantAgent);
     if (simpleTimerInfo == nullptr) { return E_TIME_NULLPTR; }
     int32_t errCode = proxy->CreateTimer(*simpleTimerInfo, timerCallbackInfoObject, timerId);
     if (errCode != E_TIME_OK) {
