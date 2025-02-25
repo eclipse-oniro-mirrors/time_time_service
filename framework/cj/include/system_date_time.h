@@ -16,7 +16,6 @@
 #ifndef OHOS_SYSTEM_DATE_TIME_H
 #define OHOS_SYSTEM_DATE_TIME_H
 
-#include <cstdint>
 #include <string>
 
 namespace OHOS {

@@ -16,17 +16,12 @@
 #ifndef SERVICES_INCLUDE_TIME_SERVICES_MANAGER_H
 #define SERVICES_INCLUDE_TIME_SERVICES_MANAGER_H
 
-#include <mutex>
 #include <sstream>
-#include <unordered_set>
 
-#include "itimer_info.h"
-#include "refbase.h"
 #include "itime_service.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "system_ability_status_change_stub.h"
-#include "visibility.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -370,7 +365,7 @@ public:
      * @return error code.
      */
     TIME_API int32_t DestroyTimerAsyncV9(uint64_t timerId);
-    
+
     /**
      * @brief ProxyTimer
      *

@@ -15,14 +15,6 @@
 #ifndef TIMER_PROXY_H
 #define TIMER_PROXY_H
 
-#include <chrono>
-#include <functional>
-#include <unordered_map>
-#include <unordered_set>
-#include <mutex>
-#include <memory>
-#include <stdint.h>
-
 #include "single_instance.h"
 #include "timer_info.h"
 

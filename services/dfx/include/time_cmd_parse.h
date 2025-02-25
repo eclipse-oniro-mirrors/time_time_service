@@ -16,9 +16,7 @@
 #ifndef TIME_CMDPARSE_H
 #define TIME_CMDPARSE_H
 
-#include <functional>
 #include <string>
-#include <vector>
 
 class TimeCmdParse {
 public:

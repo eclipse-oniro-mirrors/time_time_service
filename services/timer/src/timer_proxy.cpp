@@ -13,12 +13,9 @@
  * limitations under the License.
  */
 
-#include <string>
 #include <cinttypes>
-#include <algorithm>
 
 #include "timer_proxy.h"
-#include "time_hilog.h"
 
 namespace OHOS {
 namespace MiscServices {

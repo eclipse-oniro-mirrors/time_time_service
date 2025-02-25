@@ -16,7 +16,6 @@
 #ifndef TIME_SYSEVENT_H
 #define TIME_SYSEVENT_H
 
-#include <string>
 #include "timer_info.h"
 
 namespace OHOS {

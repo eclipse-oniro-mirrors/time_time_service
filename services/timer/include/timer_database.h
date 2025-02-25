@@ -18,7 +18,6 @@
 
 #include "rdb_helper.h"
 #include "rdb_predicates.h"
-#include "rdb_store.h"
 
 namespace OHOS {
 namespace MiscServices {

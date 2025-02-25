@@ -15,21 +15,12 @@
 #ifndef TIMER_MANAGER_H
 #define TIMER_MANAGER_H
 
-#include <atomic>
-#include <chrono>
-#include <cinttypes>
-#include <functional>
-#include <map>
-#include <mutex>
 #include <random>
 #include <thread>
-#include <vector>
-#include <unordered_set>
+#include <cinttypes>
 
 #include "batch.h"
 #include "timer_handler.h"
-#include "want_agent_helper.h"
-#include "time_common.h"
 
 #ifdef POWER_MANAGER_ENABLE
 #include "completed_callback.h"

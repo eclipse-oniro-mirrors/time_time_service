@@ -16,11 +16,7 @@
 #ifndef SNTP_CLIENT_SNTP_CLIENT_H
 #define SNTP_CLIENT_SNTP_CLIENT_H
 
-#include <cstdlib>
-#include <ctime>
-#include <netinet/in.h>
 #include <string>
-#include <sys/socket.h>
 #include <sys/types.h>
 
 namespace OHOS {

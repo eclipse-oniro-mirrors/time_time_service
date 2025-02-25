@@ -16,21 +16,11 @@
 #include "sntp_client.h"
 #include "ntp_trusted_time.h"
 
-#include <chrono>
-#include <cstdio>
-#include <ctime>
-#include <iomanip>
 #include <netdb.h>
-#include <netinet/in.h>
 #include <securec.h>
 #include <sstream>
-#include <string>
-#include <sys/socket.h>
 #include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
 
-#include "time_common.h"
 #include "time_sysevent.h"
 
 namespace OHOS {

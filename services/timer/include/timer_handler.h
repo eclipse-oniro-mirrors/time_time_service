@@ -16,12 +16,6 @@
 #ifndef TIMER_HANDLER_H
 #define TIMER_HANDLER_H
 
-#include <array>
-#include <cstdint>
-#include <string>
-#include <chrono>
-#include <memory>
-
 #include "time_common.h"
 
 namespace OHOS {

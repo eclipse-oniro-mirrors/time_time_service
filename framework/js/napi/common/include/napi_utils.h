@@ -17,13 +17,9 @@
 #define NAPI_UTILS_H
 
 #include <map>
-#include <memory>
-#include <string>
 
-#include "js_native_api.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
-#include "time_hilog.h"
 namespace OHOS {
 namespace MiscServices {
 namespace Time {

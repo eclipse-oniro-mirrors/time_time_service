@@ -13,10 +13,8 @@
  * limitations under the License.
  */
 
-#include "time_hilog.h"
 #include "cj_ffi/cj_common_ffi.h"
 #include "system_date_time.h"
-#include "system_date_time_ffi.h"
 
 namespace OHOS {
 namespace CJSystemapi {

@@ -17,8 +17,6 @@
 
 #include <cinttypes>
 
-#include "time_hilog.h"
-
 namespace OHOS {
 namespace MiscServices {
 static constexpr uint32_t HALF_SECEND = 2;

@@ -16,8 +16,6 @@
 #ifndef TIMER_MANAGER_INTERFACE_H
 #define TIMER_MANAGER_INTERFACE_H
 
-#include <memory>
-#include <unordered_set>
 #include "want_agent_helper.h"
 #include "time_common.h"
 

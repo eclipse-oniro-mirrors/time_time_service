@@ -15,16 +15,8 @@
 
 #include "time_service_client.h"
 
-#include <cinttypes>
-#include <mutex>
-
-#include "iremote_object.h"
-#include "iservice_registry.h"
 #include "system_ability_definition.h"
-#include "time_common.h"
-#include "time_service_proxy.h"
 #include "timer_call_back.h"
-#include "simple_timer_info.h"
 
 namespace OHOS {
 namespace MiscServices {

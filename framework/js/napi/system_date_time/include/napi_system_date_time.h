@@ -16,10 +16,8 @@
 #ifndef NAPI_SYSTEM_TIME_H
 #define NAPI_SYSTEM_TIME_H
 
-#include <list>
 #include <map>
 
-#include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
 namespace OHOS {

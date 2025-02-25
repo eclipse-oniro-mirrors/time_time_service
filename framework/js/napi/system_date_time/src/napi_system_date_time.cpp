@@ -18,7 +18,6 @@
 #include "parameters.h"
 #include "napi_work.h"
 #include "napi_utils.h"
-#include "time_hilog.h"
 #include "time_service_client.h"
 
 using namespace OHOS::MiscServices;

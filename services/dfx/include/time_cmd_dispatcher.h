@@ -17,8 +17,6 @@
 #define TIME_CMD_DISPATCHER_H
 
 #include <map>
-#include <string>
-#include <vector>
 #include "time_cmd_parse.h"
 
 namespace OHOS {

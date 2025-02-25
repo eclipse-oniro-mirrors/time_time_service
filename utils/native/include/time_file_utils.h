@@ -16,7 +16,6 @@
 #ifndef TIME_FILE_UTILS_H
 #define TIME_FILE_UTILS_H
 
-#include <string>
 #include <vector>
 
 namespace OHOS {

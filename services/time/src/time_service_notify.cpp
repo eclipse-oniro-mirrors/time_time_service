@@ -15,7 +15,6 @@
 
 #include "time_service_notify.h"
 
-#include "common_event_data.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
 

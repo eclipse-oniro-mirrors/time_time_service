@@ -16,12 +16,6 @@
 #ifndef SERVICES_INCLUDE_TIME_SERVICES_H
 #define SERVICES_INCLUDE_TIME_SERVICES_H
 
-#include <cinttypes>
-#include <mutex>
-#include <unordered_set>
-
-#include "event_handler.h"
-#include "securec.h"
 #include "system_ability.h"
 #ifdef HIDUMPER_ENABLE
 #include "time_cmd_dispatcher.h"
@@ -33,10 +27,8 @@
 #include "shutdown/sync_shutdown_callback_stub.h"
 #include "shutdown/shutdown_client.h"
 #include "cjson_helper.h"
-#include "itimer_info.h"
 #include "ipc_skeleton.h"
 #include "time_permission.h"
-#include "simple_timer_info.h"
 #include "time_sysevent.h"
 #ifdef RDB_ENABLE
 #include "rdb_helper.h"

@@ -17,13 +17,6 @@
 #ifndef SNTP_CLIENT_NTP_TRUSTED_TIME_H
 #define SNTP_CLIENT_NTP_TRUSTED_TIME_H
 
-#include <fstream>
-#include <mutex>
-#include <string>
-#include <sys/time.h>
-
-#include "refbase.h"
-#include "time.h"
 #include "time_common.h"
 
 namespace OHOS {

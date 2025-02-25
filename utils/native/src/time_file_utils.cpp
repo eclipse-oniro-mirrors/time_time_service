@@ -15,11 +15,7 @@
 
 #include "time_file_utils.h"
 
-#include <fcntl.h>
-#include <sys/stat.h>
-
 #include "accesstoken_kit.h"
-#include "ipc_skeleton.h"
 #include "securec.h"
 #include "time_hilog.h"
 #include "parameters.h"

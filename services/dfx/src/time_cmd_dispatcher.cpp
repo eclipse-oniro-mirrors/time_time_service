@@ -15,10 +15,6 @@
 
 #include "time_cmd_dispatcher.h"
 
-#include <cstdio>
-#include <iostream>
-#include "time_hilog.h"
-
 namespace OHOS {
 namespace MiscServices {
 bool TimeCmdDispatcher::Dispatch(int fd, const std::vector<std::string> &args)

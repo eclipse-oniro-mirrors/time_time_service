@@ -15,16 +15,10 @@
 #ifndef SERVICES_INCLUDE_TIME_ZONE_INFO_H
 #define SERVICES_INCLUDE_TIME_ZONE_INFO_H
 
-#include <fstream>
-#include <mutex>
 #include <sys/time.h>
-#include <vector>
 
 #include "parameter.h"
-#include "refbase.h"
 #include "set"
-#include "time.h"
-#include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {

@@ -14,33 +14,21 @@
  */
 #include "time_system_ability.h"
 
-#include <chrono>
 #include <dirent.h>
-#include <fstream>
 #include <linux/rtc.h>
-#include <mutex>
 #include <sstream>
-#include <string>
 #include <sys/ioctl.h>
-#include <sys/time.h>
 #include <sys/timerfd.h>
 
 #include "iservice_registry.h"
 #include "ntp_update_time.h"
 #include "ntp_trusted_time.h"
-#include "pthread.h"
-#include "system_ability.h"
 #include "system_ability_definition.h"
-#include "time_common.h"
 #include "time_tick_notify.h"
 #include "time_zone_info.h"
-#include "timer_manager_interface.h"
 #include "timer_proxy.h"
 #include "time_file_utils.h"
 #include "time_xcollie.h"
-#include "common_event_manager.h"
-#include "common_event_support.h"
-#include "init_param.h"
 #include "parameters.h"
 #include "event_manager.h"
 #include "simple_timer_info.h"

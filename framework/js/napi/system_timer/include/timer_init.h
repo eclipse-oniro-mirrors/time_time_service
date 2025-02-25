@@ -16,8 +16,6 @@
 #define TIMER_INIT_H
 
 #include "napi_system_timer.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace MiscServices {
