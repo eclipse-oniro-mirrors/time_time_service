@@ -66,6 +66,8 @@ constexpr int FIVE_HUNDRED = 500;
 constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
 constexpr int TIMER_ALARM_COUNT = 50;
 constexpr int64_t MINUTE_TO_MILLISECOND = 60000;
+constexpr char BYTE_SNTP_MESSAGE = 0xD8;
+constexpr const char* DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
 static const int MAX_PID_LIST_SIZE = 1024;
 
 static HapPolicyParams g_policyA = {
@@ -1019,6 +1021,122 @@ HWTEST_F(TimeServiceTest, SntpClient001, TestSize.Level0)
 }
 
 /**
+* @tc.name: SntpClient002.
+* @tc.desc: test RequestTime of SntpClient.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, SntpClient002, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+    auto res = ntpClient -> RequestTime("");
+    EXPECT_FALSE(res);
+    res = ntpClient -> RequestTime(DEFAULT_NTP_SERVER);
+    EXPECT_TRUE(res);
+}
+
+/**
+* @tc.name: SntpClient003.
+* @tc.desc: test SetClockOffset of SntpClient.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, SntpClient003, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+    ntpClient -> SetClockOffset(1);
+    EXPECT_EQ(ntpClient -> m_clockOffset, 1);
+}
+
+/**
+* @tc.name: SntpClient004.
+* @tc.desc: test ConvertUnixToNtp of SntpClient.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, SntpClient004, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+
+    OHOS::MiscServices::SNTPClient::ntp_timestamp ntp{.second = 0, .fraction = 0};
+    struct timeval unix;
+    gettimeofday(&unix, nullptr);
+    ntpClient -> ConvertUnixToNtp(&ntp, &unix);
+    EXPECT_NE(ntp.second, 0);
+    EXPECT_NE(ntp.fraction, 0);
+}
+
+/**
+* @tc.name: SntpClient005.
+* @tc.desc: test CreateMessage of SntpClient.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, SntpClient005, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+    char sendBuf[48] = { 0 };
+    ntpClient -> CreateMessage(sendBuf);
+    EXPECT_EQ(sendBuf[0], '\x1B');
+}
+
+/**
+* @tc.name: SntpClient006.
+* @tc.desc: test ReceivedMessage of SntpClient.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, SntpClient006, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+    char Buf[48] = {0};
+    auto res = ntpClient -> ReceivedMessage(Buf);
+    EXPECT_FALSE(res);
+    Buf[32] = BYTE_SNTP_MESSAGE;
+    res = ntpClient -> ReceivedMessage(Buf);
+    EXPECT_FALSE(res);
+    Buf[40] = BYTE_SNTP_MESSAGE;
+    res = ntpClient -> ReceivedMessage(Buf);
+    EXPECT_TRUE(res);
+    Buf[32] = 0;
+    res = ntpClient -> ReceivedMessage(Buf);
+    EXPECT_FALSE(res);
+}
+
+/**
+* @tc.name: SntpClient007.
+* @tc.desc: test GetReferenceId of SntpClient.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, SntpClient007, TestSize.Level0)
+{
+    char Buf[5] = {'1', '2', '3', '4', '5'};
+    int Array[5] = {0};
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+    ntpClient -> GetReferenceId(0, Buf, Array);
+    EXPECT_EQ(Array[0], '1');
+}
+
+/**
+* @tc.name: SntpClient008.
+* @tc.desc: test Get of SntpClient.
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(TimeServiceTest, SntpClient008, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+    std::shared_ptr<SNTPClient::SNTPMessage> sntpMessage = std::make_shared<SNTPClient::SNTPMessage>();
+    sntpMessage -> clear();
+    ntpClient -> mNtpTime = 1;
+    ntpClient -> mNtpTimeReference = 2;
+    ntpClient -> mRoundTripTime = 3;
+    EXPECT_EQ(ntpClient -> getNtpTime(), 1);
+    EXPECT_EQ(ntpClient -> getNtpTimeReference(), 2);
+    EXPECT_EQ(ntpClient -> getRoundTripTime(), 3);
+}
+/**
 * @tc.name: NtpTrustedTime001.
 * @tc.desc: test NtpTrustedTime.
 * @tc.type: FUNC
@@ -1583,6 +1701,32 @@ HWTEST_F(TimeServiceTest, TimerManager016, TestSize.Level0)
     int count = 0;
     TimeDatabase::GetInstance().Query(rdbPredicatesDelete, {"timerId"})->GetRowCount(count);
     EXPECT_EQ(count, 0);
+}
+
+/**
+* @tc.name: TimerManager017.
+* @tc.desc: test timer database when store is nullptr.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTest, TimerManager017, TestSize.Level0)
+{
+    auto DataBase = TimeDatabase::GetInstance();
+    DataBase.RecoverDataBase();
+    DataBase.ClearDropOnReboot();
+    DataBase.ClearInvaildDataInHoldOnReboot();
+    DataBase.store_ = nullptr;
+    OHOS::NativeRdb::ValuesBucket Values;
+    OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
+    DataBase.ClearDropOnReboot();
+    DataBase.ClearInvaildDataInHoldOnReboot();
+    auto res = DataBase.Insert(HOLD_ON_REBOOT, Values);
+    EXPECT_FALSE(res);
+    res = DataBase.Update(Values, rdbPredicates);
+    EXPECT_FALSE(res);
+    auto queryres = DataBase.Query(rdbPredicates, {"something"});
+    EXPECT_EQ(queryres, nullptr);
+    res = DataBase.Delete(rdbPredicates);
+    EXPECT_FALSE(res);
 }
 
 /**
