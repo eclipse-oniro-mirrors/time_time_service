@@ -61,7 +61,7 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
             std::lock_guard<std::mutex> lock(timerServiceClient->recoverTimerInfoLock_);
             recoverTimer = timerServiceClient->recoverTimerInfoMap_;
         }
-        TIME_HILOGI(TIME_MODULE_CLIENT, "recoverTimer count:%{public}zu", recoverTimer.size());
+        TIME_HILOGW(TIME_MODULE_CLIENT, "recoverTimer count:%{public}zu", recoverTimer.size());
         auto iter = recoverTimer.begin();
         for (; iter != recoverTimer.end(); iter++) {
             auto timerId = iter->first;
@@ -70,6 +70,7 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
                 timerInfo->name, timerInfo->type, timerInfo->repeat, timerInfo->disposable,
                 timerInfo->autoRestore, timerInfo->interval, timerInfo->wantAgent);
             if (simpleTimerInfo == nullptr) { return; }
+            TIME_HILOGD(TIME_MODULE_CLIENT, "recover cb-timer: %{public}" PRId64 "", timerId);
             proxy->CreateTimer(*simpleTimerInfo, timerCallbackInfoObject, timerId);
             if (iter->second->state == 1) {
                 proxy->StartTimer(timerId, iter->second->triggerTime);
