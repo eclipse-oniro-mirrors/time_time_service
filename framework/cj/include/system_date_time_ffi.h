@@ -16,6 +16,11 @@
 #ifndef OHOS_SYSTEM_DATE_TIME_FFI_H
 #define OHOS_SYSTEM_DATE_TIME_FFI_H
 
+#include "native/ffi_remote_data.h"
+#include "cj_ffi/cj_common_ffi.h"
+
+#include <cstdint>
+
 extern "C" {
     FFI_EXPORT RetCode FfiOHOSSysDateTimeSetTime(int64_t time);
     FFI_EXPORT RetDataI64 FfiOHOSSysDateTimegetCurrentTime(bool isNano);
