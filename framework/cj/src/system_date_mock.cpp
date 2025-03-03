@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include "cj_ffi/cj_common_ffi.h"
+
 extern "C" {
 FFI_EXPORT int FfiOHOSSysDateTimeSetTime = 0;
 FFI_EXPORT int FfiOHOSSysDateTimegetCurrentTime = 0;
