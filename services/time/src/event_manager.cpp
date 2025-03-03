@@ -16,7 +16,6 @@
 #include <thread>
 #include "event_manager.h"
 #include "ntp_update_time.h"
-#include "time_common.h"
 #include "time_tick_notify.h"
 #include "timer_manager.h"
 

@@ -14,7 +14,6 @@
  */
 
 #include "time_common.h"
-#include "time_hilog.h"
 
 
 namespace OHOS {

@@ -16,13 +16,6 @@
 #ifndef EVENT_MANAGER_H
 #define EVENT_MANAGER_H
 
-#include <common_event_publish_info.h>
-#include <map>
-#include <string>
-#include <vector>
-
-#include "common_event.h"
-#include "common_event_data.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
 

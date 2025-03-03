@@ -16,7 +16,6 @@
 #ifndef SYSTEM_TIMER_TYPE_H
 #define SYSTEM_TIMER_TYPE_H
 
-#include <string>
 #include "napi/native_api.h"
 #include "napi/native_common.h"
 

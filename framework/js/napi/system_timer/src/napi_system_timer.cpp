@@ -15,9 +15,7 @@
 
 #include "napi_system_timer.h"
 
-#include "securec.h"
 #include "napi_utils.h"
-#include "time_hilog.h"
 #include "timer_type.h"
 
 using namespace OHOS::MiscServices;

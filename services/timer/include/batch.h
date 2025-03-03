@@ -16,12 +16,7 @@
 #ifndef TIMER_BATCH_H
 #define TIMER_BATCH_H
 
-#include <cstdint>
-#include <vector>
-#include <chrono>
-#include <functional>
 #include "timer_info.h"
-#include "time_common.h"
 namespace OHOS {
 namespace MiscServices {
 class Batch {

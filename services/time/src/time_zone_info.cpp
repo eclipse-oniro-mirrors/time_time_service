@@ -13,13 +13,10 @@
 * limitations under the License.
 */
 
-#include <cerrno>
-#include <climits>
 #include <fstream>
 #include <sys/stat.h>
 #include "time_zone_info.h"
 #include "ipc_skeleton.h"
-#include "time_file_utils.h"
 #include "time_sysevent.h"
 
 namespace OHOS {

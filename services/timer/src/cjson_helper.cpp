@@ -13,11 +13,9 @@
  * limitations under the License.
  */
 
-#include <iostream>
 #include <charconv>
 
 #include "cjson_helper.h"
-#include "want_agent_helper.h"
 #include "timer_manager_interface.h"
 
 namespace OHOS {
@@ -59,6 +57,27 @@ CjsonHelper::CjsonHelper()
     }
     cJSON_Delete(root);
     newFile.close();
+}
+
+bool CjsonHelper::LoadAndParseJsonFile(const std::string& tableName, cJSON* &db, cJSON* &table)
+{
+    db = nullptr;
+    table = nullptr;
+    std::ifstream file(DB_PATH);
+    if (!file.good()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "open json file fail!");
+        return false;
+    }
+    std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    db = cJSON_Parse(fileContent.c_str());
+    table = cJSON_GetObjectItem(db, tableName.c_str());
+    if (table == NULL) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get fail!", tableName.c_str());
+        cJSON_Delete(db);
+        db = nullptr;
+        return false;
+    }
+    return true;
 }
 
 std::string CjsonHelper::QueryWant(std::string tableName, uint64_t timerId)
@@ -219,17 +238,9 @@ bool CjsonHelper::UpdateTrigger(std::string tableName, int64_t timerId, int64_t 
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    std::ifstream file(DB_PATH);
-    if (!file.good()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "open json file fail!");
-        return false;
-    }
-    std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    cJSON* db = cJSON_Parse(fileContent.c_str());
-    cJSON* table = cJSON_GetObjectItem(db, tableName.c_str());
-    if (table == NULL) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get fail!", tableName.c_str());
-        cJSON_Delete(db);
+    cJSON* db = nullptr;
+    cJSON* table = nullptr;
+    if (!LoadAndParseJsonFile(tableName, db, table)) {
         return false;
     }
 
@@ -259,17 +270,9 @@ bool CjsonHelper::UpdateTriggerGroup(std::string tableName, std::vector<std::pai
     }
     std::lock_guard<std::mutex> lock(mutex_);
 
-    std::ifstream file(DB_PATH);
-    if (!file.good()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "open json file fail!");
-        return false;
-    }
-    std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    cJSON* db = cJSON_Parse(fileContent.c_str());
-    cJSON* table = cJSON_GetObjectItem(db, tableName.c_str());
-    if (table == NULL) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get fail!", tableName.c_str());
-        cJSON_Delete(db);
+    cJSON* db = nullptr;
+    cJSON* table = nullptr;
+    if (!LoadAndParseJsonFile(tableName, db, table)) {
         return false;
     }
 
@@ -299,17 +302,9 @@ bool CjsonHelper::UpdateState(std::string tableName, int64_t timerId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    std::ifstream file(DB_PATH);
-    if (!file.good()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "open json file fail!");
-        return false;
-    }
-    std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    cJSON* db = cJSON_Parse(fileContent.c_str());
-    cJSON* table = cJSON_GetObjectItem(db, tableName.c_str());
-    if (table == NULL) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get fail!", tableName.c_str());
-        cJSON_Delete(db);
+    cJSON* db = nullptr;
+    cJSON* table = nullptr;
+    if (!LoadAndParseJsonFile(tableName, db, table)) {
         return false;
     }
 
@@ -336,17 +331,9 @@ bool CjsonHelper::Delete(std::string tableName, int64_t timerId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    std::ifstream file(DB_PATH);
-    if (!file.good()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "open json file fail!");
-        return false;
-    }
-    std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    cJSON* db = cJSON_Parse(fileContent.c_str());
-    cJSON* table = cJSON_GetObjectItem(db, tableName.c_str());
-    if (table == NULL) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get fail!", tableName.c_str());
-        cJSON_Delete(db);
+    cJSON* db = nullptr;
+    cJSON* table = nullptr;
+    if (!LoadAndParseJsonFile(tableName, db, table)) {
         return false;
     }
 

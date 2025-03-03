@@ -15,8 +15,6 @@
 #ifndef I_TIMER_INFO_H
 #define I_TIMER_INFO_H
 
-#include <mutex>
-
 #include "visibility.h"
 #include "want_agent_helper.h"
 

@@ -15,11 +15,6 @@
 #ifndef TIME_PERMISSION_H
 #define TIME_PERMISSION_H
 
-#include <cstdint>
-#include <mutex>
-#include <singleton.h>
-#include <string>
-
 #include "time_common.h"
 
 namespace OHOS {

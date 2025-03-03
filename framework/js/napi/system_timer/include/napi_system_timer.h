@@ -16,11 +16,6 @@
 #ifndef NAPI_SYSTEM_TIMER_H
 #define NAPI_SYSTEM_TIMER_H
 
-#include <functional>
-
-#include "uv.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
 #include "napi_work.h"
 #include "time_service_client.h"
 

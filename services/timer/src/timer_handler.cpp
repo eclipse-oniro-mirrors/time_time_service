@@ -14,13 +14,9 @@
  */
 
 #include <unistd.h>
-#include <cstring>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
-#include <sys/time.h>
 #include <sstream>
-#include <fstream>
-#include <iostream>
 #include "timer_handler.h"
 
 namespace OHOS {

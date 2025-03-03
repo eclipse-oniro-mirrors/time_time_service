@@ -17,8 +17,6 @@
 #define NTP_UPDATE_TIME_H
 
 #include <mutex>
-#include <string>
-#include <atomic>
 
 namespace OHOS {
 namespace MiscServices {

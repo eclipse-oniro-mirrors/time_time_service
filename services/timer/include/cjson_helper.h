@@ -16,14 +16,9 @@
 #ifndef TIMER_CJSON_HELPER_H
 #define TIMER_CJSON_HELPER_H
 
-#include <stdint.h>
-#include <string>
-#include <vector>
-#include <mutex>
 #include <fstream>
 
 #include <cJSON.h>
-#include "time_hilog.h"
 #include "timer_manager_interface.h"
 
 namespace OHOS {
@@ -48,6 +43,7 @@ public:
     bool IsNumber(cJSON* item);
     bool IsString(cJSON* item);
     static CjsonHelper &GetInstance();
+    bool LoadAndParseJsonFile(const std::string& tableName, cJSON* &db, cJSON* &table);
 
 private:
     CjsonHelper();

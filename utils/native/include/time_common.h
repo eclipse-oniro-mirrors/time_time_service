@@ -16,7 +16,6 @@
 #ifndef SERVICES_INCLUDE_TIME_COMMON_H
 #define SERVICES_INCLUDE_TIME_COMMON_H
 
-#include <stdint.h>
 #include <string>
 
 #include "errors.h"

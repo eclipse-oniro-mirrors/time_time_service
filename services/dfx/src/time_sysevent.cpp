@@ -18,7 +18,6 @@
 #include <cinttypes>
 
 #include "hisysevent.h"
-#include "time_hilog.h"
 #include "time_file_utils.h"
 #include "ipc_skeleton.h"
 

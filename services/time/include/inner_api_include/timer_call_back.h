@@ -16,8 +16,6 @@
 #ifndef TIMER_CALL_BACK_H
 #define TIMER_CALL_BACK_H
 
-#include <mutex>
-
 #include "itimer_info.h"
 #include "time_common.h"
 #include "timer_callback_stub.h"

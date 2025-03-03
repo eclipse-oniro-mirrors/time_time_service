@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <securec.h>
 #include <string_ex.h>
 
 #include "accesstoken_kit.h"

@@ -17,8 +17,6 @@
 #define SIMPLE_TIMER_INFO_H
 
 #include "itimer_info.h"
-#include "parcel.h"
-
 namespace OHOS {
 namespace MiscServices {
 class SimpleTimerInfo : public ITimerInfo, public Parcelable {

@@ -16,14 +16,8 @@
 #include "ntp_trusted_time.h"
 
 #include <cinttypes>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
-#include <securec.h>
-#include <unistd.h>
 
 #include "sntp_client.h"
-#include "time_common.h"
 
 namespace OHOS {
 namespace MiscServices {

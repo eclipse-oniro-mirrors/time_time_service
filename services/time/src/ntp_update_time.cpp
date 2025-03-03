@@ -14,17 +14,9 @@
  */
 #include "ntp_update_time.h"
 
-#include <chrono>
-#include <cinttypes>
-#include <string>
-#include <thread>
-#include <unistd.h>
-#include <sys/time.h>
-
 #include "init_param.h"
 #include "ntp_trusted_time.h"
 #include "parameters.h"
-#include "time_common.h"
 #include "time_system_ability.h"
 
 using namespace std::chrono;

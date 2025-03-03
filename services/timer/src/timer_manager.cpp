@@ -15,21 +15,8 @@
 
 #include "timer_manager.h"
 
-#include <algorithm>
-#include <ctime>
-#include <iostream>
-#include <sys/time.h>
-#include <utility>
-#include <vector>
-
-#include "system_ability_definition.h"
-#include "ipc_skeleton.h"
 #include "time_file_utils.h"
-#include "time_permission.h"
-#include "time_service_notify.h"
 #include "timer_proxy.h"
-#include "time_sysevent.h"
-#include "cjson_helper.h"
 
 #ifdef RDB_ENABLE
 #include "rdb_errno.h"
