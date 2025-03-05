@@ -322,7 +322,7 @@ int32_t TimerManager::StartTimerGroup(std::vector<std::pair<uint64_t, uint64_t>>
             std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
         {
             // To prevent the same ID from being started repeatedly,
-            // the later start overwrites the earlier start.
+            // the later start overwrites the earlier start
             std::lock_guard<std::mutex> lock(mutex_);
             RemoveLocked(timerId, false);
         }

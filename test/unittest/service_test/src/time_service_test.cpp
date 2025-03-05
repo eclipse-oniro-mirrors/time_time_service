@@ -1711,9 +1711,9 @@ HWTEST_F(TimeServiceTest, TimerManager016, TestSize.Level0)
 HWTEST_F(TimeServiceTest, TimerManager017, TestSize.Level0)
 {
     auto DataBase = TimeDatabase::GetInstance();
-    DataBase.RecoverDataBase();
     DataBase.ClearDropOnReboot();
     DataBase.ClearInvaildDataInHoldOnReboot();
+    auto storeptr = DataBase.store_;
     DataBase.store_ = nullptr;
     OHOS::NativeRdb::ValuesBucket Values;
     OHOS::NativeRdb::RdbPredicates rdbPredicates(HOLD_ON_REBOOT);
@@ -1727,6 +1727,7 @@ HWTEST_F(TimeServiceTest, TimerManager017, TestSize.Level0)
     EXPECT_EQ(queryres, nullptr);
     res = DataBase.Delete(rdbPredicates);
     EXPECT_FALSE(res);
+    DataBase.store_ = storeptr;
 }
 
 /**
