@@ -179,7 +179,7 @@ void TimeServiceTest::DestroyIdleTimer()
 * @tc.name: ProxyTimer001.
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
+* @tc.require:
 */
 HWTEST_F(TimeServiceTest, ProxyTimer001, TestSize.Level0)
 {
@@ -193,7 +193,7 @@ HWTEST_F(TimeServiceTest, ProxyTimer001, TestSize.Level0)
 * @tc.name: ProxyTimer002.
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
+* @tc.require:
 */
 HWTEST_F(TimeServiceTest, ProxyTimer002, TestSize.Level0)
 {
@@ -207,7 +207,7 @@ HWTEST_F(TimeServiceTest, ProxyTimer002, TestSize.Level0)
 * @tc.name: ProxyTimer003.
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
+* @tc.require:
 */
 HWTEST_F(TimeServiceTest, ProxyTimer003, TestSize.Level0)
 {
@@ -219,7 +219,7 @@ HWTEST_F(TimeServiceTest, ProxyTimer003, TestSize.Level0)
 * @tc.name: ProxyTimer004.
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
-* @tc.require: SR000H0GQ6 AR000H2VTQ
+* @tc.require:
 */
 HWTEST_F(TimeServiceTest, ProxyTimer004, TestSize.Level0)
 {
