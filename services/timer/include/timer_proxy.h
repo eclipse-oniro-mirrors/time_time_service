@@ -39,6 +39,7 @@ public:
     void RecordUidTimerMap(const std::shared_ptr<TimerInfo> &alarm, const bool isRebatched);
     void RecordProxyTimerMap(const std::shared_ptr<TimerInfo> &alarm, bool isPid);
     void RemoveUidTimerMap(const std::shared_ptr<TimerInfo> &alarm);
+    void RemoveUidTimerMapLocked(const std::shared_ptr<TimerInfo> &alarm);
     void RemoveUidTimerMap(const uint64_t id);
     int32_t CountUidTimerMapByUid(int32_t uid);
     bool IsProxy(const int32_t uid, const int32_t pid);
@@ -56,7 +57,8 @@ private:
         const uint64_t id, std::unordered_map<uint64_t, std::shared_ptr<TimerInfo>> &idAlarmsMap);
     void UpdateProxyWhenElapsedForProxyTimers(const int32_t uid, const int32_t pid,
         const std::chrono::steady_clock::time_point &now,
-        std::function<void(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)> insertAlarmCallback);
+        std::function<void(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)> insertAlarmCallback,
+        bool needRetrigger);
     bool UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_point &now,  uint32_t delta,
         uint32_t interval, std::shared_ptr<TimerInfo> &timer);
     bool RestoreAdjustWhenElapsed(std::shared_ptr<TimerInfo> &timer);
