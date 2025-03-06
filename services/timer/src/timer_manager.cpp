@@ -888,14 +888,15 @@ void TimerManager::RescheduleKernelTimerLocked()
             HandleRunningLock(firstWakeup);
             #endif
             auto setTimePoint = firstWakeup->GetStart().time_since_epoch();
-            if (setTimePoint.count() != lastSetTime_[ELAPSED_REALTIME_WAKEUP]) {
+            if (setTimePoint < bootTime.time_since_epoch() ||
+                setTimePoint.count() != lastSetTime_[ELAPSED_REALTIME_WAKEUP]) {
                 SetLocked(ELAPSED_REALTIME_WAKEUP, setTimePoint, bootTime);
                 lastSetTime_[ELAPSED_REALTIME_WAKEUP] = setTimePoint.count();
             }
         }
         if (firstBatch != firstWakeup) {
             auto setTimePoint = firstBatch->GetStart().time_since_epoch();
-            if (setTimePoint.count() != lastSetTime_[ELAPSED_REALTIME]) {
+            if (setTimePoint < bootTime.time_since_epoch() || setTimePoint.count() != lastSetTime_[ELAPSED_REALTIME]) {
                 SetLocked(ELAPSED_REALTIME, setTimePoint, bootTime);
                 lastSetTime_[ELAPSED_REALTIME] = setTimePoint.count();
             }
@@ -1517,10 +1518,13 @@ void TimerManager::HandleRepeatTimer(
         uint64_t count = 1 + static_cast<uint64_t>(
             duration_cast<milliseconds>(nowElapsed - timer->whenElapsed) / timer->repeatInterval);
         auto delta = count * timer->repeatInterval;
-        auto nextElapsed = timer->whenElapsed + delta;
+        steady_clock::time_point nextElapsed = timer->whenElapsed + delta;
+        steady_clock::time_point nextMaxElapsed = (timer->windowLength == milliseconds::zero()) ?
+                                                  nextElapsed :
+                                                  MaxTriggerTime(nowElapsed, nextElapsed, timer->repeatInterval);
         SetHandlerLocked(timer->name, timer->id, timer->type, timer->when + delta, nextElapsed, timer->windowLength,
-            MaxTriggerTime(nowElapsed, nextElapsed, timer->repeatInterval), timer->repeatInterval, timer->callback,
-            timer->wantAgent, timer->flags, timer->autoRestore, timer->uid, timer->pid, timer->bundleName);
+            nextMaxElapsed, timer->repeatInterval, timer->callback, timer->wantAgent, timer->flags, timer->autoRestore,
+            timer->uid, timer->pid, timer->bundleName);
     } else {
         TimerProxy::GetInstance().RemoveUidTimerMap(timer);
     }
