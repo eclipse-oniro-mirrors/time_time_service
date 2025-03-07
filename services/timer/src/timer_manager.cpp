@@ -1142,7 +1142,10 @@ void TimerManager::UpdateTimersState(std::shared_ptr<TimerInfo> &alarm, bool nee
         InsertAndBatchTimerLocked(alarm);
         RescheduleKernelTimerLocked();
     } else {
-        StopTimer(alarm->id);
+        RemoveLocked(alarm->id, true);
+        TimerProxy::GetInstance().RemoveUidTimerMapLocked(alarm);
+        bool needRecover = CheckNeedRecoverOnReboot(alarm->bundleName, alarm->type, alarm->autoRestore);
+        UpdateOrDeleteDatabase(false, alarm->id, needRecover);
     }
 }
 

@@ -17,6 +17,7 @@
 
 #include "system_ability_definition.h"
 #include "timer_call_back.h"
+#include <cinttypes>
 
 namespace OHOS {
 namespace MiscServices {
@@ -62,7 +63,7 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
                 timerInfo->name, timerInfo->type, timerInfo->repeat, timerInfo->disposable,
                 timerInfo->autoRestore, timerInfo->interval, timerInfo->wantAgent);
             if (simpleTimerInfo == nullptr) { return; }
-            TIME_HILOGD(TIME_MODULE_CLIENT, "recover cb-timer: %{public}" PRId64 "", timerId);
+            TIME_HILOGW(TIME_MODULE_CLIENT, "recover cb-timer: %{public}" PRId64 "", timerId);
             proxy->CreateTimer(*simpleTimerInfo, timerCallbackInfoObject, timerId);
             if (iter->second->state == 1) {
                 proxy->StartTimer(timerId, iter->second->triggerTime);
