@@ -163,9 +163,9 @@ bool NtpUpdateTime::GetNtpTimeInner()
     std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.ntpServer);
     ntpSpecList.insert(ntpSpecList.end(), ntpList.begin(), ntpList.end());
     for (int i = 0; i < RETRY_TIMES; i++) {
-        for (size_t i = 0; i < ntpSpecList.size(); i++) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpSpecList[i].c_str());
-            if (NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[i])) {
+        for (size_t j = 0; j < ntpSpecList.size(); j++) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpSpecList[j].c_str());
+            if (NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[j])) {
                 return true;
             }
         }
