@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package OGOS.Callback;
+package OHOS.Callback;
 [callback] interface OHOS.MiscServices.ITimerCallback {
-    void NotifyTimer([in] unsigned long timeId);
+    [oneway] void NotifyTimer([in] unsigned long timeId);
 }
