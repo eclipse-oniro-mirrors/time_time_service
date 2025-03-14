@@ -425,7 +425,6 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
     TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", needDestroy: %{public}d", timerNumber, needDestroy);
     int32_t ret;
     bool needRecover = false;
-    std::string name = "";
     {
         std::lock_guard<std::mutex> lock(entryMapMutex_);
         ret = StopTimerInnerLocked(needDestroy, timerNumber, needRecover);

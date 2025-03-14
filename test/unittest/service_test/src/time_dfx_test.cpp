@@ -71,9 +71,9 @@ void TimeDfxTest::TearDown(void)
 
 bool TimeDfxTest::ExecuteCmd(const std::string &cmd, std::string &result)
 {
-    char buff[EACH_LINE_LENGTH] = { 0x00 };
     FILE *ptr = popen(cmd.c_str(), "r");
     if (ptr != nullptr) {
+        char buff[EACH_LINE_LENGTH] = { 0x00 };
         while (fgets(buff, sizeof(buff), ptr) != nullptr) {
             result.append(std::string(buff));
         }
