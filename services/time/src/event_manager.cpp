@@ -69,10 +69,6 @@ void EventManager::OnReceiveEvent(const CommonEventData &data)
 
 void EventManager::NetConnStateConnected(const CommonEventData &data)
 {
-    if (NtpUpdateTime::GetInstance().IsValidNITZTime()) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "NITZ Time is valid");
-        return;
-    }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Internet ready");
     if (NtpUpdateTime::IsInUpdateInterval()) {
         NtpUpdateTime::SetSystemTime();

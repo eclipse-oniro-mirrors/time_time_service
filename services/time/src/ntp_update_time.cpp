@@ -32,7 +32,6 @@ constexpr uint32_t NTP_MAX_SIZE = 5;
 constexpr const char* AUTO_TIME_SYSTEM_PARAMETER = "persist.time.auto_time";
 constexpr const char* AUTO_TIME_STATUS_ON = "ON";
 constexpr const char* AUTO_TIME_STATUS_OFF = "OFF";
-constexpr uint64_t TWO_SECONDS = 2000;
 constexpr uint64_t ONE_HOUR = 3600000;
 constexpr const char* DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
 constexpr int32_t RETRY_TIMES = 2;
@@ -84,11 +83,6 @@ void NtpUpdateTime::RefreshNetworkTimeByTimer(uint64_t timerId)
     TIME_HILOGI(TIME_MODULE_SERVICE, "The timer is up");
     if (!CheckStatus()) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Auto Sync Switch Off");
-        return;
-    }
-
-    if (IsValidNITZTime()) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "NITZ is valid");
         return;
     }
 
@@ -235,12 +229,6 @@ void NtpUpdateTime::SetSystemTime()
     int64_t curBootTime = 0;
     if (TimeUtils::GetBootTimeMs(curBootTime) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail");
-        requestMutex_.unlock();
-        return;
-    }
-    uint64_t bootTime = static_cast<uint64_t>(curBootTime);
-    if (bootTime - NtpUpdateTime::GetInstance().GetNITZUpdateTime() <= TWO_SECONDS) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "nitz updated time");
         requestMutex_.unlock();
         return;
     }
