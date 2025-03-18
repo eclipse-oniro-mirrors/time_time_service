@@ -36,7 +36,7 @@ config("module_private_config") {
   }
 }
 
-module_output_path = "time_service/native"
+module_output_path = "time_service/time_service/native"
 
 ohos_unittest("TimeServiceTest") {
   module_out_path = module_output_path
