@@ -287,6 +287,7 @@ void TimeSystemAbility::RegisterCommonEventSubscriber()
         thread.detach();
     }
     RegisterSubscriber();
+    NtpUpdateTime::SetSystemTime();
 }
 
 #ifdef MULTI_ACCOUNT_ENABLE
