@@ -705,7 +705,7 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
     struct rtc_time rtc {};
     struct tm tm {};
     struct tm *gmtime_res = nullptr;
-    int fd = -1;
+    FILE* fd = nullptr;
     int res;
     if (rtcId < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "invalid rtc id: %{public}s:", strerror(ENODEV));
@@ -716,8 +716,8 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
     auto rtcDev = strs.str();
     TIME_HILOGI(TIME_MODULE_SERVICE, "rtc_dev : %{public}s:", rtcDev.data());
     auto rtcData = rtcDev.data();
-    fd = open(rtcData, O_RDWR);
-    if (fd < 0) {
+    fd = fopen(rtcData, "r+");
+    if (fd == NULL) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "open failed %{public}s: %{public}s", rtcDev.data(), strerror(errno));
         return E_TIME_SET_RTC_FAILED;
     }
@@ -732,7 +732,8 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
         rtc.tm_wday = tm.tm_wday;
         rtc.tm_yday = tm.tm_yday;
         rtc.tm_isdst = tm.tm_isdst;
-        res = ioctl(fd, RTC_SET_TIME, &rtc);
+        int fd_int = fileno(fd);
+        res = ioctl(fd_int, RTC_SET_TIME, &rtc);
         if (res < 0) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "ioctl RTC_SET_TIME failed,errno: %{public}s, res: %{public}d",
                 strerror(errno), res);
@@ -741,7 +742,10 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
         TIME_HILOGE(TIME_MODULE_SERVICE, "convert rtc time failed: %{public}s", strerror(errno));
         res = E_TIME_SET_RTC_FAILED;
     }
-    close(fd);
+    int result = fclose(fd);
+    if (result != 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "file close failed: %{public}d", result);
+    }
     return res;
 }
 
