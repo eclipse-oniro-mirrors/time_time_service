@@ -13,7 +13,7 @@
 
 import("//build/test.gni")
 
-module_output_path = "time_service/js_nopermission"
+module_output_path = "time_service/time_service/js_nopermission"
 
 ohos_js_unittest("TimeTestNoAclPermission") {
   module_out_path = module_output_path
