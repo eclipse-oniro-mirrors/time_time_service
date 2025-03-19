@@ -176,9 +176,14 @@ std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
         return nullptr;
     }
     auto result = store_->Query(predicates, columns);
+    if (result == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "result is nullptr");
+        return nullptr;
+    }
     int count;
     if (result->GetRowCount(count) == OHOS::NativeRdb::E_SQLITE_CORRUPT) {
         RecoverDataBase();
+        result->Close();
         return nullptr;
     }
     return result;
