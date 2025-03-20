@@ -29,6 +29,7 @@ enum TimeSubModule {
     TIME_MODULE_JNI,
     TIME_MODULE_COMMON,
     TIME_MODULE_JS_NAPI,
+    TIME_MODULE_JS_ANI,
     TIME_MODULE_BUTT,
 };
 
@@ -42,6 +43,7 @@ enum TimeDomainId {
     TIME_JNI_DOMAIN,
     TIME_COMMON_DOMAIN,
     TIME_JS_NAPI,
+    TIME_JS_ANI,
     TIME_BUTT,
 };
 
@@ -53,6 +55,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel TIME_MODULE_LABEL[TIME_MODULE_BUTT]
     { LOG_CORE, TIME_JNI_DOMAIN, "TimeJni" },
     { LOG_CORE, TIME_COMMON_DOMAIN, "TimeCommon" },
     { LOG_CORE, TIME_JS_NAPI, "TimeJSNAPI" },
+    { LOG_CORE, TIME_JS_ANI, "TimeJSANI" },
 };
 
 #define R_FORMATED(fmt, ...) "%{public}s# " fmt, __FUNCTION__, ##__VA_ARGS__
