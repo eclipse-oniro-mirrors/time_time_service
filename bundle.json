@@ -59,7 +59,6 @@
           "//base/time/time_service/framework/js/napi/system_time:systemtime",
           "//base/time/time_service/framework/js/napi/system_timer:systemtimer",
           "//base/time/time_service/framework/js/napi/system_date_time:systemdatetime",
-          "//base/time/time_service/framework/cj:cj_system_date_time_ffi",
           "//base/time/time_service/interfaces/inner_api:time_client",
           "//base/time/time_service/interfaces/kits/c:time_service_ndk"
         ],
@@ -80,6 +79,13 @@
               "time_service_client.h"
             ],
             "header_base":"//base/time/time_service/interfaces/inner_api/include"
+          }
+        },
+        {
+          "name": "//base/time/time_service/framework/cj:cj_system_date_time_ffi",
+          "header": {
+            "header_files": [],
+            "header_base":"//base/time/time_service/framework/cj/include"
           }
         }
       ],
