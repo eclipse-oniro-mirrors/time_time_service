@@ -93,6 +93,9 @@ bool TimeDatabase::RecoverDataBase()
     TimeDBOpenCallback timeDbOpenCallback;
     int errCode;
     store_ = OHOS::NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_OPEN_VERSION_3, timeDbOpenCallback, errCode);
+    if (store_ == nullptr) {
+        return false;
+    }
     return true;
 }
 
@@ -119,13 +122,14 @@ std::string GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int
 
 bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::ValuesBucket &insertValues)
 {
-    if (store_ == nullptr) {
+    auto store = store_;
+    if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return false;
     }
 
     int64_t outRowId = 0;
-    int ret = store_->Insert(outRowId, table, insertValues);
+    auto ret = store->Insert(outRowId, table, insertValues);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "insert values failed, ret: %{public}d", ret);
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
@@ -134,7 +138,12 @@ bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::Value
         if (!RecoverDataBase()) {
             return false;
         }
-        ret = store_->Insert(outRowId, table, insertValues);
+        store = store_;
+        if (store == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
+            return false;
+        }
+        ret = store->Insert(outRowId, table, insertValues);
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Insert values after RecoverDataBase failed, ret: %{public}d", ret);
         }
@@ -145,13 +154,14 @@ bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::Value
 bool TimeDatabase::Update(
     const OHOS::NativeRdb::ValuesBucket values, const OHOS::NativeRdb::AbsRdbPredicates &predicates)
 {
-    if (store_ == nullptr) {
+    auto store = store_;
+    if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return false;
     }
 
     int changedRows = 0;
-    int ret = store_->Update(changedRows, values, predicates);
+    auto ret = store->Update(changedRows, values, predicates);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "update values failed, ret: %{public}d", ret);
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
@@ -160,7 +170,12 @@ bool TimeDatabase::Update(
         if (!RecoverDataBase()) {
             return false;
         }
-        ret = store_->Update(changedRows, values, predicates);
+        store = store_;
+        if (store == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
+            return false;
+        }
+        ret = store->Update(changedRows, values, predicates);
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Update values after RecoverDataBase failed, ret: %{public}d", ret);
         }
@@ -171,11 +186,12 @@ bool TimeDatabase::Update(
 std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
     const OHOS::NativeRdb::AbsRdbPredicates &predicates, const std::vector<std::string> &columns)
 {
-    if (store_ == nullptr) {
+    auto store = store_;
+    if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return nullptr;
     }
-    auto result = store_->Query(predicates, columns);
+    auto result = store->Query(predicates, columns);
     if (result == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "result is nullptr");
         return nullptr;
@@ -191,13 +207,14 @@ std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
 
 bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
 {
-    if (store_ == nullptr) {
+    auto store = store_;
+    if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return false;
     }
 
     int deletedRows = 0;
-    int ret = store_->Delete(deletedRows, predicates);
+    auto ret = store->Delete(deletedRows, predicates);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "delete values failed, ret: %{public}d", ret);
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
@@ -206,7 +223,12 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
         if (!RecoverDataBase()) {
             return false;
         }
-        ret = store_->Delete(deletedRows, predicates);
+        store = store_;
+        if (store == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
+            return false;
+        }
+        ret = store->Delete(deletedRows, predicates);
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Delete values after RecoverDataBase failed, ret: %{public}d", ret);
         }
@@ -217,11 +239,12 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
 void TimeDatabase::ClearDropOnReboot()
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Clears drop_on_reboot table");
-    if (store_ == nullptr) {
+    auto store = store_;
+    if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return;
     }
-    int ret = store_->ExecuteSql("DELETE FROM drop_on_reboot");
+    auto ret = store->ExecuteSql("DELETE FROM drop_on_reboot");
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Clears drop_on_reboot table failed");
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
@@ -230,7 +253,12 @@ void TimeDatabase::ClearDropOnReboot()
         if (!RecoverDataBase()) {
             return;
         }
-        ret = store_->ExecuteSql("DELETE FROM drop_on_reboot");
+        store = store_;
+        if (store == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
+            return;
+        }
+        ret = store->ExecuteSql("DELETE FROM drop_on_reboot");
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret: %{public}d", ret);
         }
@@ -240,11 +268,12 @@ void TimeDatabase::ClearDropOnReboot()
 void TimeDatabase::ClearInvaildDataInHoldOnReboot()
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Clears hold_on_reboot table");
-    if (store_ == nullptr) {
+    auto store = store_;
+    if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return;
     }
-    int ret = store_->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
+    auto ret = store->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Clears hold_on_reboot table failed");
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
@@ -253,7 +282,12 @@ void TimeDatabase::ClearInvaildDataInHoldOnReboot()
         if (!RecoverDataBase()) {
             return;
         }
-        ret = store_->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
+        store = store_;
+        if (store == nullptr) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
+            return;
+        }
+        ret = store->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret: %{public}d", ret);
         }
