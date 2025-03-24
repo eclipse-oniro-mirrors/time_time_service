@@ -67,6 +67,7 @@ ohos_source_set("timeservice_proxy") {
     "ipc:ipc_single",
     "samgr:samgr_proxy",
   ]
+  branch_protector_ret = "pac_ret"
   subsystem_name = "time"
   part_name = "time_service"
 }
