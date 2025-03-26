@@ -25,6 +25,7 @@ namespace {
 constexpr int64_t TIME_RESULT_UNINITED = -1;
 constexpr int64_t HALF = 2;
 constexpr int NANO_TO_SECOND =  1000000000;
+constexpr uint64_t ONE_DAY = 86400000;
 } // namespace
 
 NtpTrustedTime &NtpTrustedTime::GetInstance()
@@ -110,6 +111,12 @@ int64_t NtpTrustedTime::TimeResult::CurrentTimeMillis()
 {
     if (mTimeMillis == 0 || mElapsedRealtimeMillis == 0) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "Missing authoritative time source");
+        return TIME_RESULT_UNINITED;
+    }
+    auto bootTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+        NtpTrustedTime::GetInstance().GetBootTimeNs().time_since_epoch()).count();
+    if (bootTime - mElapsedRealtimeMillis > ONE_DAY) {
+        Clear();
         return TIME_RESULT_UNINITED;
     }
     return mTimeMillis + GetAgeMillis();
