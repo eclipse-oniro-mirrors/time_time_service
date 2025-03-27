@@ -1735,6 +1735,32 @@ HWTEST_F(TimeServiceTimerTest, ResetAllProxy001, TestSize.Level0)
     EXPECT_EQ(res, E_TIME_NO_PERMISSION);
 }
 
+/**
+* @tc.name: ExactRepeatTimer001.
+* @tc.desc: test exact & repeat tiemr.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, ExactRepeatTimer001, TestSize.Level0)
+{
+    auto windowLength = std::chrono::milliseconds::zero();
+    auto interval = std::chrono::milliseconds(20000);
+    auto timePoint = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>((timePoint).time_since_epoch());
+    auto callback = [this](uint64_t id) -> int32_t {
+        return 0;
+    };
+    auto timerInfo = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, windowLength, timePoint,
+        interval, callback, nullptr, 0, false, UID, PID, "");
+    auto bootTime = TimerManager::GetInstance()->GetBootTimeNs();
+    TimerManager::GetInstance()->HandleRepeatTimer(timerInfo, bootTime);
+    auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
+    auto it1 = uidTimersMap.find(UID);
+    EXPECT_NE(it1, uidTimersMap.end());
+    auto it2 = it1->second.find(TIMER_ID);
+    EXPECT_NE(it2, it1->second.end());
+    EXPECT_EQ(it2->second->whenElapsed, it2->second->maxWhenElapsed);
+}
+
 #ifdef MULTI_ACCOUNT_ENABLE
 /**
 * @tc.name: CheckUserIdForNotify001.
