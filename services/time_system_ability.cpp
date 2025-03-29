@@ -583,7 +583,7 @@ int32_t TimeSystemAbility::SetTimeInner(int64_t time, int8_t apiVersion)
     if (!SetRealTime(time)) {
         return E_TIME_DEAL_FAILED;
     }
-    return ERR_OK;
+    return E_TIME_OK;
 }
 
 #ifdef HIDUMPER_ENABLE
@@ -826,7 +826,7 @@ int32_t TimeSystemAbility::SetTimeZoneInner(const std::string &timeZoneId, int8_
     int64_t currentTime = 0;
     TimeUtils::GetBootTimeMs(currentTime);
     TimeServiceNotify::GetInstance().PublishTimeZoneChangeEvents(currentTime);
-    return ERR_OK;
+    return E_TIME_OK;
 }
 
 int32_t TimeSystemAbility::GetTimeZone(std::string &timeZoneId)
