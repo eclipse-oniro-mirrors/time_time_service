@@ -252,6 +252,24 @@ HWTEST_F(TimeServiceTimeTest, SetTime004, TestSize.Level1)
 }
 
 /**
+* @tc.name: SetTimeInner001
+* @tc.desc: set system time by ability.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, SetTimeInner001, TestSize.Level1)
+{
+    struct timeval currentTime {
+    };
+    gettimeofday(&currentTime, NULL);
+    int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
+    ASSERT_GT(time, 0);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
+    auto result = TimeSystemAbility::GetInstance()->SetTimeInner(time);
+    EXPECT_EQ(result, E_TIME_OK);
+}
+
+
+/**
 * @tc.name: SetTimeZone001
 * @tc.desc: set system time zone.
 * @tc.type: FUNC
@@ -310,6 +328,28 @@ HWTEST_F(TimeServiceTimeTest, SetTimeZone003, TestSize.Level1)
     bool ret = TimeServiceClient::GetInstance()->SetTimeZone(getCurrentTimeZone);
     EXPECT_TRUE(ret);
     DeletePermission();
+}
+
+/**
+* @tc.name: SetTimeZoneInner001
+* @tc.desc: set system time zone by ability.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, SetTimeZoneInner001, TestSize.Level1)
+{
+    time_t t;
+    (void)time(&t);
+    TIME_HILOGI(TIME_MODULE_CLIENT, "Time before: %{public}s", asctime(localtime(&t)));
+    auto getCurrentTimeZone = TimeServiceClient::GetInstance()->GetTimeZone();
+    EXPECT_FALSE(getCurrentTimeZone.empty());
+
+    std::string timeZoneNicosia("Asia/Shanghai");
+    bool result = TimeSystemAbility::GetInstance()->SetTimeZoneInner(timeZoneNicosia);
+    EXPECT_EQ(result, E_TIME_OK);
+    auto getTimeZoneNicosia = TimeServiceClient::GetInstance()->GetTimeZone();
+    EXPECT_EQ(timeZoneNicosia, getTimeZoneNicosia);
+    auto ret = TimeSystemAbility::GetInstance()->SetTimeZoneInner(getCurrentTimeZone);
+    EXPECT_EQ(ret, E_TIME_OK);
 }
 
 /**

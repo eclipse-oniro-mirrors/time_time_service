@@ -55,7 +55,7 @@ int64_t NtpTrustedTime::CurrentTimeMillis()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     if (mTimeResult == nullptr) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Missing authoritative time source");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Missing authoritative time source");
         return TIME_RESULT_UNINITED;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
@@ -66,7 +66,7 @@ int64_t NtpTrustedTime::ElapsedRealtimeMillis()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     if (mTimeResult == nullptr) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Missing authoritative time source");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Missing authoritative time source");
         return TIME_RESULT_UNINITED;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");

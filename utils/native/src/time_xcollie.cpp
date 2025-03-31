@@ -27,11 +27,11 @@ TimeXCollie::TimeXCollie(const std::string &name, uint32_t timeoutSeconds,
     std::function<void(void *)> func, void *arg, uint32_t flag)
 {
     name_ = name;
-#ifdef HICOLLIE_ENABLE
+    #ifdef HICOLLIE_ENABLE
     id_ = HiviewDFX::XCollie::GetInstance().SetTimer(name_, timeoutSeconds, func, arg, flag);
-#else
+    #else
     id_ = -1;
-#endif
+    #endif
     isCanceled_ = false;
     TIME_HILOGD(TIME_MODULE_SERVICE, "start TimeXCollie, name:%{public}s,timeout:%{public}u,flag:%{public}u,"
         "id:%{public}d", name_.c_str(), timeoutSeconds, flag, id_);
@@ -45,9 +45,9 @@ TimeXCollie::~TimeXCollie()
 void TimeXCollie::CancelTimeXCollie()
 {
     if (!isCanceled_) {
-#ifdef HICOLLIE_ENABLE
+        #ifdef HICOLLIE_ENABLE
         HiviewDFX::XCollie::GetInstance().CancelTimer(id_);
-#endif
+        #endif
         isCanceled_ = true;
         TIME_HILOGD(TIME_MODULE_SERVICE, "cancel TimeXCollie, tag:%{public}s,id:%{public}d", name_.c_str(), id_);
     }

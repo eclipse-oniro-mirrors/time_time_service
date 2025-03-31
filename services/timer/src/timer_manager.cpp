@@ -1258,7 +1258,7 @@ bool TimerManager::ResetAllProxy()
 
 bool TimerManager::CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm)
 {
-#ifdef DEVICE_STANDBY_ENABLE
+    #ifdef DEVICE_STANDBY_ENABLE
     if (TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         std::vector<DevStandbyMgr::AllowInfo> restrictList;
         DevStandbyMgr::StandbyServiceClient::GetInstance().GetRestrictList(DevStandbyMgr::AllowType::TIMER,
@@ -1285,7 +1285,7 @@ bool TimerManager::CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm)
             return false;
         }
     }
-#endif
+    #endif
     return true;
 }
 
