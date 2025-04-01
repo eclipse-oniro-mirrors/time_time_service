@@ -32,7 +32,7 @@ constexpr uint32_t NTP_MAX_SIZE = 5;
 constexpr const char* AUTO_TIME_SYSTEM_PARAMETER = "persist.time.auto_time";
 constexpr const char* AUTO_TIME_STATUS_ON = "ON";
 constexpr const char* AUTO_TIME_STATUS_OFF = "OFF";
-constexpr uint64_t ONE_HOUR = 3600000;
+constexpr int64_t ONE_HOUR = 3600000;
 constexpr const char* DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
 constexpr int32_t RETRY_TIMES = 2;
 } // namespace
@@ -133,15 +133,14 @@ std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
 bool NtpUpdateTime::IsInUpdateInterval()
 {
     // Determine the time interval between two NTP requests sent.
-    int64_t curBootTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-        NtpTrustedTime::GetInstance().GetBootTimeNs().time_since_epoch()).count();
-    uint64_t bootTime = static_cast<uint64_t>(curBootTime);
+    int64_t curBootTime = 0;
+    TimeUtils::GetBootTimeNs(curBootTime);
     auto lastBootTime = NtpTrustedTime::GetInstance().ElapsedRealtimeMillis();
     // If the time <= ONE_HOUR, do not send NTP requests.
-    if ((lastBootTime > 0) && (bootTime - static_cast<uint64_t>(lastBootTime) <= ONE_HOUR)) {
+    if ((lastBootTime > 0) && (curBootTime - lastBootTime <= ONE_HOUR)) {
         TIME_HILOGI(TIME_MODULE_SERVICE,
             "ntp updated bootTime: %{public}" PRId64 ", lastBootTime: %{public}" PRId64 "",
-            bootTime, lastBootTime);
+                    curBootTime, lastBootTime);
         return true;
     }
     return false;

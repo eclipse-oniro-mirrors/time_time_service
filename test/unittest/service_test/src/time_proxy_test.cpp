@@ -84,7 +84,9 @@ uint64_t CreateTimer(int uid, int pid)
 
 void StartTimer(uint64_t timerId)
 {
-    auto nowElapsed = timerManagerHandler_->GetBootTimeNs().time_since_epoch().count() / NANO_TO_MILESECOND;
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeNs(bootTime);
+    auto nowElapsed = bootTime / NANO_TO_MILESECOND;
     uint64_t triggerTime = 10000000 + nowElapsed;
     auto ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
@@ -158,7 +160,10 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
     std::shared_ptr<Batch> batch = timerManagerHandler_->alarmBatches_.at(0);
     std::chrono::steady_clock::time_point tpRpoch(nanoseconds(1000000000));
     batch->start_ = tpRpoch;
-    auto retTrigger = timerManagerHandler_->TriggerTimersLocked(triggerList, timerManagerHandler_->GetBootTimeNs());
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeNs(bootTime);
+    steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
+    auto retTrigger = timerManagerHandler_->TriggerTimersLocked(triggerList, bootTimePoint);
     EXPECT_EQ(retTrigger, true);
     auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
     EXPECT_EQ(uidTimersMap.size(), (const unsigned int)0);
