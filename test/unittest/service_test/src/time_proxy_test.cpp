@@ -487,6 +487,32 @@ HWTEST_F(TimeProxyTest, PidProxyTimer004, TestSize.Level1)
 }
 
 /**
+* @tc.name: PidProxyTimer005
+* @tc.desc: test the value of needtrigger is false.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, PidProxyTimer005, TestSize.Level1)
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "PidProxyTimer005 start");
+    auto ret = timerManagerHandler_->ResetAllProxy();
+    TimerProxy::GetInstance().uidTimersMap_.clear();
+    int32_t uid = 2000;
+    int pid = 1000;
+    uint64_t timerId = CreateTimer(uid, pid);
+    StartTimer(timerId);
+
+    std::set<int> pidList;
+    pidList.insert(pid);
+
+    ret = timerManagerHandler_->ProxyTimer(uid, pidList, true, false);
+    EXPECT_TRUE(ret);
+    auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
+    auto it1 = uidTimersMap.find(uid);
+    EXPECT_EQ(it1, uidTimersMap.end());
+    timerManagerHandler_->DestroyTimer(timerId);
+}
+
+/**
 * @tc.name: AdjustTimerProxy001
 * @tc.desc: Determine whether to unify the heartbeat when the timer proxy is disabled.
 * @tc.type: FUNC
