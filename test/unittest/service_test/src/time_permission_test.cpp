@@ -52,7 +52,7 @@ void TimePermissionTest::TearDown(void) {
 
 /**
 * @tc.name: CheckCallingPermission001
-* @tc.desc: check calling permission
+* @tc.desc: check calling permission.
 * @tc.type: FUNC
 */
 HWTEST_F(TimePermissionTest, CheckCallingPermission001, TestSize.Level1)

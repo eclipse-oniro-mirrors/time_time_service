@@ -65,7 +65,7 @@ void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer)
     }
 }
 
-void TimeBehaviorReport(ReportEventCode eventCode, const std::string& originTime, const std::string& newTime,
+void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime, const std::string &newTime,
     int64_t ntpTime)
 {
     std::string bundleOrProcessName = GetBundleOrProcessName();
@@ -138,8 +138,8 @@ void TimerCountStaticReporter(int count, int (&uidArr)[COUNT_REPORT_ARRAY_LENGTH
     }
 }
 
-void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, int uid, const std::string& bundleOrProcessName,
-    const std::string& extraInfo)
+void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, int uid, const std::string &bundleOrProcessName,
+    const std::string &extraInfo)
 {
     struct HiSysEventParam params[] = {
         {"EVENT_CODE",  HISYSEVENT_INT32,  {.i32 = eventCode},                                    0},
