@@ -88,7 +88,7 @@ bool TimeDfxTest::ExecuteCmd(const std::string &cmd, std::string &result)
 #ifdef HIDUMPER_ENABLE
 /**
 * @tc.name: DumpAllTimeInfo001
-* @tc.desc: dump all time info
+* @tc.desc: dump all time info.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpAllTimeInfo001, TestSize.Level0)
@@ -102,7 +102,7 @@ HWTEST_F(TimeDfxTest, DumpAllTimeInfo001, TestSize.Level0)
 
 /**
 * @tc.name: DumpTimerInfo001
-* @tc.desc: dump timer info
+* @tc.desc: dump timer info.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpTimerInfo001, TestSize.Level0)
@@ -115,7 +115,7 @@ HWTEST_F(TimeDfxTest, DumpTimerInfo001, TestSize.Level0)
 
 /**
 * @tc.name: DumpTimerInfoById001
-* @tc.desc: dump timer info by id
+* @tc.desc: dump timer info by id.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpTimerInfoById001, TestSize.Level0)
@@ -140,7 +140,7 @@ HWTEST_F(TimeDfxTest, DumpTimerInfoById001, TestSize.Level0)
 
 /**
 * @tc.name: DumpTimerTriggerById001
-* @tc.desc: dump trigger by id
+* @tc.desc: dump trigger by id.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpTimerTriggerById001, TestSize.Level0)
@@ -165,7 +165,7 @@ HWTEST_F(TimeDfxTest, DumpTimerTriggerById001, TestSize.Level0)
 
 /**
 * @tc.name: DumpShowHelp001
-* @tc.desc: dump show help
+* @tc.desc: dump show help.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpShowHelp001, TestSize.Level0)
@@ -180,7 +180,7 @@ HWTEST_F(TimeDfxTest, DumpShowHelp001, TestSize.Level0)
 
 /**
 * @tc.name: DumpIdleTimer001
-* @tc.desc: dump idle timer when working
+* @tc.desc: dump idle timer when working.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpIdleTimer001, TestSize.Level0)
@@ -193,7 +193,7 @@ HWTEST_F(TimeDfxTest, DumpIdleTimer001, TestSize.Level0)
 
 /**
 * @tc.name: DumpIdleTimer001
-* @tc.desc: dump idle timer when sleep
+* @tc.desc: dump idle timer when sleep.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpIdleTimer002, TestSize.Level0)
@@ -218,7 +218,7 @@ HWTEST_F(TimeDfxTest, DumpIdleTimer002, TestSize.Level0)
 
 /**
 * @tc.name: DumpUidTimerMapInfo001
-* @tc.desc: dump uid timer map info
+* @tc.desc: dump uid timer map info.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpUidTimerMapInfo001, TestSize.Level0)
@@ -251,7 +251,7 @@ HWTEST_F(TimeDfxTest, DumpUidTimerMapInfo001, TestSize.Level0)
 
 /**
 * @tc.name: DumpPeoxyTimerMapInfo001
-* @tc.desc: dump proxy timer map info
+* @tc.desc: dump proxy timer map info.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpPeoxyTimerMapInfo001, TestSize.Level0)
@@ -283,7 +283,7 @@ HWTEST_F(TimeDfxTest, DumpPeoxyTimerMapInfo001, TestSize.Level0)
 
 /**
 * @tc.name: DumpProxyDelayTime001
-* @tc.desc: dump proxy delay time
+* @tc.desc: dump proxy delay time.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpProxyDelayTime001, TestSize.Level0)
@@ -298,7 +298,7 @@ HWTEST_F(TimeDfxTest, DumpProxyDelayTime001, TestSize.Level0)
 
 /**
 * @tc.name: DumpPeoxyTimerMapInfo001
-* @tc.desc: dump proxy timer map info
+* @tc.desc: dump proxy timer map info.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeDfxTest, DumpAdjustTime001, TestSize.Level0)

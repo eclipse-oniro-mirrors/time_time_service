@@ -167,7 +167,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByUid001
-* @tc.desc: test proxytimer in uid
+* @tc.desc: test proxytimer in uid.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByUid001, TestSize.Level1)
@@ -243,7 +243,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid002, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByUid003
-* @tc.desc: reset all proxy
+* @tc.desc: reset all proxy.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByUid003, TestSize.Level1)
@@ -287,7 +287,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid003, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimer001
-* @tc.desc: adjust timer test
+* @tc.desc: adjust timer test.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
@@ -309,7 +309,7 @@ HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimer002
-* @tc.desc: set timer exemption
+* @tc.desc: set timer exemption.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
@@ -344,7 +344,7 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByPid001
-* @tc.desc: test proxytimer in Pid
+* @tc.desc: test proxytimer in Pid.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByPid001, TestSize.Level1)
@@ -422,7 +422,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByPid002, TestSize.Level1)
 
 /**
 * @tc.name: PidProxyTimer003
-* @tc.desc: reset all proxy测试
+* @tc.desc: reset all proxy tests.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
@@ -557,7 +557,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
 }
 
 /**
-* @tc.name: AdjustTimerExemption001.
+* @tc.name: AdjustTimerExemption001
 * @tc.desc: test adjust timer exemption list.
 * @tc.type: FUNC
 */
@@ -577,7 +577,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerExemption001, TestSize.Level0)
 
 /**
 * @tc.name: ProxyTimerCover001
-* @tc.desc: test CallbackAlarmIfNeed
+* @tc.desc: test CallbackAlarmIfNeed.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover001, TestSize.Level1)
@@ -588,7 +588,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover001, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerCover002
-* @tc.desc: test UID
+* @tc.desc: test UID.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
@@ -602,7 +602,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerCover003
-* @tc.desc: test PID
+* @tc.desc: test PID.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
@@ -619,7 +619,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerCover004
-* @tc.desc: test CallbackAlarmIfNeed
+* @tc.desc: test CallbackAlarmIfNeed.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover004, TestSize.Level1)

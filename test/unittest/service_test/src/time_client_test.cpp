@@ -195,7 +195,7 @@ HWTEST_F(TimeClientTest, GetNtpTimeMs001, TestSize.Level1)
 
 /**
 * @tc.name: GetNtpTimeMsAndGetRealTimeMs001
-* @tc.desc: get ntp time and get real time.
+* @tc.desc: get ntp time and get real time by multi thread.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeClientTest, GetNtpTimeMsAndGetRealTimeMs001, TestSize.Level1)
@@ -228,29 +228,29 @@ HWTEST_F(TimeClientTest, SetTime001, TestSize.Level1)
 
 /**
 * @tc.name: SetTime002
-* @tc.desc: set system time.
+* @tc.desc: set system time with negative value.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeClientTest, SetTime002, TestSize.Level1)
 {
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(-1);
-    EXPECT_NE(result, TimeError::E_TIME_OK);
+    EXPECT_EQ(result, TimeError::E_TIME_DEAL_FAILED);
 }
 
 /**
 * @tc.name: SetTime003
-* @tc.desc: set system time.
+* @tc.desc: set system time with LLONG_MAX.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeClientTest, SetTime003, TestSize.Level1)
 {
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(LLONG_MAX);
-    EXPECT_NE(result, TimeError::E_TIME_OK);
+    EXPECT_EQ(result, TimeError::E_TIME_DEAL_FAILED);
 }
 
 /**
 * @tc.name: SetTime004
-* @tc.desc: set system time.
+* @tc.desc: set system time with no permission.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeClientTest, SetTime004, TestSize.Level1)
@@ -261,11 +261,11 @@ HWTEST_F(TimeClientTest, SetTime004, TestSize.Level1)
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
     ASSERT_GT(time, 0);
     int32_t result = TimeServiceClient::GetInstance()->SetTimeV9(time);
-    EXPECT_NE(result, TimeError::E_TIME_OK);
+    EXPECT_EQ(result, TimeError::E_TIME_NOT_SYSTEM_APP);
     int32_t code;
     bool ret = TimeServiceClient::GetInstance()->SetTime(time, code);
     EXPECT_EQ(ret, false);
-    EXPECT_NE(code, TimeError::E_TIME_OK);
+    EXPECT_EQ(code, TimeError::E_TIME_NO_PERMISSION);
 }
 
 /**
@@ -293,25 +293,25 @@ HWTEST_F(TimeClientTest, SetTimeZone001, TestSize.Level1)
 
 /**
 * @tc.name: SetTimeZone002
-* @tc.desc: set system time zone.
+* @tc.desc: set system time zone will invalid timezone.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeClientTest, SetTimeZone002, TestSize.Level1)
 {
     int32_t result = TimeServiceClient::GetInstance()->SetTimeZoneV9("123");
-    EXPECT_NE(result, TimeError::E_TIME_OK);
+    EXPECT_EQ(result, TimeError::E_TIME_DEAL_FAILED);
 }
 
 /**
 * @tc.name: SetTimeZone003
-* @tc.desc: set system time zone.
+* @tc.desc: set system time zone with no permission.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeClientTest, SetTimeZone003, TestSize.Level1)
 {
     DeletePermission();
     int32_t result = TimeServiceClient::GetInstance()->SetTimeZoneV9("Asia/Shanghai");
-    EXPECT_NE(result, TimeError::E_TIME_OK);
+    EXPECT_EQ(result, TimeError::E_TIME_NOT_SYSTEM_APP);
     bool ret = TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
     EXPECT_FALSE(ret);
 }
@@ -414,18 +414,18 @@ HWTEST_F(TimeClientTest, GetThreadTimeNs001, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer001
-* @tc.desc: Create system timer.
+* @tc.desc: Create system timer with invalid timerid and timerinfo.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeClientTest, CreateTimer001, TestSize.Level1)
 {
     uint64_t timerId = 0;
     auto ret = TimeServiceClient::GetInstance()->StartTimerV9(timerId, 5);
-    EXPECT_NE(ret, TimeError::E_TIME_OK);
+    EXPECT_EQ(ret, TimeError::E_TIME_DEAL_FAILED);
     ret = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
-    EXPECT_NE(ret, TimeError::E_TIME_OK);
+    EXPECT_EQ(ret, TimeError::E_TIME_DEAL_FAILED);
     ret = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_NE(ret, TimeError::E_TIME_OK);
+    EXPECT_EQ(ret, TimeError::E_TIME_DEAL_FAILED);
 }
 
 /**
@@ -498,7 +498,7 @@ HWTEST_F(TimeClientTest, CreateTimer004, TestSize.Level1)
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     EXPECT_EQ(g_data1, 0);
     errCode = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
-    EXPECT_NE(errCode, TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_DEAL_FAILED);
 }
 
 /**
@@ -531,25 +531,25 @@ HWTEST_F(TimeClientTest, CreateTimer005, TestSize.Level1)
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     EXPECT_EQ(g_data1, 1);
     errCode = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
-    EXPECT_NE(errCode, TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_DEAL_FAILED);
 }
 
 /**
 * @tc.name: CreateTimer006
-* @tc.desc: Create system timer.
+* @tc.desc: Create system timer with nullprt.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeClientTest, CreateTimer006, TestSize.Level1)
 {
     uint64_t timerId;
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(nullptr, timerId);
-    EXPECT_NE(errCode, TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_NULLPTR);
     EXPECT_EQ(timerId, 0);
 }
 
 /**
 * @tc.name: CreateTimer007
-* @tc.desc: Create system timer.
+* @tc.desc: Create system timer with no permission.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeClientTest, CreateTimer007, TestSize.Level1)
@@ -569,13 +569,13 @@ HWTEST_F(TimeClientTest, CreateTimer007, TestSize.Level1)
     uint64_t timerId = TimeServiceClient::GetInstance()->CreateTimer(timerInfo);
     EXPECT_EQ(timerId, 0);
     auto codeCreateTimer = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_NE(codeCreateTimer, TimeError::E_TIME_OK);
+    EXPECT_EQ(codeCreateTimer, TimeError::E_TIME_NOT_SYSTEM_APP);
     auto codeStartTimer = TimeServiceClient::GetInstance()->StartTimerV9(timerId, currentTime + 1000);
-    EXPECT_NE(codeStartTimer, TimeError::E_TIME_OK);
+    EXPECT_EQ(codeStartTimer, TimeError::E_TIME_NOT_SYSTEM_APP);
     auto codeStopTimer = TimeServiceClient::GetInstance()->StopTimerV9(timerId);
-    EXPECT_NE(codeStopTimer, TimeError::E_TIME_OK);
+    EXPECT_EQ(codeStopTimer, TimeError::E_TIME_NOT_SYSTEM_APP);
     auto codeDestroyTimer = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_NE(codeDestroyTimer, TimeError::E_TIME_OK);
+    EXPECT_EQ(codeDestroyTimer, TimeError::E_TIME_NOT_SYSTEM_APP);
 }
 
 /**
@@ -620,8 +620,7 @@ HWTEST_F(TimeClientTest, CreateTimer009, TestSize.Level1)
     auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
     timerInfo->SetWantAgent(wantAgent);
     auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
-    EXPECT_NE(errCode, TimeError::E_TIME_OK);
-    
+    EXPECT_EQ(errCode, TimeError::E_TIME_DEAL_FAILED);
     TIME_HILOGI(TIME_MODULE_CLIENT, "test timer id: %{public}" PRId64 "", timerId);
 }
 
@@ -657,7 +656,7 @@ HWTEST_F(TimeClientTest, CreateTimer010, TestSize.Level1)
     EXPECT_EQ(info, TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
 
     errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId1);
-    EXPECT_NE(errCode, TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_DEAL_FAILED);
 
     errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId2);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
@@ -820,7 +819,7 @@ HWTEST_F(TimeClientTest, StartTimer005, TestSize.Level1)
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     sleep(1);
     errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_NE(errCode, TimeError::E_TIME_OK);
+    EXPECT_EQ(errCode, TimeError::E_TIME_DEAL_FAILED);
 }
 
 /**
@@ -1082,7 +1081,7 @@ HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
         EXPECT_EQ(info, TimeServiceClient::GetInstance()->recoverTimerInfoMap_.end());
     }
     auto ret = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
-    EXPECT_NE(ret, E_TIME_OK);
+    EXPECT_EQ(ret, E_TIME_DEAL_FAILED);
 }
 
 /**
@@ -1109,7 +1108,7 @@ HWTEST_F(TimeClientTest, AdjustTimer001, TestSize.Level1)
     EXPECT_EQ(g_data1, 1);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
- 
+
 /**
 * @tc.name: AdjustTimer002
 * @tc.desc: adjust timer.

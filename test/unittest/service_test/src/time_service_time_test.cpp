@@ -210,7 +210,7 @@ HWTEST_F(TimeServiceTimeTest, SetTime001, TestSize.Level1)
 
 /**
 * @tc.name: SetTime002
-* @tc.desc: set system time.
+* @tc.desc: Verify set system time with negative value will return false.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimeTest, SetTime002, TestSize.Level1)
@@ -221,7 +221,7 @@ HWTEST_F(TimeServiceTimeTest, SetTime002, TestSize.Level1)
 
 /**
 * @tc.name: SetTime003
-* @tc.desc: set system time.
+* @tc.desc: Verify set system time with LLONG_MAX will return false.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimeTest, SetTime003, TestSize.Level1)
@@ -249,6 +249,8 @@ HWTEST_F(TimeServiceTimeTest, SetTime004, TestSize.Level1)
     EXPECT_TRUE(result);
     EXPECT_EQ(code, 0);
     DeletePermission();
+    auto res = TimeSystemAbility::GetInstance()->SetTime(0, 0);
+    EXPECT_EQ(res, E_TIME_NO_PERMISSION);
 }
 
 /**
@@ -295,7 +297,7 @@ HWTEST_F(TimeServiceTimeTest, SetTimeZone001, TestSize.Level1)
 
 /**
 * @tc.name: SetTimeZone002
-* @tc.desc: set system time zone.
+* @tc.desc: Verify set system time zone with invalid timezone will return false.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimeTest, SetTimeZone002, TestSize.Level1)
@@ -328,6 +330,8 @@ HWTEST_F(TimeServiceTimeTest, SetTimeZone003, TestSize.Level1)
     bool ret = TimeServiceClient::GetInstance()->SetTimeZone(getCurrentTimeZone);
     EXPECT_TRUE(ret);
     DeletePermission();
+    auto res = TimeSystemAbility::GetInstance()->SetTimeZone("", 0);
+    EXPECT_EQ(res, E_TIME_NO_PERMISSION);
 }
 
 /**
@@ -440,22 +444,39 @@ HWTEST_F(TimeServiceTimeTest, GetThreadTimeNs001, TestSize.Level1)
 }
 
 /**
-* @tc.name: SntpClient001.
-* @tc.desc: test SntpClient.
+* @tc.name: SntpClient001
+* @tc.desc: test GetNtpTimestamp64 will return timestamp.
 * @tc.type: FUNC
-* @tc.require:
 */
 HWTEST_F(TimeServiceTimeTest, SntpClient001, TestSize.Level0)
 {
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
-
     auto buffer = std::string("31234114451");
     auto millisecond = ntpClient->GetNtpTimestamp64(0, buffer.c_str());
     EXPECT_GT(millisecond, 0);
-    millisecond = 0;
-    millisecond = ntpClient->GetNtpField32(0, buffer.c_str());
-    EXPECT_GT(millisecond, 0);
+}
 
+/**
+* @tc.name: SntpClient002
+* @tc.desc: test GetNtpField32 will return time.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, SntpClient002, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+    auto buffer = std::string("31234114451");
+    auto millisecond = ntpClient->GetNtpField32(0, buffer.c_str());
+    EXPECT_GT(millisecond, 0);
+}
+
+/**
+* @tc.name: SntpClient003
+* @tc.desc: test ConvertNtpToStamp with invalid value will return 0 timestamp.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, SntpClient003, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
     auto timeStamp = ntpClient->ConvertNtpToStamp(0);
     EXPECT_EQ(timeStamp, 0);
     timeStamp = ntpClient->ConvertNtpToStamp(100);
@@ -464,18 +485,27 @@ HWTEST_F(TimeServiceTimeTest, SntpClient001, TestSize.Level0)
     EXPECT_EQ(timeStamp, 0);
     timeStamp = ntpClient->ConvertNtpToStamp(31234114451);
     EXPECT_EQ(timeStamp, 0);
-    uint64_t time = 999999999911;
-    timeStamp = ntpClient->ConvertNtpToStamp(time << 32);
-    EXPECT_GT(timeStamp, 0);
 }
 
 /**
-* @tc.name: SntpClient002.
-* @tc.desc: test RequestTime of SntpClient.
+* @tc.name: SntpClient004
+* @tc.desc: test ConvertNtpToStamp with valid value will return true timestamp.
 * @tc.type: FUNC
-* @tc.require:
 */
-HWTEST_F(TimeServiceTimeTest, SntpClient002, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, SntpClient004, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+    uint64_t time = 999999999911;
+    auto timeStamp = ntpClient->ConvertNtpToStamp(time << 32);
+    EXPECT_EQ(timeStamp, 1358598439000);
+}
+
+/**
+* @tc.name: SntpClient005
+* @tc.desc: Verify RequestTime with null string will return false.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, SntpClient005, TestSize.Level0)
 {
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
     auto res = ntpClient -> RequestTime("");
@@ -483,12 +513,11 @@ HWTEST_F(TimeServiceTimeTest, SntpClient002, TestSize.Level0)
 }
 
 /**
-* @tc.name: SntpClient003.
+* @tc.name: SntpClient006
 * @tc.desc: test SetClockOffset of SntpClient.
 * @tc.type: FUNC
-* @tc.require:
 */
-HWTEST_F(TimeServiceTimeTest, SntpClient003, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, SntpClient006, TestSize.Level0)
 {
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
     ntpClient -> SetClockOffset(1);
@@ -496,15 +525,13 @@ HWTEST_F(TimeServiceTimeTest, SntpClient003, TestSize.Level0)
 }
 
 /**
-* @tc.name: SntpClient004.
+* @tc.name: SntpClient007
 * @tc.desc: test ConvertUnixToNtp of SntpClient.
 * @tc.type: FUNC
-* @tc.require:
 */
-HWTEST_F(TimeServiceTimeTest, SntpClient004, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, SntpClient007, TestSize.Level0)
 {
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
-
     OHOS::MiscServices::SNTPClient::ntp_timestamp ntp{.second = 0, .fraction = 0};
     struct timeval unix;
     gettimeofday(&unix, nullptr);
@@ -514,12 +541,11 @@ HWTEST_F(TimeServiceTimeTest, SntpClient004, TestSize.Level0)
 }
 
 /**
-* @tc.name: SntpClient005.
+* @tc.name: SntpClient008
 * @tc.desc: test CreateMessage of SntpClient.
 * @tc.type: FUNC
-* @tc.require:
 */
-HWTEST_F(TimeServiceTimeTest, SntpClient005, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, SntpClient008, TestSize.Level0)
 {
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
     char sendBuf[48] = { 0 };
@@ -528,35 +554,47 @@ HWTEST_F(TimeServiceTimeTest, SntpClient005, TestSize.Level0)
 }
 
 /**
-* @tc.name: SntpClient006.
-* @tc.desc: test ReceivedMessage of SntpClient.
+* @tc.name: SntpClient009
+* @tc.desc: test ReceivedMessage will return true when received valid message.
 * @tc.type: FUNC
-* @tc.require:
 */
-HWTEST_F(TimeServiceTimeTest, SntpClient006, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, SntpClient009, TestSize.Level0)
+{
+    std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
+    char buf[48] = {0};
+    buf[32] = BYTE_SNTP_MESSAGE;
+    buf[40] = BYTE_SNTP_MESSAGE;
+    auto res = ntpClient -> ReceivedMessage(buf);
+    EXPECT_TRUE(res);
+}
+
+/**
+* @tc.name: SntpClient010
+* @tc.desc: test ReceivedMessage will return false when received invalid message.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, SntpClient010, TestSize.Level0)
 {
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
     char buf[48] = {0};
     auto res = ntpClient -> ReceivedMessage(buf);
     EXPECT_FALSE(res);
     buf[32] = BYTE_SNTP_MESSAGE;
+    buf[40] = 0;
     res = ntpClient -> ReceivedMessage(buf);
     EXPECT_FALSE(res);
-    buf[40] = BYTE_SNTP_MESSAGE;
-    res = ntpClient -> ReceivedMessage(buf);
-    EXPECT_TRUE(res);
     buf[32] = 0;
+    buf[40] = BYTE_SNTP_MESSAGE;
     res = ntpClient -> ReceivedMessage(buf);
     EXPECT_FALSE(res);
 }
 
 /**
-* @tc.name: SntpClient007.
+* @tc.name: SntpClient011
 * @tc.desc: test GetReferenceId of SntpClient.
 * @tc.type: FUNC
-* @tc.require:
 */
-HWTEST_F(TimeServiceTimeTest, SntpClient007, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, SntpClient011, TestSize.Level0)
 {
     char buf[5] = {'1', '2', '3', '4', '5'};
     int array[5] = {0};
@@ -566,12 +604,11 @@ HWTEST_F(TimeServiceTimeTest, SntpClient007, TestSize.Level0)
 }
 
 /**
-* @tc.name: SntpClient008.
+* @tc.name: SntpClient012
 * @tc.desc: test Get of SntpClient.
 * @tc.type: FUNC
-* @tc.require:
 */
-HWTEST_F(TimeServiceTimeTest, SntpClient008, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, SntpClient012, TestSize.Level0)
 {
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
     std::shared_ptr<SNTPClient::SNTPMessage> sntpMessage = std::make_shared<SNTPClient::SNTPMessage>();
@@ -585,10 +622,9 @@ HWTEST_F(TimeServiceTimeTest, SntpClient008, TestSize.Level0)
 }
 
 /**
-* @tc.name: NtpTrustedTime001.
-* @tc.desc: test NtpTrustedTime.
+* @tc.name: NtpTrustedTime001
+* @tc.desc: test NtpTrustedTime with invalid value.
 * @tc.type: FUNC
-* @tc.require:
 */
 HWTEST_F(TimeServiceTimeTest, NtpTrustedTime001, TestSize.Level0)
 {
@@ -598,7 +634,16 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime001, TestSize.Level0)
     EXPECT_EQ(errCode, -1);
     errCode = ntpTrustedTime->GetCacheAge();
     EXPECT_EQ(errCode, INT_MAX);
+}
 
+/**
+* @tc.name: NtpTrustedTime002
+* @tc.desc: test NtpTrustedTime with valid value.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime002, TestSize.Level0)
+{
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
     ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(1, 1, 0);
     int64_t time = ntpTrustedTime->CurrentTimeMillis();
     EXPECT_GT(time, 0);
@@ -607,12 +652,11 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime001, TestSize.Level0)
 }
 
 /**
-* @tc.name: NtpTrustedTime002.
+* @tc.name: NtpTrustedTime003
 * @tc.desc: test NtpTrustedTime clear.
 * @tc.type: FUNC
-* @tc.require:
 */
-HWTEST_F(TimeServiceTimeTest, NtpTrustedTime002, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime003, TestSize.Level0)
 {
     auto TimeResult = std::make_shared<OHOS::MiscServices::NtpTrustedTime::TimeResult>();
     TimeResult->Clear();
@@ -622,12 +666,11 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime002, TestSize.Level0)
 }
 
 /**
-* @tc.name: NtpTrustedTime003.
+* @tc.name: NtpTrustedTime004
 * @tc.desc: test GetTimeMillis.
 * @tc.type: FUNC
-* @tc.require:
 */
-HWTEST_F(TimeServiceTimeTest, NtpTrustedTime003, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime004, TestSize.Level0)
 {
     auto TimeResult = std::make_shared<OHOS::MiscServices::NtpTrustedTime::TimeResult>();
     TimeResult->Clear();
@@ -637,9 +680,8 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime003, TestSize.Level0)
 
 /**
 * @tc.name: TimeTick001
-* @tc.desc: Check RefreshNextTriggerTime().
+* @tc.desc: Check RefreshNextTriggerTime.
 * @tc.type: FUNC
-* @tc.require:
 */
 HWTEST_F(TimeServiceTimeTest, TimeTick001, TestSize.Level0)
 {
@@ -679,7 +721,7 @@ HWTEST_F(TimeServiceTimeTest, SetSystemTime001, TestSize.Level1)
 }
 
 /**
-* @tc.name: NtpTime001.
+* @tc.name: NtpTime001
 * @tc.desc: test SplitNtpAddrs return max size.
 * @tc.type: FUNC
 */
@@ -691,7 +733,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTime001, TestSize.Level0)
 }
 
 /**
-* @tc.name: NtpTime002.
+* @tc.name: NtpTime002
 * @tc.desc: test RefreshNetworkTimeByTimer.
 * @tc.type: FUNC
 */
@@ -718,11 +760,11 @@ HWTEST_F(TimeServiceTimeTest, NtpTime002, TestSize.Level0)
 }
 
 /**
-* @tc.name: GetNtpTimeMs001.
-* @tc.desc: test RefreshNetworkTimeByTimer.
+* @tc.name: GetNtpTimeMsWithNoPermission001
+* @tc.desc: test GetNtpTimeMs with no permission.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTimeTest, GetNtpTimeMs001, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, GetNtpTimeMsWithNoPermission001, TestSize.Level0)
 {
     DeletePermission();
     int64_t time = 0;
@@ -731,16 +773,15 @@ HWTEST_F(TimeServiceTimeTest, GetNtpTimeMs001, TestSize.Level0)
 }
 
 /**
-* @tc.name: GetRealTimeMs001.
-* @tc.desc: test GetRealTimeMs.
+* @tc.name: GetRealTimeMsWithNoPermission001
+* @tc.desc: test GetRealTimeMs with no permission.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTimeTest, GetRealTimeMs, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, GetRealTimeMsWithNoPermission001, TestSize.Level0)
 {
     DeletePermission();
     int64_t time = 0;
     auto res = TimeSystemAbility::GetInstance()->GetRealTimeMs(time);
     EXPECT_EQ(res, E_TIME_NOT_SYSTEM_APP);
 }
-
 } // namespace
