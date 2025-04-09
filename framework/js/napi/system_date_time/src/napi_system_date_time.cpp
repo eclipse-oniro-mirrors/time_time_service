@@ -534,6 +534,10 @@ int32_t NapiSystemDateTime::GetDeviceTime(bool isNano, int32_t timeType, int64_t
     } else {
         deviceTime = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
     }
+    if (deviceTime == 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "failed clock_gettime_nsec_np.");
+        return ERROR;
+    }
 
     if (isNano) {
         time = deviceTime;
