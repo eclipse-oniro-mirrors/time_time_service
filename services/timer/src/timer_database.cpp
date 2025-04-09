@@ -198,8 +198,8 @@ std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
     }
     int count;
     if (result->GetRowCount(count) == OHOS::NativeRdb::E_SQLITE_CORRUPT) {
-        RecoverDataBase();
         result->Close();
+        RecoverDataBase();
         return nullptr;
     }
     return result;
