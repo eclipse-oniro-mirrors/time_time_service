@@ -160,10 +160,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
     std::shared_ptr<Batch> batch = timerManagerHandler_->alarmBatches_.at(0);
     std::chrono::steady_clock::time_point tpRpoch(nanoseconds(1000000000));
     batch->start_ = tpRpoch;
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
-    auto retTrigger = timerManagerHandler_->TriggerTimersLocked(triggerList, bootTimePoint);
+    auto retTrigger = timerManagerHandler_->TriggerTimersLocked(triggerList, TimeUtils::GetBootTimeNs());
     EXPECT_EQ(retTrigger, true);
     auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
     EXPECT_EQ(uidTimersMap.size(), (const unsigned int)0);
@@ -172,7 +169,7 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByUid001
-* @tc.desc: test proxytimer in uid
+* @tc.desc: test proxytimer in uid.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByUid001, TestSize.Level1)
@@ -248,7 +245,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid002, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByUid003
-* @tc.desc: reset all proxy
+* @tc.desc: reset all proxy.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByUid003, TestSize.Level1)
@@ -292,7 +289,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid003, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimer001
-* @tc.desc: adjust timer test
+* @tc.desc: adjust timer test.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
@@ -314,7 +311,7 @@ HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimer002
-* @tc.desc: set timer exemption
+* @tc.desc: set timer exemption.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
@@ -349,7 +346,7 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByPid001
-* @tc.desc: test proxytimer in Pid
+* @tc.desc: test proxytimer in Pid.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByPid001, TestSize.Level1)
@@ -427,7 +424,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByPid002, TestSize.Level1)
 
 /**
 * @tc.name: PidProxyTimer003
-* @tc.desc: reset all proxy测试
+* @tc.desc: reset all proxy tests.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
@@ -492,6 +489,32 @@ HWTEST_F(TimeProxyTest, PidProxyTimer004, TestSize.Level1)
 }
 
 /**
+* @tc.name: PidProxyTimer005
+* @tc.desc: test the value of needtrigger is false.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeProxyTest, PidProxyTimer005, TestSize.Level1)
+{
+    TIME_HILOGI(TIME_MODULE_SERVICE, "PidProxyTimer005 start");
+    auto ret = timerManagerHandler_->ResetAllProxy();
+    TimerProxy::GetInstance().uidTimersMap_.clear();
+    int32_t uid = 2000;
+    int pid = 1000;
+    uint64_t timerId = CreateTimer(uid, pid);
+    StartTimer(timerId);
+
+    std::set<int> pidList;
+    pidList.insert(pid);
+
+    ret = timerManagerHandler_->ProxyTimer(uid, pidList, true, false);
+    EXPECT_TRUE(ret);
+    auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
+    auto it1 = uidTimersMap.find(uid);
+    EXPECT_EQ(it1, uidTimersMap.end());
+    timerManagerHandler_->DestroyTimer(timerId);
+}
+
+/**
 * @tc.name: AdjustTimerProxy001
 * @tc.desc: Determine whether to unify the heartbeat when the timer proxy is disabled.
 * @tc.type: FUNC
@@ -536,7 +559,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
 }
 
 /**
-* @tc.name: AdjustTimerExemption001.
+* @tc.name: AdjustTimerExemption001
 * @tc.desc: test adjust timer exemption list.
 * @tc.type: FUNC
 */
@@ -556,7 +579,7 @@ HWTEST_F(TimeProxyTest, AdjustTimerExemption001, TestSize.Level0)
 
 /**
 * @tc.name: ProxyTimerCover001
-* @tc.desc: test CallbackAlarmIfNeed
+* @tc.desc: test CallbackAlarmIfNeed.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover001, TestSize.Level1)
@@ -567,7 +590,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover001, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerCover002
-* @tc.desc: test UID
+* @tc.desc: test UID.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
@@ -581,7 +604,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerCover003
-* @tc.desc: test PID
+* @tc.desc: test PID.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
@@ -598,7 +621,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerCover004
-* @tc.desc: test CallbackAlarmIfNeed
+* @tc.desc: test CallbackAlarmIfNeed.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover004, TestSize.Level1)

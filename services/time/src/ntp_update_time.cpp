@@ -140,7 +140,7 @@ bool NtpUpdateTime::IsInUpdateInterval()
     if ((lastBootTime > 0) && (curBootTime - lastBootTime <= ONE_HOUR)) {
         TIME_HILOGI(TIME_MODULE_SERVICE,
             "ntp updated bootTime: %{public}" PRId64 ", lastBootTime: %{public}" PRId64 "",
-                    curBootTime, lastBootTime);
+            curBootTime, lastBootTime);
         return true;
     }
     return false;

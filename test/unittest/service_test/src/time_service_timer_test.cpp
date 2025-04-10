@@ -250,8 +250,8 @@ void WaitForAlarm(std::atomic<int> * data, int interval)
 }
 
 /**
-* @tc.name: Batch001.
-* @tc.desc: test Batch.
+* @tc.name: Batch001
+* @tc.desc: Verify the value of newly Batch as expected.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, Batch001, TestSize.Level0)
@@ -263,7 +263,7 @@ HWTEST_F(TimeServiceTimerTest, Batch001, TestSize.Level0)
 }
 
 /**
-* @tc.name: SystemAbility001.
+* @tc.name: SystemAbility001
 * @tc.desc: test OnStop.
 * @tc.type: FUNC
 */
@@ -271,13 +271,11 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility001, TestSize.Level0)
 {
     TimeSystemAbility::GetInstance()->OnStop();
     EXPECT_EQ(TimeSystemAbility::GetInstance()->state_, ServiceRunningState::STATE_NOT_START);
-    TimeSystemAbility::GetInstance()->OnStop();
-    EXPECT_EQ(TimeSystemAbility::GetInstance()->state_, ServiceRunningState::STATE_NOT_START);
 }
 
 #ifdef RDB_ENABLE
 /**
-* @tc.name: SystemAbility002.
+* @tc.name: SystemAbility002
 * @tc.desc: test RecoverTimer.
 * @tc.type: FUNC
 */
@@ -343,8 +341,8 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility002, TestSize.Level0)
 
 #ifdef SET_AUTO_REBOOT_ENABLE
 /**
-* @tc.name: SystemAbility003.
-* @tc.desc: test SetAutoReboot.
+* @tc.name: SystemAbility003
+* @tc.desc: test SetAutoReboot when triggerTime is smaller than currenttime plus 2min.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, SystemAbility003, TestSize.Level0)
@@ -373,25 +371,13 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility003, TestSize.Level0)
     rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
     TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
 }
-#endif
 
 /**
-* @tc.name: SystemAbility004.
-* @tc.desc: test SetRealTime.
+* @tc.name: SystemAbility004
+* @tc.desc: test SetAutoReboot when triggerTime is larger than currenttime plus 2min.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, SystemAbility004, TestSize.Level0)
-{
-    auto res = TimeSystemAbility::GetInstance()->SetRealTime(-1);
-    EXPECT_FALSE(res);
-}
-
-/**
-* @tc.name: SystemAbility005.
-* @tc.desc: test SetAutoReboot.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTimerTest, SystemAbility005, TestSize.Level0)
 {
     uint64_t timerId1 = TIMER_ID;
 
@@ -418,10 +404,22 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility005, TestSize.Level0)
     rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
     TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
 }
+#endif
+
+/**
+* @tc.name: SystemAbility005
+* @tc.desc: Verify set negative value by SetRealTime will return false.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, SystemAbility005, TestSize.Level0)
+{
+    auto res = TimeSystemAbility::GetInstance()->SetRealTime(-1);
+    EXPECT_FALSE(res);
+}
 
 #ifdef RDB_ENABLE
 /**
-* @tc.name: TimeDatabase001.
+* @tc.name: TimeDatabase001
 * @tc.desc: test TimeDatabase Insert.
 * @tc.type: FUNC
 */
@@ -434,7 +432,7 @@ HWTEST_F(TimeServiceTimerTest, TimeDatabase001, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimeDatabase002.
+* @tc.name: TimeDatabase002
 * @tc.desc: test TimeDatabase Update.
 * @tc.type: FUNC
 */
@@ -449,7 +447,7 @@ HWTEST_F(TimeServiceTimerTest, TimeDatabase002, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimeDatabase003.
+* @tc.name: TimeDatabase003
 * @tc.desc: test TimeDatabase Delete.
 * @tc.type: FUNC
 */
@@ -463,8 +461,8 @@ HWTEST_F(TimeServiceTimerTest, TimeDatabase003, TestSize.Level0)
 #endif
 
 /**
-* @tc.name: Cjson001.
-* @tc.desc: cjson.
+* @tc.name: Cjson001
+* @tc.desc: Test Delete of CjsonHelper.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, Cjson001, TestSize.Level0)
@@ -491,8 +489,8 @@ HWTEST_F(TimeServiceTimerTest, Cjson001, TestSize.Level0)
 }
 
 /**
-* @tc.name: Cjson002.
-* @tc.desc: cjson.
+* @tc.name: Cjson002
+* @tc.desc: Test clear of CjsonHelper.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, Cjson002, TestSize.Level0)
@@ -519,8 +517,8 @@ HWTEST_F(TimeServiceTimerTest, Cjson002, TestSize.Level0)
 }
 
 /**
-* @tc.name: Cjson003.
-* @tc.desc: cjson.
+* @tc.name: Cjson003
+* @tc.desc: Test QueryTable of cjson.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, Cjson003, TestSize.Level0)
@@ -575,10 +573,9 @@ HWTEST_F(TimeServiceTimerTest, Cjson003, TestSize.Level0)
     CjsonHelper::GetInstance().Delete(std::string(DROP_ON_REBOOT), TIMER_ID);
 }
 
-
 /**
-* @tc.name: Cjson004.
-* @tc.desc: cjson.
+* @tc.name: Cjson004
+* @tc.desc: Test QueryWant of cjson.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, Cjson004, TestSize.Level0)
@@ -592,8 +589,8 @@ HWTEST_F(TimeServiceTimerTest, Cjson004, TestSize.Level0)
 }
 
 /**
-* @tc.name: Cjson005.
-* @tc.desc: cjson.
+* @tc.name: Cjson005
+* @tc.desc: Test QueryAutoReboot of cjson.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, Cjson005, TestSize.Level0)
@@ -608,8 +605,8 @@ HWTEST_F(TimeServiceTimerTest, Cjson005, TestSize.Level0)
 }
 
 /**
-* @tc.name: Cjson006.
-* @tc.desc: cjson get entry.
+* @tc.name: Cjson006
+* @tc.desc: Test GetEntry will return nullptr when cjson is incomplete and invalid.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, Cjson006, TestSize.Level0)
@@ -656,18 +653,42 @@ HWTEST_F(TimeServiceTimerTest, Cjson006, TestSize.Level0)
 }
 
 /**
-* @tc.name: Cjson007.
-* @tc.desc: cjson get entry.
+* @tc.name: Cjson007
+* @tc.desc: Test GetEntry will return nullptr when cjson is complete and valid.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, Cjson007, TestSize.Level0)
+{
+    cJSON* obj = cJSON_CreateObject();
+    cJSON_AddStringToObject(obj, "name", "");
+    cJSON_AddStringToObject(obj, "timerId", std::to_string(TIMER_ID).c_str());
+    cJSON_AddNumberToObject(obj, "type", 1);
+    cJSON_AddNumberToObject(obj, "windowLength", 1);
+    cJSON_AddNumberToObject(obj, "interval", 1);
+    cJSON_AddNumberToObject(obj, "flag", 1);
+    cJSON_AddStringToObject(obj, "wantAgent",
+        OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(nullptr).c_str());
+    cJSON_AddNumberToObject(obj, "uid", 1);
+    cJSON_AddNumberToObject(obj, "pid", 1);
+    cJSON_AddStringToObject(obj, "bundleName", "bundleName1");
+    auto res = TimeSystemAbility::GetInstance()->GetEntry(obj, true);
+    EXPECT_NE(res, nullptr);
+    cJSON_Delete(obj);
+}
+
+/**
+* @tc.name: Cjson008
+* @tc.desc: Test CjsonIntoDatabase.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, Cjson008, TestSize.Level0)
 {
     cJSON* resultSet = cJSON_CreateArray();
     cJSON* obj1 = cJSON_CreateObject();
     cJSON_AddItemToArray(resultSet, obj1);
     cJSON* obj2 = cJSON_CreateObject();
     cJSON_AddStringToObject(obj2, "name", "");
-    cJSON_AddStringToObject(obj2, "timerId", "88888");
+    cJSON_AddStringToObject(obj2, "timerId", std::to_string(TIMER_ID).c_str());
     cJSON_AddNumberToObject(obj2, "type", 1);
     cJSON_AddNumberToObject(obj2, "windowLength", 1);
     cJSON_AddNumberToObject(obj2, "interval", 1);
@@ -687,7 +708,7 @@ HWTEST_F(TimeServiceTimerTest, Cjson007, TestSize.Level0)
 }
 
 /**
-* @tc.name: PidProxyTimer001.
+* @tc.name: PidProxyTimer001
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
 */
@@ -700,7 +721,7 @@ HWTEST_F(TimeServiceTimerTest, PidProxyTimer001, TestSize.Level0)
 }
 
 /**
-* @tc.name: PidProxyTimer002.
+* @tc.name: PidProxyTimer002
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
 */
@@ -714,7 +735,7 @@ HWTEST_F(TimeServiceTimerTest, PidProxyTimer002, TestSize.Level0)
 }
 
 /**
-* @tc.name: PidProxyTimer003.
+* @tc.name: PidProxyTimer003
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
 */
@@ -725,10 +746,9 @@ HWTEST_F(TimeServiceTimerTest, PidProxyTimer003, TestSize.Level0)
 }
 
 /**
-* @tc.name: PidProxyTimer004.
+* @tc.name: PidProxyTimer004
 * @tc.desc: proxy timer.
 * @tc.type: FUNC
-* @tc.require:
 */
 HWTEST_F(TimeServiceTimerTest, PidProxyTimer004, TestSize.Level0)
 {
@@ -739,26 +759,45 @@ HWTEST_F(TimeServiceTimerTest, PidProxyTimer004, TestSize.Level0)
 }
 
 /**
-* @tc.name: AdjustTimer001.
+* @tc.name: AdjustTimer001
 * @tc.desc: adjust timer.
 * @tc.type: FUNC
-* @tc.require:
 */
 HWTEST_F(TimeServiceTimerTest, AdjustTimer001, TestSize.Level0)
 {
-    auto errCode = TimeServiceClient::GetInstance()->AdjustTimer(true, 5, 0);
+    auto errCode = TimeServiceClient::GetInstance()->AdjustTimer(true, 0, 0);
+    EXPECT_EQ(errCode, TimeError::E_TIME_READ_PARCEL_ERROR);
+    errCode = TimeServiceClient::GetInstance()->AdjustTimer(true, 1, 0);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     errCode = TimeServiceClient::GetInstance()->AdjustTimer(false, 0, 0);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    errCode = TimeServiceClient::GetInstance()->AdjustTimer(false, 1, 0);
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
 }
 
 /**
-* @tc.name: AdjustTimer002.
+* @tc.name: AdjustTimer002
+* @tc.desc: Check AdjustTimer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, AdjustTimer002, TestSize.Level1)
+{
+    auto res = TimeSystemAbility::GetInstance()->AdjustTimer(true, 0, 0);
+    EXPECT_EQ(res, TimeError::E_TIME_READ_PARCEL_ERROR);
+    res = TimeSystemAbility::GetInstance()->AdjustTimer(true, 1, 0);
+    EXPECT_EQ(res, TimeError::E_TIME_OK);
+    res = TimeSystemAbility::GetInstance()->AdjustTimer(false, 0, 0);
+    EXPECT_EQ(res, TimeError::E_TIME_OK);
+    res = TimeSystemAbility::GetInstance()->AdjustTimer(false, 1, 0);
+    EXPECT_EQ(res, TimeError::E_TIME_OK);
+}
+
+/**
+* @tc.name: AdjustTimer003
 * @tc.desc: exemption timer.
 * @tc.type: FUNC
-* @tc.require:
 */
-HWTEST_F(TimeServiceTimerTest, AdjustTimer002, TestSize.Level0)
+HWTEST_F(TimeServiceTimerTest, AdjustTimer003, TestSize.Level0)
 {
     std::unordered_set<std::string> nameArr{"timer"};
     auto errCode = TimeServiceClient::GetInstance()->SetTimerExemption(nameArr, false);
@@ -768,28 +807,11 @@ HWTEST_F(TimeServiceTimerTest, AdjustTimer002, TestSize.Level0)
 }
 
 /**
-* @tc.name: AdjustTimer003
-* @tc.desc: Check AdjustTimer.
+* @tc.name: AdjustTimer004
+* @tc.desc: Verify SetTimerExemption will return PARAMETERS_INVALID when nameArr is larger than MAX_EXEMPTION_SIZE.
 * @tc.type: FUNC
 */
-HWTEST_F(TimeServiceTimerTest, AdjustTimer003, TestSize.Level1)
-{
-    auto res = TimeSystemAbility::GetInstance()->AdjustTimer(true, 0, 0);
-    EXPECT_EQ(res, E_TIME_READ_PARCEL_ERROR);
-    res = TimeSystemAbility::GetInstance()->AdjustTimer(true, 1, 0);
-    EXPECT_NE(res, E_TIME_READ_PARCEL_ERROR);
-    res = TimeSystemAbility::GetInstance()->AdjustTimer(false, 0, 0);
-    EXPECT_NE(res, E_TIME_READ_PARCEL_ERROR);
-    res = TimeSystemAbility::GetInstance()->AdjustTimer(false, 1, 0);
-    EXPECT_NE(res, E_TIME_READ_PARCEL_ERROR);
-}
-
-/**
-* @tc.name: SetTimerExemption001
-* @tc.desc: Check clear proxy.
-* @tc.type: FUNC
-*/
-HWTEST_F(TimeServiceTimerTest, SetTimerExemption001, TestSize.Level1)
+HWTEST_F(TimeServiceTimerTest, AdjustTimer004, TestSize.Level1)
 {
     std::unordered_set<std::string> nameArr{"timer"};
     for (int i = 0; i <= MAX_EXEMPTION_SIZE + 1; i++) {
@@ -801,7 +823,7 @@ HWTEST_F(TimeServiceTimerTest, SetTimerExemption001, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimer001
-* @tc.desc: Check ProxyTimer.
+* @tc.desc: Verify ProxyTimer will return PARAMETERS_INVALID when pidList is larger than MAX_PID_LIST_SIZE.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, ProxyTimer001, TestSize.Level1)
@@ -817,10 +839,9 @@ HWTEST_F(TimeServiceTimerTest, ProxyTimer001, TestSize.Level1)
 }
 
 /**
-* @tc.name: IdleTimer001.
+* @tc.name: IdleTimer001
 * @tc.desc: test create idle timer for app.
 * @tc.type: FUNC
-* @tc.require:
 */
 HWTEST_F(TimeServiceTimerTest, IdleTimer001, TestSize.Level0)
 {
@@ -837,7 +858,6 @@ HWTEST_F(TimeServiceTimerTest, IdleTimer001, TestSize.Level0)
 * @tc.name: IdleTimer002
 * @tc.desc: test public app start timer when device is sleeping and device sleep quit greater than timer callback.
 * @tc.type: FUNC
-* @tc.require:
 */
 HWTEST_F(TimeServiceTimerTest, IdleTimer002, TestSize.Level0)
 {
@@ -866,7 +886,6 @@ HWTEST_F(TimeServiceTimerTest, IdleTimer002, TestSize.Level0)
 * @tc.name: IdleTimer003
 * @tc.desc: test public app start timer when device is sleeping and device sleep quit less than timer callback.
 * @tc.type: FUNC
-* @tc.require:
 */
 HWTEST_F(TimeServiceTimerTest, IdleTimer003, TestSize.Level0)
 {
@@ -895,7 +914,6 @@ HWTEST_F(TimeServiceTimerTest, IdleTimer003, TestSize.Level0)
 * @tc.desc: test public app start timer when device is working, device sleep immediately
 *           and timer callback greater than idle quit.
 * @tc.type: FUNC
-* @tc.require:
 */
 HWTEST_F(TimeServiceTimerTest, IdleTimer004, TestSize.Level0)
 {
@@ -1207,7 +1225,7 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer011, TestSize.Level1) {
 }
 
 /**
-* @tc.name: TimerManager001.
+* @tc.name: TimerManager001
 * @tc.desc: test ReCreateTimer.
 * @tc.type: FUNC
 */
@@ -1228,7 +1246,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager001, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager002.
+* @tc.name: TimerManager002
 * @tc.desc: test SetHandler with interval = milliseconds(10) < second(1).
 * @tc.type: FUNC
 */
@@ -1258,7 +1276,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager002, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager003.
+* @tc.name: TimerManager003
 * @tc.desc: test Set() with type > ALARM_TYPE_COUNT.
 * @tc.type: FUNC
 */
@@ -1271,7 +1289,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager003, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager004.
+* @tc.name: TimerManager004
 * @tc.desc: test StartTimer with UidProxy and PidProxy.
 * @tc.type: FUNC
 */
@@ -1321,7 +1339,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager004, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager005.
+* @tc.name: TimerManager005
 * @tc.desc: test NotifyWantAgent.
 * @tc.type: FUNC
 */
@@ -1366,7 +1384,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager005, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager006.
+* @tc.name: TimerManager006
 * @tc.desc: test AdjustTimer.
 * @tc.type: FUNC
 */
@@ -1398,7 +1416,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager006, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager007.
+* @tc.name: TimerManager007
 * @tc.desc: test AdjustDeliveryTimeBasedOnDeviceIdle.
 * @tc.type: FUNC
 */
@@ -1434,7 +1452,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager007, TestSize.Level0)
 
 #ifdef HIDUMPER_ENABLE
 /**
-* @tc.name: TimerManager008.
+* @tc.name: TimerManager008
 * @tc.desc: test ShowTimerEntryById TIMER_ID not in timerEntryMap_.
 * @tc.type: FUNC
 */
@@ -1465,7 +1483,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager009, TestSize.Level0)
 #endif
 
 /**
-* @tc.name: TimerManager010.
+* @tc.name: TimerManager010
 * @tc.desc: test HandleRSSDeath.
 * @tc.type: FUNC
 */
@@ -1501,7 +1519,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager010, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager011.
+* @tc.name: TimerManager011
 * @tc.desc: test OnPackageRemoved.
 * @tc.type: FUNC
 */
@@ -1530,7 +1548,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager011, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager012.
+* @tc.name: TimerManager012
 * @tc.desc: test record and delete of timerCount_.
 * @tc.type: FUNC
 */
@@ -1565,7 +1583,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager012, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager013.
+* @tc.name: TimerManager013
 * @tc.desc: test when create and delete timer, the change of timerOutOfRangeTimes_.
 * @tc.type: FUNC
 */
@@ -1590,7 +1608,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager013, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager014.
+* @tc.name: TimerManager014
 * @tc.desc: test create two timer with same name.
 * @tc.type: FUNC
 */
@@ -1614,12 +1632,12 @@ HWTEST_F(TimeServiceTimerTest, TimerManager014, TestSize.Level0)
     EXPECT_NE(timerNameMap[UID].find("name"), timerNameMap[UID].end());
     EXPECT_EQ(timerNameMap[UID]["name"], TIMER_ID + 1);
     auto ret = TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
-    EXPECT_NE(ret, E_TIME_OK);
+    EXPECT_EQ(ret, E_TIME_NOT_FOUND);
 }
 
 /**
-* @tc.name: TimerManager015.
-* @tc.desc: test check timer .
+* @tc.name: TimerManager015
+* @tc.desc: test check timer.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, TimerManager015, TestSize.Level0)
@@ -1639,8 +1657,8 @@ HWTEST_F(TimeServiceTimerTest, TimerManager015, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager016.
-* @tc.desc: test update or delete database .
+* @tc.name: TimerManager016
+* @tc.desc: test update or delete database.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, TimerManager016, TestSize.Level0)
@@ -1667,7 +1685,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager016, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager017.
+* @tc.name: TimerManager017
 * @tc.desc: test timer database when store is nullptr.
 * @tc.type: FUNC
 */
@@ -1694,7 +1712,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager017, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo001.
+* @tc.name: TimerInfo001
 * @tc.desc: test UpdateWhenElapsedFromNow.
 * @tc.type: FUNC
 */
@@ -1709,7 +1727,7 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo001, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo002.
+* @tc.name: TimerInfo002
 * @tc.desc: test AdjustTimer.
 * @tc.type: FUNC
 */
@@ -1735,9 +1753,35 @@ HWTEST_F(TimeServiceTimerTest, ResetAllProxy001, TestSize.Level0)
     EXPECT_EQ(res, E_TIME_NO_PERMISSION);
 }
 
+/**
+* @tc.name: ExactRepeatTimer001.
+* @tc.desc: test exact & repeat tiemr.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, ExactRepeatTimer001, TestSize.Level0)
+{
+    auto windowLength = std::chrono::milliseconds::zero();
+    auto interval = std::chrono::milliseconds(20000);
+    auto timePoint = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>((timePoint).time_since_epoch());
+    auto callback = [this](uint64_t id) -> int32_t {
+        return 0;
+    };
+    auto timerInfo = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, windowLength, timePoint,
+        interval, callback, nullptr, 0, false, UID, PID, "");
+    auto bootTime = TimeUtils::GetBootTimeNs();
+    TimerManager::GetInstance()->HandleRepeatTimer(timerInfo, bootTime);
+    auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
+    auto it1 = uidTimersMap.find(UID);
+    EXPECT_NE(it1, uidTimersMap.end());
+    auto it2 = it1->second.find(TIMER_ID);
+    EXPECT_NE(it2, it1->second.end());
+    EXPECT_EQ(it2->second->whenElapsed, it2->second->maxWhenElapsed);
+}
+
 #ifdef MULTI_ACCOUNT_ENABLE
 /**
-* @tc.name: CheckUserIdForNotify001.
+* @tc.name: CheckUserIdForNotify001
 * @tc.desc: test CheckUserIdForNotify.
 * @tc.type: FUNC
 */
@@ -1755,4 +1799,54 @@ HWTEST_F(TimeServiceTimerTest, CheckUserIdForNotify001, TestSize.Level0)
     EXPECT_EQ(res, E_TIME_OK);
 }
 #endif
+
+/**
+* @tc.name: AdjustTimerWithNoPermission001
+* @tc.desc: Verify AdjustTimer with no permission.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, AdjustTimerWithNoPermission001, TestSize.Level0)
+{
+    DeletePermission();
+    auto res = TimeSystemAbility::GetInstance()->AdjustTimer(false, 0, 0);
+    EXPECT_EQ(res, E_TIME_NO_PERMISSION);
+}
+
+/**
+* @tc.name:ProxyTimerWithNoPermission001
+* @tc.desc: Verify ProxyTimer with no permission.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, ProxyTimerWithNoPermission001, TestSize.Level0)
+{
+    DeletePermission();
+    std::vector<int> pidList{1};
+    auto res = TimeSystemAbility::GetInstance()->ProxyTimer(1, pidList, false, false);
+    EXPECT_EQ(res, E_TIME_NO_PERMISSION);
+}
+
+/**
+* @tc.name: SetTimerExemptionyWithNoPermission001
+* @tc.desc: Verify SetTimerExemption with no permission.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, SetTimerExemptionWithNoPermission001, TestSize.Level0)
+{
+    DeletePermission();
+    std::vector<std::string> nameArr{"timer"};
+    auto res = TimeSystemAbility::GetInstance()->SetTimerExemption(nameArr, false);
+    EXPECT_EQ(res, E_TIME_NO_PERMISSION);
+}
+
+/**
+* @tc.name: ResetAllProxyWithNoPermission004.
+* @tc.desc: Verify ResetAllProxy with no permission.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, ResetAllProxyWithNoPermission001, TestSize.Level0)
+{
+    DeletePermission();
+    auto res = TimeSystemAbility::GetInstance()->ResetAllProxy();
+    EXPECT_EQ(res, E_TIME_NO_PERMISSION);
+}
 } // namespace

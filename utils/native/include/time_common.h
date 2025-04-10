@@ -17,6 +17,7 @@
 #define SERVICES_INCLUDE_TIME_COMMON_H
 
 #include <string>
+#include <chrono>
 
 #include "errors.h"
 #include "time_hilog.h"
@@ -43,22 +44,21 @@ constexpr ErrCode TIME_ERR_OFFSET = ErrCodeOffset(SUBSYS_SMALLSERVICES, TIME_MOD
 
 enum TimeError : int32_t {
     E_TIME_OK = 0,
-    // 77856768
-    E_TIME_SA_DIED = TIME_ERR_OFFSET,
-    E_TIME_READ_PARCEL_ERROR,
-    E_TIME_WRITE_PARCEL_ERROR,
-    E_TIME_PUBLISH_FAIL,
-    E_TIME_TRANSACT_ERROR,
-    E_TIME_DEAL_FAILED,
-    E_TIME_PARAMETERS_INVALID,
-    E_TIME_SET_RTC_FAILED,
-    E_TIME_NOT_FOUND,
-    E_TIME_NULLPTR,
-    E_TIME_NO_PERMISSION,
-    E_TIME_NOT_SYSTEM_APP,
-    E_TIME_NO_TIMER_ADJUST,
-    E_TIME_NTP_UPDATE_FAILED,
-    E_TIME_NTP_NOT_UPDATE,
+    E_TIME_SA_DIED = TIME_ERR_OFFSET,       // 77856768
+    E_TIME_READ_PARCEL_ERROR,               // 77856769
+    E_TIME_WRITE_PARCEL_ERROR,              // 77856770
+    E_TIME_PUBLISH_FAIL,                    // 77856771
+    E_TIME_TRANSACT_ERROR,                  // 77856772
+    E_TIME_DEAL_FAILED,                     // 77856773
+    E_TIME_PARAMETERS_INVALID,              // 77856774
+    E_TIME_SET_RTC_FAILED,                  // 77856775
+    E_TIME_NOT_FOUND,                       // 77856776
+    E_TIME_NULLPTR,                         // 77856777
+    E_TIME_NO_PERMISSION,                   // 77856778
+    E_TIME_NOT_SYSTEM_APP,                  // 77856779
+    E_TIME_NO_TIMER_ADJUST,                 // 77856780
+    E_TIME_NTP_UPDATE_FAILED,               // 77856781
+    E_TIME_NTP_NOT_UPDATE,                  // 77856782
     #ifdef MULTI_ACCOUNT_ENABLE
     E_TIME_ACCOUNT_NOT_MATCH,
     E_TIME_ACCOUNT_ERROR,
@@ -81,6 +81,7 @@ public:
     static int32_t GetWallTimeMs(int64_t &time);
     static int32_t GetBootTimeMs(int64_t &time);
     static int32_t GetBootTimeNs(int64_t &time);
+    static std::chrono::steady_clock::time_point GetBootTimeNs();
     static bool GetTimeByClockId(clockid_t clockId, struct timespec &tv);
 };
 } // namespace MiscServices

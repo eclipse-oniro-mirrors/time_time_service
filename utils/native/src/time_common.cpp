@@ -46,6 +46,18 @@ int32_t TimeUtils::GetBootTimeNs(int64_t &time)
     return E_TIME_OK;
 }
 
+std::chrono::steady_clock::time_point TimeUtils::GetBootTimeNs()
+{
+    int64_t timeNow = -1;
+    struct timespec tv {};
+    if (!GetTimeByClockId(CLOCK_BOOTTIME, tv)) {
+        return std::chrono::steady_clock::now();
+    }
+    timeNow = tv.tv_sec * NANO_TO_SEC + tv.tv_nsec;
+    std::chrono::steady_clock::time_point tp_epoch ((std::chrono::nanoseconds(timeNow)));
+    return tp_epoch;
+}
+
 int32_t TimeUtils::GetBootTimeMs(int64_t &time)
 {
     struct timespec tv {};

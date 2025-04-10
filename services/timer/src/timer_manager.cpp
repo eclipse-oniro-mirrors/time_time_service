@@ -364,9 +364,7 @@ void TimerManager::DecreaseTimerCount(int uid)
 
 void TimerManager::CheckTimerCount()
 {
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
+    steady_clock::time_point bootTimePoint = TimeUtils::GetBootTimeNs();
     int count = static_cast<int>(timerEntryMap_.size());
     if (count > (timerOutOfRangeTimes_ + 1) * TIMER_ALARM_COUNT) {
         timerOutOfRangeTimes_ += 1;
@@ -508,9 +506,7 @@ void TimerManager::SetHandler(std::string name,
         intervalDuration = MAX_INTERVAL;
     }
 
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point nowElapsed ((nanoseconds(bootTime)));
+    auto nowElapsed = TimeUtils::GetBootTimeNs();
     auto when = milliseconds(triggerAtTime > MAX_MILLISECOND ? MAX_MILLISECOND : triggerAtTime);
     auto nominalTrigger = ConvertToElapsed(when, type);
     auto minTrigger = nowElapsed + ZERO_FUTURITY;
@@ -561,9 +557,7 @@ void TimerManager::SetHandlerLocked(std::string name, uint64_t id, int type,
     auto alarm = std::make_shared<TimerInfo>(name, id, type, when, whenElapsed, windowLength, maxWhen,
                                              interval, std::move(callback), wantAgent, flags, autoRestore, callingUid,
                                              callingPid, bundleName);
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
+    auto bootTimePoint = TimeUtils::GetBootTimeNs();
     if (TimerProxy::GetInstance().IsProxy(alarm->uid, 0)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, uid=%{public}" PRIu64 " id=%{public}" PRId64 "",
             callingUid, alarm->id);
@@ -619,9 +613,7 @@ void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
         delayedTimers_.clear();
         for (const auto &pendingTimer : pendingDelayTimers_) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", pendingTimer->id);
-            int64_t bootTime = 0;
-            TimeUtils::GetBootTimeNs(bootTime);
-            steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
+            auto bootTimePoint = TimeUtils::GetBootTimeNs();
             if (pendingTimer->whenElapsed <= bootTimePoint) {
                 // 2 means the time of performing task.
                 pendingTimer->UpdateWhenElapsedFromNow(bootTimePoint, milliseconds(2));
@@ -650,10 +642,7 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
     if (!isRebatched && mPendingIdleUntil_ != nullptr && !CheckAllowWhileIdle(alarm)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Pending not-allowed alarm in idle state, id=%{public}" PRId64 "",
             alarm->id);
-        int64_t bootTime = 0;
-        TimeUtils::GetBootTimeNs(bootTime);
-        steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
-        alarm->offset = duration_cast<milliseconds>(alarm->whenElapsed - bootTimePoint);
+        alarm->offset = duration_cast<milliseconds>(alarm->whenElapsed - TimeUtils::GetBootTimeNs());
         pendingDelayTimers_.push_back(alarm);
         return;
     }
@@ -681,9 +670,7 @@ void TimerManager::ReBatchAllTimers()
 {
     auto oldSet = alarmBatches_;
     alarmBatches_.clear();
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point nowElapsed ((nanoseconds(bootTime)));
+    auto nowElapsed = TimeUtils::GetBootTimeNs();
     for (const auto &batch : oldSet) {
         auto n = batch->Size();
         for (unsigned int i = 0; i < n; i++) {
@@ -718,9 +705,7 @@ void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
 
 std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono::milliseconds when, int type)
 {
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
+    auto bootTimePoint = TimeUtils::GetBootTimeNs();
     if (type == RTC || type == RTC_WAKEUP) {
         auto systemTimeNow = system_clock::now().time_since_epoch();
         auto offset = when - systemTimeNow;
@@ -743,9 +728,7 @@ void TimerManager::TimerLooper()
     while (runFlag_) {
         uint32_t result = handler_->WaitForAlarm();
         auto nowRtc = std::chrono::system_clock::now();
-        int64_t bootTime = 0;
-        TimeUtils::GetBootTimeNs(bootTime);
-        steady_clock::time_point nowElapsed ((nanoseconds(bootTime)));
+        auto nowElapsed = TimeUtils::GetBootTimeNs();
         triggerList.clear();
 
         if ((result & TIME_CHANGED_MASK) != 0) {
@@ -800,9 +783,7 @@ void TimerManager::TriggerIdleTimer()
     std::for_each(pendingDelayTimers_.begin(), pendingDelayTimers_.end(),
         [this](const std::shared_ptr<TimerInfo> &pendingTimer) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", pendingTimer->id);
-            int64_t bootTime = 0;
-            TimeUtils::GetBootTimeNs(bootTime);
-            steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
+            auto bootTimePoint = TimeUtils::GetBootTimeNs();
             if (pendingTimer->whenElapsed > bootTimePoint) {
                 pendingTimer->UpdateWhenElapsedFromNow(bootTimePoint, pendingTimer->offset);
             } else {
@@ -889,9 +870,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
 // needs to acquire the lock `mutex_` before calling this method
 void TimerManager::RescheduleKernelTimerLocked()
 {
-    int64_t curTime = 0;
-    TimeUtils::GetBootTimeNs(curTime);
-    steady_clock::time_point bootTime ((nanoseconds(curTime)));
+    auto bootTime = TimeUtils::GetBootTimeNs();
     if (!alarmBatches_.empty()) {
         auto firstWakeup = FindFirstWakeupBatchLocked();
         auto firstBatch = alarmBatches_.front();
@@ -1168,15 +1147,13 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
         TIME_HILOGI(TIME_MODULE_SERVICE, "already deal timer adjust, flag: %{public}d", isAdjust);
         return false;
     }
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point now ((nanoseconds(bootTime)));
+    std::chrono::steady_clock::time_point now = TimeUtils::GetBootTimeNs();
     adjustPolicy_ = isAdjust;
     adjustInterval_ = interval;
     adjustDelta_ = delta;
-    auto callback = [this, bootTime] (AdjustTimerCallback adjustTimer) {
+    auto callback = [this] (AdjustTimerCallback adjustTimer) {
         bool isChanged = false;
-        steady_clock::time_point nowElapsed ((nanoseconds(bootTime)));
+        auto nowElapsed = TimeUtils::GetBootTimeNs();
         for (const auto &batch : alarmBatches_) {
             if (!batch) {
                 continue;
@@ -1200,9 +1177,7 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
 bool TimerManager::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
 {
     std::set<int> failurePid;
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
+    auto bootTimePoint = TimeUtils::GetBootTimeNs();
     std::lock_guard<std::mutex> lock(mutex_);
     if (pidList.size() == 0) {
         return TimerProxy::GetInstance().ProxyTimer(uid, 0, isProxy, needRetrigger, bootTimePoint,
@@ -1252,11 +1227,8 @@ bool TimerManager::AdjustSingleTimer(std::shared_ptr<TimerInfo> timer)
         || TimerProxy::GetInstance().IsProxy(timer->uid, timer->pid)) {
         return false;
     }
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
-    return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, bootTimePoint, adjustDelta_,
-        [this, timer] (AdjustTimerCallback adjustTimer) { adjustTimer(timer); });
+    return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, TimeUtils::GetBootTimeNs(),
+        adjustDelta_, [this, timer] (AdjustTimerCallback adjustTimer) { adjustTimer(timer); });
 }
 
 // needs to acquire the lock `proxyMutex_` before calling this method
@@ -1266,20 +1238,14 @@ bool TimerManager::AdjustSingleTimerLocked(std::shared_ptr<TimerInfo> timer)
         || TimerProxy::GetInstance().IsProxyLocked(timer->uid, timer->pid)) {
         return false;
     }
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
-    return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, bootTimePoint, adjustDelta_,
-        [this, timer] (AdjustTimerCallback adjustTimer) { adjustTimer(timer); });
+    return TimerProxy::GetInstance().AdjustTimer(adjustPolicy_, adjustInterval_, TimeUtils::GetBootTimeNs(),
+        adjustDelta_, [this, timer] (AdjustTimerCallback adjustTimer) { adjustTimer(timer); });
 }
 
 bool TimerManager::ResetAllProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
-    return TimerProxy::GetInstance().ResetAllProxy(bootTimePoint,
+    return TimerProxy::GetInstance().ResetAllProxy(TimeUtils::GetBootTimeNs(),
         [this] (std::shared_ptr<TimerInfo> &alarm, bool needRetrigger) { UpdateTimersState(alarm, true); });
 }
 
@@ -1328,21 +1294,18 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<Tim
         auto itMap = delayedTimers_.find(alarm->id);
         if (itMap != delayedTimers_.end()) {
             std::chrono::milliseconds currentTime;
-            int64_t bootTime = 0;
-            TimeUtils::GetBootTimeNs(bootTime);
-            steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
             if (alarm->type == RTC || alarm->type == RTC_WAKEUP) {
                 currentTime = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
             } else {
-                currentTime = duration_cast<milliseconds>(bootTimePoint.time_since_epoch());
+                currentTime = duration_cast<milliseconds>(TimeUtils::GetBootTimeNs().time_since_epoch());
             }
 
             if (alarm->origWhen > currentTime) {
                 auto offset = alarm->origWhen - currentTime;
-                return alarm->UpdateWhenElapsedFromNow(bootTimePoint, offset);
+                return alarm->UpdateWhenElapsedFromNow(TimeUtils::GetBootTimeNs(), offset);
             }
             // 2 means the time of performing task.
-            return alarm->UpdateWhenElapsedFromNow(bootTimePoint, milliseconds(2));
+            return alarm->UpdateWhenElapsedFromNow(TimeUtils::GetBootTimeNs(), milliseconds(2));
         }
         return false;
     }
@@ -1356,9 +1319,7 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<Tim
     } else {
         TIME_HILOGD(TIME_MODULE_SERVICE, "Timer not allowed, id=%{public}" PRId64 "", alarm->id);
         delayedTimers_[alarm->id] = alarm->whenElapsed;
-        int64_t bootTime = 0;
-        TimeUtils::GetBootTimeNs(bootTime);
-        steady_clock::time_point bootTimePoint ((nanoseconds(bootTime)));
+        auto bootTimePoint = TimeUtils::GetBootTimeNs();
         auto offset = ConvertToElapsed(mPendingIdleUntil_->when, mPendingIdleUntil_->type) - bootTimePoint;
         return alarm->UpdateWhenElapsedFromNow(bootTimePoint, offset);
     }
