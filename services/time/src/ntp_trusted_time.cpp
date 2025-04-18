@@ -113,9 +113,12 @@ int64_t NtpTrustedTime::TimeResult::CurrentTimeMillis()
         TIME_HILOGD(TIME_MODULE_SERVICE, "Missing authoritative time source");
         return TIME_RESULT_UNINITED;
     }
-    auto bootTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-        NtpTrustedTime::GetInstance().GetBootTimeNs().time_since_epoch()).count();
-    if (static_cast<int64_t>(bootTime) - mElapsedRealtimeMillis > ONE_DAY) {
+    int64_t bootTime = 0;
+    int res = TimeUtils::GetBootTimeNs(bootTime);
+    if (res != E_TIME_OK) {
+        return TIME_RESULT_UNINITED;
+    }
+    if (bootTime - mElapsedRealtimeMillis > ONE_DAY) {
         Clear();
         return TIME_RESULT_UNINITED;
     }
@@ -124,8 +127,9 @@ int64_t NtpTrustedTime::TimeResult::CurrentTimeMillis()
 
 int64_t NtpTrustedTime::TimeResult::GetAgeMillis()
 {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-        NtpTrustedTime::GetInstance().GetBootTimeNs().time_since_epoch()).count() - this->mElapsedRealtimeMillis;
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeNs(bootTime);
+    return bootTime - this->mElapsedRealtimeMillis;
 }
 
 NtpTrustedTime::TimeResult::TimeResult()

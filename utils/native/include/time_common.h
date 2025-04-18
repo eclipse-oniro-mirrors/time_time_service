@@ -17,6 +17,7 @@
 #define SERVICES_INCLUDE_TIME_COMMON_H
 
 #include <string>
+#include <chrono>
 
 #include "errors.h"
 #include "time_hilog.h"
@@ -80,6 +81,7 @@ public:
     static int32_t GetWallTimeMs(int64_t &time);
     static int32_t GetBootTimeMs(int64_t &time);
     static int32_t GetBootTimeNs(int64_t &time);
+    static std::chrono::steady_clock::time_point GetBootTimeNs();
     static bool GetTimeByClockId(clockid_t clockId, struct timespec &tv);
 };
 } // namespace MiscServices

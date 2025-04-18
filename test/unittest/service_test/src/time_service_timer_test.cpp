@@ -1769,7 +1769,7 @@ HWTEST_F(TimeServiceTimerTest, ExactRepeatTimer001, TestSize.Level0)
     };
     auto timerInfo = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, windowLength, timePoint,
         interval, callback, nullptr, 0, false, UID, PID, "");
-    auto bootTime = TimerManager::GetInstance()->GetBootTimeNs();
+    auto bootTime = TimeUtils::GetBootTimeNs();
     TimerManager::GetInstance()->HandleRepeatTimer(timerInfo, bootTime);
     auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
     auto it1 = uidTimersMap.find(UID);
