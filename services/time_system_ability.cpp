@@ -1021,7 +1021,10 @@ void TimeSystemAbility::RegisterRSSDeathCallback()
     }
 
     if (deathRecipient_ == nullptr) {
-        deathRecipient_ = new RSSSaDeathRecipient();
+        deathRecipient_ = new (std::nothrow) RSSSaDeathRecipient();
+        if (deathRecipient_ == nullptr) {
+            return;
+        }
     }
 
     systemAbility->AddDeathRecipient(deathRecipient_);
@@ -1046,7 +1049,7 @@ void TimeSystemAbility::RegisterPowerStateListener()
 {
     TIME_HILOGI(TIME_MODULE_CLIENT, "RegisterPowerStateListener");
     auto& powerManagerClient = OHOS::PowerMgr::ShutdownClient::GetInstance();
-    sptr<OHOS::PowerMgr::ISyncShutdownCallback> syncShutdownCallback = new TimePowerStateListener();
+    sptr<OHOS::PowerMgr::ISyncShutdownCallback> syncShutdownCallback = new (std::nothrow) TimePowerStateListener();
     if (!syncShutdownCallback) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Get TimePowerStateListener failed");
         return;

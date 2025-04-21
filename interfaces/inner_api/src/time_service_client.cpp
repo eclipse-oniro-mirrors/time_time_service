@@ -146,7 +146,10 @@ bool TimeServiceClient::ConnectService()
     }
     std::lock_guard<std::mutex> autoLock(deathLock_);
     if (deathRecipient_ == nullptr) {
-        deathRecipient_ = new TimeSaDeathRecipient();
+        deathRecipient_ = new (std::nothrow) TimeSaDeathRecipient();
+        if (deathRecipient_ == nullptr) {
+            return false;
+        }
     }
     systemAbility->AddDeathRecipient(deathRecipient_);
     sptr<ITimeService> proxy = iface_cast<ITimeService>(systemAbility);
