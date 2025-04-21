@@ -113,18 +113,13 @@ bool TimerProxy::UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_p
     TIME_HILOGD(TIME_MODULE_SERVICE, "adjust single time id: %{public}" PRId64 ", "
         "uid: %{public}d, bundleName: %{public}s",
         timer->id, timer->uid, timer->bundleName.c_str());
-    adjustTimers_.push_back(timer);
+    adjustTimers_.insert(timer->id);
     return timer->AdjustTimer(now, interval, delta);
 }
 
 bool TimerProxy::RestoreAdjustWhenElapsed(std::shared_ptr<TimerInfo> &timer)
 {
-    auto it = std::find_if(adjustTimers_.begin(),
-                           adjustTimers_.end(),
-                           [&timer](const std::shared_ptr<TimerInfo> &compareTimer) {
-                               return compareTimer->id == timer->id;
-                           });
-    if (it == adjustTimers_.end()) {
+    if (adjustTimers_.find(timer->id) == adjustTimers_.end()) {
         return false;
     }
     return timer->RestoreAdjustTimer();
@@ -458,14 +453,8 @@ void TimerProxy::ShowAdjustTimerInfo(int fd)
 {
     std::lock_guard<std::mutex> lockProxy(adjustMutex_);
     dprintf(fd, "show adjust timer");
-    for (auto timer : adjustTimers_) {
-        dprintf(fd, " * timer id            = %lu\n", timer->id);
-        dprintf(fd, " * timer uid           = %d\n\n", timer->uid);
-        dprintf(fd, " * timer bundleName           = %s\n\n", timer->bundleName.c_str());
-        dprintf(fd, " * timer originWhenElapsed           = %lld\n\n", timer->originWhenElapsed);
-        dprintf(fd, " * timer whenElapsed           = %lld\n\n", timer->whenElapsed);
-        dprintf(fd, " * timer originMaxWhenElapsed           = %lld\n\n", timer->originMaxWhenElapsed);
-        dprintf(fd, " * timer maxWhenElapsed           = %lld\n\n", timer->maxWhenElapsed);
+    for (auto timerId : adjustTimers_) {
+        dprintf(fd, " * timer id            = %lu\n", timerId);
     }
 }
 

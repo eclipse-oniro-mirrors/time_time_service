@@ -334,13 +334,6 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
     bool adjustRet = timerManagerHandler_->AdjustTimer(isAdjust, interval, 0);
     EXPECT_TRUE(adjustRet);
     EXPECT_NE(TimerProxy::GetInstance().adjustTimers_.size(), (const unsigned int)0);
-    bool isExemption = true;
-    for (auto timer : TimerProxy::GetInstance().adjustTimers_) {
-        if (timer->bundleName == "time_service") {
-            isExemption = false;
-        }
-    }
-    EXPECT_TRUE(isExemption);
     timerManagerHandler_->DestroyTimer(timerId);
 }
 

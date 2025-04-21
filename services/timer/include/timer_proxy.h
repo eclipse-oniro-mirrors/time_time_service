@@ -81,7 +81,7 @@ private:
     std::unordered_map<uint64_t, std::vector<uint64_t>> proxyTimers_ {};
     std::mutex adjustMutex_;
     std::unordered_set<std::string> adjustExemptionList_ { "time_service" };
-    std::vector<std::shared_ptr<TimerInfo>> adjustTimers_ {};
+    std::unordered_set<uint64_t> adjustTimers_ {};
     /* ms for 3 days */
     int64_t proxyDelayTime_ = 3 * 24 * 60 * 60 * 1000;
 }; // timer_proxy
