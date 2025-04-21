@@ -134,7 +134,7 @@ bool NtpUpdateTime::IsInUpdateInterval()
 {
     // Determine the time interval between two NTP requests sent.
     int64_t curBootTime = 0;
-    TimeUtils::GetBootTimeNs(curBootTime);
+    TimeUtils::GetBootTimeMs(curBootTime);
     auto lastBootTime = NtpTrustedTime::GetInstance().ElapsedRealtimeMillis();
     // If the time <= ONE_HOUR, do not send NTP requests.
     if ((lastBootTime > 0) && (curBootTime - lastBootTime <= ONE_HOUR)) {

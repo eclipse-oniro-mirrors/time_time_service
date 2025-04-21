@@ -114,7 +114,7 @@ int64_t NtpTrustedTime::TimeResult::CurrentTimeMillis()
         return TIME_RESULT_UNINITED;
     }
     int64_t bootTime = 0;
-    int res = TimeUtils::GetBootTimeNs(bootTime);
+    int res = TimeUtils::GetBootTimeMs(bootTime);
     if (res != E_TIME_OK) {
         return TIME_RESULT_UNINITED;
     }
@@ -128,7 +128,7 @@ int64_t NtpTrustedTime::TimeResult::CurrentTimeMillis()
 int64_t NtpTrustedTime::TimeResult::GetAgeMillis()
 {
     int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
+    TimeUtils::GetBootTimeMs(bootTime);
     return bootTime - this->mElapsedRealtimeMillis;
 }
 

@@ -257,7 +257,7 @@ bool SNTPClient::ReceivedMessage(char *buffer)
     int64_t _roundTripDelay = (_receiveClient - _originClient) - (_transmitServer - _receiveServer);
     mRoundTripTime = _roundTripDelay;
     mNtpTime = receiveBootTime + _clockOffset;
-    TimeUtils::GetBootTimeNs(mNtpTimeReference);
+    TimeUtils::GetBootTimeMs(mNtpTimeReference);
     SetClockOffset(_clockOffset);
     TIME_HILOGI(TIME_MODULE_SERVICE, "_originClient:%{public}s, _receiveServer:%{public}s, _transmitServer:%{public}s,"
                 "_receiveClient:%{public}s", std::to_string(_originClient).c_str(),
