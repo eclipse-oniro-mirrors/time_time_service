@@ -57,7 +57,6 @@ void TimeTickNotify::Init()
 void TimeTickNotify::Callback()
 {
     std::lock_guard<std::mutex> lock(timeridMutex_);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRIu64 "", timerId_);
     auto trigger = RefreshNextTriggerTime();
     if (trigger.second) {
         auto currentTime = steady_clock::now().time_since_epoch().count();

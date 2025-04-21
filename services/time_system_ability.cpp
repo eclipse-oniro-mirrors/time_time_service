@@ -522,7 +522,7 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     TimeUtils::GetWallTimeMs(beforeTime);
     int64_t bootTime = 0;
     TimeUtils::GetBootTimeMs(bootTime);
-    TIME_HILOGI(TIME_MODULE_SERVICE,
+    TIME_HILOGW(TIME_MODULE_SERVICE,
         "Before Current Time: %{public}s"
         " Set time: %{public}s"
         " Difference: %{public}s"

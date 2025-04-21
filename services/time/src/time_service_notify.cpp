@@ -50,7 +50,7 @@ bool TimeServiceNotify::PublishEvents(int64_t eventTime, const IntentWant &want,
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to Publish event %{public}s", want.GetAction().c_str());
         return false;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Publish event %{public}s done", want.GetAction().c_str());
+    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "Publish %{public}s ", want.GetAction().c_str());
     return true;
 }
 

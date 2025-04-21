@@ -68,6 +68,7 @@ constexpr int MAX_TIMER_ALARM_COUNT = 100;
 constexpr int TIMER_ALRAM_INTERVAL = 60;
 constexpr int TIMER_COUNT_TOP_NUM = 5;
 constexpr const char* AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
+constexpr const char* NO_LOG_APP = "wifi_manager_service";
 
 #ifdef RDB_ENABLE
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
@@ -267,11 +268,14 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
             return E_TIME_NOT_FOUND;
         }
         timerInfo = it->second;
-        TIME_HILOGI(TIME_MODULE_SERVICE,
-            "id: %{public}" PRIu64 " typ:%{public}d len: %{public}" PRId64 " int: %{public}" PRId64 " "
-            "flg :%{public}d trig: %{public}s uid:%{public}d pid:%{public}d",
-            timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
-            std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
+        if (timerInfo->bundleName != NO_LOG_APP ||
+            timerInfo->type == RTC_WAKEUP || timerInfo->type == ELAPSED_REALTIME_WAKEUP) {
+            TIME_HILOGI(TIME_MODULE_SERVICE,
+                "id: %{public}" PRIu64 " typ:%{public}d len: %{public}" PRId64 " int: %{public}" PRId64 " "
+                "flg :%{public}d trig: %{public}s uid:%{public}d pid:%{public}d",
+                timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
+                std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
+        }
         {
             // To prevent the same ID from being started repeatedly,
             // the later start overwrites the earlier start.
@@ -368,7 +372,6 @@ void TimerManager::CheckTimerCount()
     int count = static_cast<int>(timerEntryMap_.size());
     if (count > (timerOutOfRangeTimes_ + 1) * TIMER_ALARM_COUNT) {
         timerOutOfRangeTimes_ += 1;
-        TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}d timer in system", count);
         ShowTimerCountByUid(count);
         lastTimerOutOfRangeTime_ = bootTimePoint;
         return;
@@ -376,7 +379,6 @@ void TimerManager::CheckTimerCount()
     auto currentBootTime = bootTimePoint;
     if (count > MAX_TIMER_ALARM_COUNT &&
         currentBootTime - lastTimerOutOfRangeTime_ > std::chrono::minutes(TIMER_ALRAM_INTERVAL)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}d timer in system", count);
         ShowTimerCountByUid(count);
         lastTimerOutOfRangeTime_ = currentBootTime;
         return;
@@ -596,7 +598,6 @@ void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
             TIME_HILOGI(TIME_MODULE_SERVICE, "remove id: %{public}" PRIu64 "", id);
             it = alarmBatches_.erase(it);
             if (batch->Size() != 0) {
-                TIME_HILOGI(TIME_MODULE_SERVICE, "reorder batch");
                 AddBatchLocked(alarmBatches_, batch);
             }
             break;
@@ -841,10 +842,11 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
             triggerList.push_back(alarm);
-            TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "uid: %{public}d id:%{public}" PRId64 " name:%{public}s"
-                " wk:%{public}u",
-                alarm->uid, alarm->id, alarm->bundleName.c_str(), alarm->wakeup);
-
+            if (alarm->bundleName != NO_LOG_APP || alarm->wakeup) {
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "uid: %{public}d id:%{public}" PRId64 " name:%{public}s"
+                    " wk:%{public}u",
+                    alarm->uid, alarm->id, alarm->bundleName.c_str(), alarm->wakeup);
+            }
             if (alarm->wakeup) {
                 hasWakeup = true;
             }
@@ -918,12 +920,14 @@ void TimerManager::SetLocked(int type, std::chrono::nanoseconds when, std::chron
 void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
 {
     int64_t whichBatch = (alarm->flags & static_cast<uint32_t>(STANDALONE)) ?
-                         -1 :
-                         AttemptCoalesceLocked(alarm->whenElapsed, alarm->maxWhenElapsed);
-    TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat: %{public}" PRId64 " id:%{public}" PRIu64 " "
-                         "we:%{public}lld mwe:%{public}lld",
-                         whichBatch, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
-                         alarm->maxWhenElapsed.time_since_epoch().count());
+        -1 :
+        AttemptCoalesceLocked(alarm->whenElapsed, alarm->maxWhenElapsed);
+    if (alarm->bundleName != NO_LOG_APP || alarm->wakeup) {
+        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat: %{public}" PRId64 " id:%{public}" PRIu64 " "
+            "we:%{public}lld mwe:%{public}lld",
+            whichBatch, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
+            alarm->maxWhenElapsed.time_since_epoch().count());
+    }
     if (whichBatch < 0) {
         AddBatchLocked(alarmBatches_, std::make_shared<Batch>(*alarm));
     } else {
