@@ -687,7 +687,7 @@ void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
     int64_t bootTime = 0;
     TimeUtils::GetBootTimeNs(bootTime);
     TIME_HILOGD(TIME_MODULE_SERVICE, "ReAddTimerLocked start. uid= %{public}d, id=%{public}" PRId64 ""
-        ", timer originMaxWhenElapsed=%{public}lld, whenElapsed=%{public}lld, now=%{public}lld",
+        ", timer originMaxWhenElapsed=%{public}lld, whenElapsed=%{public}lld, now=%{public}" PRId64 "",
         timer->uid, timer->id, timer->originWhenElapsed.time_since_epoch().count(),
         timer->whenElapsed.time_since_epoch().count(), bootTime);
     auto whenElapsed = ConvertToElapsed(timer->when, timer->type);
@@ -822,7 +822,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
     bool hasWakeup = false;
     int64_t bootTime = 0;
     TimeUtils::GetBootTimeNs(bootTime);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "current time %{public}lld", bootTime);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "current time %{public}" PRId64 "", bootTime);
 
     for (auto iter = alarmBatches_.begin(); iter != alarmBatches_.end();) {
         if (*iter == nullptr) {
