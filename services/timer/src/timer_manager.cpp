@@ -163,7 +163,7 @@ void TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId)
 {
     if (timerNameMap_.find(uid) == timerNameMap_.end() || timerNameMap_[uid].find(name) == timerNameMap_[uid].end()) {
         timerNameMap_[uid][name] = timerId;
-        TIME_HILOGD(TIME_MODULE_SERVICE, "record name: %{public}s id %{public}" PRId64 "", name.c_str(), timerId);
+        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "%{public}s: %{public}" PRId64 "", name.c_str(), timerId);
         return;
     }
     auto oldTimerId = timerNameMap_[uid][name];
