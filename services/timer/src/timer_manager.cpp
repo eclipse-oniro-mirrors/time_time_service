@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include "timer_manager.h"
 
 #include "time_file_utils.h"
@@ -48,15 +49,7 @@ using namespace OHOS::AppExecFwk;
 namespace {
 constexpr uint32_t TIME_CHANGED_BITS = 16;
 constexpr uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
-constexpr int64_t MAX_MILLISECOND = std::numeric_limits<int64_t>::max() / 1000000;
 constexpr int ONE_THOUSAND = 1000;
-constexpr float_t BATCH_WINDOW_COE = 0.75;
-const auto ZERO_FUTURITY = seconds(0);
-const auto MIN_INTERVAL_ONE_SECONDS = seconds(1);
-const auto MAX_INTERVAL = hours(24 * 365);
-const auto INTERVAL_HOUR = hours(1);
-const auto INTERVAL_HALF_DAY = hours(12);
-const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
 constexpr int NANO_TO_SECOND =  1000000000;
 constexpr int WANTAGENT_CODE_ELEVEN = 11;
 constexpr int WANT_RETRY_TIMES = 6;
@@ -99,9 +92,6 @@ std::mutex TimerManager::instanceLock_;
 TimerManager* TimerManager::instance_ = nullptr;
 
 extern bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &batch);
-extern steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
-                                               steady_clock::time_point triggerAtTime,
-                                               milliseconds interval);
 
 TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
     : random_ {static_cast<uint64_t>(time(nullptr))},
@@ -282,9 +272,11 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
             std::lock_guard<std::mutex> lock(mutex_);
             RemoveLocked(timerId, false);
         }
-        SetHandler(timerInfo->name, timerInfo->id, timerInfo->type, triggerTime, timerInfo->windowLength,
-            timerInfo->interval, timerInfo->flag, timerInfo->autoRestore, timerInfo->callback, timerInfo->wantAgent,
-            timerInfo->uid, timerInfo->pid, timerInfo->bundleName);
+        auto alarm = TimerInfo::CreateTimerInfo(timerInfo->name, timerInfo->id, timerInfo->type, triggerTime,
+            timerInfo->windowLength, timerInfo->interval, timerInfo->flag, timerInfo->autoRestore, timerInfo->callback,
+            timerInfo->wantAgent, timerInfo->uid, timerInfo->pid, timerInfo->bundleName);
+        std::lock_guard<std::mutex> lockGuard(mutex_);
+        SetHandlerLocked(alarm);
     }
     if (timerInfo->wantAgent) {
         auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type, timerInfo->autoRestore)
@@ -330,9 +322,11 @@ int32_t TimerManager::StartTimerGroup(std::vector<std::pair<uint64_t, uint64_t>>
             std::lock_guard<std::mutex> lock(mutex_);
             RemoveLocked(timerId, false);
         }
-        SetHandler(timerInfo->name, timerInfo->id, timerInfo->type, triggerTime, timerInfo->windowLength,
-            timerInfo->interval, timerInfo->flag, timerInfo->autoRestore, timerInfo->callback, timerInfo->wantAgent,
-            timerInfo->uid, timerInfo->pid, timerInfo->bundleName);
+        auto alarm = TimerInfo::CreateTimerInfo(timerInfo->name, timerInfo->id, timerInfo->type, triggerTime,
+            timerInfo->windowLength, timerInfo->interval, timerInfo->flag, timerInfo->autoRestore, timerInfo->callback,
+            timerInfo->wantAgent, timerInfo->uid, timerInfo->pid, timerInfo->bundleName);
+        std::lock_guard<std::mutex> lockGuard(mutex_);
+        SetHandlerLocked(alarm);
     }
     CjsonHelper::GetInstance().UpdateTriggerGroup(tableName, timerVec);
     return E_TIME_OK;
@@ -483,94 +477,21 @@ void TimerManager::UpdateOrDeleteDatabase(bool needDestroy, uint64_t timerNumber
     }
 }
 
-void TimerManager::SetHandler(std::string name,
-                              uint64_t id,
-                              int type,
-                              uint64_t triggerAtTime,
-                              int64_t windowLength,
-                              uint64_t interval,
-                              uint32_t flag,
-                              bool autoRestore,
-                              std::function<int32_t (const uint64_t)> callback,
-                              std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-                              int uid,
-                              int pid,
-                              const std::string &bundleName)
+void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm)
 {
-    auto windowLengthDuration = milliseconds(windowLength);
-    if (windowLengthDuration > INTERVAL_HALF_DAY) {
-        windowLengthDuration = INTERVAL_HOUR;
-    }
-    auto intervalDuration = milliseconds(interval > MAX_MILLISECOND ? MAX_MILLISECOND : interval);
-    if (intervalDuration > milliseconds::zero() && intervalDuration < MIN_INTERVAL_ONE_SECONDS) {
-        intervalDuration = MIN_INTERVAL_ONE_SECONDS;
-    } else if (intervalDuration > MAX_INTERVAL) {
-        intervalDuration = MAX_INTERVAL;
-    }
-
-    auto nowElapsed = TimeUtils::GetBootTimeNs();
-    auto when = milliseconds(triggerAtTime > MAX_MILLISECOND ? MAX_MILLISECOND : triggerAtTime);
-    auto nominalTrigger = ConvertToElapsed(when, type);
-    auto minTrigger = nowElapsed + ZERO_FUTURITY;
-    auto triggerElapsed = (nominalTrigger > minTrigger) ? nominalTrigger : minTrigger;
-
-    steady_clock::time_point maxElapsed;
-    if (windowLengthDuration == milliseconds::zero()) {
-        maxElapsed = triggerElapsed;
-    } else if (windowLengthDuration < milliseconds::zero()) {
-        maxElapsed = MaxTriggerTime(nominalTrigger, triggerElapsed, intervalDuration);
-        windowLengthDuration = duration_cast<milliseconds>(maxElapsed - triggerElapsed);
-    } else {
-        maxElapsed = triggerElapsed + windowLengthDuration;
-    }
-    std::lock_guard<std::mutex> lockGuard(mutex_);
-    SetHandlerLocked(name,
-                     id,
-                     type,
-                     when,
-                     triggerElapsed,
-                     windowLengthDuration,
-                     maxElapsed,
-                     intervalDuration,
-                     std::move(callback),
-                     wantAgent,
-                     flag,
-                     autoRestore,
-                     uid,
-                     pid,
-                     bundleName);
-}
-
-void TimerManager::SetHandlerLocked(std::string name, uint64_t id, int type,
-                                    std::chrono::milliseconds when,
-                                    std::chrono::steady_clock::time_point whenElapsed,
-                                    std::chrono::milliseconds windowLength,
-                                    std::chrono::steady_clock::time_point maxWhen,
-                                    std::chrono::milliseconds interval,
-                                    std::function<int32_t (const uint64_t)> callback,
-                                    const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
-                                    uint32_t flags,
-                                    bool autoRestore,
-                                    uint64_t callingUid,
-                                    uint64_t callingPid,
-                                    const std::string &bundleName)
-{
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", id);
-    auto alarm = std::make_shared<TimerInfo>(name, id, type, when, whenElapsed, windowLength, maxWhen,
-                                             interval, std::move(callback), wantAgent, flags, autoRestore, callingUid,
-                                             callingPid, bundleName);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", alarm->id);
     auto bootTimePoint = TimeUtils::GetBootTimeNs();
     if (TimerProxy::GetInstance().IsProxy(alarm->uid, 0)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, uid=%{public}" PRIu64 " id=%{public}" PRId64 "",
-            callingUid, alarm->id);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, uid=%{public}d id=%{public}" PRId64 "",
+            alarm->uid, alarm->id);
         TimerProxy::GetInstance().RecordProxyTimerMap(alarm, false);
-        alarm->UpdateWhenElapsedFromNow(bootTimePoint, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
+        alarm->ProxyTimer(bootTimePoint, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
     if (TimerProxy::GetInstance().IsProxy(alarm->uid, alarm->pid)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, pid=%{public}" PRIu64 " id=%{public}" PRId64 "",
-            callingPid, alarm->id);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, pid=%{public}d id=%{public}" PRId64 "",
+            alarm->pid, alarm->id);
         TimerProxy::GetInstance().RecordProxyTimerMap(alarm, true);
-        alarm->UpdateWhenElapsedFromNow(bootTimePoint, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
+        alarm->ProxyTimer(bootTimePoint, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
     }
 
     SetHandlerLocked(alarm, false, false);
@@ -684,41 +605,12 @@ void TimerManager::ReBatchAllTimers()
 void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
                                     std::chrono::steady_clock::time_point nowElapsed)
 {
-    int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
     TIME_HILOGD(TIME_MODULE_SERVICE, "ReAddTimerLocked start. uid= %{public}d, id=%{public}" PRId64 ""
         ", timer originMaxWhenElapsed=%{public}lld, whenElapsed=%{public}lld, now=%{public}" PRId64 "",
         timer->uid, timer->id, timer->originWhenElapsed.time_since_epoch().count(),
-        timer->whenElapsed.time_since_epoch().count(), bootTime);
-    auto whenElapsed = ConvertToElapsed(timer->when, timer->type);
-    steady_clock::time_point maxElapsed;
-    if (timer->windowLength == milliseconds::zero()) {
-        maxElapsed = whenElapsed;
-    } else {
-        maxElapsed = (timer->windowLength > milliseconds::zero()) ?
-                     (whenElapsed + timer->windowLength) :
-                     MaxTriggerTime(nowElapsed, whenElapsed, timer->repeatInterval);
-    }
-    timer->whenElapsed = whenElapsed;
-    timer->maxWhenElapsed = maxElapsed;
+        timer->whenElapsed.time_since_epoch().count(), nowElapsed.time_since_epoch().count());
+    timer->CalculateWhenElapsed(nowElapsed);
     SetHandlerLocked(timer, true, true);
-}
-
-std::chrono::steady_clock::time_point TimerManager::ConvertToElapsed(std::chrono::milliseconds when, int type)
-{
-    auto bootTimePoint = TimeUtils::GetBootTimeNs();
-    if (type == RTC || type == RTC_WAKEUP) {
-        auto systemTimeNow = system_clock::now().time_since_epoch();
-        auto offset = when - systemTimeNow;
-        TIME_HILOGD(TIME_MODULE_SERVICE, "systemTimeNow : %{public}lld offset : %{public}lld",
-                    systemTimeNow.count(), offset.count());
-        return bootTimePoint + offset;
-    }
-    auto bootTimeNow = bootTimePoint.time_since_epoch();
-    auto offset = when - bootTimeNow;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "bootTimeNow : %{public}lld offset : %{public}lld",
-                bootTimeNow.count(), offset.count());
-    return bootTimePoint + offset;
 }
 
 void TimerManager::TimerLooper()
@@ -806,7 +698,7 @@ bool TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
     }
     if (TimerProxy::GetInstance().IsProxy(alarm->uid, 0)
         || TimerProxy::GetInstance().IsProxy(alarm->uid, alarm->pid)) {
-        alarm->UpdateWhenElapsedFromNow(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
+        alarm->ProxyTimer(nowElapsed, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
         SetHandlerLocked(alarm, false, false);
         return false;
     } else {
@@ -1157,7 +1049,6 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
     adjustDelta_ = delta;
     auto callback = [this] (AdjustTimerCallback adjustTimer) {
         bool isChanged = false;
-        auto nowElapsed = TimeUtils::GetBootTimeNs();
         for (const auto &batch : alarmBatches_) {
             if (!batch) {
                 continue;
@@ -1165,7 +1056,6 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
             auto n = batch->Size();
             for (unsigned int i = 0; i < n; i++) {
                 auto timer = batch->Get(i);
-                ReCalcuOriWhenElapsed(timer, nowElapsed);
                 isChanged = adjustTimer(timer) || isChanged;
             }
         }
@@ -1198,25 +1088,6 @@ bool TimerManager::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, 
         }
     }
     return (failurePid.size() == 0);
-}
-
-void TimerManager::ReCalcuOriWhenElapsed(std::shared_ptr<TimerInfo> timer,
-                                         std::chrono::steady_clock::time_point nowElapsed)
-{
-    if (adjustPolicy_) {
-        return;
-    }
-    auto whenElapsed = ConvertToElapsed(timer->origWhen, timer->type);
-    steady_clock::time_point maxElapsed;
-    if (timer->windowLength == milliseconds::zero()) {
-        maxElapsed = whenElapsed;
-    } else {
-        maxElapsed = (timer->windowLength > milliseconds::zero()) ?
-                     (whenElapsed + timer->windowLength) :
-                     MaxTriggerTime(nowElapsed, whenElapsed, timer->repeatInterval);
-    }
-    timer->originWhenElapsed = whenElapsed;
-    timer->originMaxWhenElapsed = maxElapsed;
 }
 
 void TimerManager::SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption)
@@ -1324,7 +1195,7 @@ bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<Tim
         TIME_HILOGD(TIME_MODULE_SERVICE, "Timer not allowed, id=%{public}" PRId64 "", alarm->id);
         delayedTimers_[alarm->id] = alarm->whenElapsed;
         auto bootTimePoint = TimeUtils::GetBootTimeNs();
-        auto offset = ConvertToElapsed(mPendingIdleUntil_->when, mPendingIdleUntil_->type) - bootTimePoint;
+        auto offset = TimerInfo::ConvertToElapsed(mPendingIdleUntil_->when, mPendingIdleUntil_->type) - bootTimePoint;
         return alarm->UpdateWhenElapsedFromNow(bootTimePoint, offset);
     }
 }
@@ -1356,18 +1227,6 @@ bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared
                                });
     list.insert(it, newBatch);
     return it == list.begin();
-}
-
-steady_clock::time_point MaxTriggerTime(steady_clock::time_point now,
-                                        steady_clock::time_point triggerAtTime,
-                                        milliseconds interval)
-{
-    milliseconds futurity = (interval == milliseconds::zero()) ?
-                            (duration_cast<milliseconds>(triggerAtTime - now)) : interval;
-    if (futurity < MIN_FUZZABLE_INTERVAL) {
-        futurity = milliseconds::zero();
-    }
-    return triggerAtTime + milliseconds(static_cast<long>(BATCH_WINDOW_COE * futurity.count()));
 }
 
 #ifdef HIDUMPER_ENABLE
@@ -1521,10 +1380,12 @@ void TimerManager::HandleRepeatTimer(
         steady_clock::time_point nextElapsed = timer->whenElapsed + delta;
         steady_clock::time_point nextMaxElapsed = (timer->windowLength == milliseconds::zero()) ?
                                                   nextElapsed :
-                                                  MaxTriggerTime(nowElapsed, nextElapsed, timer->repeatInterval);
-        SetHandlerLocked(timer->name, timer->id, timer->type, timer->when + delta, nextElapsed, timer->windowLength,
-            nextMaxElapsed, timer->repeatInterval, timer->callback, timer->wantAgent, timer->flags, timer->autoRestore,
-            timer->uid, timer->pid, timer->bundleName);
+                                                  TimerInfo::MaxTriggerTime(nowElapsed, nextElapsed,
+                                                                            timer->repeatInterval);
+        auto alarm = std::make_shared<TimerInfo>(timer->name, timer->id, timer->type, timer->when + delta,
+            timer->whenElapsed + delta, timer->windowLength, nextMaxElapsed, timer->repeatInterval, timer->callback,
+            timer->wantAgent, timer->flags, timer->autoRestore, timer->uid, timer->pid, timer->bundleName);
+        SetHandlerLocked(alarm);
     } else {
         TimerProxy::GetInstance().RemoveUidTimerMap(timer);
     }

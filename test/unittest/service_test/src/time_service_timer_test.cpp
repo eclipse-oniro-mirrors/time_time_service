@@ -1253,7 +1253,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager001, TestSize.Level0)
 HWTEST_F(TimeServiceTimerTest, TimerManager002, TestSize.Level0)
 {
     uint64_t max = std::numeric_limits<uint64_t>::max();
-    TimerManager::GetInstance()->SetHandler("",
+    auto alarm = TimerInfo::CreateTimerInfo("",
                                             TIMER_ID,
                                             0,
                                             max,
@@ -1266,6 +1266,8 @@ HWTEST_F(TimeServiceTimerTest, TimerManager002, TestSize.Level0)
                                             0,
                                             0,
                                             "bundleName");
+    std::lock_guard<std::mutex> lockGuard(TimerManager::GetInstance()->mutex_);
+    TimerManager::GetInstance()->SetHandlerLocked(alarm);
     std::lock_guard<std::mutex> lock(TimerManager::GetInstance()->entryMapMutex_);
     auto map = TimerManager::GetInstance()->timerEntryMap_;
     auto it = map.find(TIMER_ID);
@@ -1739,6 +1741,221 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo002, TestSize.Level0)
                                           nullptr, 0, false, 0, 0, "");
     auto res = timerInfo.AdjustTimer(timePoint, 1, 0);
     EXPECT_TRUE(res);
+}
+
+/**
+* @tc.name: TimerInfo003
+* @tc.desc: test CreateTimerInfo.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, TimerInfo003, TestSize.Level0)
+{
+    struct timeval timeOfDay {};
+    gettimeofday(&timeOfDay, nullptr);
+    int64_t currentTime = (timeOfDay.tv_sec + 100) * 1000 + timeOfDay.tv_usec / 1000;
+    if (currentTime < 0) {
+        currentTime = 0;
+    }
+    auto timerInfo = TimerInfo::CreateTimerInfo("",
+                                                0,
+                                                ITimerManager::RTC,
+                                                currentTime,
+                                                0,
+                                                10000,
+                                                0,
+                                                false,
+                                                nullptr,
+                                                nullptr,
+                                                0,
+                                                false,
+                                                "");
+    auto triggerTime = milliseconds(currentTime);
+    auto triggerElapsed = TimerInfo::ConvertToElapsed(triggerTime, ITimerManager::RTC);
+    EXPECT_EQ(timerInfo->name, "");
+    EXPECT_EQ(timerInfo->id, 0);
+    EXPECT_EQ(timerInfo->type, ITimerManager::RTC);
+    EXPECT_EQ(timerInfo->when, triggerTime);
+    EXPECT_EQ(timerInfo->origWhen, triggerTime);
+    EXPECT_EQ(timerInfo->wakeup, false);
+    EXPECT_EQ(timerInfo->whenElapsed.time_since_epoch().count() / NANO_TO_SECOND,
+              triggerElapsed.time_since_epoch().count() / NANO_TO_SECOND);
+    EXPECT_EQ(timerInfo->maxWhenElapsed.time_since_epoch().count() / NANO_TO_SECOND,
+              triggerElapsed.time_since_epoch().count() / NANO_TO_SECOND);
+    EXPECT_EQ(timerInfo->windowLength, milliseconds(0));
+    EXPECT_EQ(timerInfo->repeatInterval, milliseconds(10000));
+    EXPECT_EQ(timerInfo->bundleName, "");
+    EXPECT_EQ(timerInfo->callback, nullptr);
+    EXPECT_EQ(timerInfo->wantAgent, nullptr);
+    EXPECT_EQ(timerInfo->autoRestore, false);
+}
+
+/**
+* @tc.name: TimerInfo004
+* @tc.desc: test MaxTriggerTime.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, TimerInfo004, TestSize.Level0)
+{
+    auto currentBootTime = TimeUtils::GetBootTimeNs();
+    auto maxTriggerTime = TimerInfo::MaxTriggerTime(currentBootTime,
+                                                    currentBootTime + milliseconds(9999),
+                                                    milliseconds::zero());
+    EXPECT_EQ(maxTriggerTime, currentBootTime + milliseconds(9999));
+
+    auto maxTriggerTime2 = TimerInfo::MaxTriggerTime(currentBootTime,
+                                                currentBootTime + milliseconds(10000),
+                                                     milliseconds::zero());
+    EXPECT_EQ(maxTriggerTime2, currentBootTime + milliseconds(10000 + 7500));
+
+    auto maxTriggerTime3 = TimerInfo::MaxTriggerTime(currentBootTime,
+                                                 currentBootTime + milliseconds(9999),
+                                                 milliseconds(20000));
+    EXPECT_EQ(maxTriggerTime3, currentBootTime + milliseconds(9999 + 15000));
+
+    auto maxTriggerTime4 = TimerInfo::MaxTriggerTime(currentBootTime,
+                                                 currentBootTime + milliseconds(10000),
+                                                 milliseconds(20000));
+    EXPECT_EQ(maxTriggerTime4, currentBootTime + milliseconds(10000 + 15000));
+}
+
+/**
+* @tc.name: TimerInfo005
+* @tc.desc: test ConvertToElapsed.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, TimerInfo005, TestSize.Level0)
+{
+    struct timeval timeOfDay {};
+    gettimeofday(&timeOfDay, nullptr);
+    int64_t currentTime = timeOfDay.tv_sec * 1000 + timeOfDay.tv_usec / 1000;
+    if (currentTime < 0) {
+        currentTime = 0;
+    }
+
+    auto currentBootTime = TimeUtils::GetBootTimeNs();
+    auto range = milliseconds(1000);
+    auto duration = milliseconds(5000);
+
+    auto elapsed1 = TimerInfo::ConvertToElapsed(milliseconds(currentTime) + duration,
+                                                ITimerManager::RTC);
+    EXPECT_GT(elapsed1, currentBootTime + duration - range);
+    EXPECT_GT(currentBootTime + duration + range, elapsed1);
+
+    int64_t currentBootTime2 = 0;
+    TimeUtils::GetBootTimeMs(currentBootTime2);
+    std::chrono::steady_clock::time_point bootTime2 ((std::chrono::milliseconds(currentBootTime2)));
+
+    auto elapsed2 = TimerInfo::ConvertToElapsed(milliseconds(currentBootTime2) + duration,
+                                                ITimerManager::ELAPSED_REALTIME);
+    EXPECT_EQ(elapsed2, bootTime2 + duration);
+}
+
+/**
+* @tc.name: TimerInfo006
+* @tc.desc: test CalculateWhenElapsed.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, TimerInfo006, TestSize.Level0)
+{
+    struct timeval timeOfDay {};
+    gettimeofday(&timeOfDay, nullptr);
+    int64_t currentTime = timeOfDay.tv_sec * 1000 + timeOfDay.tv_usec / 1000;
+    if (currentTime < 0) {
+        currentTime = 0;
+    }
+
+    auto currentBootTime = TimeUtils::GetBootTimeNs();
+    auto range = milliseconds(1000);
+    auto zero = milliseconds(0);
+
+    std::chrono::steady_clock::time_point empty (zero);
+    std::chrono::steady_clock::time_point tp_epoch ((std::chrono::milliseconds(currentTime)));
+
+    auto timerInfo = TimerInfo("", 0, ITimerManager::RTC, std::chrono::milliseconds(currentTime), empty, zero,
+                               empty, zero, nullptr, nullptr, 0, false, 0, 0, "");
+    timerInfo.CalculateWhenElapsed(tp_epoch);
+    EXPECT_GT(timerInfo.whenElapsed, currentBootTime - range);
+    EXPECT_GT(currentBootTime + range, timerInfo.whenElapsed);
+    EXPECT_EQ(timerInfo.whenElapsed, timerInfo.maxWhenElapsed);
+}
+
+/**
+* @tc.name: TimerInfo007
+* @tc.desc: test CalculateOriWhenElapsed.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, TimerInfo007, TestSize.Level0)
+{
+    struct timeval timeOfDay {};
+    gettimeofday(&timeOfDay, nullptr);
+    int64_t currentTime = timeOfDay.tv_sec * 1000 + timeOfDay.tv_usec / 1000;
+    if (currentTime < 0) {
+        currentTime = 0;
+    }
+
+    auto currentBootTime = TimeUtils::GetBootTimeNs();
+    auto range = milliseconds(1000);
+    auto zero = milliseconds(0);
+
+    std::chrono::steady_clock::time_point empty (zero);
+
+    auto timerInfo = TimerInfo("", 0, ITimerManager::RTC, std::chrono::milliseconds(currentTime), empty, zero,
+                               empty, zero, nullptr, nullptr, 0, false, 0, 0, "");
+    timerInfo.CalculateOriWhenElapsed();
+    EXPECT_GT(timerInfo.originWhenElapsed, currentBootTime - range);
+    EXPECT_GT(currentBootTime + range, timerInfo.originWhenElapsed);
+    EXPECT_EQ(timerInfo.originWhenElapsed, timerInfo.originMaxWhenElapsed);
+}
+
+/**
+* @tc.name: TimerInfo008
+* @tc.desc: test ProxyTimer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, TimerInfo008, TestSize.Level0)
+{
+    auto zero = milliseconds(0);
+    std::chrono::steady_clock::time_point empty (zero);
+    auto timerInfo = TimerInfo("", 0, ITimerManager::ELAPSED_REALTIME, zero, empty, zero, empty, zero, nullptr,
+                               nullptr, 0, false, 0, 0, "");
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::INIT);
+    EXPECT_TRUE(timerInfo.ProxyTimer(empty, milliseconds(3000)));
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::PROXY);
+    EXPECT_EQ(timerInfo.whenElapsed, empty + milliseconds(3000));
+    EXPECT_EQ(timerInfo.maxWhenElapsed, empty + milliseconds(3000));
+    EXPECT_EQ(timerInfo.when, milliseconds(3000));
+}
+
+/**
+* @tc.name: TimerInfo009
+* @tc.desc: test RestoreProxyTimer.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, TimerInfo009, TestSize.Level0)
+{
+    auto zero = milliseconds(0);
+    std::chrono::steady_clock::time_point empty (zero);
+    auto timerInfo = TimerInfo("", 0, ITimerManager::ELAPSED_REALTIME, zero, empty, zero, empty, zero, nullptr,
+                               nullptr, 0, false, 0, 0, "");
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::INIT);
+    EXPECT_FALSE(timerInfo.RestoreProxyTimer());
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::INIT);
+
+    timerInfo.state = TimerInfo::TimerState::ADJUST;
+    EXPECT_FALSE(timerInfo.RestoreProxyTimer());
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::INIT);
+
+    timerInfo.ProxyTimer(empty, milliseconds(3000));
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::PROXY);
+    EXPECT_EQ(timerInfo.whenElapsed, empty + milliseconds(3000));
+    EXPECT_EQ(timerInfo.maxWhenElapsed, empty + milliseconds(3000));
+    EXPECT_EQ(timerInfo.when, milliseconds(3000));
+
+    EXPECT_TRUE(timerInfo.RestoreProxyTimer());
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::INIT);
+    EXPECT_EQ(timerInfo.whenElapsed, empty);
+    EXPECT_EQ(timerInfo.maxWhenElapsed, empty);
+    EXPECT_EQ(timerInfo.when, milliseconds(0));
 }
 
 /**
