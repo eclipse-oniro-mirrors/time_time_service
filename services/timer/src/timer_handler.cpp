@@ -62,8 +62,11 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
         typStr += std::to_string(i) + " ";
     }
     TIME_HILOGW(TIME_MODULE_SERVICE, "create fd:[%{public}s], typ:[%{public}s]", fdStr.c_str(), typStr.c_str());
-
-    std::shared_ptr<TimerHandler> handler = std::shared_ptr<TimerHandler>(new TimerHandler(fds, epollfd));
+    std::shared_ptr<TimerHandler> handler = std::shared_ptr<TimerHandler>(
+        new (std::nothrow)TimerHandler(fds, epollfd));
+    if (handler == nullptr) {
+        return nullptr;
+    }
     for (size_t i = 0; i < fds.size(); i++) {
         epoll_event event {};
         event.events = EPOLLIN | EPOLLWAKEUP;
