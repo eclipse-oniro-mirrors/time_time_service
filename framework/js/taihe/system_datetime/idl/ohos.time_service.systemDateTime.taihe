@@ -14,6 +14,9 @@
  */
 
 @!namespace("@ohos.systemDateTime", "systemDateTime")
+@!sts_inject("""
+static { loadLibrary("systemdatetime_taihe_native.z") }
+""")
 
 enum TimeType: i32 {
     STARTUP,
