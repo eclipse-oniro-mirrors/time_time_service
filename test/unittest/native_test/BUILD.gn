@@ -28,7 +28,6 @@ ohos_unittest("TimeServiceNativeTest") {
 
   deps = [
     "${time_capi_path}:time_service_ndk",
-    "//third_party/googletest:gtest_main",
   ]
   branch_protector_ret = "pac_ret"
   sanitize = {
@@ -37,6 +36,7 @@ ohos_unittest("TimeServiceNativeTest") {
     debug = false
   }
   external_deps = [
+    "googletest:gtest_main",
     "hilog:libhilog",
     "init:libbegetutil",
   ]
