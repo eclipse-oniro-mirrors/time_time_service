@@ -73,40 +73,11 @@ private:
     explicit TimerManager(std::shared_ptr<TimerHandler> impl);
     void TimerLooper();
 
-    void SetHandler(std::string name,
-                    uint64_t id,
-                    int type,
-                    uint64_t triggerAtTime,
-                    int64_t windowLength,
-                    uint64_t interval,
-                    uint32_t flag,
-                    bool autoRestore,
-                    std::function<int32_t (const uint64_t)> callback,
-                    std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
-                    int uid,
-                    int pid,
-                    const std::string &bundleName);
-    void SetHandlerLocked(std::string name,
-                          uint64_t id,
-                          int type,
-                          std::chrono::milliseconds when,
-                          std::chrono::steady_clock::time_point whenElapsed,
-                          std::chrono::milliseconds windowLength,
-                          std::chrono::steady_clock::time_point maxWhen,
-                          std::chrono::milliseconds interval,
-                          std::function<int32_t (const uint64_t)> callback,
-                          const std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> &wantAgent,
-                          uint32_t flags,
-                          bool autoRestore,
-                          uint64_t callingUid,
-                          uint64_t callingPid,
-                          const std::string &bundleName);
+    void SetHandlerLocked(std::shared_ptr<TimerInfo> timer);
     void RemoveHandler(uint64_t id);
     void RemoveLocked(uint64_t id, bool needReschedule);
     void ReBatchAllTimers();
     void ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
-                          std::chrono::steady_clock::time_point nowElapsed);
-    void ReCalcuOriWhenElapsed(std::shared_ptr<TimerInfo> timer,
                           std::chrono::steady_clock::time_point nowElapsed);
     void SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebatching, bool isRebatched);
     void InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm);
@@ -122,7 +93,6 @@ private:
     void NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer);
     std::shared_ptr<Batch> FindFirstWakeupBatchLocked();
     void SetLocked(int type, std::chrono::nanoseconds when, std::chrono::steady_clock::time_point bootTime);
-    std::chrono::steady_clock::time_point ConvertToElapsed(std::chrono::milliseconds when, int type);
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
     int32_t StopTimerInnerLocked(bool needDestroy, uint64_t timerNumber, bool &needRecover);
     void UpdateOrDeleteDatabase(bool needDestroy, uint64_t timerNumber, bool needRecover);

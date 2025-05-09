@@ -23,7 +23,6 @@ using namespace std::chrono;
 using namespace OHOS::AppExecFwk;
 
 namespace {
-constexpr int MILLI_TO_SECOND =  1000;
 constexpr int UID_PROXY_OFFSET = 32;
 constexpr const char* NO_LOG_APP = "wifi_manager_service";
 }
@@ -333,12 +332,11 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
     for (auto itTimerInfo = itUidTimersMap->second.begin(); itTimerInfo!= itUidTimersMap->second.end();
         ++itTimerInfo) {
         if (pid == 0 || pid == itTimerInfo->second->pid) {
-            itTimerInfo->second->originProxyWhenElapsed = itTimerInfo->second->whenElapsed;
             if (!needRetrigger) {
                 insertAlarmCallback(itTimerInfo->second, false);
                 break;
             }
-            itTimerInfo->second->UpdateWhenElapsedFromNow(now, milliseconds(proxyDelayTime_));
+            itTimerInfo->second->ProxyTimer(now, milliseconds(proxyDelayTime_));
             TIME_HILOGD(TIME_MODULE_SERVICE, "Update proxy WhenElapsed for proxy pid map. "
                 "pid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
                 itTimerInfo->second->pid, itTimerInfo->second->id,
@@ -374,13 +372,7 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
         if (itTimerInfo == itTimer->second.end()) {
             continue;
         }
-        auto originTriggerTime = itTimerInfo->second->originProxyWhenElapsed;
-        if (originTriggerTime > now + milliseconds(MILLI_TO_SECOND)) {
-            auto interval = std::chrono::duration_cast<std::chrono::nanoseconds>(originTriggerTime - now);
-            itTimerInfo->second->UpdateWhenElapsedFromNow(now, interval);
-        } else {
-            itTimerInfo->second->UpdateWhenElapsedFromNow(now, milliseconds(MILLI_TO_SECOND));
-        }
+        itTimerInfo->second->RestoreProxyTimer();
         TIME_HILOGD(TIME_MODULE_SERVICE, "Restore proxy WhenElapsed by pid"
             "pid= %{public}d, id=%{public}" PRId64 ", timer whenElapsed=%{public}lld, now=%{public}lld",
             itTimerInfo->second->pid, itTimerInfo->second->id,

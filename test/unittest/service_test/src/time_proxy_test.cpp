@@ -27,7 +27,7 @@ using namespace testing::ext;
 using namespace std::chrono;
 
 namespace {
-constexpr uint64_t NANO_TO_MILESECOND = 100000;
+constexpr uint64_t NANO_TO_MILESECOND = 1000000;
 const uint64_t TIMER_ID = 88887;
 const int UID = 999996;
 const int PID = 999997;
@@ -82,7 +82,7 @@ uint64_t CreateTimer(int uid, int pid)
     return timerId;
 }
 
-void StartTimer(uint64_t timerId)
+uint64_t StartTimer(uint64_t timerId)
 {
     int64_t bootTime = 0;
     TimeUtils::GetBootTimeNs(bootTime);
@@ -90,6 +90,7 @@ void StartTimer(uint64_t timerId)
     uint64_t triggerTime = 10000000 + nowElapsed;
     auto ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    return triggerTime;
 }
 
 /**
@@ -223,7 +224,7 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid002, TestSize.Level1)
     auto it2 = std::find(it->second.begin(), it->second.end(), timerId);
     EXPECT_NE(it2, it->second.end());
     uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
-    std::chrono::steady_clock::time_point time = uidTimersMap[uid][timerId]->originProxyWhenElapsed;
+    std::chrono::steady_clock::time_point time = uidTimersMap[uid][timerId]->originWhenElapsed;
     EXPECT_EQ(originTime, time);
     auto it3 = uidTimersMap.find(uid);
     EXPECT_NE(it3, uidTimersMap.end());
@@ -377,9 +378,8 @@ HWTEST_F(TimeProxyTest, ProxyTimerByPid002, TestSize.Level1)
     std::set<int> pidList;
     pidList.insert(pid);
     uint64_t timerId = CreateTimer(uid, pid);
-    StartTimer(timerId);
+    uint64_t originTime = StartTimer(timerId);
     auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
-    std::chrono::steady_clock::time_point originTime = uidTimersMap[uid][timerId]->whenElapsed;
 
     bool retProxy = timerManagerHandler_->ProxyTimer(uid, pidList, true, true);
     EXPECT_TRUE(retProxy);
@@ -394,8 +394,8 @@ HWTEST_F(TimeProxyTest, ProxyTimerByPid002, TestSize.Level1)
     auto it2 = std::find(it->second.begin(), it->second.end(), timerId);
     EXPECT_NE(it2, it->second.end());
     uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
-    std::chrono::steady_clock::time_point time = uidTimersMap[uid][timerId]->originProxyWhenElapsed;
-    EXPECT_EQ(originTime, time);
+    std::chrono::steady_clock::time_point time = uidTimersMap[uid][timerId]->originWhenElapsed;
+    EXPECT_EQ(originTime, time.time_since_epoch().count() / NANO_TO_MILESECOND);
 
     auto it3 = uidTimersMap.find(uid);
     EXPECT_NE(it3, uidTimersMap.end());
