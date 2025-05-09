@@ -21,6 +21,7 @@ MISC_TIME_STATISTIC_REPORT:
   INTERVAL: {type: INT32, desc: the interval time}
   CALLER_PID: {type: INT32, desc: the process id}
   BUNDLE_OR_PROCESS_NAME: {type: STRING, desc: the trigger bundle or process name}
+  TIMER_NAME: {type: STRING, desc: the trigger timer name}
   TIMER_SIZE: {type: INT32, desc: Number of trigger with the same timestamp}
 
 ALARM_COUNT:
