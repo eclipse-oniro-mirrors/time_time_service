@@ -26,7 +26,8 @@ class TimeFileUtils {
 public:
     static std::string GetBundleNameByTokenID(uint32_t tokenID);
     static std::string GetNameByPid(uint32_t pid);
-    static std::vector<std::string> GetParameterList(std::string parameterName);
+    static std::vector<std::string> GetParameterList(const std::string& parameterName);
+    static int64_t GetIntParameter(const std::string& parameterName, int64_t def);
 };
 } // namespace MiscServices
 } // namespace OHOS

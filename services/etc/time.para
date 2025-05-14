@@ -18,3 +18,4 @@ persist.time.auto_time = "ON"
 persist.time.auto_restore_timer_apps = ""
 persist.time.scheduled_power_on_apps = ""
 persist.time.timer_across_accounts = ""
+persist.time.running_lock_duration = 1000000000

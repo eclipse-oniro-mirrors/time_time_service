@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include <cctype>
+#include <string>
 #include "time_file_utils.h"
 
 #include "accesstoken_kit.h"
@@ -70,7 +72,7 @@ std::string TimeFileUtils::GetNameByPid(uint32_t pid)
     return cmdline;
 }
 
-std::vector<std::string> TimeFileUtils::GetParameterList(std::string parameterName)
+std::vector<std::string> TimeFileUtils::GetParameterList(const std::string& parameterName)
 {
     std::vector<std::string> bundleList;
     std::string bundleStr = system::GetParameter(parameterName, "");
@@ -92,6 +94,21 @@ std::vector<std::string> TimeFileUtils::GetParameterList(std::string parameterNa
         start = end + 1;
     } while (start < bundleStr.size());
     return bundleList;
+}
+
+int64_t TimeFileUtils::GetIntParameter(const std::string& parameterName, int64_t def)
+{
+    std::string value = system::GetParameter(parameterName, "");
+    if (value.empty()) {
+        return def;
+    }
+    for (auto ch : value) {
+        if (!std::isdigit(ch)) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Wrong para in %{public}s", parameterName.c_str());
+            return def;
+        }
+    }
+    return std::stoll(value);
 }
 } // namespace MiscServices
 } // namespace OHOS
