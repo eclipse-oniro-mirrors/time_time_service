@@ -44,6 +44,7 @@ void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer)
     int32_t callerUid = timer->uid;
     int32_t callerPid = timer->pid;
     std::string bundleOrProcessName = timer->bundleName;
+    std::string timerName = timer->name;
     int32_t type = timer->type;
     int64_t triggerTime = timer->whenElapsed.time_since_epoch().count();
     auto interval = static_cast<uint64_t>(timer->repeatInterval.count());
@@ -51,6 +52,7 @@ void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer)
         {"CALLER_PID",             HISYSEVENT_INT32,  {.i32 = callerPid},                                    0},
         {"CALLER_UID",             HISYSEVENT_INT32,  {.i32 = callerUid},                                    0},
         {"BUNDLE_OR_PROCESS_NAME", HISYSEVENT_STRING, {.s = const_cast<char*>(bundleOrProcessName.c_str())}, 0},
+        {"TIMER_NAME",             HISYSEVENT_STRING, {.s = const_cast<char*>(timerName.c_str())},           0},
         {"TIMER_SIZE",             HISYSEVENT_INT32,  {.i32 = size},                                         0},
         {"TIMER_TYPE",             HISYSEVENT_INT32,  {.i32 = type},                                         0},
         {"TRIGGER_TIME",           HISYSEVENT_INT64,  {.i64 = triggerTime},                                  0},
