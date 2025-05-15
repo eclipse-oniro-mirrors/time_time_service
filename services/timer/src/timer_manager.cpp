@@ -606,7 +606,7 @@ void TimerManager::ReAddTimerLocked(std::shared_ptr<TimerInfo> timer,
                                     std::chrono::steady_clock::time_point nowElapsed)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "ReAddTimerLocked start. uid= %{public}d, id=%{public}" PRId64 ""
-        ", timer originMaxWhenElapsed=%{public}lld, whenElapsed=%{public}lld, now=%{public}" PRId64 "",
+        ", timer originMaxWhenElapsed=%{public}lld, whenElapsed=%{public}lld, now=%{public}lld",
         timer->uid, timer->id, timer->originWhenElapsed.time_since_epoch().count(),
         timer->whenElapsed.time_since_epoch().count(), nowElapsed.time_since_epoch().count());
     timer->CalculateWhenElapsed(nowElapsed);
