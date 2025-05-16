@@ -80,6 +80,8 @@ constexpr int32_t NANO_TO_MILLI = 1000000;
 constexpr int64_t ONE_HUNDRED_MILLI = 100000000; // 100ms
 constexpr int POWER_RETRY_TIMES = 10;
 constexpr int POWER_RETRY_INTERVAL = 10000;
+constexpr const char* RUNNING_LOCK_DURATION_PARAMETER = "persist.time.running_lock_duration";
+static int64_t RUNNING_LOCK_DURATION = 1 * NANO_TO_SECOND;
 #endif
 
 #ifdef DEVICE_STANDBY_ENABLE
@@ -119,6 +121,10 @@ TimerManager* TimerManager::GetInstance()
             if (!bundleList.empty()) {
                 NEED_RECOVER_ON_REBOOT = bundleList;
             }
+            #ifdef POWER_MANAGER_ENABLE
+            RUNNING_LOCK_DURATION = TimeFileUtils::GetIntParameter(RUNNING_LOCK_DURATION_PARAMETER,
+                                                                   USE_LOCK_ONE_SEC_IN_NANO);
+            #endif
         }
     }
     if (instance_ == nullptr) {
@@ -900,7 +906,7 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
             #ifdef POWER_MANAGER_ENABLE
-            AddRunningLock(USE_LOCK_ONE_SEC_IN_NANO);
+            AddRunningLock(RUNNING_LOCK_DURATION);
             #endif
             TimerBehaviorReport(timer, false);
             StatisticReporter(wakeupNums, timer);
