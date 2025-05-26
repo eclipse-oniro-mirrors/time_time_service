@@ -1016,7 +1016,9 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
         }
     }
     OHOS::AbilityRuntime::WantAgent::TriggerInfo paramsInfo("", nullptr, want, WANTAGENT_CODE_ELEVEN);
-    auto code = AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo);
+    sptr<AbilityRuntime::WantAgent::CompletedDispatcher> data;
+    auto code = AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo,
+        data, nullptr);
     TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "trigWA ret: %{public}d", code);
     if (code != ERR_OK) {
         auto extraInfo = "timer id:" + std::to_string(timer->id);
