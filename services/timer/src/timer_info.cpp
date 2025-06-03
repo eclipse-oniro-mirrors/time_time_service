@@ -207,13 +207,13 @@ bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now,
     std::chrono::duration<int, std::ratio<1, HALF_SECEND>> halfIntervalSec(interval);
     std::chrono::duration<int, std::ratio<1, 1>> intervalSec(interval);
     std::chrono::duration<int, std::ratio<1, 1>> deltaSec(delta);
-    auto oldTimeSec = std::chrono::duration_cast<std::chrono::seconds>(whenElapsed.time_since_epoch());
+    auto oldTimeSec = std::chrono::duration_cast<std::chrono::seconds>(originWhenElapsed.time_since_epoch());
     auto timeSec = ((oldTimeSec + halfIntervalSec) / intervalSec) * intervalSec + deltaSec;
     whenElapsed = std::chrono::steady_clock::time_point(timeSec);
     if (windowLength == std::chrono::milliseconds::zero()) {
         maxWhenElapsed = whenElapsed;
     } else {
-        auto oldMaxTimeSec = std::chrono::duration_cast<std::chrono::seconds>(maxWhenElapsed.time_since_epoch());
+        auto oldMaxTimeSec = std::chrono::duration_cast<std::chrono::seconds>(originMaxWhenElapsed.time_since_epoch());
         auto maxTimeSec = ((oldMaxTimeSec + halfIntervalSec) / intervalSec) * intervalSec + deltaSec;
         maxWhenElapsed = std::chrono::steady_clock::time_point(maxTimeSec);
     }
