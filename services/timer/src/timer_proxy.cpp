@@ -89,7 +89,8 @@ bool TimerProxy::AdjustTimer(bool isAdjust, uint32_t interval,
             return false;
         }
         bool isOverdue = (now > timer->originWhenElapsed);
-        if (isAdjust && !isOverdue) {
+        bool isProxy = (timer->state == TimerInfo::TimerState::PROXY);
+        if (isAdjust && !isOverdue && !isProxy) {
             return UpdateAdjustWhenElapsed(now, interval, delta, timer);
         }
         return RestoreAdjustWhenElapsed(timer);
