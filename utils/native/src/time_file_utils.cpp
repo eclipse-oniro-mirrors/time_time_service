@@ -15,6 +15,7 @@
 
 #include <cctype>
 #include <string>
+#include <cerrno>
 #include "time_file_utils.h"
 
 #include "accesstoken_kit.h"
@@ -108,7 +109,18 @@ int64_t TimeFileUtils::GetIntParameter(const std::string& parameterName, int64_t
             return def;
         }
     }
-    return std::stoll(value);
+    errno = 0;
+    char *end = nullptr;
+    int64_t num = std::strtoll(value.c_str(), &end, 10);
+    if (end == nullptr || *end != '\0') {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Wrong para in %{public}s", parameterName.c_str());
+        return def;
+    }
+    if (errno == ERANGE) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Overflow in %{public}s", parameterName.c_str());
+        return def;
+    }
+    return num;
 }
 } // namespace MiscServices
 } // namespace OHOS

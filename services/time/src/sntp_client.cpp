@@ -57,7 +57,8 @@ constexpr int32_t SNTP_MSG_OFFSET_THREE = 3;
 bool SNTPClient::RequestTime(const std::string &host)
 {
     int bufLen = NTP_PACKAGE_SIZE;
-    struct addrinfo hints = { 0 }, *addrs;
+    struct addrinfo hints = { 0 };
+    struct addrinfo *addrs;
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
