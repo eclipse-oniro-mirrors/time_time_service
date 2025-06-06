@@ -68,6 +68,9 @@ public:
     ~TimerManager() override;
     void HandleRSSDeath();
     static TimerManager* GetInstance();
+    #ifdef SET_AUTO_REBOOT_ENABLE
+    std::vector<std::string> powerOnApps_;
+    #endif
 
 private:
     explicit TimerManager(std::shared_ptr<TimerHandler> impl);
@@ -120,6 +123,13 @@ private:
     void ShowTimerCountByUid(int count);
     void AddTimerName(int uid, std::string name, uint64_t timerId);
     void DeleteTimerName(int uid, std::string name, uint64_t timerId);
+#ifdef SET_AUTO_REBOOT_ENABLE
+    bool CheckPowerOnName(std::shared_ptr<TimerInfo> timerInfo);
+    void DeleteTimerFromPowerOnTimerListById(int64_t timerId);
+    void DeleteTimerFromPowerOnTimerListByTimerInfo(std::shared_ptr<TimerInfo> timerInfo);
+    void ReschedulePowerOnTimerLocked();
+    std::shared_ptr<TimerInfo> FindTimerInfoInPowerOnList(int64_t timerId);
+#endif
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     // vector<uid, count>
@@ -150,6 +160,9 @@ private:
     uint32_t adjustDelta_ = 0;
     int64_t timerOutOfRangeTimes_ = 0;
     std::chrono::steady_clock::time_point lastTimerOutOfRangeTime_;
+    #ifdef SET_AUTO_REBOOT_ENABLE
+    std::vector<std::shared_ptr<TimerInfo>> powerOnTriggerTimerList_;
+    #endif
     #ifdef POWER_MANAGER_ENABLE
     std::mutex runningLockMutex_;
     std::shared_ptr<PowerMgr::RunningLock> runningLock_;

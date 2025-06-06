@@ -69,7 +69,6 @@ static constexpr uint32_t MAX_EXEMPTION_SIZE = 1000;
 #ifdef SET_AUTO_REBOOT_ENABLE
 constexpr int64_t MILLISECOND_TO_NANO = 1000000;
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
-constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 constexpr int CLOCK_POWEROFF_ALARM = 12;
 constexpr size_t INDEX_TWO = 2;
 #endif
@@ -1310,7 +1309,7 @@ void TimeSystemAbility::SetAutoReboot()
     }
     int64_t currentTime = 0;
     TimeUtils::GetWallTimeMs(currentTime);
-    auto bundleList = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
+    auto bundleList = TimerManager::GetInstance()->powerOnApps_;
     do {
         uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 1));
         if (triggerTime < static_cast<uint64_t>(currentTime)) {

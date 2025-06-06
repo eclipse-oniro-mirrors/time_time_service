@@ -53,6 +53,7 @@ public:
         RTC = 1,
         ELAPSED_REALTIME_WAKEUP = 2,
         ELAPSED_REALTIME = 3,
+        POWER_ON_ALARM = 6,
         TIMER_TYPE_BUTT
     };
 

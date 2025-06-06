@@ -23,6 +23,7 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 static constexpr uint32_t ALARM_TIME_CHANGE_MASK = 1 << 16;
+constexpr int CLOCK_POWEROFF_ALARM = 12;
 static constexpr clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
     CLOCK_REALTIME_ALARM,
     CLOCK_REALTIME,
@@ -30,25 +31,27 @@ static constexpr clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
     CLOCK_BOOTTIME,
     CLOCK_MONOTONIC,
     CLOCK_REALTIME,
+    CLOCK_POWEROFF_ALARM,
 };
 }
 
 std::shared_ptr<TimerHandler> TimerHandler::Create()
 {
-    int epollfd;
     TimerFds fds;
-
-    epollfd = epoll_create(fds.size());
+    int epollfd = epoll_create(fds.size());
     if (epollfd < 0) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "epoll_create %{public}d failed: %{public}s",
-                static_cast<int>(fds.size()), strerror(errno));
-            return nullptr;
+        TIME_HILOGE(TIME_MODULE_SERVICE, "epoll_create %{public}d failed: %{public}s",
+            static_cast<int>(fds.size()), strerror(errno));
+        return nullptr;
     }
-
     std::string fdStr = "";
     std::string typStr = "";
     for (size_t i = 0; i < fds.size(); i++) {
-        fds[i] = timerfd_create(alarm_to_clock_id[i], 0);
+        if (alarm_to_clock_id[i] != CLOCK_POWEROFF_ALARM) {
+            fds[i] = timerfd_create(alarm_to_clock_id[i], 0);
+        } else {
+            fds[i] = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
+        }
         if (fds[i] < 0) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create %{public}d  failed: %{public}s",
                 static_cast<int>(i), strerror(errno));
@@ -67,27 +70,28 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
     if (handler == nullptr) {
         return nullptr;
     }
-    for (size_t i = 0; i < fds.size(); i++) {
+    for (size_t i = 0; i < fds.size() - 1; i++) {
         epoll_event event {};
         event.events = EPOLLIN | EPOLLWAKEUP;
         event.data.u32 = i;
-
-        int err = epoll_ctl(epollfd, EPOLL_CTL_ADD, fds[i], &event);
-        if (err < 0) {
+        if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fds[i], &event) < 0) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "epoll_ctl(EPOLL_CTL_ADD) failed: %{public}s", strerror(errno));
             return nullptr;
         }
     }
-    itimerspec spec {};
-
-    int err = timerfd_settime(fds[ALARM_TYPE_COUNT], TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET, &spec, nullptr);
-    TIME_HILOGW(TIME_MODULE_SERVICE, "settime fd: %{public}d, res: %{public}d, errno: %{public}s",
-        fds[ALARM_TYPE_COUNT], err, strerror(errno));
-    if (err < 0 && errno != ECANCELED) {
+    if (SetRealTimeFd(fds) < 0 && errno != ECANCELED) {
         return nullptr;
     }
-
     return handler;
+}
+
+int TimerHandler::SetRealTimeFd(TimerFds fds)
+{
+    itimerspec spec {};
+    int err = timerfd_settime(fds[ALARM_TYPE_COUNT - 1], TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET, &spec, nullptr);
+    TIME_HILOGW(TIME_MODULE_SERVICE, "settime fd: %{public}d, res: %{public}d, errno: %{public}s",
+        fds[ALARM_TYPE_COUNT - 1], err, strerror(errno));
+    return err;
 }
 
 TimerHandler::TimerHandler(const TimerFds &fds, int epollfd)
