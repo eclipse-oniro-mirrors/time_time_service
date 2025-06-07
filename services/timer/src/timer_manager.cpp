@@ -725,7 +725,7 @@ bool TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
         return false;
     } else {
         #ifdef SET_AUTO_REBOOT_ENABLE
-        DeleteTimerFromPowerOnTimerListByTimerInfo(alarm);
+        DeleteTimerFromPowerOnTimerListById(alarm->id);
         #endif
         HandleRepeatTimer(alarm, nowElapsed);
         return true;
@@ -829,18 +829,8 @@ void TimerManager::DeleteTimerFromPowerOnTimerListById(int64_t timerId)
 {
     auto deleteTimerInfo = FindTimerInfoInPowerOnList(timerId);
     if (deleteTimerInfo == nullptr) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "did not find timer in starttimer map id:%{public}" PRId64 "", timerId);
         return;
     }
-    DeleteTimerFromPowerOnTimerListByTimerInfo(deleteTimerInfo);
-}
-
-void TimerManager::DeleteTimerFromPowerOnTimerListByTimerInfo(std::shared_ptr<TimerInfo> timerInfo)
-{
-    if (!CheckPowerOnName(timerInfo)) {
-        return;
-    }
-    auto timerId = timerInfo->id;
     TIME_HILOGI(TIME_MODULE_SERVICE, "alarm needs power on delete, id=%{public}" PRId64 "", timerId);
     powerOnTriggerTimerList_.erase(
         std::remove_if(powerOnTriggerTimerList_.begin(), powerOnTriggerTimerList_.end(),
@@ -855,12 +845,30 @@ void TimerManager::DeleteTimerFromPowerOnTimerListByTimerInfo(std::shared_ptr<Ti
 void TimerManager::ReschedulePowerOnTimerLocked()
 {
     auto bootTime = TimeUtils::GetBootTimeNs();
+    if (powerOnTriggerTimerList_.size() == 0) {
+        SetLocked(POWER_ON_ALARM, std::chrono::nanoseconds(0), bootTime);
+        return;
+    }
+    int64_t currentTime = 0;
+    if (TimeUtils::GetWallTimeMs(currentTime) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "currentTime get failed");
+        return;
+    }
     std::sort(powerOnTriggerTimerList_.begin(), powerOnTriggerTimerList_.end(),
         [](const std::shared_ptr<TimerInfo>& a, const std::shared_ptr<TimerInfo>& b) {
             return a->when < b->when;
         });
     auto timerInfo = powerOnTriggerTimerList_[0];
     auto setTimePoint = timerInfo->when;
+    while (setTimePoint.count() < currentTime) {
+        powerOnTriggerTimerList_.erase(powerOnTriggerTimerList_.begin());
+        if (powerOnTriggerTimerList_.size() == 0) {
+            SetLocked(POWER_ON_ALARM, std::chrono::nanoseconds(0), bootTime);
+            return;
+        }
+        timerInfo = powerOnTriggerTimerList_[0];
+        setTimePoint = timerInfo->when;
+    }
     if (setTimePoint.count() != lastSetTime_[POWER_ON_ALARM]) {
         SetLocked(POWER_ON_ALARM, setTimePoint, bootTime);
         lastSetTime_[POWER_ON_ALARM] = setTimePoint.count();
