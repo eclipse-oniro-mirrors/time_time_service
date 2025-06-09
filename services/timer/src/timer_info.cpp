@@ -199,9 +199,30 @@ bool TimerInfo::RestoreProxyTimer()
     return RestoreTimer();
 }
 
+bool TimerInfo::CheckStatusBeforeAdjust()
+{
+    //Change timer state
+    switch (state) {
+        case INIT:
+        case ADJUST:
+            state = ADJUST;
+            break;
+        case PROXY:
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Adjust timer in proxy state, id: %{public}" PRIu64 "", id);
+            return false;
+        default:
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Error state, id: %{public}" PRIu64 ", state: %{public}d", id, state);
+    }
+    return true;
+}
+
 bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now,
                             const uint32_t interval, const uint32_t delta)
 {
+    if (!CheckStatusBeforeAdjust()) {
+        return false;
+    }
+    CalculateOriWhenElapsed();
     auto oldWhenElapsed = whenElapsed;
     auto oldMaxWhenElapsed = maxWhenElapsed;
     std::chrono::duration<int, std::ratio<1, HALF_SECEND>> halfIntervalSec(interval);
