@@ -123,12 +123,11 @@ private:
     void ShowTimerCountByUid(int count);
     void AddTimerName(int uid, std::string name, uint64_t timerId);
     void DeleteTimerName(int uid, std::string name, uint64_t timerId);
-#ifdef SET_AUTO_REBOOT_ENABLE
-    bool CheckPowerOnName(std::shared_ptr<TimerInfo> timerInfo);
+    #ifdef SET_AUTO_REBOOT_ENABLE
+    bool IsPowerOnTimer(std::shared_ptr<TimerInfo> timerInfo);
     void DeleteTimerFromPowerOnTimerListById(int64_t timerId);
     void ReschedulePowerOnTimerLocked();
-    std::shared_ptr<TimerInfo> FindTimerInfoInPowerOnList(int64_t timerId);
-#endif
+    #endif
 
     std::map<uint64_t, std::shared_ptr<TimerEntry>> timerEntryMap_;
     // vector<uid, count>

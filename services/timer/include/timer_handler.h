@@ -20,7 +20,11 @@
 
 namespace OHOS {
 namespace MiscServices {
+#ifdef SET_AUTO_REBOOT_ENABLE
 static constexpr size_t ALARM_TYPE_COUNT = 6;
+#else
+static constexpr size_t ALARM_TYPE_COUNT = 5;
+#endif
 static constexpr size_t N_TIMER_FDS = ALARM_TYPE_COUNT + 1;
 typedef std::array<int, N_TIMER_FDS> TimerFds;
 

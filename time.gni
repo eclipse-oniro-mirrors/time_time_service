@@ -29,7 +29,7 @@ declare_args() {
   time_service_debug_able = true
   time_service_hicollie_able = true
   time_service_hidumper_able = true
-  time_service_set_auto_reboot = true
+  time_service_set_auto_reboot = false
   time_service_multi_account = true
   time_service_rdb_enable = true
   if (defined(global_parts_info) &&

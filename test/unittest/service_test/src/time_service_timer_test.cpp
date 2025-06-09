@@ -66,6 +66,9 @@ constexpr int FIVE_HUNDRED = 500;
 constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
 constexpr int TIMER_ALARM_COUNT = 50;
 static const int MAX_PID_LIST_SIZE = 1024;
+#ifdef SET_AUTO_REBOOT_ENABLE
+static const int POWER_ON_ALARM = 6;
+#endif
 
 static HapPolicyParams g_policyA = {
     .apl = APL_SYSTEM_CORE,
@@ -1957,6 +1960,114 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo009, TestSize.Level0)
     EXPECT_EQ(timerInfo.maxWhenElapsed, empty);
     EXPECT_EQ(timerInfo.when, milliseconds(0));
 }
+
+#ifdef SET_AUTO_REBOOT_ENABLE
+/**
+* @tc.name: IsPowerOnTimer001.
+* @tc.desc: Test function IsPowerOnTimer, use four timer to check the return of function.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, IsPowerOnTimer001, TestSize.Level0)
+{
+    auto timerManager = TimerManager::GetInstance();
+    timerManager->powerOnApps_ = {"testBundleName", "testTimerName"};
+    auto duration = std::chrono::milliseconds::zero();
+    auto timePoint = std::chrono::steady_clock::now();
+
+    auto timerInfo1 = std::make_shared<TimerInfo>("testTimerName", TIMER_ID, 0, duration, timePoint, duration,
+        timePoint, duration, nullptr, nullptr, 0, false, 0, 0, "");
+    bool ret = true;
+    ret = timerManager->IsPowerOnTimer(timerInfo1);
+    EXPECT_EQ(ret, false);
+
+    auto timerInfo2 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+        nullptr, nullptr, 0, false, 0, 0, "testBundleName");
+    ret = true;
+    ret = timerManager->IsPowerOnTimer(timerInfo2);
+    EXPECT_EQ(ret, false);
+
+    auto timerInfo3 = std::make_shared<TimerInfo>("testTimerName", TIMER_ID, 0, duration, timePoint, duration,
+        timePoint, duration, nullptr, nullptr, 0, true, 0, 0, "");
+    ret = false;
+    ret = timerManager->IsPowerOnTimer(timerInfo3);
+    EXPECT_EQ(ret, true);
+
+    auto timerInfo4 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+        nullptr, nullptr, 0, true, 0, 0, "testBundleName");
+    ret = false;
+    ret = timerManager->IsPowerOnTimer(timerInfo4);
+    EXPECT_EQ(ret, true);
+}
+
+/**
+* @tc.name: DeleteTimerFromPowerOnTimerListById001.
+* @tc.desc: Test function ReschedulePowerOnTimer, check delete a timer in powerOnTriggerTimerList_ by timer id.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, DeleteTimerFromPowerOnTimerListById001, TestSize.Level0)
+{
+    auto timerManager = TimerManager::GetInstance();
+    auto duration = std::chrono::milliseconds(1000);
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+        nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo);
+    EXPECT_EQ(timerManager->powerOnTriggerTimerList_.size(), 1);
+    timerManager->DeleteTimerFromPowerOnTimerListById(TIMER_ID);
+    EXPECT_EQ(timerManager->powerOnTriggerTimerList_.size(), 0);
+}
+
+/**
+* @tc.name: ReschedulePowerOnTimerLocked001.
+* @tc.desc: Test function ReschedulePowerOnTimer, use three timer to test the schedule.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked001, TestSize.Level0)
+{
+    auto timerManager = TimerManager::GetInstance();
+    timerManager->lastSetTime_[POWER_ON_ALARM] = 0;
+    int64_t currentTime = 0;
+    TimeUtils::GetWallTimeMs(currentTime);
+    auto triggerTime1 = currentTime + 1000;
+    auto duration1 = std::chrono::milliseconds(triggerTime1);
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo1 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration1, timePoint, duration1, timePoint,
+        duration1, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo1);
+    timerManager->ReschedulePowerOnTimerLocked();
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime1);
+
+    auto triggerTime2 = currentTime + 2000;
+    auto duration2 = std::chrono::milliseconds(triggerTime2);
+    auto timerId2 = TIMER_ID + 1;
+    auto timerInfo2 = std::make_shared<TimerInfo>("", timerId2, 0, duration2, timePoint, duration2, timePoint,
+        duration2, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo2);
+    timerManager->ReschedulePowerOnTimerLocked();
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime1);
+
+    auto triggerTime3 = currentTime + 500;
+    auto duration3 = std::chrono::milliseconds(triggerTime3);
+    auto timerId3 = timerId2 + 1;
+    auto timerInfo3 = std::make_shared<TimerInfo>("", timerId3, 0, duration3, timePoint, duration3, timePoint,
+        duration3, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo3);
+    timerManager->ReschedulePowerOnTimerLocked();
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime3);
+
+    timerManager->DeleteTimerFromPowerOnTimerListById(timerId3);
+    timerManager->ReschedulePowerOnTimerLocked();
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime1);
+
+    timerManager->DeleteTimerFromPowerOnTimerListById(TIMER_ID);
+    timerManager->ReschedulePowerOnTimerLocked();
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime2);
+
+    timerManager->powerOnTriggerTimerList_.clear();
+    timerManager->ReschedulePowerOnTimerLocked();
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], 0);
+}
+#endif
 
 /**
 * @tc.name: ResetAllProxy001.

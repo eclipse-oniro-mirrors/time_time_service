@@ -31,7 +31,9 @@ static constexpr clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
     CLOCK_BOOTTIME,
     CLOCK_MONOTONIC,
     CLOCK_REALTIME,
+    #ifdef SET_AUTO_REBOOT_ENABLE
     CLOCK_POWEROFF_ALARM,
+    #endif
 };
 }
 
@@ -67,10 +69,11 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
     TIME_HILOGW(TIME_MODULE_SERVICE, "create fd:[%{public}s], typ:[%{public}s]", fdStr.c_str(), typStr.c_str());
     std::shared_ptr<TimerHandler> handler = std::shared_ptr<TimerHandler>(
         new (std::nothrow)TimerHandler(fds, epollfd));
-    if (handler == nullptr) {
-        return nullptr;
-    }
+    #ifdef SET_AUTO_REBOOT_ENABLE
     for (size_t i = 0; i < fds.size() - 1; i++) {
+    #else
+    for (size_t i = 0; i < fds.size(); i++) {
+    #endif
         epoll_event event {};
         event.events = EPOLLIN | EPOLLWAKEUP;
         event.data.u32 = i;
@@ -88,9 +91,15 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
 int TimerHandler::SetRealTimeFd(TimerFds fds)
 {
     itimerspec spec {};
+    #ifdef SET_AUTO_REBOOT_ENABLE
     int err = timerfd_settime(fds[ALARM_TYPE_COUNT - 1], TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET, &spec, nullptr);
     TIME_HILOGW(TIME_MODULE_SERVICE, "settime fd: %{public}d, res: %{public}d, errno: %{public}s",
         fds[ALARM_TYPE_COUNT - 1], err, strerror(errno));
+    #else
+    int err = timerfd_settime(fds[ALARM_TYPE_COUNT], TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET, &spec, nullptr);
+    TIME_HILOGW(TIME_MODULE_SERVICE, "settime fd: %{public}d, res: %{public}d, errno: %{public}s",
+        fds[ALARM_TYPE_COUNT], err, strerror(errno));
+    #endif
     return err;
 }
 
