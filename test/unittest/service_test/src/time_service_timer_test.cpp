@@ -1977,7 +1977,7 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo010, TestSize.Level0)
 
     timerInfo.ProxyTimer(empty, milliseconds(3000));
     EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::PROXY);
-    EXPECT_TRUE(timerInfo.CheckStatusBeforeAdjust());
+    EXPECT_FALSE(timerInfo.CheckStatusBeforeAdjust());
 }
 
 /**
