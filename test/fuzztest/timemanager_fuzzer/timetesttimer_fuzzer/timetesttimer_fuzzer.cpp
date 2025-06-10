@@ -87,6 +87,24 @@ bool FuzzTimeDestroyTimerV9(int64_t timerId, size_t size)
     return true;
 }
 
+bool FuzzTimeDestroyTimerAsync(int64_t timerId, size_t size)
+{
+    TimeServiceClient::GetInstance()->DestroyTimerAsync(timerId);
+    return true;
+}
+
+bool FuzzTimeDestroyTimerAsyncV9(int64_t timerId, size_t size)
+{
+    TimeServiceClient::GetInstance()->DestroyTimerAsyncV9(timerId);
+    return true;
+}
+
+bool FuzzTimeHandleRecoverMap(int64_t timerId, size_t size)
+{
+    TimeServiceClient::GetInstance()->HandleRecoverMap(timerId);
+    return true;
+}
+
 }
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -109,5 +127,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     OHOS::FuzzTimeStartTimerV9(timerId, size);
     OHOS::FuzzTimeStopTimerV9(timerId, size);
     OHOS::FuzzTimeDestroyTimerV9(timerId, size);
+    OHOS::FuzzTimeDestroyTimerAsync(timerId, size);
+    OHOS::FuzzTimeDestroyTimerAsyncV9(timerId, size);
     return 0;
 }

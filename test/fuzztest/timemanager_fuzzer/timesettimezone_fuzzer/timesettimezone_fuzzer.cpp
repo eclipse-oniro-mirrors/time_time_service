@@ -90,6 +90,22 @@ bool FuzzTimeGetTime(const uint8_t *rawData, size_t size)
     return true;
 }
 
+bool FuzzTimeGetNtpTimeMs(const uint8_t *rawData, size_t size)
+{
+    FuzzedDataProvider fdp(rawData, size);
+    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
+    return true;
+}
+
+bool FuzzTimeGetRealTimeMs(const uint8_t *rawData, size_t size)
+{
+    FuzzedDataProvider fdp(rawData, size);
+    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    TimeServiceClient::GetInstance()->GetRealTimeMs(time);
+    return true;
+}
+
 }
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -103,5 +119,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     OHOS::FuzzTimeGetTimezone(data, size);
     OHOS::FuzzTimeSetTime(data, size);
     OHOS::FuzzTimeGetTime(data, size);
+    OHOS::FuzzTimeGetNtpTimeMs(data, size);
+    OHOS::FuzzTimeGetRealTimeMs(data, size);
     return 0;
 }

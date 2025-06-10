@@ -63,6 +63,14 @@ bool FuzzTimeReceivedMessage(const uint8_t *data, size_t size)
     return true;
 }
 
+bool FuzzTimeRequestTime(const uint8_t *data, size_t size)
+{
+    std::string host(reinterpret_cast<const char *>(data), size);
+    SNTPClient client;
+    client.RequestTime(host);
+    return true;
+}
+
 } // namespace OHOS
 
 /* Fuzzer entry point */
@@ -75,5 +83,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     /* Run your code on data */
     OHOS::FuzzTimeCreateMessage(data, size);
     OHOS::FuzzTimeReceivedMessage(data, size);
+    OHOS::FuzzTimeRequestTime(data, size);
     return 0;
 }
