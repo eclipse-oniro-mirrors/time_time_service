@@ -41,7 +41,7 @@ export default namespace systemDateTime {
   }
 
   export function getCurrentTime(isNano?: boolean): Promise<number> {
-    let p = new Promise<number>((resolve: (value: number) => void, reject: (error: Object) => void): void => {
+    let p = new Promise<number>((resolve: (value: number) => void, reject: (error: Error) => void): void => {
       let p1 = taskpool.execute(getTime, isNano);
       p1.then((e: NullishType): void => {
         resolve(e as number);
@@ -68,7 +68,7 @@ export default namespace systemDateTime {
   }
 
   export function getTimezone(): Promise<string> {
-    let p = new Promise<string>((resolve: (value: string) => void, reject: (error: Object) => void): void => {
+    let p = new Promise<string>((resolve: (value: string) => void, reject: (error: Error) => void): void => {
       let p1 = taskpool.execute(getTimezoneSync);
       p1.then((e: NullishType): void => {
         let s = e as string
