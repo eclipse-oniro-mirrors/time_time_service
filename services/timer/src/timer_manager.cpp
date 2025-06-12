@@ -61,6 +61,9 @@ constexpr int MAX_TIMER_ALARM_COUNT = 100;
 constexpr int TIMER_ALRAM_INTERVAL = 60;
 constexpr int TIMER_COUNT_TOP_NUM = 5;
 constexpr const char* AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
+#ifdef SET_AUTO_REBOOT_ENABLE
+constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
+#endif
 constexpr const char* NO_LOG_APP = "wifi_manager_service";
 
 #ifdef RDB_ENABLE
@@ -104,6 +107,9 @@ TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
       lastTimerOutOfRangeTime_ {steady_clock::time_point::min()}
 {
     alarmThread_.reset(new std::thread([this] { this->TimerLooper(); }));
+    #ifdef SET_AUTO_REBOOT_ENABLE
+    powerOnApps_ = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
+    #endif
 }
 
 TimerManager* TimerManager::GetInstance()
@@ -559,6 +565,9 @@ void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
     if (needReschedule && didRemove) {
         RescheduleKernelTimerLocked();
     }
+    #ifdef SET_AUTO_REBOOT_ENABLE
+    DeleteTimerFromPowerOnTimerListById(id);
+    #endif
 }
 
 // needs to acquire the lock `mutex_` before calling this method
@@ -583,6 +592,13 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
         mPendingIdleUntil_ = alarm;
         isAdjust = AdjustTimersBasedOnDeviceIdle();
     }
+    #ifdef SET_AUTO_REBOOT_ENABLE
+    if (IsPowerOnTimer(alarm)) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "alarm needs power on, id=%{public}" PRId64 "", alarm->id);
+        powerOnTriggerTimerList_.push_back(alarm);
+        ReschedulePowerOnTimerLocked();
+    }
+    #endif
     InsertAndBatchTimerLocked(std::move(alarm));
     if (isAdjust) {
         ReBatchAllTimers();
@@ -708,6 +724,9 @@ bool TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
         SetHandlerLocked(alarm, false, false);
         return false;
     } else {
+        #ifdef SET_AUTO_REBOOT_ENABLE
+        DeleteTimerFromPowerOnTimerListById(alarm->id);
+        #endif
         HandleRepeatTimer(alarm, nowElapsed);
         return true;
     }
@@ -794,6 +813,66 @@ void TimerManager::RescheduleKernelTimerLocked()
         }
     }
 }
+
+#ifdef SET_AUTO_REBOOT_ENABLE
+bool TimerManager::IsPowerOnTimer(std::shared_ptr<TimerInfo> timerInfo)
+{
+    if (timerInfo != nullptr) {
+        return (std::find(powerOnApps_.begin(), powerOnApps_.end(), timerInfo->name) != powerOnApps_.end() ||
+            std::find(powerOnApps_.begin(), powerOnApps_.end(), timerInfo->bundleName) != powerOnApps_.end()) &&
+            CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type, timerInfo->autoRestore);
+    }
+    return false;
+}
+
+void TimerManager::DeleteTimerFromPowerOnTimerListById(int64_t timerId)
+{
+    auto deleteTimerInfo = std::find_if(powerOnTriggerTimerList_.begin(), powerOnTriggerTimerList_.end(),
+                                        [timerId](const auto& triggerTimerInfo) {
+                                            return triggerTimerInfo->id == timerId;
+                                        });
+    if (it == powerOnTriggerTimerList_.end()) {
+        return;
+    }
+    powerOnTriggerTimerList_.erase(deleteTimerInfo);
+    ReschedulePowerOnTimerLocked();
+}
+
+void TimerManager::ReschedulePowerOnTimerLocked()
+{
+    auto bootTime = TimeUtils::GetBootTimeNs();
+    if (powerOnTriggerTimerList_.size() == 0) {
+        SetLocked(POWER_ON_ALARM, std::chrono::nanoseconds(0), bootTime);
+        lastSetTime_[POWER_ON_ALARM] = 0;
+        return;
+    }
+    int64_t currentTime = 0;
+    if (TimeUtils::GetWallTimeMs(currentTime) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "currentTime get failed");
+        return;
+    }
+    std::sort(powerOnTriggerTimerList_.begin(), powerOnTriggerTimerList_.end(),
+        [](const std::shared_ptr<TimerInfo>& a, const std::shared_ptr<TimerInfo>& b) {
+            return a->when < b->when;
+        });
+    auto timerInfo = powerOnTriggerTimerList_[0];
+    auto setTimePoint = timerInfo->when;
+    while (setTimePoint.count() < currentTime) {
+        powerOnTriggerTimerList_.erase(powerOnTriggerTimerList_.begin());
+        if (powerOnTriggerTimerList_.size() == 0) {
+            SetLocked(POWER_ON_ALARM, std::chrono::nanoseconds(0), bootTime);
+            lastSetTime_[POWER_ON_ALARM] = 0;
+            return;
+        }
+        timerInfo = powerOnTriggerTimerList_[0];
+        setTimePoint = timerInfo->when;
+    }
+    if (setTimePoint.count() != lastSetTime_[POWER_ON_ALARM]) {
+        SetLocked(POWER_ON_ALARM, setTimePoint, bootTime);
+        lastSetTime_[POWER_ON_ALARM] = setTimePoint.count();
+    }
+}
+#endif
 
 // needs to acquire the lock `mutex_` before calling this method
 std::shared_ptr<Batch> TimerManager::FindFirstWakeupBatchLocked()

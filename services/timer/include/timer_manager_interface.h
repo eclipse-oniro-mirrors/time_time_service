@@ -53,6 +53,9 @@ public:
         RTC = 1,
         ELAPSED_REALTIME_WAKEUP = 2,
         ELAPSED_REALTIME = 3,
+        #ifdef SET_AUTO_REBOOT_ENABLE
+        POWER_ON_ALARM = 6,
+        #endif
         TIMER_TYPE_BUTT
     };
 
