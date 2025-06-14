@@ -848,9 +848,11 @@ void TimerManager::ReschedulePowerOnTimerLocked()
         return;
     }
     if (powerOnTriggerTimerList_.size() == 0) {
-        SetLocked(POWER_ON_ALARM, std::chrono::milliseconds(currentTime + TEN_YEARS_TO_SECOND * ONE_THOUSAND),
-            bootTime);
-        lastSetTime_[POWER_ON_ALARM] = 0;
+        // current version cannot cancel a power-on timer
+        // set trigger time to ten years as a never trigger timer to cancel the timer
+        int64_t timeNeverTrigger = currentTime + TEN_YEARS_TO_SECOND * ONE_THOUSAND;
+        SetLocked(POWER_ON_ALARM, std::chrono::milliseconds(timeNeverTrigger), bootTime);
+        lastSetTime_[POWER_ON_ALARM] = timeNeverTrigger;
         return;
     }
     std::sort(powerOnTriggerTimerList_.begin(), powerOnTriggerTimerList_.end(),
@@ -862,9 +864,11 @@ void TimerManager::ReschedulePowerOnTimerLocked()
     while (setTimePoint.count() < currentTime) {
         powerOnTriggerTimerList_.erase(powerOnTriggerTimerList_.begin());
         if (powerOnTriggerTimerList_.size() == 0) {
-            SetLocked(POWER_ON_ALARM, std::chrono::milliseconds(currentTime + TEN_YEARS_TO_SECOND * ONE_THOUSAND),
-                bootTime);
-            lastSetTime_[POWER_ON_ALARM] = 0;
+            // current version cannot cancel a power-on timer
+            // set trigger time to ten years as a never trigger timer to cancel the timer
+            int64_t timeNeverTrigger = currentTime + TEN_YEARS_TO_SECOND * ONE_THOUSAND;
+            SetLocked(POWER_ON_ALARM, std::chrono::milliseconds(timeNeverTrigger), bootTime);
+            lastSetTime_[POWER_ON_ALARM] = timeNeverTrigger;
             return;
         }
         timerInfo = powerOnTriggerTimerList_[0];
