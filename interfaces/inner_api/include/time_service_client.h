@@ -18,6 +18,7 @@
 
 #include <sstream>
 
+#include "itimer_info.h"
 #include "itime_service.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"

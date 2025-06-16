@@ -30,6 +30,7 @@
 #include "ipc_skeleton.h"
 #include "time_permission.h"
 #include "time_sysevent.h"
+#include "itimer_info.h"
 #ifdef RDB_ENABLE
 #include "rdb_helper.h"
 #include "timer_database.h"
@@ -63,9 +64,11 @@ public:
     int32_t GetTimeZone(std::string &timeZoneId) override;
     int32_t GetThreadTimeMs(int64_t &time) override;
     int32_t GetThreadTimeNs(int64_t &time) override;
-    int32_t CreateTimer(const SimpleTimerInfo& simpleTimerInfo,
-                        const sptr<IRemoteObject> &timerCallback,
-                        uint64_t &timerId) override;
+    int32_t CreateTimer(const std::string &name, int type, bool repeat, bool disposable, bool autoRestore,
+                        uint64_t interval, const OHOS::AbilityRuntime::WantAgent::WantAgent &wantAgent,
+                        const sptr<IRemoteObject> &timerCallback, uint64_t &timerId) override;
+    int32_t CreateTimerWithoutWA(const std::string &name, int type, bool repeat, bool disposable, bool autoRestore,
+                        uint64_t interval, const sptr<IRemoteObject> &timerCallback, uint64_t &timerId) override;
     int32_t CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, const sptr<IRemoteObject> &obj,
         uint64_t &timerId);
     int32_t CreateTimer(TimerPara &paras, std::function<int32_t (const uint64_t)> callback, uint64_t &timerId);
