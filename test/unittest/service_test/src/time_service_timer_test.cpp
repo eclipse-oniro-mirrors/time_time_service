@@ -68,6 +68,8 @@ constexpr int TIMER_ALARM_COUNT = 50;
 static const int MAX_PID_LIST_SIZE = 1024;
 #ifdef SET_AUTO_REBOOT_ENABLE
 static const int POWER_ON_ALARM = 6;
+constexpr int64_t TEN_YEARS_TO_SECOND = 10 * 365 * 24 * 60 * 60;
+constexpr uint64_t SECOND_TO_MILLISECOND = 1000;
 #endif
 
 static HapPolicyParams g_policyA = {
@@ -2065,7 +2067,8 @@ HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked001, TestSize.Level0)
 
     timerManager->powerOnTriggerTimerList_.clear();
     timerManager->ReschedulePowerOnTimerLocked();
-    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], 0);
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM] >= currentTime + TEN_YEARS_TO_SECOND * SECOND_TO_MILLISECOND,
+        true);
 }
 #endif
 

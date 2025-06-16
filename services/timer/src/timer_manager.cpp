@@ -63,6 +63,7 @@ constexpr int TIMER_COUNT_TOP_NUM = 5;
 constexpr const char* AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
 #ifdef SET_AUTO_REBOOT_ENABLE
 constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
+constexpr int64_t TEN_YEARS_TO_SECOND = 10 * 365 * 24 * 60 * 60;
 #endif
 constexpr const char* NO_LOG_APP = "wifi_manager_service";
 
@@ -831,7 +832,7 @@ void TimerManager::DeleteTimerFromPowerOnTimerListById(int64_t timerId)
                                         [timerId](const auto& triggerTimerInfo) {
                                             return triggerTimerInfo->id == timerId;
                                         });
-    if (it == powerOnTriggerTimerList_.end()) {
+    if (deleteTimerInfo == powerOnTriggerTimerList_.end()) {
         return;
     }
     powerOnTriggerTimerList_.erase(deleteTimerInfo);
@@ -841,14 +842,17 @@ void TimerManager::DeleteTimerFromPowerOnTimerListById(int64_t timerId)
 void TimerManager::ReschedulePowerOnTimerLocked()
 {
     auto bootTime = TimeUtils::GetBootTimeNs();
-    if (powerOnTriggerTimerList_.size() == 0) {
-        SetLocked(POWER_ON_ALARM, std::chrono::nanoseconds(0), bootTime);
-        lastSetTime_[POWER_ON_ALARM] = 0;
-        return;
-    }
     int64_t currentTime = 0;
     if (TimeUtils::GetWallTimeMs(currentTime) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "currentTime get failed");
+        return;
+    }
+    if (powerOnTriggerTimerList_.size() == 0) {
+        // current version cannot cancel a power-on timer
+        // set trigger time to ten years as a never trigger timer to cancel the timer
+        int64_t timeNeverTrigger = currentTime + TEN_YEARS_TO_SECOND * ONE_THOUSAND;
+        SetLocked(POWER_ON_ALARM, std::chrono::milliseconds(timeNeverTrigger), bootTime);
+        lastSetTime_[POWER_ON_ALARM] = timeNeverTrigger;
         return;
     }
     std::sort(powerOnTriggerTimerList_.begin(), powerOnTriggerTimerList_.end(),
@@ -860,8 +864,11 @@ void TimerManager::ReschedulePowerOnTimerLocked()
     while (setTimePoint.count() < currentTime) {
         powerOnTriggerTimerList_.erase(powerOnTriggerTimerList_.begin());
         if (powerOnTriggerTimerList_.size() == 0) {
-            SetLocked(POWER_ON_ALARM, std::chrono::nanoseconds(0), bootTime);
-            lastSetTime_[POWER_ON_ALARM] = 0;
+            // current version cannot cancel a power-on timer
+            // set trigger time to ten years as a never trigger timer to cancel the timer
+            int64_t timeNeverTrigger = currentTime + TEN_YEARS_TO_SECOND * ONE_THOUSAND;
+            SetLocked(POWER_ON_ALARM, std::chrono::milliseconds(timeNeverTrigger), bootTime);
+            lastSetTime_[POWER_ON_ALARM] = timeNeverTrigger;
             return;
         }
         timerInfo = powerOnTriggerTimerList_[0];
@@ -887,9 +894,15 @@ std::shared_ptr<Batch> TimerManager::FindFirstWakeupBatchLocked()
 
 void TimerManager::SetLocked(int type, std::chrono::nanoseconds when, std::chrono::steady_clock::time_point bootTime)
 {
+    #ifdef SET_AUTO_REBOOT_ENABLE
+    if (type != POWER_ON_ALARM && when.count() <= 0) {
+        when = bootTime.time_since_epoch();
+    }
+    #else
     if (when.count() <= 0) {
         when = bootTime.time_since_epoch();
     }
+    #endif
     handler_->Set(static_cast<uint32_t>(type), when, bootTime);
 }
 
