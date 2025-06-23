@@ -128,7 +128,7 @@ ohos_shared_library("time_system_ability") {
     ]
   }
 
-  if (time_service_set_auto_reboot) {
+  if (!is_emulator && time_service_set_auto_reboot) {
     defines += [ "SET_AUTO_REBOOT_ENABLE" ]
   }
 
@@ -230,7 +230,7 @@ ohos_static_library("time_system_ability_static") {
     defines += [ "DEVICE_STANDBY_ENABLE" ]
   }
 
-  if (time_service_set_auto_reboot) {
+  if (!is_emulator && time_service_set_auto_reboot) {
     defines += [ "SET_AUTO_REBOOT_ENABLE" ]
   }
 
