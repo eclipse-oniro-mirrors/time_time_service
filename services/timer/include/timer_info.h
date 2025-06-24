@@ -92,7 +92,6 @@ public:
     bool ChangeStatusToAdjust();
 private:
     bool RestoreTimer();
-    bool CheckStatusBeforeAdjust();
 };
 } // MiscService
 } // OHOS
