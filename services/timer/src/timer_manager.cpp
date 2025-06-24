@@ -830,7 +830,7 @@ void TimerManager::DeleteTimerFromPowerOnTimerListById(int64_t timerId)
 {
     auto deleteTimerInfo = std::find_if(powerOnTriggerTimerList_.begin(), powerOnTriggerTimerList_.end(),
                                         [timerId](const auto& triggerTimerInfo) {
-                                            return triggerTimerInfo->id == timerId;
+                                            return triggerTimerInfo->id == static_cast<uint64_t>timerId;
                                         });
     if (deleteTimerInfo == powerOnTriggerTimerList_.end()) {
         return;
