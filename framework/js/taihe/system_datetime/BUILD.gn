@@ -18,14 +18,15 @@ import("//base/time/time_service/time.gni")
 
 subsystem_name = "time"
 part_name = "time_service"
-taihe_generated_file_path = "$taihe_file_path/out/$subsystem_name/$part_name"
+taihe_generated_file_path_datetime =
+    "$taihe_file_path/out/$subsystem_name/$part_name/systemDateTime"
 
 copy_taihe_idl("copy_systemdatetime") {
   sources = [ "idl/ohos.time_service.systemDateTime.taihe" ] 
 }
 
 ohos_taihe("run_taihe") {
-  taihe_generated_file_path = "$taihe_generated_file_path"
+  taihe_generated_file_path = "${taihe_generated_file_path_datetime}"
   deps = [ ":copy_systemdatetime" ]
   outputs = [
     "$taihe_generated_file_path/src/ohos.time_service.systemDateTime.ani.cpp",
@@ -34,7 +35,7 @@ ohos_taihe("run_taihe") {
 }
 
 taihe_shared_library("systemdatetime_taihe_native") {
-  taihe_generated_file_path = "$taihe_generated_file_path"
+  taihe_generated_file_path = "${taihe_generated_file_path_datetime}"
   part_name = "$part_name"
   subsystem_name = "$subsystem_name"
   sources = get_target_outputs(":run_taihe")
@@ -71,8 +72,8 @@ taihe_shared_library("systemdatetime_taihe_native") {
 }
 
 generate_static_abc("systemdatetime_abc") {
-  base_url = "$taihe_generated_file_path"
-  files = [ "$taihe_generated_file_path/@ohos.systemDateTime.ets" ]
+  base_url = "${taihe_generated_file_path_datetime}"
+  files = [ "${taihe_generated_file_path_datetime}/@ohos.systemDateTime.ets" ]
   is_boot_abc = "True"
   device_dst_file = "/system/framework/systemdatetime_abc.abc"
   dependencies = [ ":run_taihe" ]
