@@ -26,6 +26,11 @@ struct AutoTimeInfo {
     std::string status;
     int64_t lastUpdateTime;
 };
+enum NtpRefreshCode {
+    NO_NEED_REFRESH,
+    REFRESH_SUCCESS,
+    REFRESH_FAILED
+};
 
 class NtpUpdateTime {
 public:
@@ -43,7 +48,8 @@ public:
 
 private:
     NtpUpdateTime();
-    static bool GetNtpTimeInner();
+    static NtpRefreshCode GetNtpTimeInner();
+    static bool CheckNeedSetTime(NtpRefreshCode code, int64_t time);
     static bool GetRealTimeInner(int64_t &time);
     static void ChangeNtpServerCallback(const char *key, const char *value, void *context);
     static std::vector<std::string> SplitNtpAddrs(const std::string &ntpStr);
