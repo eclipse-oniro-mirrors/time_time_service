@@ -1960,7 +1960,7 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo009, TestSize.Level0)
 
 /**
 * @tc.name: TimerInfo010.
-* @tc.desc: test CheckStatusBeforeAdjust.
+* @tc.desc: test ChangeStatusToAdjust.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimerTest, TimerInfo010, TestSize.Level0)
@@ -1972,12 +1972,12 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo010, TestSize.Level0)
     EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::INIT);
     auto timePoint = std::chrono::steady_clock::now();
     timerInfo.AdjustTimer(timePoint, 1, 0);
-    EXPECT_TRUE(timerInfo.CheckStatusBeforeAdjust());
+    EXPECT_TRUE(timerInfo.ChangeStatusToAdjust());
     EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::ADJUST);
 
     timerInfo.ProxyTimer(empty, milliseconds(3000));
     EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::PROXY);
-    EXPECT_FALSE(timerInfo.CheckStatusBeforeAdjust());
+    EXPECT_FALSE(timerInfo.ChangeStatusToAdjust());
 }
 
 /**
