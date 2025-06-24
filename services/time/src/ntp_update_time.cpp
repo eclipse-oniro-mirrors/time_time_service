@@ -25,6 +25,7 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr int64_t NANO_TO_MILLISECOND = 1000000;
+constexpr int64_t SECOND_TO_MILLISECOND = 1000;
 constexpr int64_t HALF_DAY_TO_MILLISECOND = 43200000;
 constexpr const char* NTP_SERVER_SYSTEM_PARAMETER = "persist.time.ntpserver";
 constexpr const char* NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER = "persist.time.ntpserver_specific";
@@ -225,9 +226,15 @@ void NtpUpdateTime::SetSystemTime()
         requestMutex_.unlock();
         return;
     }
-    int64_t curBootTime = 0;
-    if (TimeUtils::GetBootTimeMs(curBootTime) != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail");
+    int64_t currentWallTime = 0;
+    if (TimeUtils::GetWallTimeMs(currentWallTime) != ERR_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get walltime fail");
+        requestMutex_.unlock();
+        return;
+    }
+
+    if (std::abs(currentWallTime - currentTime) < SECOND_TO_MILLISECOND) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "no need to refresh time");
         requestMutex_.unlock();
         return;
     }
