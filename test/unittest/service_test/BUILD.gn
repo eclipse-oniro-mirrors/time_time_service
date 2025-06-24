@@ -56,7 +56,7 @@ ohos_unittest("TimeServiceTimeTest") {
     debug = false
   }
   defines = []
-  if (time_service_set_auto_reboot) {
+  if (!is_emulator && time_service_set_auto_reboot) {
     defines += [ "SET_AUTO_REBOOT_ENABLE" ]
   }
   external_deps = [
@@ -108,7 +108,7 @@ ohos_unittest("TimeServiceTimerTest") {
     debug = false
   }
   defines = []
-  if (time_service_set_auto_reboot) {
+  if (!is_emulator && time_service_set_auto_reboot) {
     defines += [ "SET_AUTO_REBOOT_ENABLE" ]
   }
   external_deps = [
