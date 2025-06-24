@@ -89,6 +89,7 @@ public:
     bool RestoreProxyTimer();
     bool AdjustTimer(const std::chrono::steady_clock::time_point &now, const uint32_t interval, const uint32_t delta);
     bool RestoreAdjustTimer();
+    bool ChangeStatusToAdjust();
 private:
     bool RestoreTimer();
     bool CheckStatusBeforeAdjust();
