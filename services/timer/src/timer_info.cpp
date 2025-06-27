@@ -199,21 +199,42 @@ bool TimerInfo::RestoreProxyTimer()
     return RestoreTimer();
 }
 
+bool TimerInfo::ChangeStatusToAdjust()
+{
+    //Change timer state
+    switch (state) {
+        case INIT:
+        case ADJUST:
+            state = ADJUST;
+            return true;
+        case PROXY:
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Adjust timer in proxy state, id: %{public}" PRIu64 "", id);
+            break;
+        default:
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Error state, id: %{public}" PRIu64 ", state: %{public}d", id, state);
+    }
+    return false;
+}
+
 bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now,
                             const uint32_t interval, const uint32_t delta)
 {
+    if (!ChangeStatusToAdjust()) {
+        return false;
+    }
+    CalculateOriWhenElapsed();
     auto oldWhenElapsed = whenElapsed;
     auto oldMaxWhenElapsed = maxWhenElapsed;
     std::chrono::duration<int, std::ratio<1, HALF_SECEND>> halfIntervalSec(interval);
     std::chrono::duration<int, std::ratio<1, 1>> intervalSec(interval);
     std::chrono::duration<int, std::ratio<1, 1>> deltaSec(delta);
-    auto oldTimeSec = std::chrono::duration_cast<std::chrono::seconds>(whenElapsed.time_since_epoch());
+    auto oldTimeSec = std::chrono::duration_cast<std::chrono::seconds>(originWhenElapsed.time_since_epoch());
     auto timeSec = ((oldTimeSec + halfIntervalSec) / intervalSec) * intervalSec + deltaSec;
     whenElapsed = std::chrono::steady_clock::time_point(timeSec);
     if (windowLength == std::chrono::milliseconds::zero()) {
         maxWhenElapsed = whenElapsed;
     } else {
-        auto oldMaxTimeSec = std::chrono::duration_cast<std::chrono::seconds>(maxWhenElapsed.time_since_epoch());
+        auto oldMaxTimeSec = std::chrono::duration_cast<std::chrono::seconds>(originMaxWhenElapsed.time_since_epoch());
         auto maxTimeSec = ((oldMaxTimeSec + halfIntervalSec) / intervalSec) * intervalSec + deltaSec;
         maxWhenElapsed = std::chrono::steady_clock::time_point(maxTimeSec);
     }

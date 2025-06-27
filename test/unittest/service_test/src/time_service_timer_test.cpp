@@ -2073,6 +2073,28 @@ HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked001, TestSize.Level0)
 #endif
 
 /**
+* @tc.name: TimerInfo010.
+* @tc.desc: test ChangeStatusToAdjust.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, TimerInfo010, TestSize.Level0)
+{
+    auto zero = milliseconds(0);
+    std::chrono::steady_clock::time_point empty (zero);
+    auto timerInfo = TimerInfo("", 0, ITimerManager::ELAPSED_REALTIME, zero, empty, zero, empty, zero, nullptr,
+                               nullptr, 0, false, 0, 0, "");
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::INIT);
+    auto timePoint = std::chrono::steady_clock::now();
+    timerInfo.AdjustTimer(timePoint, 1, 0);
+    EXPECT_TRUE(timerInfo.ChangeStatusToAdjust());
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::ADJUST);
+
+    timerInfo.ProxyTimer(empty, milliseconds(3000));
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::PROXY);
+    EXPECT_FALSE(timerInfo.ChangeStatusToAdjust());
+}
+
+/**
 * @tc.name: ResetAllProxy001.
 * @tc.desc: test RefreshNetworkTimeByTimer.
 * @tc.type: FUNC
