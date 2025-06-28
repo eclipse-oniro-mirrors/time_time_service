@@ -25,7 +25,7 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr int64_t NANO_TO_MILLISECOND = 1000000;
-constexpr int64_t SECOND_TO_MILLISECOND = 1000;
+constexpr int64_t TWO_SECOND_TO_MILLISECOND = 2000;
 constexpr int64_t HALF_DAY_TO_MILLISECOND = 43200000;
 constexpr const char* NTP_SERVER_SYSTEM_PARAMETER = "persist.time.ntpserver";
 constexpr const char* NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER = "persist.time.ntpserver_specific";
@@ -147,10 +147,10 @@ bool NtpUpdateTime::IsInUpdateInterval()
     return false;
 }
 
-bool NtpUpdateTime::GetNtpTimeInner()
+NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
 {
     if (IsInUpdateInterval()) {
-        return true;
+        return NO_NEED_REFRESH;
     }
 
     std::vector<std::string> ntpSpecList = SplitNtpAddrs(autoTimeInfo_.ntpServerSpec);
@@ -160,11 +160,11 @@ bool NtpUpdateTime::GetNtpTimeInner()
         for (size_t j = 0; j < ntpSpecList.size(); j++) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpSpecList[j].c_str());
             if (NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[j])) {
-                return true;
+                return REFRESH_SUCCESS;
             }
         }
     }
-    return false;
+    return REFRESH_FAILED;
 }
 
 bool NtpUpdateTime::GetRealTimeInner(int64_t &time)
@@ -183,11 +183,29 @@ bool NtpUpdateTime::GetRealTime(int64_t &time)
     return GetRealTimeInner(time);
 }
 
+bool NtpUpdateTime::CheckNeedSetTime(NtpRefreshCode code, int64_t time)
+{
+    if (code == NO_NEED_REFRESH) {
+        int64_t currentWallTime = 0;
+        if (TimeUtils::GetWallTimeMs(currentWallTime) != ERR_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "get walltime fail");
+            return false;
+        }
+    
+        if (std::abs(currentWallTime - time) < TWO_SECOND_TO_MILLISECOND) {
+            TIME_HILOGW(TIME_MODULE_SERVICE, "no need to refresh time");
+            return false;
+        }
+    }
+    return true;
+}
+
 bool NtpUpdateTime::GetNtpTime(int64_t &time)
 {
     std::lock_guard<std::mutex> autoLock(requestMutex_);
 
-    if (!GetNtpTimeInner()) {
+    auto ret = GetNtpTimeInner();
+    if (ret == REFRESH_FAILED) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed");
         return false;
     }
@@ -196,7 +214,7 @@ bool NtpUpdateTime::GetNtpTime(int64_t &time)
         return false;
     }
 
-    if (autoTimeInfo_.status == AUTO_TIME_STATUS_ON) {
+    if (autoTimeInfo_.status == AUTO_TIME_STATUS_ON && CheckNeedSetTime(ret, time)) {
         TimeSystemAbility::GetInstance()->SetTimeInner(time);
     }
     return true;
@@ -214,7 +232,8 @@ void NtpUpdateTime::SetSystemTime()
         return;
     }
 
-    if (!GetNtpTimeInner()) {
+    auto ret = GetNtpTimeInner();
+    if (ret == REFRESH_FAILED) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed");
         requestMutex_.unlock();
         return;
@@ -226,15 +245,7 @@ void NtpUpdateTime::SetSystemTime()
         requestMutex_.unlock();
         return;
     }
-    int64_t currentWallTime = 0;
-    if (TimeUtils::GetWallTimeMs(currentWallTime) != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "get walltime fail");
-        requestMutex_.unlock();
-        return;
-    }
-
-    if (std::abs(currentWallTime - currentTime) < SECOND_TO_MILLISECOND) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "no need to refresh time");
+    if (!CheckNeedSetTime(ret, currentTime)) {
         requestMutex_.unlock();
         return;
     }

@@ -160,7 +160,7 @@ void TestNtpThread(const char *name)
     int64_t timeLater;
     auto errCodeRealTime = TimeServiceClient::GetInstance()->GetRealTimeMs(timeLater);
     EXPECT_EQ(errCodeRealTime, TimeError::E_TIME_OK);
-    EXPECT_GT(timeLater, time);
+    EXPECT_GE(timeLater, time);
 }
 
 /**
