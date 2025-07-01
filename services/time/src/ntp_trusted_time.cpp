@@ -28,6 +28,8 @@ constexpr int NANO_TO_SECOND =  1000000000;
 constexpr int64_t ONE_DAY = 86400000;
 } // namespace
 
+std::mutex NtpTrustedTime::mTimeResultMutex_;
+
 NtpTrustedTime &NtpTrustedTime::GetInstance()
 {
     static NtpTrustedTime instance;
@@ -39,6 +41,7 @@ bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     SNTPClient client;
     if (client.RequestTime(ntpServer)) {
+        std::lock_guard<std::mutex> lock(mTimeResultMutex_);
         if (mTimeResult != nullptr) {
             mTimeResult->Clear();
         }
@@ -54,6 +57,7 @@ bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
 int64_t NtpTrustedTime::CurrentTimeMillis()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
+    std::lock_guard<std::mutex> lock(mTimeResultMutex_);
     if (mTimeResult == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Missing authoritative time source");
         return TIME_RESULT_UNINITED;
@@ -65,6 +69,7 @@ int64_t NtpTrustedTime::CurrentTimeMillis()
 int64_t NtpTrustedTime::ElapsedRealtimeMillis()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
+    std::lock_guard<std::mutex> lock(mTimeResultMutex_);
     if (mTimeResult == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Missing authoritative time source");
         return TIME_RESULT_UNINITED;
@@ -75,6 +80,7 @@ int64_t NtpTrustedTime::ElapsedRealtimeMillis()
 
 int64_t NtpTrustedTime::GetCacheAge()
 {
+    std::lock_guard<std::mutex> lock(mTimeResultMutex_);
     if (mTimeResult != nullptr) {
         return std::chrono::duration_cast<std::chrono::milliseconds>(
                    std::chrono::steady_clock::now().time_since_epoch())

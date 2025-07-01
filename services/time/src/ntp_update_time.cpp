@@ -179,7 +179,6 @@ bool NtpUpdateTime::GetRealTimeInner(int64_t &time)
 
 bool NtpUpdateTime::GetRealTime(int64_t &time)
 {
-    std::lock_guard<std::mutex> autoLock(requestMutex_);
     return GetRealTimeInner(time);
 }
 

@@ -18,6 +18,7 @@
 #define SNTP_CLIENT_NTP_TRUSTED_TIME_H
 
 #include "time_common.h"
+#include <mutex>
 
 namespace OHOS {
 namespace MiscServices {
@@ -50,6 +51,7 @@ public:
 
 private:
     std::shared_ptr<TimeResult> mTimeResult {};
+    static std::mutex mTimeResultMutex_;
 };
 } // namespace MiscServices
 } // namespace OHOS
