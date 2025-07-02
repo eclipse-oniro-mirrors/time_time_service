@@ -371,16 +371,36 @@ int32_t TimeSystemAbility::CheckTimerPara(const DatabaseType type, const TimerPa
     return E_TIME_OK;
 }
 
-int32_t TimeSystemAbility::CreateTimer(const SimpleTimerInfo& simpleTimerInfo,
-                                       const sptr<IRemoteObject> &timerCallback,
-                                       uint64_t &timerId)
+int32_t TimeSystemAbility::CreateTimer(const std::string &name, int type, bool repeat, bool disposable,
+                                       bool autoRestore, uint64_t interval,
+                                       const OHOS::AbilityRuntime::WantAgent::WantAgent &wantAgent,
+                                       const sptr<IRemoteObject> &timerCallback, uint64_t &timerId)
 {
     TimeXCollie timeXCollie("TimeService::CreateTimer");
     if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
         return E_TIME_NOT_SYSTEM_APP;
     }
-    auto timerInfo = std::make_shared<SimpleTimerInfo>(simpleTimerInfo);
+    std::shared_ptr<SimpleTimerInfo> timerInfo = std::make_shared<SimpleTimerInfo>(name, type, repeat, disposable,
+        autoRestore, interval, std::make_shared<OHOS::AbilityRuntime::WantAgent::WantAgent>(wantAgent));
+    auto ret = CreateTimer(timerInfo, timerCallback, timerId);
+    if (ret != E_TIME_OK) {
+        return E_TIME_DEAL_FAILED;
+    }
+    return E_TIME_OK;
+}
+
+int32_t TimeSystemAbility::CreateTimerWithoutWA(const std::string &name, int type, bool repeat, bool disposable,
+    bool autoRestore, uint64_t interval,
+    const sptr<IRemoteObject> &timerCallback, uint64_t &timerId)
+{
+    TimeXCollie timeXCollie("TimeService::CreateTimer");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
+    std::shared_ptr<SimpleTimerInfo> timerInfo = std::make_shared<SimpleTimerInfo>(name, type, repeat, disposable,
+    autoRestore, interval, nullptr);
     auto ret = CreateTimer(timerInfo, timerCallback, timerId);
     if (ret != E_TIME_OK) {
         return E_TIME_DEAL_FAILED;

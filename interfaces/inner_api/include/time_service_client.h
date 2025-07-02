@@ -18,6 +18,7 @@
 
 #include <sstream>
 
+#include "itimer_info.h"
 #include "itime_service.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
@@ -465,6 +466,7 @@ private:
     void SetProxy(sptr<ITimeService> proxy);
     void CheckNameLocked(std::string name);
     int32_t ConvertErrCode(int32_t errCode);
+    int32_t RecordRecoverTimerInfoMap(std::shared_ptr<ITimerInfo> timerOptions, uint64_t timerId);
 
     sptr<TimeServiceListener> listener_;
     static std::mutex instanceLock_;

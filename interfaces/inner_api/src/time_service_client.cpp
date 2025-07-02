@@ -59,11 +59,16 @@ void TimeServiceClient::TimeServiceListener::OnAddSystemAbility(
         for (; iter != recoverTimer.end(); iter++) {
             auto timerId = iter->first;
             auto timerInfo = iter->second->timerInfo;
-            std::shared_ptr<SimpleTimerInfo> simpleTimerInfo = std::make_shared<SimpleTimerInfo>(
-                timerInfo->name, timerInfo->type, timerInfo->repeat, timerInfo->disposable,
-                timerInfo->autoRestore, timerInfo->interval, timerInfo->wantAgent);
             TIME_HILOGW(TIME_MODULE_CLIENT, "recover cb-timer: %{public}" PRId64 "", timerId);
-            proxy->CreateTimer(*simpleTimerInfo, timerCallbackInfoObject, timerId);
+            if (timerInfo->wantAgent) {
+                proxy->CreateTimer(timerInfo->name, timerInfo->type, timerInfo->repeat, timerInfo->disposable,
+                    timerInfo->autoRestore, timerInfo->interval, *timerInfo->wantAgent,
+                    timerCallbackInfoObject, timerId);
+            } else {
+                proxy->CreateTimerWithoutWA(timerInfo->name, timerInfo->type, timerInfo->repeat, timerInfo->disposable,
+                    timerInfo->autoRestore, timerInfo->interval, timerCallbackInfoObject, timerId);
+            }
+            
             if (iter->second->state == 1) {
                 proxy->StartTimer(timerId, iter->second->triggerTime);
             }
@@ -308,39 +313,52 @@ int32_t TimeServiceClient::CreateTimerV9(std::shared_ptr<ITimerInfo> timerOption
     if (proxy == nullptr) {
         return E_TIME_NULLPTR;
     }
-    std::shared_ptr<SimpleTimerInfo> simpleTimerInfo = std::make_shared<SimpleTimerInfo>(
-        timerOptions->name, timerOptions->type, timerOptions->repeat, timerOptions->disposable,
-        timerOptions->autoRestore, timerOptions->interval, timerOptions->wantAgent);
-    int32_t errCode = proxy->CreateTimer(*simpleTimerInfo, timerCallbackInfoObject, timerId);
+    int32_t errCode = E_TIME_OK;
+    if (timerOptions->wantAgent) {
+        errCode = proxy->CreateTimer(timerOptions->name, timerOptions->type, timerOptions->repeat,
+            timerOptions->disposable, timerOptions->autoRestore, timerOptions->interval,
+            *timerOptions->wantAgent, timerCallbackInfoObject, timerId);
+    } else {
+        errCode = proxy->CreateTimerWithoutWA(timerOptions->name, timerOptions->type, timerOptions->repeat,
+            timerOptions->disposable, timerOptions->autoRestore, timerOptions->interval,
+            timerCallbackInfoObject, timerId);
+    }
     if (errCode != E_TIME_OK) {
         errCode = ConvertErrCode(errCode);
         TIME_HILOGE(TIME_MODULE_CLIENT, "create timer failed, errCode=%{public}d", errCode);
         return errCode;
     }
-
     if (timerOptions->wantAgent == nullptr) {
-        std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
-        if (timerOptions->name != "") {
-            CheckNameLocked(timerOptions->name);
-        }
-        auto info = recoverTimerInfoMap_.find(timerId);
-        if (info != recoverTimerInfoMap_.end()) {
-            TIME_HILOGE(TIME_MODULE_CLIENT, "recover timer info already insert");
-            return E_TIME_DEAL_FAILED;
-        } else {
-            auto recoverTimerInfo = std::make_shared<RecoverTimerInfo>();
-            recoverTimerInfo->timerInfo = timerOptions;
-            recoverTimerInfo->state = 0;
-            recoverTimerInfo->triggerTime = 0;
-            recoverTimerInfoMap_[timerId] = recoverTimerInfo;
+        auto ret = RecordRecoverTimerInfoMap(timerOptions, timerId);
+        if (ret != E_TIME_OK) {
+            return ret;
         }
     }
-
     TIME_HILOGD(TIME_MODULE_CLIENT, "CreateTimer id: %{public}" PRId64 "", timerId);
     if (!TimerCallback::GetInstance()->InsertTimerCallbackInfo(timerId, timerOptions)) {
         return E_TIME_DEAL_FAILED;
     }
     return errCode;
+}
+
+int32_t TimeServiceClient::RecordRecoverTimerInfoMap(std::shared_ptr<ITimerInfo> timerOptions, uint64_t timerId)
+{
+    std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
+    if (timerOptions->name != "") {
+        CheckNameLocked(timerOptions->name);
+    }
+    auto info = recoverTimerInfoMap_.find(timerId);
+    if (info != recoverTimerInfoMap_.end()) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "recover timer info already insert");
+        return E_TIME_DEAL_FAILED;
+    } else {
+        auto recoverTimerInfo = std::make_shared<RecoverTimerInfo>();
+        recoverTimerInfo->timerInfo = timerOptions;
+        recoverTimerInfo->state = 0;
+        recoverTimerInfo->triggerTime = 0;
+        recoverTimerInfoMap_[timerId] = recoverTimerInfo;
+    }
+    return E_TIME_OK;
 }
 
 bool TimeServiceClient::StartTimer(uint64_t timerId, uint64_t triggerTime)

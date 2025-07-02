@@ -15,7 +15,6 @@
 
 import ITimerCallback;
 sequenceable OHOS.IRemoteObject;
-sequenceable SimpleTimerInfo..OHOS.MiscServices.SimpleTimerInfo;
 sequenceable OHOS.AbilityRuntime.WantAgent.WantAgent;
 interface OHOS.MiscServices.ITimeService {
     void SetTime([in] long time, [in] byte apiVersion);
@@ -23,7 +22,12 @@ interface OHOS.MiscServices.ITimeService {
     void GetTimeZone([out] String timezoneId);
     void GetThreadTimeMs([out] long time);
     void GetThreadTimeNs([out] long time);
-    void CreateTimer([in] SimpleTimerInfo simpleTimerInfo, [in] IRemoteObject timerCallback, [inout] unsigned long timerId);
+    void CreateTimer([in] String name, [in] int type, [in] boolean repeat, [in] boolean disposable,
+                     [in] boolean autoRestore, [in] unsigned long interval, [in] WantAgent wantAgent,
+                     [in] IRemoteObject timerCallback, [inout] unsigned long timerId);
+    void CreateTimerWithoutWA([in] String name, [in] int type, [in] boolean repeat, [in] boolean disposable,
+                     [in] boolean autoRestore, [in] unsigned long interval, [in] IRemoteObject timerCallback,
+                     [inout] unsigned long timerId);
     void StartTimer([in] unsigned long timerId, [in] unsigned long triggerTime);
     void StopTimer([in] unsigned long timerId);
     void DestroyTimer([in] unsigned long timerId);
