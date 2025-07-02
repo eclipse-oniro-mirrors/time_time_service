@@ -328,30 +328,37 @@ int32_t TimeServiceClient::CreateTimerV9(std::shared_ptr<ITimerInfo> timerOption
         TIME_HILOGE(TIME_MODULE_CLIENT, "create timer failed, errCode=%{public}d", errCode);
         return errCode;
     }
-
     if (timerOptions->wantAgent == nullptr) {
-        std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
-        if (timerOptions->name != "") {
-            CheckNameLocked(timerOptions->name);
-        }
-        auto info = recoverTimerInfoMap_.find(timerId);
-        if (info != recoverTimerInfoMap_.end()) {
-            TIME_HILOGE(TIME_MODULE_CLIENT, "recover timer info already insert");
-            return E_TIME_DEAL_FAILED;
-        } else {
-            auto recoverTimerInfo = std::make_shared<RecoverTimerInfo>();
-            recoverTimerInfo->timerInfo = timerOptions;
-            recoverTimerInfo->state = 0;
-            recoverTimerInfo->triggerTime = 0;
-            recoverTimerInfoMap_[timerId] = recoverTimerInfo;
+        auto ret = RecordRecoverTimerInfoMap(timerOptions, timerId);
+        if (ret != E_TIME_OK) {
+            return ret;
         }
     }
-
     TIME_HILOGD(TIME_MODULE_CLIENT, "CreateTimer id: %{public}" PRId64 "", timerId);
     if (!TimerCallback::GetInstance()->InsertTimerCallbackInfo(timerId, timerOptions)) {
         return E_TIME_DEAL_FAILED;
     }
     return errCode;
+}
+
+int32_t TimeServiceClient::RecordRecoverTimerInfoMap(std::shared_ptr<ITimerInfo> timerOptions, uint64_t timerId)
+{
+    std::lock_guard<std::mutex> lock(recoverTimerInfoLock_);
+    if (timerOptions->name != "") {
+        CheckNameLocked(timerOptions->name);
+    }
+    auto info = recoverTimerInfoMap_.find(timerId);
+    if (info != recoverTimerInfoMap_.end()) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "recover timer info already insert");
+        return E_TIME_DEAL_FAILED;
+    } else {
+        auto recoverTimerInfo = std::make_shared<RecoverTimerInfo>();
+        recoverTimerInfo->timerInfo = timerOptions;
+        recoverTimerInfo->state = 0;
+        recoverTimerInfo->triggerTime = 0;
+        recoverTimerInfoMap_[timerId] = recoverTimerInfo;
+    }
+    return E_TIME_OK;
 }
 
 bool TimeServiceClient::StartTimer(uint64_t timerId, uint64_t triggerTime)
