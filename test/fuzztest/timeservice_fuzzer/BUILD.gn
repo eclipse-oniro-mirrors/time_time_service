@@ -110,6 +110,7 @@ foreach(item, time_fuzztests) {
       "${time_service_path}/ipc/base",
       "${api_path}/include",
       "${time_service_path}/timer/include",
+      "${time_service_path}/time/include/inner_api_include",
       "${time_root_path}/test/fuzztest/timeservice_fuzzer/common",
     ]
 
@@ -125,7 +126,10 @@ foreach(item, time_fuzztests) {
       item.source,
     ]
 
-    deps = [ "${time_service_path}:time_system_ability_static" ]
+    deps = [
+      "${time_service_path}:time_system_ability_static",
+      "${api_path}:time_client",
+      ]
 
     external_deps = [
       "ability_base:want",

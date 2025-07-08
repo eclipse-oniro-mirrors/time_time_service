@@ -14,6 +14,7 @@
  */
 
 #include "timesettimezone_fuzzer.h"
+#include "time_common.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -106,6 +107,31 @@ bool FuzzTimeGetRealTimeMs(const uint8_t *rawData, size_t size)
     return true;
 }
 
+bool FuzzTimeTimeUtilsGetWallTimeMs(const uint8_t *rawData, size_t size)
+{
+    FuzzedDataProvider fdp(rawData, size);
+    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    TimeUtils::GetWallTimeMs(time);
+    return true;
+}
+
+bool FuzzTimeTimeUtilsGetBootTimeNs(const uint8_t *rawData, size_t size)
+{
+    FuzzedDataProvider fdp(rawData, size);
+    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    TimeUtils::GetBootTimeNs(time);
+    TimeUtils::GetBootTimeNs();
+    return true;
+}
+
+bool FuzzTimeTimeUtilsGetBootTimeMs(const uint8_t *rawData, size_t size)
+{
+    FuzzedDataProvider fdp(rawData, size);
+    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    TimeUtils::GetBootTimeNs(time);
+    return true;
+}
+
 }
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -121,5 +147,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     OHOS::FuzzTimeGetTime(data, size);
     OHOS::FuzzTimeGetNtpTimeMs(data, size);
     OHOS::FuzzTimeGetRealTimeMs(data, size);
+    OHOS::FuzzTimeTimeUtilsGetWallTimeMs(data, size);
+    OHOS::FuzzTimeTimeUtilsGetBootTimeNs(data, size);
+    OHOS::FuzzTimeTimeUtilsGetBootTimeMs(data, size);
     return 0;
 }
