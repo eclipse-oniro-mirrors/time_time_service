@@ -23,7 +23,10 @@ ohos_fuzztest("TimeSetTimezoneFuzzTest") {
 
   fuzz_config_file = "${time_root_path}/test/fuzztest/timemanager_fuzzer/timesettimezone_fuzzer"
 
-  include_dirs = [ "${api_path}/include" ]
+  include_dirs = [ 
+    "${api_path}/include",
+    "${time_utils_path}/native/include",
+  ]
 
   cflags = [
     "-g",
@@ -34,7 +37,10 @@ ohos_fuzztest("TimeSetTimezoneFuzzTest") {
 
   sources = [ "timesettimezone_fuzzer.cpp" ]
 
-  deps = [ "${api_path}:time_client" ]
+  deps = [ 
+    "${api_path}:time_client",
+    "${time_utils_path}:time_utils",
+  ]
 
   external_deps = [
     "ability_base:want",
