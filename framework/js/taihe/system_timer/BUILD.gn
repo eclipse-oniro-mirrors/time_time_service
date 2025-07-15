@@ -18,14 +18,15 @@ import("//base/time/time_service/time.gni")
 
 subsystem_name = "time"
 part_name = "time_service"
-taihe_generated_file_path = "$taihe_file_path/out/$subsystem_name/$part_name"
+taihe_generated_file_path_systemtimer =
+    "$taihe_file_path/out/$subsystem_name/$part_name/systemtimer"
 
 copy_taihe_idl("copy_systemtimer") {
   sources = [ "idl/ohos.time_service.systemtimer.taihe" ]
 }
 
 ohos_taihe("run_taihe") {
-  taihe_generated_file_path = "$taihe_generated_file_path"
+  taihe_generated_file_path = "${taihe_generated_file_path_systemtimer}"
   deps = [ ":copy_systemtimer" ]
   outputs = [
     "$taihe_generated_file_path/src/ohos.time_service.systemtimer.ani.cpp",
@@ -33,7 +34,7 @@ ohos_taihe("run_taihe") {
   ]
 }
 taihe_shared_library("systemtimer_taihe_native") {
-  taihe_generated_file_path = "$taihe_generated_file_path"
+  taihe_generated_file_path = "${taihe_generated_file_path_systemtimer}"
   part_name = "$part_name"
   subsystem_name = "$subsystem_name"
   sources = get_target_outputs(":run_taihe")
@@ -72,8 +73,8 @@ taihe_shared_library("systemtimer_taihe_native") {
 }
 
 generate_static_abc("systemtimer_abc") {
-  base_url = "$taihe_generated_file_path"
-  files = [ "$taihe_generated_file_path/@ohos.systemTimer.ets" ]
+  base_url = "$taihe_generated_file_path_systemtimer"
+  files = [ "$taihe_generated_file_path_systemtimer/@ohos.systemTimer.ets" ]
   is_boot_abc = "True"
   device_dst_file = "/system/framework/systemtimer_abc.abc"
   dependencies = [ ":run_taihe" ]
