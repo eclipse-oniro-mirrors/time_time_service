@@ -76,7 +76,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         return ANI_ERROR;
     }
 
-    static const char *namespaceName = "L@ohos/systemDateTime/systemDateTime;";
+    static const char *namespaceName = "@ohos.systemDateTime.systemDateTime";
     ani_namespace ns;
     if (ANI_OK != env->FindNamespace(namespaceName, &ns)) {
         TIME_HILOGE(TIME_MODULE_JS_ANI, "Not found '%{public}s'", namespaceName);
@@ -85,7 +85,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 
     std::array methods = {
         ani_native_function {"getTime", nullptr, reinterpret_cast<void *>(GetTime)},
-        ani_native_function {"getTimezoneSync", ":Lstd/core/String;", reinterpret_cast<void *>(GetTimeZone)},
+        ani_native_function {"getTimezoneSync", ":C{std.core.String}", reinterpret_cast<void *>(GetTimeZone)},
     };
 
     if (ANI_OK != env->Namespace_BindNativeFunctions(ns, methods.data(), methods.size())) {
