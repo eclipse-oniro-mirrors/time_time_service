@@ -595,9 +595,16 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
     }
     #ifdef SET_AUTO_REBOOT_ENABLE
     if (IsPowerOnTimer(alarm)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "alarm needs power on, id=%{public}" PRId64 "", alarm->id);
-        powerOnTriggerTimerList_.push_back(alarm);
-        ReschedulePowerOnTimerLocked();
+        auto timerId = alarm->id;
+        auto timerInfo = std::find_if(powerOnTriggerTimerList_.begin(), powerOnTriggerTimerList_.end(),
+                                      [timerId](const auto& triggerTimerInfo) {
+                                          return triggerTimerInfo->id == timerId;
+                                      });
+        if (timerInfo == powerOnTriggerTimerList_.end()) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "alarm needs power on, id=%{public}" PRId64 "", alarm->id);
+            powerOnTriggerTimerList_.push_back(alarm);
+            ReschedulePowerOnTimerLocked();
+        }
     }
     #endif
     InsertAndBatchTimerLocked(std::move(alarm));
@@ -826,11 +833,11 @@ bool TimerManager::IsPowerOnTimer(std::shared_ptr<TimerInfo> timerInfo)
     return false;
 }
 
-void TimerManager::DeleteTimerFromPowerOnTimerListById(int64_t timerId)
+void TimerManager::DeleteTimerFromPowerOnTimerListById(uint64_t timerId)
 {
     auto deleteTimerInfo = std::find_if(powerOnTriggerTimerList_.begin(), powerOnTriggerTimerList_.end(),
                                         [timerId](const auto& triggerTimerInfo) {
-                                            return triggerTimerInfo->id == static_cast<uint64_t>timerId;
+                                            return triggerTimerInfo->id == timerId;
                                         });
     if (deleteTimerInfo == powerOnTriggerTimerList_.end()) {
         return;

@@ -125,7 +125,7 @@ private:
     void DeleteTimerName(int uid, std::string name, uint64_t timerId);
     #ifdef SET_AUTO_REBOOT_ENABLE
     bool IsPowerOnTimer(std::shared_ptr<TimerInfo> timerInfo);
-    void DeleteTimerFromPowerOnTimerListById(int64_t timerId);
+    void DeleteTimerFromPowerOnTimerListById(uint64_t timerId);
     void ReschedulePowerOnTimerLocked();
     #endif
 

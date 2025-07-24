@@ -2002,6 +2002,36 @@ HWTEST_F(TimeServiceTimerTest, IsPowerOnTimer001, TestSize.Level0)
 }
 
 /**
+* @tc.name: AddPowerOnTimer001.
+* @tc.desc: Test function SetHandlerLocked, to prevent same timer put into TriggerTimerList.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimerTest, AddPowerOnTimer001, TestSize.Level0)
+{
+    auto timerManager = TimerManager::GetInstance();
+    timerManager->powerOnTriggerTimerList_.clear();
+    timerManager->powerOnApps_ = {"testBundleName", "testTimerName"};
+    int64_t currentTime = 0;
+    auto ret = TimeUtils::GetWallTimeMs(currentTime);
+    EXPECT_EQ(ret, ERR_OK);
+    auto duration = std::chrono::milliseconds(currentTime + 10000);
+    auto timePoint = std::chrono::steady_clock::now() + std::chrono::milliseconds(10000);
+
+    auto timerInfo1 = std::make_shared<TimerInfo>("testTimerName", TIMER_ID, 0, duration, timePoint, duration,
+        timePoint, duration, nullptr, nullptr, 0, true, 0, 0, "");
+    timerManager->SetHandlerLocked(timerInfo1, false, false);
+    EXPECT_EQ(timerManager->powerOnTriggerTimerList_.size(), 1);
+    timerManager->SetHandlerLocked(timerInfo1, false, false);
+    EXPECT_EQ(timerManager->powerOnTriggerTimerList_.size(), 1);
+    timerManager->SetHandlerLocked(timerInfo1, false, false);
+    EXPECT_EQ(timerManager->powerOnTriggerTimerList_.size(), 1);
+    timerManager->SetHandlerLocked(timerInfo1, false, false);
+    EXPECT_EQ(timerManager->powerOnTriggerTimerList_.size(), 1);
+    timerManager->RemoveLocked(TIMER_ID, true);
+    EXPECT_EQ(timerManager->powerOnTriggerTimerList_.size(), 0);
+}
+
+/**
 * @tc.name: DeleteTimerFromPowerOnTimerListById001.
 * @tc.desc: Test function ReschedulePowerOnTimer, check delete a timer in powerOnTriggerTimerList_ by timer id.
 * @tc.type: FUNC
