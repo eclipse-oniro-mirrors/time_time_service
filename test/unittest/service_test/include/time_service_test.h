@@ -32,6 +32,12 @@ void TimeOutCallback2(void)
     g_data2 += 1;
 }
 
+int32_t TimeOutCallbackReturn(const uint64_t num)
+{
+    g_data1 += 1;
+    return 0;
+}
+
 uint64_t GetProxyKey(int uid, int pid)
 {
     uint64_t key = (static_cast<uint64_t>(uid) << UID_PROXY_OFFSET) | static_cast<uint64_t>(pid);

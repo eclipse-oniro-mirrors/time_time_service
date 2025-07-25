@@ -20,6 +20,7 @@
 #include "timer_proxy.h"
 #include "time_common.h"
 #include "time_service_test.h"
+#include "timer_info_test.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -27,11 +28,13 @@ using namespace testing::ext;
 using namespace std::chrono;
 
 namespace {
-constexpr uint64_t NANO_TO_MILESECOND = 1000000;
+constexpr int ONE_HUNDRED = 100;
+constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
 const uint64_t TIMER_ID = 88887;
 const int UID = 999996;
 const int PID = 999997;
 const int ELAPSED_REALTIME_WAKEUP = 2;
+
 }
 TimerManager* timerManagerHandler_ = nullptr;
 
@@ -85,12 +88,28 @@ uint64_t CreateTimer(int uid, int pid)
 uint64_t StartTimer(uint64_t timerId)
 {
     int64_t bootTime = 0;
-    TimeUtils::GetBootTimeNs(bootTime);
-    auto nowElapsed = bootTime / NANO_TO_MILESECOND;
-    uint64_t triggerTime = 10000000 + nowElapsed;
+    TimeUtils::GetBootTimeMs(bootTime);
+    uint64_t triggerTime = 10000000 + bootTime;
     auto ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
     EXPECT_EQ(ret, TimeError::E_TIME_OK);
     return triggerTime;
+}
+
+/**
+ * @brief Wait for timer trigger
+ * @param data the global variable that callback function changes
+ * @param interval the time need to wait
+ */
+void WaitForAlarm(std::atomic<int> * data, int interval)
+{
+    int i = 0;
+    if (interval > 0) {
+        usleep(interval);
+    }
+    while (*data == 0 && i < ONE_HUNDRED) {
+        ++i;
+        usleep(MICRO_TO_MILLISECOND);
+    }
 }
 
 /**
@@ -151,19 +170,29 @@ HWTEST_F(TimeProxyTest, UidTimerMap002, TestSize.Level1)
 */
 HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
 {
+    g_data1 = 0;
     int32_t uid = 2000;
     int pid = 1000;
-    uint64_t timerId = CreateTimer(uid, pid);
-    
-    StartTimer(timerId);
-
-    std::vector<std::shared_ptr<TimerInfo>> triggerList;
-    std::shared_ptr<Batch> batch = timerManagerHandler_->alarmBatches_.at(0);
-    std::chrono::steady_clock::time_point tpRpoch(nanoseconds(1000000000));
-    batch->start_ = tpRpoch;
-    auto retTrigger = timerManagerHandler_->TriggerTimersLocked(triggerList, TimeUtils::GetBootTimeNs());
-    EXPECT_EQ(retTrigger, true);
     auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
+    uidTimersMap.clear();
+    TimerPara paras;
+    paras.timerType = ELAPSED_REALTIME_WAKEUP;
+    paras.windowLength = -1;
+    paras.interval = 0;
+    paras.flag = 0;
+    auto wantAgent = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    uint64_t timerId = 0;
+    timerManagerHandler_->CreateTimer(paras, TimeOutCallbackReturn, wantAgent, uid, pid, timerId, NOT_STORE);
+
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
+    uint64_t triggerTime = ONE_HUNDRED + bootTime;
+    auto ret = timerManagerHandler_->StartTimer(timerId, triggerTime);
+    EXPECT_EQ(ret, TimeError::E_TIME_OK);
+    uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
+    EXPECT_EQ(uidTimersMap.size(), (const unsigned int)1);
+    WaitForAlarm(&g_data1, ONE_HUNDRED * MICRO_TO_MILLISECOND);
+    uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
     EXPECT_EQ(uidTimersMap.size(), (const unsigned int)0);
     timerManagerHandler_->DestroyTimer(timerId);
 }
