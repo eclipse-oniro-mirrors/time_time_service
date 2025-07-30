@@ -1352,8 +1352,6 @@ HWTEST_F(TimeServiceTimerTest, TimerManager004, TestSize.Level0)
 */
 HWTEST_F(TimeServiceTimerTest, TimerManager005, TestSize.Level0)
 {
-    TimerManager::GetInstance()->NotifyWantAgentRetry(nullptr);
-
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
