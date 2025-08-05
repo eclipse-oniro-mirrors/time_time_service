@@ -28,13 +28,19 @@ using namespace OHOS::MiscServices::Time;
 namespace {
 // To be implemented.
 
-int64_t CreateTimerSync(TimerOptions const& options)
+int64_t CreateTimerSync(::ohos::time_service::systemtimer::TimerOptions const& options)
 {
     std::shared_ptr<ITimerInfoInstance> iTimerInfoInstance = std::make_shared<ITimerInfoInstance>();
     iTimerInfoInstance->SetType(options.type);
     iTimerInfoInstance->SetRepeat(options.repeat);
-    iTimerInfoInstance->SetInterval(options.interval);
-    iTimerInfoInstance->SetName(std::string(options.name));
+    int64_t intervalValue = options.interval.value_or(0);
+    iTimerInfoInstance->SetInterval(intervalValue);
+    std::string nameValue = std::string(options.name.value_or(""));
+    iTimerInfoInstance->SetName(nameValue);
+    auto callback = options.callback;
+    if (callback.has_value()) {
+        iTimerInfoInstance->SetCallbackInfo(std::function<void()>(callback.value()));
+    }
     uint64_t timerId = 0;
     auto innerCode = TimeServiceClient::GetInstance()->CreateTimerV9(iTimerInfoInstance, timerId);
     if (innerCode != JsErrorCode::ERROR_OK) {

@@ -17,7 +17,13 @@
 @!sts_inject("""
 static { loadLibrary("systemtimer_taihe_native.z") }
 """)
-struct TimerOptions {type: i64; repeat: bool; interval: i64; name: String;}
+struct TimerOptions {
+    type: i32;
+    repeat: bool;
+    interval: Optional<i64>;
+    name: Optional<String>;
+    callback: Optional<() => void>;
+}
 
 @const
 enum TimerType: i32 {

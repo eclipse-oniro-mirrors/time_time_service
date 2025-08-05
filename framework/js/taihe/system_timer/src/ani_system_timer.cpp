@@ -28,11 +28,6 @@ ITimerInfoInstance::~ITimerInfoInstance()
 {
 }
 
-void ITimerInfoInstance::OnTrigger()
-{
-    return;
-}
-
 void ITimerInfoInstance::SetType(const int &_type)
 {
     type = _type;
@@ -42,14 +37,29 @@ void ITimerInfoInstance::SetRepeat(bool _repeat)
 {
     repeat = _repeat;
 }
+
 void ITimerInfoInstance::SetInterval(const uint64_t &_interval)
 {
     interval = _interval;
 }
+
 void ITimerInfoInstance::SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> _wantAgent)
 {
     wantAgent = _wantAgent;
 }
+
+void ITimerInfoInstance::SetCallbackInfo(const std::function<void()> &_callBack)
+{
+    callBack = _callBack;
+}
+
+void ITimerInfoInstance::OnTrigger()
+{
+    if (callBack) {
+        callBack();
+    }
+}
+
 } // namespace Time
 } // namespace MiscServices
 } // namespace OHOS

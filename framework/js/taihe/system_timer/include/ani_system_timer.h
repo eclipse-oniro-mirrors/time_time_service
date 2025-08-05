@@ -36,6 +36,10 @@ public:
     virtual void SetRepeat(bool repeat) override;
     virtual void SetInterval(const uint64_t &interval) override;
     virtual void SetWantAgent(std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent) override;
+    void SetCallbackInfo(const std::function<void()> &callBack);
+
+    private:
+    std::function<void()> callBack = nullptr;
 };
 }
 }
