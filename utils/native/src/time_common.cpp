@@ -46,6 +46,8 @@ int32_t TimeUtils::GetBootTimeNs(int64_t &time)
     return E_TIME_OK;
 }
 
+// LCOV_EXCL_START
+// The method has no input parameters, impossible to construct fuzz test.
 std::chrono::steady_clock::time_point TimeUtils::GetBootTimeNs()
 {
     int64_t timeNow = -1;
@@ -57,6 +59,7 @@ std::chrono::steady_clock::time_point TimeUtils::GetBootTimeNs()
     std::chrono::steady_clock::time_point tp_epoch ((std::chrono::nanoseconds(timeNow)));
     return tp_epoch;
 }
+// LCOV_EXCL_STOP
 
 int32_t TimeUtils::GetBootTimeMs(int64_t &time)
 {

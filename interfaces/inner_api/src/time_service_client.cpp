@@ -891,10 +891,13 @@ void TimeServiceClient::SetProxy(sptr<ITimeService> proxy)
     timeServiceProxy_ = proxy;
 }
 
+// LCOV_EXCL_START
+// The method has no input parameters, impossible to construct fuzz test.
 void TimeServiceClient::ClearProxy()
 {
     std::lock_guard<std::mutex> autoLock(proxyLock_);
     timeServiceProxy_ = nullptr;
 }
+// LCOV_EXCL_STOP
 } // namespace MiscServices
 } // namespace OHOS
