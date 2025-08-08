@@ -50,7 +50,6 @@
         "device_standby",
         "init",
         "power_manager",
-        "googletest",
         "runtime_core"
       ]
     },

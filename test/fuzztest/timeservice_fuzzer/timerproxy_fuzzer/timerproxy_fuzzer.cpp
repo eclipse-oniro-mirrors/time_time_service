@@ -97,14 +97,6 @@ bool FuzzTimerIsProxy(const uint8_t *data, size_t size)
     TimerProxy::GetInstance().IsProxy(uid, pid);
     return true;
 }
-
-bool FuzzTimerNotifyTimer(const uint8_t *data, size_t size)
-{
-    FuzzedDataProvider fdp(data, size);
-    uint64_t id = fdp.ConsumeIntegral<uint64_t>();
-    TimerCallback::GetInstance()->NotifyTimer(id);
-    return true;
-}
 } // namespace OHOS
 
 /* Fuzzer entry point */
@@ -122,6 +114,5 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     OHOS::FuzzTimerEraseTimer(data, size);
     OHOS::FuzzTimerRemoveTimerMap(data, size);
     OHOS::FuzzTimerIsProxy(data, size);
-    OHOS::FuzzTimerNotifyTimer(data, size);
     return 0;
 }

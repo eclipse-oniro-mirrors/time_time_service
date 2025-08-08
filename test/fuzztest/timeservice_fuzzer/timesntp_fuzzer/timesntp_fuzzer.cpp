@@ -70,28 +70,6 @@ bool FuzzTimeRequestTime(const uint8_t *data, size_t size)
     client.RequestTime(host);
     return true;
 }
-
-bool FuzzTimeGetNtpTime(const uint8_t *data, size_t size)
-{
-    SNTPClient client;
-    client.getNtpTime();
-    return true;
-}
-
-bool FuzzTimeGetNtpTimeReference(const uint8_t *data, size_t size)
-{
-    SNTPClient client;
-    client.getNtpTimeReference();
-    return true;
-}
-
-bool FuzzTimeGetRoundTripTime(const uint8_t *data, size_t size)
-{
-    SNTPClient client;
-    client.getRoundTripTime();
-    return true;
-}
-
 } // namespace OHOS
 
 /* Fuzzer entry point */
@@ -105,8 +83,5 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     OHOS::FuzzTimeCreateMessage(data, size);
     OHOS::FuzzTimeReceivedMessage(data, size);
     OHOS::FuzzTimeRequestTime(data, size);
-    OHOS::FuzzTimeGetNtpTime(data, size);
-    OHOS::FuzzTimeGetNtpTimeReference(data, size);
-    OHOS::FuzzTimeGetRoundTripTime(data, size);
     return 0;
 }

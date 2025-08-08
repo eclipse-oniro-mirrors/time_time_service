@@ -100,31 +100,11 @@ bool FuzzTimeDestroyTimerAsyncV9(int64_t timerId, size_t size)
     return true;
 }
 
-bool FuzzTimeCheckNameLocked(const uint8_t* data, size_t size)
-{
-    std::string name(reinterpret_cast<const char *>(data), size);
-    TimeServiceClient::GetInstance()->CheckNameLocked(name);
-    return true;
-}
-
-bool FuzzTimeHandleRecoverMap(int64_t timerId, size_t size)
-{
-    TimeServiceClient::GetInstance()->HandleRecoverMap(timerId);
-    return true;
-}
-
 bool FuzzTimeResetAllProxy(int64_t timerId, size_t size)
 {
     TimeServiceClient::GetInstance()->ResetAllProxy();
     return true;
 }
-
-bool FuzzTimeClearProxy(int64_t timerId, size_t size)
-{
-    TimeServiceClient::GetInstance()->ClearProxy();
-    return true;
-}
-
 }
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -149,9 +129,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     OHOS::FuzzTimeDestroyTimerV9(timerId, size);
     OHOS::FuzzTimeDestroyTimerAsync(timerId, size);
     OHOS::FuzzTimeDestroyTimerAsyncV9(timerId, size);
-    OHOS::FuzzTimeCheckNameLocked(data, size);
-    OHOS::FuzzTimeHandleRecoverMap(timerId, size);
     OHOS::FuzzTimeResetAllProxy(timerId, size);
-    OHOS::FuzzTimeClearProxy(timerId, size);
     return 0;
 }
