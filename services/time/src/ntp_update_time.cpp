@@ -147,6 +147,7 @@ bool NtpUpdateTime::IsInUpdateInterval()
     return false;
 }
 
+// needs to acquire the lock `requestMutex_` before calling this method
 NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
 {
     if (IsInUpdateInterval()) {
@@ -162,6 +163,9 @@ NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
             if (NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[j])) {
                 return REFRESH_SUCCESS;
             }
+        }
+        if (NtpTrustedTime::GetInstance().FindBestTimeResult()) {
+            return REFRESH_SUCCESS;
         }
     }
     return REFRESH_FAILED;

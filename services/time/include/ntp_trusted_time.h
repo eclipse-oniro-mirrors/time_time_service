@@ -30,6 +30,7 @@ public:
     int64_t CurrentTimeMillis();
     int64_t ElapsedRealtimeMillis();
     std::chrono::steady_clock::time_point GetBootTimeNs();
+    bool FindBestTimeResult();
     class TimeResult : std::enable_shared_from_this<TimeResult> {
     public:
         TimeResult();
@@ -37,8 +38,8 @@ public:
         ~TimeResult();
         int64_t GetTimeMillis();
         int64_t GetElapsedRealtimeMillis();
-        int64_t CurrentTimeMillis();
-        int64_t GetAgeMillis();
+        int64_t CurrentTimeMillis(int64_t bootTime);
+        int64_t GetAgeMillis(int64_t bootTime);
         void Clear();
 
     private:
@@ -48,9 +49,11 @@ public:
         int64_t mElapsedRealtimeMillis;
         int64_t mCertaintyMillis;
     };
+    bool IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult);
 
 private:
     std::shared_ptr<TimeResult> mTimeResult {};
+    std::vector<std::shared_ptr<TimeResult>> TimeResultCandidates_ {};
     static std::mutex mTimeResultMutex_;
 };
 } // namespace MiscServices
