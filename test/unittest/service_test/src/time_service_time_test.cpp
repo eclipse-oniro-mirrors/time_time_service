@@ -55,6 +55,8 @@ std::set<int> RESERVED_PIDLIST = {1111, 2222};
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NETWORK_TIME_STATUS_ON = "ON";
 const std::string AUTO_TIME_STATUS_ON = "ON";
+constexpr int64_t MIN_NTP_RETRY_INTERVAL = 10000;
+constexpr int64_t MAX_NTP_RETRY_INTERVAL = 43200000;
 const uint64_t TIMER_ID = 88888;
 constexpr int64_t MINUTE_TO_MILLISECOND = 60000;
 constexpr char BYTE_SNTP_MESSAGE = 0xD8;
@@ -186,7 +188,7 @@ void TestNtpThread(const char *name)
     {
         std::lock_guard<std::mutex> autoLock(NtpUpdateTime::requestMutex_);
     }
-    NtpUpdateTime::SetSystemTime();
+    NtpUpdateTime::SetSystemTime(NtpUpdateSource::INIT);
 }
 
 /**
@@ -757,6 +759,51 @@ HWTEST_F(TimeServiceTimeTest, NtpTime002, TestSize.Level0)
     NtpUpdateTime::GetInstance().RefreshNetworkTimeByTimer(TIMER_ID);
 
     NtpUpdateTime::GetInstance().autoTimeInfo_.status = status;
+}
+
+/**
+* @tc.name: NtpUpdateTime001
+* @tc.desc: test SetSystemTime with switch off.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpUpdateTime001, TestSize.Level0)
+{
+    NtpUpdateTime::GetInstance().autoTimeInfo_.status = NETWORK_TIME_STATUS_OFF;
+    NtpUpdateTime::SetSystemTime(NtpUpdateSource::RETRY_BY_TIMER);
+    EXPECT_EQ(NtpUpdateTime::ntpRetryInterval_, MAX_NTP_RETRY_INTERVAL);
+}
+
+/**
+* @tc.name: NtpUpdateTime002
+* @tc.desc: test RefreshNextTriggerTime.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpUpdateTime002, TestSize.Level0)
+{
+    NtpUpdateTime::ntpRetryInterval_ = MAX_NTP_RETRY_INTERVAL;
+    NtpUpdateTime::RefreshNextTriggerTime(RETRY_BY_TIMER, false, true);
+    EXPECT_EQ(NtpUpdateTime::ntpRetryInterval_, MAX_NTP_RETRY_INTERVAL);
+    
+    NtpUpdateTime::RefreshNextTriggerTime(REGISTER_SUBSCRIBER, false, true);
+    EXPECT_EQ(NtpUpdateTime::ntpRetryInterval_, MIN_NTP_RETRY_INTERVAL);
+
+    NtpUpdateTime::RefreshNextTriggerTime(NET_CONNECTED, false, true);
+    EXPECT_EQ(NtpUpdateTime::ntpRetryInterval_, MIN_NTP_RETRY_INTERVAL);
+
+    NtpUpdateTime::RefreshNextTriggerTime(NTP_SERVER_CHANGE, false, true);
+    EXPECT_EQ(NtpUpdateTime::ntpRetryInterval_, MIN_NTP_RETRY_INTERVAL);
+
+    NtpUpdateTime::RefreshNextTriggerTime(AUTO_TIME_CHANGE, false, true);
+    EXPECT_EQ(NtpUpdateTime::ntpRetryInterval_, MIN_NTP_RETRY_INTERVAL);
+
+    NtpUpdateTime::RefreshNextTriggerTime(INIT, false, true);
+    EXPECT_EQ(NtpUpdateTime::ntpRetryInterval_, MIN_NTP_RETRY_INTERVAL);
+
+    NtpUpdateTime::RefreshNextTriggerTime(INIT, true, true);
+    EXPECT_EQ(NtpUpdateTime::ntpRetryInterval_, MAX_NTP_RETRY_INTERVAL);
+
+    NtpUpdateTime::RefreshNextTriggerTime(INIT, true, false);
+    EXPECT_EQ(NtpUpdateTime::ntpRetryInterval_, MAX_NTP_RETRY_INTERVAL);
 }
 
 /**
