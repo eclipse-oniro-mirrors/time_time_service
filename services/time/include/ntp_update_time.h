@@ -26,10 +26,20 @@ struct AutoTimeInfo {
     std::string status;
     int64_t lastUpdateTime;
 };
+
 enum NtpRefreshCode {
     NO_NEED_REFRESH,
     REFRESH_SUCCESS,
     REFRESH_FAILED
+};
+
+enum NtpUpdateSource {
+    RETRY_BY_TIMER,
+    REGISTER_SUBSCRIBER,
+    NET_CONNECTED,
+    NTP_SERVER_CHANGE,
+    AUTO_TIME_CHANGE,
+    INIT,
 };
 
 class NtpUpdateTime {
@@ -37,7 +47,7 @@ public:
     static NtpUpdateTime &GetInstance();
     static bool GetNtpTime(int64_t &time);
     static bool GetRealTime(int64_t &time);
-    static void SetSystemTime();
+    static void SetSystemTime(NtpUpdateSource code);
     static bool IsInUpdateInterval();
     void RefreshNetworkTimeByTimer(uint64_t timerId);
     void UpdateNITZSetTime();
@@ -53,18 +63,18 @@ private:
     static bool GetRealTimeInner(int64_t &time);
     static void ChangeNtpServerCallback(const char *key, const char *value, void *context);
     static std::vector<std::string> SplitNtpAddrs(const std::string &ntpStr);
-    void StartTimer();
-    void RefreshNextTriggerTime();
+    static void RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess, bool isSwitchOpen);
     bool CheckStatus();
     void RegisterSystemParameterListener();
     static void ChangeAutoTimeCallback(const char *key, const char *value, void *context);
 
     static AutoTimeInfo autoTimeInfo_;
-    uint64_t timerId_;
+    static uint64_t timerId_;
     uint64_t nitzUpdateTimeMilli_;
-    uint64_t nextTriggerTime_;
+    static int64_t ntpRetryInterval_;
     static std::mutex requestMutex_;
     int64_t lastNITZUpdateTime_;
+    static std::mutex ntpRetryMutex_;
 };
 } // namespace MiscServices
 } // namespace OHOS

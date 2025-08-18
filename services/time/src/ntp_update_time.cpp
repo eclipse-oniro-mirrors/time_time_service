@@ -36,12 +36,18 @@ constexpr const char* AUTO_TIME_STATUS_OFF = "OFF";
 constexpr int64_t ONE_HOUR = 3600000;
 constexpr const char* DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
 constexpr int32_t RETRY_TIMES = 2;
+constexpr int64_t MIN_NTP_RETRY_INTERVAL = 10000;
+constexpr int64_t MAX_NTP_RETRY_INTERVAL = HALF_DAY_TO_MILLISECOND;
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
 std::mutex NtpUpdateTime::requestMutex_;
+std::mutex NtpUpdateTime::ntpRetryMutex_;
+uint64_t NtpUpdateTime::timerId_ = 0;
+int64_t NtpUpdateTime::ntpRetryInterval_ = MAX_NTP_RETRY_INTERVAL;
 
-NtpUpdateTime::NtpUpdateTime() : timerId_(0), nitzUpdateTimeMilli_(0), nextTriggerTime_(0), lastNITZUpdateTime_(0){};
+
+NtpUpdateTime::NtpUpdateTime() : nitzUpdateTimeMilli_(0), lastNITZUpdateTime_(0){};
 
 NtpUpdateTime& NtpUpdateTime::GetInstance()
 {
@@ -70,27 +76,23 @@ void NtpUpdateTime::Init()
     TimerPara timerPara{};
     timerPara.timerType = static_cast<int>(ITimerManager::TimerType::ELAPSED_REALTIME);
     timerPara.windowLength = 0;
-    timerPara.interval = HALF_DAY_TO_MILLISECOND;
+    timerPara.interval = 0;
     timerPara.flag = 0;
     TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId_);
-    RefreshNextTriggerTime();
-    TimeSystemAbility::GetInstance()->StartTimer(timerId_, nextTriggerTime_);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "ntp update timerId: %{public}" PRIu64 "triggertime: %{public}" PRId64 "",
-                timerId_, nextTriggerTime_);
+    RefreshNextTriggerTime(NtpUpdateSource::INIT, false, CheckStatus());
 }
 
 void NtpUpdateTime::RefreshNetworkTimeByTimer(uint64_t timerId)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "The timer is up");
     if (!CheckStatus()) {
+        RefreshNextTriggerTime(RETRY_BY_TIMER, false, false);
         TIME_HILOGI(TIME_MODULE_SERVICE, "Auto Sync Switch Off");
         return;
     }
 
-    auto setSystemTime = [this]() { this->SetSystemTime(); };
+    auto setSystemTime = [this]() { this->SetSystemTime(RETRY_BY_TIMER); };
     std::thread thread(setSystemTime);
     thread.detach();
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp next triggertime: %{public}" PRId64 "", nextTriggerTime_);
 }
 
 void NtpUpdateTime::UpdateNITZSetTime()
@@ -219,23 +221,30 @@ bool NtpUpdateTime::GetNtpTime(int64_t &time)
     return true;
 }
 
-void NtpUpdateTime::SetSystemTime()
+void NtpUpdateTime::SetSystemTime(NtpUpdateSource code)
 {
     if (autoTimeInfo_.status != AUTO_TIME_STATUS_ON) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "auto sync switch off");
+        RefreshNextTriggerTime(code, false, false);
         return;
     }
 
     if (!requestMutex_.try_lock()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "The NTP request is in progress");
+        if (code == NtpUpdateSource::NET_CONNECTED || code == NtpUpdateSource::INIT) {
+            RefreshNextTriggerTime(code, false, true);
+        }
         return;
     }
 
     auto ret = GetNtpTimeInner();
     if (ret == REFRESH_FAILED) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get ntp time failed");
+        RefreshNextTriggerTime(code, false, true);
         requestMutex_.unlock();
         return;
+    } else {
+        RefreshNextTriggerTime(code, true, true);
     }
 
     int64_t currentTime = NtpTrustedTime::GetInstance().CurrentTimeMillis();
@@ -253,11 +262,43 @@ void NtpUpdateTime::SetSystemTime()
     requestMutex_.unlock();
 }
 
-void NtpUpdateTime::RefreshNextTriggerTime()
+void NtpUpdateTime::RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess, bool isSwitchOpen)
 {
-    auto bootTimeNano = steady_clock::now().time_since_epoch().count();
-    auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
-    nextTriggerTime_ = static_cast<uint64_t>(bootTimeMilli + HALF_DAY_TO_MILLISECOND);
+    std::lock_guard<std::mutex> lock(ntpRetryMutex_);
+    if (isSuccess || !isSwitchOpen) {
+        // if interval reach to max and refresh is caused by timer, need to set a new timer
+        // else do not need to refresh timer, cause timer is already set
+        if (ntpRetryInterval_ == MAX_NTP_RETRY_INTERVAL && code != RETRY_BY_TIMER) {
+            return;
+        }
+        ntpRetryInterval_ = MAX_NTP_RETRY_INTERVAL;
+    } else {
+        switch (code) {
+            case INIT:
+            case REGISTER_SUBSCRIBER:
+            case NET_CONNECTED:
+            case NTP_SERVER_CHANGE:
+            case AUTO_TIME_CHANGE:
+                ntpRetryInterval_ = MIN_NTP_RETRY_INTERVAL;
+                break;
+            case RETRY_BY_TIMER:
+                ntpRetryInterval_ = ntpRetryInterval_ << 1;
+                ntpRetryInterval_ = ntpRetryInterval_ > MAX_NTP_RETRY_INTERVAL ?
+                                    MAX_NTP_RETRY_INTERVAL:
+                                    ntpRetryInterval_;
+            default:
+                TIME_HILOGE(TIME_MODULE_SERVICE, "Error state, code: %{public}d", code);
+                return;
+        }
+    }
+    if (timerId_ == 0) {
+        return;
+    }
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
+    auto nextTriggerTime = bootTime + ntpRetryInterval_;
+    TimeSystemAbility::GetInstance()->StartTimer(timerId_, nextTriggerTime);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "refresh timerId: %{public}" PRIu64 "", timerId_);
 }
 
 bool NtpUpdateTime::CheckStatus()
@@ -275,11 +316,6 @@ bool NtpUpdateTime::IsValidNITZTime()
     TIME_HILOGI(TIME_MODULE_SERVICE, "nitz update time: %{public}" PRIu64 " currentTime: %{public}" PRId64 "",
         nitzUpdateTimeMilli_, bootTimeMilli);
     return (bootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMilli_)) < HALF_DAY_TO_MILLISECOND;
-}
-
-void NtpUpdateTime::StartTimer()
-{
-    TimeSystemAbility::GetInstance()->StartTimer(timerId_, nextTriggerTime_);
 }
 
 void NtpUpdateTime::Stop()
@@ -319,7 +355,7 @@ void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, 
     }
     autoTimeInfo_.ntpServer = ntpServer;
     autoTimeInfo_.ntpServerSpec = ntpServerSpec;
-    SetSystemTime();
+    NtpUpdateTime::GetInstance().SetSystemTime(NtpUpdateSource::NTP_SERVER_CHANGE);
 }
 
 void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, void *context)
@@ -339,7 +375,7 @@ void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, v
         return;
     }
     autoTimeInfo_.status = std::string(value);
-    SetSystemTime();
+    NtpUpdateTime::GetInstance().SetSystemTime(NtpUpdateSource::AUTO_TIME_CHANGE);
 }
 
 uint64_t NtpUpdateTime::GetNITZUpdateTime()

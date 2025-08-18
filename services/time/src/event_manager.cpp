@@ -71,9 +71,9 @@ void EventManager::NetConnStateConnected(const CommonEventData &data)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Internet ready");
     if (NtpUpdateTime::IsInUpdateInterval()) {
-        NtpUpdateTime::SetSystemTime();
+        NtpUpdateTime::SetSystemTime(NtpUpdateSource::NET_CONNECTED);
     } else {
-        auto setSystemTime = [this]() { NtpUpdateTime::SetSystemTime(); };
+        auto setSystemTime = [this]() { NtpUpdateTime::SetSystemTime(NtpUpdateSource::NET_CONNECTED); };
         std::thread thread(setSystemTime);
         thread.detach();
     }
