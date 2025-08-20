@@ -1213,4 +1213,17 @@ HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
     EXPECT_EQ(g_data1, 0);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
 }
+
+/**
+* @tc.name: SetAutoTime001
+* @tc.desc: test SetAutoTime.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeClientTest, SetAutoTime001, TestSize.Level1)
+{
+    auto res = TimeServiceClient::GetInstance()->SetAutoTime(true);
+    EXPECT_EQ(res, 0);
+    res = TimeServiceClient::GetInstance()->SetAutoTime(false);
+    EXPECT_EQ(res, 0);
+}
 } // namespace

@@ -18,6 +18,7 @@
 #include "parameters.h"
 #include "napi_work.h"
 #include "napi_utils.h"
+#include "time_common.h"
 #include "time_service_client.h"
 
 using namespace OHOS::MiscServices;
@@ -32,6 +33,7 @@ constexpr int64_t NANO_TO_MILLI = SECONDS_TO_NANO / SECONDS_TO_MILLI;
 constexpr int32_t STARTUP = 0;
 constexpr int32_t ACTIVE = 1;
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
+constexpr const char *AUTOTIME_KEY = "persist.time.auto_time";
 
 napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value exports)
 {
@@ -58,6 +60,8 @@ napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value expor
         DECLARE_NAPI_STATIC_FUNCTION("getTimezone", GetTimezone),
         DECLARE_NAPI_STATIC_FUNCTION("getUptime", GetUptime),
         DECLARE_NAPI_STATIC_FUNCTION("getTimezoneSync", GetTimezoneSync),
+        DECLARE_NAPI_STATIC_FUNCTION("getAutoTimeStatus", GetAutoTimeStatus),
+        DECLARE_NAPI_STATIC_FUNCTION("setAutoTimeStatus", SetAutoTimeStatus),
         DECLARE_NAPI_STATIC_PROPERTY("TimeType", timeType),
     };
 
@@ -449,6 +453,62 @@ napi_value NapiSystemDateTime::GetTimezoneSync(napi_env env, napi_callback_info 
     return NapiWork::SyncEnqueue(env, getTimezoneContext, "GetTimezone", executor, complete);
 }
 
+napi_value NapiSystemDateTime::GetAutoTimeStatus(napi_env env, napi_callback_info info)
+{
+    struct GetAutoTimeContext : public ContextBase {
+        bool autotime;
+    };
+    auto *getAutoTimeContext = new GetAutoTimeContext();
+    auto inputParser = [env, getAutoTimeContext](size_t argc, napi_value *argv) {
+        getAutoTimeContext->status = napi_ok;
+    };
+    getAutoTimeContext->GetCbInfo(env, info, inputParser, true);
+    auto executor = [getAutoTimeContext]() {
+        auto innerCode = GetAutoTime(getAutoTimeContext->autotime);
+            if (innerCode != JsErrorCode::ERROR_OK) {
+            getAutoTimeContext->errCode = innerCode;
+            getAutoTimeContext->status = napi_generic_failure;
+        }
+    };
+    auto complete = [env, getAutoTimeContext](napi_value &output) {
+        getAutoTimeContext->status =
+            napi_get_boolean(env, getAutoTimeContext->autotime, &output);
+        CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getAutoTimeContext,
+            "convert native object to javascript object failed", JsErrorCode::ERROR);
+    };
+    return NapiWork::SyncEnqueue(env, getAutoTimeContext, "GetAutoTimeStatus", executor, complete);
+}
+
+napi_value NapiSystemDateTime::SetAutoTimeStatus(napi_env env, napi_callback_info info)
+{
+    struct SetAutoTimeContext : public ContextBase {
+        bool autotime;
+    };
+    auto *setAutoTimeContext = new SetAutoTimeContext();
+    auto inputParser = [env, setAutoTimeContext](size_t argc, napi_value *argv) {
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setAutoTimeContext, argc >= ARGC_ONE,
+            "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
+        setAutoTimeContext->status = napi_get_value_bool(env, argv[ARGV_FIRST], &setAutoTimeContext->autotime);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setAutoTimeContext, setAutoTimeContext->status == napi_ok,
+            "The type of 'time' must be bool", JsErrorCode::PARAMETER_ERROR);
+        setAutoTimeContext->status = napi_ok;
+    };
+    setAutoTimeContext->GetCbInfo(env, info, inputParser);
+    auto executor = [setAutoTimeContext]() {
+        auto innerCode = TimeServiceClient::GetInstance()->SetAutoTime(setAutoTimeContext->autotime);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            if (innerCode != E_TIME_NOT_SYSTEM_APP && innerCode != E_TIME_NO_PERMISSION) {
+                setAutoTimeContext->errCode = E_TIME_NTP_UPDATE_FAILED;
+            } else {
+                setAutoTimeContext->errCode = innerCode;
+            }
+            setAutoTimeContext->status = napi_generic_failure;
+        }
+    };
+    auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
+    return NapiWork::AsyncEnqueue(env, setAutoTimeContext, "SetAutoTimeStatus", executor, complete);
+}
+
 napi_value NapiSystemDateTime::UpdateNtpTime(napi_env env, napi_callback_info info)
 {
     struct UpdateNtpTime : public ContextBase {
@@ -522,6 +582,13 @@ int32_t NapiSystemDateTime::GetTimezone(std::string &timezone)
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found timezone from system parameter.");
         return ERROR;
     }
+    return ERROR_OK;
+}
+
+int32_t NapiSystemDateTime::GetAutoTime(bool &autoTime)
+{
+    auto res = system::GetParameter(AUTOTIME_KEY, "ON");
+    autoTime = (res == "ON");
     return ERROR_OK;
 }
 

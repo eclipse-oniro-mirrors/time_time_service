@@ -110,4 +110,25 @@ describe('SystemDateTimeTest', function () {
         })
         console.log('testSetTimezoneNoPermission002 end');
     })
+
+    /**
+     * @tc.number: TestSetAutoTimeNoPermission001
+     * @tc.name: TestSetAutoTimeNoPermission001
+     * @tc.desc: Test setAutoTimeStatus without permission
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('TestSetAutoTimeNoPermission001', 0, async function (done) {
+        systemDateTime.setAutoTimeStatus(true, (err) => {
+            if (err) {
+                expect(err.code).assertEqual(ACL_ERROR);
+            } else {
+                expect(false).assertTrue();
+            }
+            done();
+        })
+        console.log('TestSetAutoTimeNoPermission001 end');
+    })
 })

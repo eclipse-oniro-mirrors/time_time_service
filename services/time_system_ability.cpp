@@ -59,10 +59,12 @@ static constexpr int32_t STR_MAX_LENGTH = 64;
 constexpr int32_t MILLI_TO_MICR = MICR_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 constexpr int32_t ONE_MILLI = 1000;
+constexpr int AUTOTIME_OK = 0;
 static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "windowLength", "interval", \
                                                    "uid", "bundleName", "wantAgent", "state", "triggerTime", \
                                                    "pid", "name"};
 constexpr const char* BOOTEVENT_PARAMETER = "bootevent.boot.completed";
+constexpr const char* AUTOTIME_KEY = "persist.time.auto_time";
 static constexpr int MAX_PID_LIST_SIZE = 1024;
 static constexpr uint32_t MAX_EXEMPTION_SIZE = 1000;
 
@@ -819,6 +821,26 @@ int TimeSystemAbility::GetWallClockRtcId()
         TIME_HILOGE(TIME_MODULE_SERVICE, "failed to check rtc: %{public}s", strerror(errno));
     }
     return -1;
+}
+
+int32_t TimeSystemAbility::SetAutoTime(bool autoTime)
+{
+    TimeXCollie timeXCollie("TimeService::SetAutoTime");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
+    if (!TimePermission::CheckCallingPermission(TimePermission::setTime)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
+        return E_TIME_NO_PERMISSION;
+    }
+    auto errNo = SetParameter(AUTOTIME_KEY, autoTime ? "ON" : "OFF");
+    if (errNo != AUTOTIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SetAutoTime FAIL,errNo: %{public}d", errNo);
+        return E_TIME_DEAL_FAILED;
+    } else {
+        return E_TIME_OK;
+    }
 }
 
 int32_t TimeSystemAbility::SetTimeZone(const std::string &timeZoneId, int8_t apiVersion)
