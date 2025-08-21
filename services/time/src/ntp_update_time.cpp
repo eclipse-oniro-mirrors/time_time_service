@@ -38,6 +38,7 @@ constexpr const char* DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
 constexpr int32_t RETRY_TIMES = 2;
 constexpr int64_t MIN_NTP_RETRY_INTERVAL = 10000;
 constexpr int64_t MAX_NTP_RETRY_INTERVAL = HALF_DAY_TO_MILLISECOND;
+constexpr int32_t INCREASE_TIMES = 4;
 } // namespace
 
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
@@ -231,9 +232,7 @@ void NtpUpdateTime::SetSystemTime(NtpUpdateSource code)
 
     if (!requestMutex_.try_lock()) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "The NTP request is in progress");
-        if (code == NtpUpdateSource::NET_CONNECTED || code == NtpUpdateSource::INIT) {
-            RefreshNextTriggerTime(code, false, true);
-        }
+        RefreshNextTriggerTime(code, false, true);
         return;
     }
 
@@ -282,10 +281,11 @@ void NtpUpdateTime::RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess,
                 ntpRetryInterval_ = MIN_NTP_RETRY_INTERVAL;
                 break;
             case RETRY_BY_TIMER:
-                ntpRetryInterval_ = ntpRetryInterval_ << 1;
+                ntpRetryInterval_ *= INCREASE_TIMES;
                 ntpRetryInterval_ = ntpRetryInterval_ > MAX_NTP_RETRY_INTERVAL ?
                                     MAX_NTP_RETRY_INTERVAL:
                                     ntpRetryInterval_;
+                break;
             default:
                 TIME_HILOGE(TIME_MODULE_SERVICE, "Error state, code: %{public}d", code);
                 return;
