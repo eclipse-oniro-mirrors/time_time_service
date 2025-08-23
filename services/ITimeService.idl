@@ -18,6 +18,7 @@ sequenceable OHOS.IRemoteObject;
 sequenceable OHOS.AbilityRuntime.WantAgent.WantAgent;
 interface OHOS.MiscServices.ITimeService {
     void SetTime([in] long time, [in] byte apiVersion);
+    void SetAutoTime([in] boolean autoTime);
     void SetTimeZone([in] String timezoneId, [in] byte apiVersion);
     void GetTimeZone([out] String timezoneId);
     void GetThreadTimeMs([out] long time);

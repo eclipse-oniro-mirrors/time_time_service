@@ -417,49 +417,111 @@ describe("SystemDateTimeSetTest", function () {
      * @tc.level: Level 1
      * @tc.require:
      */
-        it("TestSetTimezonenonsupport005", 0, async function (done) {
-            console.log("TestSetTimezonenonsupport005 start");
-            try {
-                systemDateTime.setTimezone('Asia/Hangzhou').then(() => {
-                    expect(false).assertTrue();
-                    done();
-                }).catch((err) => {
-                    expect(true).assertTrue();
-                    done();
-                })
-            } catch (err) {
+    it("TestSetTimezonenonsupport005", 0, async function (done) {
+        console.log("TestSetTimezonenonsupport005 start");
+        try {
+            systemDateTime.setTimezone('Asia/Hangzhou').then(() => {
+                expect(false).assertTrue();
+                done();
+            }).catch((err) => {
                 expect(true).assertTrue();
                 done();
-            }
-            console.log("TestSetTimezonenonsupport005 end");
-        });
+            })
+        } catch (err) {
+            expect(true).assertTrue();
+            done();
+        }
+        console.log("TestSetTimezonenonsupport005 end");
+    });
     
-        /**
-         * @tc.number: TestSetTimezonenonsupport006
-         * @tc.name: TestSetTimezonenonsupport006
-         * @tc.desc: Test setDate for callback with nonsupport zone.
-         * @tc.size: MediumTest
-         * @tc.type: Function
-         * @tc.level: Level 1
-         * @tc.require:
-         */
-        it("TestSetTimezonenonsupport006", 0, async function (done) {
-            console.log("TestSetTimezonenonsupport006 start");
-            try {
-                systemDateTime.setTimezone('Asia/Hangzhou', (err) => {
-                    if (err) {
-                        expect(true).assertTrue();
-                        console.log(err.code);
-                    } else {
-                        expect(false).assertTrue();
-                    }
-                    done();
-                });
-            } catch (err) {
-                expect(true).assertTrue();
+    /**
+     * @tc.number: TestSetTimezonenonsupport006
+     * @tc.name: TestSetTimezonenonsupport006
+     * @tc.desc: Test setDate for callback with nonsupport zone.
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it("TestSetTimezonenonsupport006", 0, async function (done) {
+        console.log("TestSetTimezonenonsupport006 start");
+        try {
+            systemDateTime.setTimezone('Asia/Hangzhou', (err) => {
+                if (err) {
+                    expect(true).assertTrue();
+                    console.log(err.code);
+                } else {
+                    expect(false).assertTrue();
+                }
                 done();
-            }
-            console.log("TestSetTimezonenonsupport006 end");
-        });  
+            });
+        } catch (err) {
+            expect(true).assertTrue();
+            done();
+        }
+        console.log("TestSetTimezonenonsupport006 end");
+    });  
 
+    /**
+     * @tc.number: testSetAutoTime001
+     * @tc.name: testSetAutoTime001
+     * @tc.desc: test setAutoTimeStatus and getAutoTimeStatus.
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('testSetAutoTime001', 0, async function (done) {
+        console.log("testSetAutoTime001 start");
+        await systemDateTime.setAutoTimeStatus(false);
+        const autoTimeStatus = systemDateTime.getAutoTimeStatus();
+        expect(!autoTimeStatus).assertTrue();
+        done();
+        console.log('testGetAutoTime001 end');
+    })
+
+    /**
+     * @tc.number: testSetAutoTime002
+     * @tc.name: testSetAutoTime002
+     * @tc.desc: test setAutoTimeStatus and getAutoTimeStatus.
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('testSetAutoTime002', 0, async function (done) {
+        console.log("testSetAutoTime002 start");
+        await systemDateTime.setAutoTimeStatus(true);
+        const autoTimeStatus = systemDateTime.getAutoTimeStatus();
+        expect(autoTimeStatus).assertTrue();
+        done();
+        console.log('testSetAutoTime002 end');
+    })
+
+    /**
+     * @tc.number: testSetAutoTime003
+     * @tc.name: testSetAutoTime003
+     * @tc.desc: test setAutoTimeStatus.
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it("testSetAutoTime003", 0, async function (done) {
+        console.log("testSetAutoTime003 start");
+        try {
+            systemDateTime.setAutoTimeStatus(null, (err) => {
+                if (err) {
+                    expect(err.code).assertEqual(401);
+                } else {
+                    expect(false).assertTrue();
+                }
+                done();
+            });
+        } catch (err) {
+            expect(err.code).assertEqual(401);
+            done();
+        }
+        console.log('testSetAutoTime003 end')
+    })
 })

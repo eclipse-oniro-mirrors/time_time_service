@@ -220,6 +220,20 @@ int32_t TimeServiceClient::SetTimeV9(int64_t time)
     return code;
 }
 
+int32_t TimeServiceClient::SetAutoTime(bool autoTime)
+{
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    int32_t code = proxy->SetAutoTime(autoTime);
+    code = ConvertErrCode(code);
+    return code;
+}
+
 bool TimeServiceClient::SetTimeZone(const std::string &timezoneId)
 {
     if (!ConnectService()) {

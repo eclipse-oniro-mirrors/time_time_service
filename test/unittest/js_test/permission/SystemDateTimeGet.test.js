@@ -853,4 +853,40 @@ describe('SystemDateTimeGetTest', function () {
         console.log('testUpdateAndGetNtpTime001 end');
         done();
     }) 
+
+    /**
+     * @tc.number: testGetAutoTime001
+     * @tc.name: testGetAutoTime001
+     * @tc.desc: test setAutoTimeStatus and getAutoTimeStatus.
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('testGetAutoTime001', 0, async function (done) {
+        console.log("testGetAutoTime001 start");
+        await systemDateTime.setAutoTimeStatus(false);
+        const autoTimeStatus = systemDateTime.getAutoTimeStatus();
+        expect(typeof (autoTimeStatus) == 'boolean' && autoTimeStatus === false).assertTrue();
+        done();
+        console.log('testGetAutoTime001 end');
+    })
+
+    /**
+     * @tc.number: testGetAutoTime001
+     * @tc.name: testGetAutoTime001
+     * @tc.desc: test setAutoTimeStatus and getAutoTimeStatus.
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('testGetAutoTime002', 0, async function (done) {
+        console.log("testGetAutoTime002 start");
+        await systemDateTime.setAutoTimeStatus(true);
+        const autoTimeStatus = systemDateTime.getAutoTimeStatus();
+        expect(typeof (autoTimeStatus) == 'boolean' && autoTimeStatus === true).assertTrue();
+        done();
+        console.log('testGetAutoTime002 end');
+    })
 }) 

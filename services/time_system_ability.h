@@ -59,6 +59,7 @@ public:
     int32_t SetTime(int64_t time, int8_t apiVersion = APIVersion::API_VERSION_7) override;
     int32_t SetTimeInner(int64_t time, int8_t apiVersion = APIVersion::API_VERSION_7);
     bool SetRealTime(int64_t time);
+    int32_t SetAutoTime(bool autoTime) override;
     int32_t SetTimeZone(const std::string &timeZoneId, int8_t apiVersion = APIVersion::API_VERSION_7) override;
     int32_t SetTimeZoneInner(const std::string &timeZoneId, int8_t apiVersion = APIVersion::API_VERSION_7);
     int32_t GetTimeZone(std::string &timeZoneId) override;

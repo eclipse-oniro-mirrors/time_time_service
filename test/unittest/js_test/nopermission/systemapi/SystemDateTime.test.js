@@ -152,4 +152,25 @@ describe('SystemDateTimeTest', function () {
         console.log('TestgetNtpTimeNoPermission001 end');
     })      
 
+    /**
+     * @tc.number:TestSetAutoTimeNoPermission001
+     * @tc.name: TestSetAutoTimeNoPermission001
+     * @tc.desc: Test getNtpTime no permission
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level 1
+     * @tc.require:
+     */
+    it('TestSetAutoTimeNoPermission001', 0, async function (done) {
+        console.log("TestSetAutoTimeNoPermission001 start");
+        systemDateTime.setAutoTimeStatus(true, (err) => {
+            if (err) {
+                expect(err.code).assertEqual(202);
+            } else {
+                expect(false).assertTrue();
+            }
+            done();
+        })
+        console.log('TestSetAutoTimeNoPermission001 end');
+    }) 
 })

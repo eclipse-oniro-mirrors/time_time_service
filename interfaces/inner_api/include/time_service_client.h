@@ -63,6 +63,16 @@ public:
     TIME_API int32_t SetTimeV9(int64_t time);
 
     /**
+     * @brief Set autotime status
+     *
+     * This api is used to set autotime status.
+     *
+     * @param status status of autotime.
+     * @return error code.
+     */
+    TIME_API int32_t SetAutoTime(bool autoTime);
+
+    /**
      * @brief Set Timezone
      *
      * This api is used to set timezone.

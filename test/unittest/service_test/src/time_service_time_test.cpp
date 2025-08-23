@@ -121,6 +121,49 @@ static HapPolicyParams g_policyA = {
     }
 };
 
+static HapPolicyParams g_policyC = {
+    .apl = APL_SYSTEM_CORE,
+    .domain = "test.domain",
+    .permList = {
+        {
+            .permissionName = "ohos.permission.SET_TIME_ZONE",
+            .bundleName = "ohos.permission_test.demoB",
+            .grantMode = 1,
+            .availableLevel = APL_NORMAL,
+            .label = "label",
+            .labelId = 1,
+            .description = "test",
+            .descriptionId = 1
+        },
+        {
+            .permissionName = "ohos.permission.MANAGE_LOCAL_ACCOUNTS",
+            .bundleName = "ohos.permission_test.demoB",
+            .grantMode = 1,
+            .availableLevel = APL_NORMAL,
+            .label = "label",
+            .labelId = 1,
+            .description = "test",
+            .descriptionId = 1
+        }
+    },
+    .permStateList = {
+        {
+            .permissionName = "ohos.permission.SET_TIME_ZONE",
+            .isGeneral = true,
+            .resDeviceID = { "local" },
+            .grantStatus = { PermissionState::PERMISSION_GRANTED },
+            .grantFlags = { 1 }
+        },
+        {
+            .permissionName = "ohos.permission.MANAGE_LOCAL_ACCOUNTS",
+            .isGeneral = true,
+            .resDeviceID = { "local" },
+            .grantStatus = { PermissionState::PERMISSION_GRANTED },
+            .grantFlags = { 1 }
+        }
+    }
+};
+
 static HapInfoParams g_systemInfoParams = {
     .userID = 1,
     .bundleName = "timer",
@@ -807,6 +850,20 @@ HWTEST_F(TimeServiceTimeTest, NtpUpdateTime002, TestSize.Level0)
 }
 
 /**
+* @tc.name: SetAutoTime001
+* @tc.desc: test SetAutoTime.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, SetAutoTime001, TestSize.Level0)
+{
+    AddPermission();
+    auto res = TimeSystemAbility::GetInstance()->SetAutoTime(true);
+    EXPECT_EQ(res, E_TIME_OK);
+    res = TimeSystemAbility::GetInstance()->SetAutoTime(false);
+    EXPECT_EQ(res, E_TIME_OK);
+}
+
+/**
 * @tc.name: GetNtpTimeMsWithNoPermission001
 * @tc.desc: test GetNtpTimeMs with no permission.
 * @tc.type: FUNC
@@ -831,4 +888,32 @@ HWTEST_F(TimeServiceTimeTest, GetRealTimeMsWithNoPermission001, TestSize.Level0)
     auto res = TimeSystemAbility::GetInstance()->GetRealTimeMs(time);
     EXPECT_EQ(res, E_TIME_NOT_SYSTEM_APP);
 }
+
+/**
+* @tc.name: SetAutoTimeWithNoPermission001
+* @tc.desc: test SetAutoTime with no permission.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, SetAutoTimeWithNoPermission001, TestSize.Level0)
+{
+    DeletePermission();
+    auto res = TimeSystemAbility::GetInstance()->SetAutoTime(true);
+    EXPECT_EQ(res, E_TIME_NOT_SYSTEM_APP);
+}
+
+/**
+* @tc.name: SetAutoTimeWithNoPermission002
+* @tc.desc: test SetAutoTime with no permission.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, SetAutoTimeWithNoPermission002, TestSize.Level0)
+{
+    DeletePermission();
+    AccessTokenIDEx tokenIdEx = { 0 };
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_systemInfoParams, g_policyC);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    auto res = TimeSystemAbility::GetInstance()->SetAutoTime(true);
+    EXPECT_EQ(res, E_TIME_NO_PERMISSION);
+}
+
 } // namespace

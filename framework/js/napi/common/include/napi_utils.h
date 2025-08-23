@@ -93,6 +93,7 @@ constexpr int32_t DESTROY_MAX_PARA = 2;
 
 constexpr int32_t MAX_TIME_ZONE_ID = 1024;
 constexpr int32_t INVALID_TIME = -1;
+constexpr int32_t OS_ERROR = 77856781;
 
 enum JsErrorCode : int32_t {
     ERROR_OK = 0,
