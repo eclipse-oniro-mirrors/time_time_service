@@ -27,6 +27,7 @@ ohos_shared_library("systemdatetime_ani") {
     "init:libbegetutil",
     "runtime_core:ani",
     "samgr:samgr_proxy",
+    "ipc:ipc_single",
   ]
 
   sanitize = {
