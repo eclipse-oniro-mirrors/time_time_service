@@ -47,7 +47,7 @@ void TimeZoneInfo::Init()
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init Set kernel failed");
     }
     curTimezoneId_ = value;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Timezone value: %{public}s", value);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Timezone value:%{public}s", value);
 }
 
 bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
@@ -57,7 +57,7 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
         TIME_HILOGI(TIME_MODULE_SERVICE, "Same Timezone has been set");
         return true;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone : %{public}s, Current timezone : %{public}s, uid: %{public}d",
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone :%{public}s, Current timezone :%{public}s, uid:%{public}d",
         timezoneId.c_str(), curTimezoneId_.c_str(), IPCSkeleton::GetCallingUid());
     std::set<std::string> availableTimeZoneIDs = GetTimeZoneAvailableIDs();
     if (availableTimeZoneIDs.find(timezoneId) == availableTimeZoneIDs.end()) {
@@ -72,7 +72,7 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
     }
     auto errNo = SetParameter(TIMEZONE_KEY, timezoneId.c_str());
     if (errNo > TIMEZONE_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone timezoneId: %{public}d: %{public}s", errNo, timezoneId.c_str());
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone timezoneId:%{public}d:%{public}s", errNo, timezoneId.c_str());
         return false;
     }
     curTimezoneId_ = timezoneId;
@@ -120,14 +120,14 @@ bool TimeZoneInfo::SetTimezoneToKernel()
     struct tm *localTime = localtime(&t);
     struct timezone tz {};
     if (localTime == nullptr) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "localtime is nullptr errornum: %{public}s", strerror(errno));
+        TIME_HILOGE(TIME_MODULE_SERVICE, "localtime is nullptr errornum:%{public}s", strerror(errno));
         return false;
     }
     tz.tz_minuteswest = -localTime->tm_gmtoff / HOUR_TO_MIN;
     tz.tz_dsttime = 0;
     int result = settimeofday(nullptr, &tz);
     if (result < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Settimeofday timezone fail: %{public}d", result);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Settimeofday timezone fail:%{public}d", result);
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "Settimeofday timezone success");

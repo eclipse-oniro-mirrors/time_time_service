@@ -139,11 +139,12 @@ bool NtpUpdateTime::IsInUpdateInterval()
     int64_t curBootTime = 0;
     TimeUtils::GetBootTimeMs(curBootTime);
     auto lastBootTime = NtpTrustedTime::GetInstance().ElapsedRealtimeMillis();
+    auto gapTime = curBootTime - lastBootTime;
     // If the time <= ONE_HOUR, do not send NTP requests.
-    if ((lastBootTime > 0) && (curBootTime - lastBootTime <= ONE_HOUR)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE,
-            "ntp updated bootTime: %{public}" PRId64 ", lastBootTime: %{public}" PRId64 "",
-            curBootTime, lastBootTime);
+    if ((lastBootTime > 0) && (gapTime <= ONE_HOUR)) {
+        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE,
+            "ntp updated lastBootTime:%{public}" PRId64 " gap:%{public}" PRId64 "",
+            lastBootTime, gapTime);
         return true;
     }
     return false;
@@ -160,7 +161,7 @@ NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
     ntpSpecList.insert(ntpSpecList.end(), ntpList.begin(), ntpList.end());
     for (int i = 0; i < RETRY_TIMES; i++) {
         for (size_t j = 0; j < ntpSpecList.size(); j++) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is : %{public}s", ntpSpecList[j].c_str());
+            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is:%{public}s", ntpSpecList[j].c_str());
             if (NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[j])) {
                 return REFRESH_SUCCESS;
             }
@@ -173,7 +174,7 @@ bool NtpUpdateTime::GetRealTimeInner(int64_t &time)
 {
     time = NtpTrustedTime::GetInstance().CurrentTimeMillis();
     if (time <= 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "current time is invalid: %{public}" PRId64 "", time);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "time is invalid:%{public}" PRId64 "", time);
         return false;
     }
     return true;
@@ -249,7 +250,7 @@ void NtpUpdateTime::SetSystemTime(NtpUpdateSource code)
 
     int64_t currentTime = NtpTrustedTime::GetInstance().CurrentTimeMillis();
     if (currentTime <= 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "current time is invalid: %{public}" PRIu64 "", currentTime);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "time is invalid:%{public}" PRIu64 "", currentTime);
         requestMutex_.unlock();
         return;
     }
@@ -287,7 +288,7 @@ void NtpUpdateTime::RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess,
                                     MAX_NTP_RETRY_INTERVAL:
                                     ntpRetryInterval_;
             default:
-                TIME_HILOGE(TIME_MODULE_SERVICE, "Error state, code: %{public}d", code);
+                TIME_HILOGE(TIME_MODULE_SERVICE, "Error state, code:%{public}d", code);
                 return;
         }
     }
@@ -298,7 +299,7 @@ void NtpUpdateTime::RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess,
     TimeUtils::GetBootTimeMs(bootTime);
     auto nextTriggerTime = bootTime + ntpRetryInterval_;
     TimeSystemAbility::GetInstance()->StartTimer(timerId_, nextTriggerTime);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "refresh timerId: %{public}" PRIu64 "", timerId_);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "refresh timerId:%{public}" PRIu64 "", timerId_);
 }
 
 bool NtpUpdateTime::CheckStatus()
@@ -313,7 +314,7 @@ bool NtpUpdateTime::IsValidNITZTime()
     }
     int64_t bootTimeNano = static_cast<int64_t>(steady_clock::now().time_since_epoch().count());
     int64_t bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
-    TIME_HILOGI(TIME_MODULE_SERVICE, "nitz update time: %{public}" PRIu64 " currentTime: %{public}" PRId64 "",
+    TIME_HILOGI(TIME_MODULE_SERVICE, "nitz update time:%{public}" PRIu64 " currentTime:%{public}" PRId64 "",
         nitzUpdateTimeMilli_, bootTimeMilli);
     return (bootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMilli_)) < HALF_DAY_TO_MILLISECOND;
 }
@@ -330,17 +331,17 @@ void NtpUpdateTime::RegisterSystemParameterListener()
     auto specificNtpResult = SystemWatchParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER,
                                                   ChangeNtpServerCallback, nullptr);
     if (specificNtpResult != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "register specific ntp server lister fail: %{public}d", specificNtpResult);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "register specific ntp server lister fail:%{public}d", specificNtpResult);
     }
 
     auto netResult = SystemWatchParameter(NTP_SERVER_SYSTEM_PARAMETER, ChangeNtpServerCallback, nullptr);
     if (netResult != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "register ntp server lister fail: %{public}d", netResult);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "register ntp server lister fail:%{public}d", netResult);
     }
 
     auto switchResult = SystemWatchParameter(AUTO_TIME_SYSTEM_PARAMETER, ChangeAutoTimeCallback, nullptr);
     if (switchResult != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "register auto sync switch lister fail: %{public}d", switchResult);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "register auto sync switch lister fail:%{public}d", switchResult);
     }
 }
 

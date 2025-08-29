@@ -62,11 +62,13 @@ TimeDatabase::TimeDatabase()
     config.SetReadConSize(1);
     TimeDBOpenCallback timeDBOpenCallback;
     store_ = OHOS::NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_OPEN_VERSION_3, timeDBOpenCallback, errCode);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Gets time database, ret: %{public}d", errCode);
+    if (errCode) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Get database, ret:%{public}d", errCode);
+    }
     if (errCode == OHOS::NativeRdb::E_SQLITE_CORRUPT) {
         auto ret = OHOS::NativeRdb::RdbHelper::DeleteRdbStore(config);
         if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "delete corrupt database failed, ret: %{public}d", ret);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "delete corrupt database failed, ret:%{public}d", ret);
             return;
         }
         store_ = OHOS::NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_OPEN_VERSION_3, timeDBOpenCallback, errCode);
@@ -87,7 +89,7 @@ bool TimeDatabase::RecoverDataBase()
     config.SetReadConSize(1);
     auto ret = OHOS::NativeRdb::RdbHelper::DeleteRdbStore(config);
     if (ret != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "delete corrupt database failed, ret: %{public}d", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "delete corrupt database failed, ret %{public}d", ret);
         return false;
     }
     TimeDBOpenCallback timeDbOpenCallback;
@@ -131,7 +133,7 @@ bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::Value
     int64_t outRowId = 0;
     auto ret = store->Insert(outRowId, table, insertValues);
     if (ret != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "insert values failed, ret: %{public}d", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "insert values failed, ret:%{public}d", ret);
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
             return false;
         }
@@ -145,7 +147,7 @@ bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::Value
         }
         ret = store->Insert(outRowId, table, insertValues);
         if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Insert values after RecoverDataBase failed, ret: %{public}d", ret);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Insert values after RecoverDataBase failed, ret:%{public}d", ret);
         }
     }
     return true;
@@ -163,7 +165,7 @@ bool TimeDatabase::Update(
     int changedRows = 0;
     auto ret = store->Update(changedRows, values, predicates);
     if (ret != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "update values failed, ret: %{public}d", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "update values failed, ret:%{public}d", ret);
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
             return false;
         }
@@ -177,7 +179,7 @@ bool TimeDatabase::Update(
         }
         ret = store->Update(changedRows, values, predicates);
         if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Update values after RecoverDataBase failed, ret: %{public}d", ret);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Update values after RecoverDataBase failed, ret:%{public}d", ret);
         }
     }
     return true;
@@ -216,7 +218,7 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
     int deletedRows = 0;
     auto ret = store->Delete(deletedRows, predicates);
     if (ret != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "delete values failed, ret: %{public}d", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "delete values failed, ret:%{public}d", ret);
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
             return false;
         }
@@ -230,7 +232,7 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
         }
         ret = store->Delete(deletedRows, predicates);
         if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Delete values after RecoverDataBase failed, ret: %{public}d", ret);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Delete values after RecoverDataBase failed, ret:%{public}d", ret);
         }
     }
     return true;
@@ -260,7 +262,7 @@ void TimeDatabase::ClearDropOnReboot()
         }
         ret = store->ExecuteSql("DELETE FROM drop_on_reboot");
         if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret: %{public}d", ret);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret:%{public}d", ret);
         }
     }
 }
@@ -289,7 +291,7 @@ void TimeDatabase::ClearInvaildDataInHoldOnReboot()
         }
         ret = store->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
         if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret: %{public}d", ret);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret:%{public}d", ret);
         }
     }
 }
@@ -300,7 +302,7 @@ int TimeDBCreateTables(OHOS::NativeRdb::RdbStore &store)
     // Creates hold_on_reboot table.
     int ret = store.ExecuteSql(CREATE_TIME_TIMER_HOLD_ON_REBOOT);
     if (ret != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Creates hold_on_reboot table failed, ret: %{public}d", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Creates hold_on_reboot table failed, ret:%{public}d", ret);
         return ret;
     }
 
@@ -308,7 +310,7 @@ int TimeDBCreateTables(OHOS::NativeRdb::RdbStore &store)
     // Creates drop_on_reboot table.
     ret = store.ExecuteSql(CREATE_TIME_TIMER_DROP_ON_REBOOT);
     if (ret != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Creates drop_on_reboot table failed, ret: %{public}d", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Creates drop_on_reboot table failed, ret:%{public}d", ret);
         return ret;
     }
     return ret;
@@ -319,7 +321,7 @@ int TimeDBOpenCallback::OnCreate(OHOS::NativeRdb::RdbStore &store)
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnCreate");
     auto initRet = TimeDBCreateTables(store);
     if (initRet != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Init database failed: %{public}d", initRet);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Init database failed:%{public}d", initRet);
         return initRet;
     }
     return OHOS::NativeRdb::E_OK;
@@ -335,24 +337,24 @@ int TimeDBOpenCallback::OnUpgrade(OHOS::NativeRdb::RdbStore &store, int oldVersi
     if (oldVersion < DATABASE_OPEN_VERSION_2 && newVersion >= DATABASE_OPEN_VERSION_2) {
         int ret = store.ExecuteSql(HOLD_ON_REBOOT_ADD_PID_COLUMN);
         if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "hold_on_reboot add column failed, ret: %{public}d", ret);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "hold_on_reboot add column failed, ret:%{public}d", ret);
             return ret;
         }
         ret = store.ExecuteSql(DROP_ON_REBOOT_ADD_PID_COLUMN);
         if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "drop_on_reboot add column failed, ret: %{public}d", ret);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "drop_on_reboot add column failed, ret:%{public}d", ret);
             return ret;
         }
     }
     if (oldVersion < DATABASE_OPEN_VERSION_3 && newVersion >= DATABASE_OPEN_VERSION_3) {
         int ret = store.ExecuteSql(HOLD_ON_REBOOT_ADD_NAME_COLUMN);
         if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "hold_on_reboot add column failed, ret: %{public}d", ret);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "hold_on_reboot add column failed, ret:%{public}d", ret);
             return ret;
         }
         ret = store.ExecuteSql(DROP_ON_REBOOT_ADD_NAME_COLUMN);
         if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "drop_on_reboot add column failed, ret: %{public}d", ret);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "drop_on_reboot add column failed, ret:%{public}d", ret);
             return ret;
         }
     }

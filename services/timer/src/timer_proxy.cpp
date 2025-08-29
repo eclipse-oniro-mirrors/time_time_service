@@ -50,8 +50,12 @@ int32_t TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
     }
     int32_t ret = alarm->callback(alarm->id);
     if (alarm->bundleName != NO_LOG_APP || alarm->wakeup) {
-        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "cb: %{public}" PRId64 " ret: %{public}d",
-            alarm->id, ret);
+        if (ret == 0) {
+            TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "cb:%{public}" PRId64 "", alarm->id);
+        } else {
+            TIME_SIMPLIFY_HILOGE(TIME_MODULE_SERVICE, "cb:%{public}" PRId64 " ret:%{public}d",
+                alarm->id, ret);
+        }
     }
     return ret;
 }
@@ -70,7 +74,7 @@ bool TimerProxy::ProxyTimer(int32_t uid, int pid, bool isProxy, bool needRetrigg
     }
 
     if (!RestoreProxyWhenElapsedForProxyTimers(uid, pid, now, insertAlarmCallback, needRetrigger)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Pid: %{public}d doesn't exist in the proxy list" PRId64 "", pid);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Pid%{public}d doesn't exist in the proxy list" PRId64 "", pid);
         return false;
     }
     return true;
@@ -81,7 +85,7 @@ bool TimerProxy::AdjustTimer(bool isAdjust, uint32_t interval,
     std::function<void(AdjustTimerCallback adjustTimer)> updateTimerDeliveries)
 {
     std::lock_guard<std::mutex> lockProxy(adjustMutex_);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "adjust timer state: %{public}d, interval: %{public}d, delta: %{public}d",
+    TIME_HILOGD(TIME_MODULE_SERVICE, "adjust timer state:%{public}d, interval:%{public}d, delta:%{public}d",
         isAdjust, interval, delta);
     auto callback = [=] (std::shared_ptr<TimerInfo> timer) {
         if (timer == nullptr) {
@@ -105,12 +109,12 @@ bool TimerProxy::UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_p
     uint32_t interval, uint32_t delta, std::shared_ptr<TimerInfo> &timer)
 {
     if (IsTimerExemption(timer)) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "adjust exemption timer bundleName: %{public}s",
+        TIME_HILOGD(TIME_MODULE_SERVICE, "adjust exemption timer bundleName:%{public}s",
             timer->bundleName.c_str());
         return false;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "adjust single time id: %{public}" PRId64 ", "
-        "uid: %{public}d, bundleName: %{public}s",
+    TIME_HILOGD(TIME_MODULE_SERVICE, "adjust single time id:%{public}" PRId64 ", "
+        "uid:%{public}d, bundleName:%{public}s",
         timer->id, timer->uid, timer->bundleName.c_str());
     adjustTimers_.insert(timer->id);
     return timer->AdjustTimer(now, interval, delta);
@@ -141,7 +145,7 @@ bool TimerProxy::SetTimerExemption(const std::unordered_set<std::string> &nameAr
 bool TimerProxy::IsTimerExemption(std::shared_ptr<TimerInfo> timer)
 {
     auto key = timer->bundleName + "|" + timer->name;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "key is: %{public}s", key.c_str());
+    TIME_HILOGD(TIME_MODULE_SERVICE, "key is:%{public}s", key.c_str());
     if ((adjustExemptionList_.find(timer->bundleName) != adjustExemptionList_.end()
         || adjustExemptionList_.find(key) != adjustExemptionList_.end())
         && timer->windowLength == milliseconds::zero()) {
@@ -194,7 +198,7 @@ int32_t TimerProxy::CountUidTimerMapByUid(int32_t uid)
 void TimerProxy::RecordUidTimerMap(const std::shared_ptr<TimerInfo> &alarm, const bool isRebatched)
 {
     if (isRebatched) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "Record uid timer info map, isRebatched: %{public}d", isRebatched);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "Record uid timer info map, isRebatched:%{public}d", isRebatched);
         return;
     }
     if (alarm == nullptr) {
@@ -317,14 +321,14 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
     uint64_t key = GetProxyKey(uid, pid);
     auto it = proxyTimers_.find(key);
     if (it != proxyTimers_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid: %{public}d is already proxy", uid, pid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid:%{public}d is already proxy", uid, pid);
         return;
     }
     std::lock_guard<std::mutex> lockUidTimers(uidTimersMutex_);
     std::vector<uint64_t> timerList;
     auto itUidTimersMap = uidTimersMap_.find(uid);
     if (itUidTimersMap == uidTimersMap_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "uid: %{public}d in map not found", uid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d in map not found", uid);
         proxyTimers_[key] = timerList;
         return;
     }
@@ -453,7 +457,7 @@ void TimerProxy::ShowAdjustTimerInfo(int fd)
 bool TimerProxy::ShowProxyDelayTime(int fd)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
-    dprintf(fd, "proxy delay time: %lld ms\n", proxyDelayTime_);
+    dprintf(fd, "proxy delay time:%lld ms\n", proxyDelayTime_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return true;
 }

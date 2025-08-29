@@ -184,17 +184,17 @@ bool TimerInfo::RestoreProxyTimer()
     //Change timer state
     switch (state) {
         case INIT:
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Restore timer in init state, id: %{public}" PRIu64 "", id);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Restore timer in init state id:%{public}" PRIu64 "", id);
             break;
         case ADJUST:
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Restore timer in adjust state, id: %{public}" PRIu64 "", id);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Restore timer in adjust state id:%{public}" PRIu64 "", id);
             state = INIT;
             break;
         case PROXY:
             state = INIT;
             break;
         default:
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Error state, id: %{public}" PRIu64 ", state: %{public}d", id, state);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Error state id:%{public}" PRIu64 ", state:%{public}d", id, state);
     }
     return RestoreTimer();
 }
