@@ -50,6 +50,7 @@ public:
         int64_t mCertaintyMillis;
     };
     bool IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult);
+    int32_t GetSameTimeResultCount(std::shared_ptr<TimeResult> candidateTimeResult);
 
 private:
     std::shared_ptr<TimeResult> mTimeResult {};

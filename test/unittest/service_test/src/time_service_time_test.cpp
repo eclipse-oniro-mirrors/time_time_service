@@ -58,8 +58,8 @@ const std::string AUTO_TIME_STATUS_ON = "ON";
 const uint64_t TIMER_ID = 88888;
 constexpr int64_t MINUTE_TO_MILLISECOND = 60000;
 constexpr char BYTE_SNTP_MESSAGE = 0xD8;
-constexpr int64_t ONE_DAY_KERNEL_GAP = 1700;
-constexpr int64_t TRUSTED_NTP_TIME_GAP = 10;
+constexpr int64_t MAX_TIME_DRIFT_IN_ONE_DAY = 2000;
+constexpr int64_t MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS = 100;
 constexpr int64_t ONE_DAY = 86400000;
 constexpr int64_t ONE_HOUR = 3600000;
 constexpr int64_t TWO_SECOND = 2000;
@@ -714,7 +714,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime005, TestSize.Level0)
     EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 2);
 
     // test new result Within the margin of error
-    auto wallTime2 = wallTime - ONE_HOUR - ONE_DAY_KERNEL_GAP;
+    auto wallTime2 = wallTime - ONE_HOUR - MAX_TIME_DRIFT_IN_ONE_DAY;
     auto bootTime2 = bootTime - ONE_HOUR;
     ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
     ret = false;
@@ -724,7 +724,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime005, TestSize.Level0)
     EXPECT_EQ(ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(), bootTime);
     EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
 
-    auto wallTime3 = wallTime - ONE_HOUR + ONE_DAY_KERNEL_GAP;
+    auto wallTime3 = wallTime - ONE_HOUR + MAX_TIME_DRIFT_IN_ONE_DAY;
     auto bootTime3 = bootTime - ONE_HOUR;
     ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
     ret = false;
@@ -751,7 +751,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
     auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
     
     // test new result out of the margin of error
-    auto wallTime1 = wallTime - ONE_HOUR - ONE_DAY_KERNEL_GAP - TWO_SECOND;
+    auto wallTime1 = wallTime - ONE_HOUR - MAX_TIME_DRIFT_IN_ONE_DAY - TWO_SECOND;
     auto bootTime1 = bootTime - ONE_HOUR;
     ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime1, bootTime1, 0);
     auto ret = true;
@@ -761,7 +761,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
     EXPECT_EQ(ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(), bootTime1);
     EXPECT_EQ(ret, false);
 
-    auto wallTime2 = wallTime - ONE_HOUR + ONE_DAY_KERNEL_GAP + TWO_SECOND;
+    auto wallTime2 = wallTime - ONE_HOUR + MAX_TIME_DRIFT_IN_ONE_DAY + TWO_SECOND;
     auto bootTime2 = bootTime - ONE_HOUR;
     ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
     ret = true;
@@ -786,10 +786,10 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime007, TestSize.Level0)
 
     // three time is similar, vote for 3 candidate
     auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
-    auto wallTime2 = wallTime + ONE_SECOND + TRUSTED_NTP_TIME_GAP;
+    auto wallTime2 = wallTime + ONE_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS;
     auto bootTime2 = bootTime + ONE_SECOND;
     auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
-    auto wallTime3 = wallTime + TWO_SECOND + TRUSTED_NTP_TIME_GAP / 2;
+    auto wallTime3 = wallTime + TWO_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS / 2;
     auto bootTime3 = bootTime + TWO_SECOND;
     auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
     bool ret = true;
@@ -853,7 +853,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime009, TestSize.Level0)
     auto wallTime2 = wallTime + TWO_SECOND;
     auto bootTime2 = bootTime + ONE_SECOND;
     auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
-    auto wallTime3 = wallTime + TWO_SECOND + TRUSTED_NTP_TIME_GAP * 2;
+    auto wallTime3 = wallTime + TWO_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS * 2;
     auto bootTime3 = bootTime + TWO_SECOND;
     auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult1);

@@ -27,8 +27,8 @@ constexpr int64_t HALF = 2;
 constexpr int NANO_TO_SECOND =  1000000000;
 constexpr int64_t ONE_DAY = 86400000;
 // RTC has 1.7s gap one day
-constexpr int64_t ONE_DAY_KERNEL_GAP = 1700;
-constexpr int64_t TRUSTED_NTP_TIME_GAP = 20;
+constexpr int64_t MAX_TIME_DRIFT_IN_ONE_DAY = 2000;
+constexpr int64_t MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS = 100;
 } // namespace
 
 std::mutex NtpTrustedTime::mTimeResultMutex_;
@@ -60,7 +60,6 @@ bool NtpTrustedTime::IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult)
 {
     // system has not got ntp time, push into candidate list
     if (mTimeResult == nullptr) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "mTimeResult is nullptr");
         TimeResultCandidates_.push_back(timeResult);
         return false;
     }
@@ -73,8 +72,9 @@ bool NtpTrustedTime::IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult)
     }
     // mTimeResult is beyond max value of kernel gap, this server is untrusted
     auto newNtpTime = timeResult->GetTimeMillis();
-    if (std::abs(newNtpTime - oldNtpTime) > ONE_DAY_KERNEL_GAP) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "NTP server is untrusted");
+    if (std::abs(newNtpTime - oldNtpTime) > MAX_TIME_DRIFT_IN_ONE_DAY) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "NTP server is untrusted old:%{public}" PRId64 " new:%{public}" PRId64 "",
+            oldNtpTime, newNtpTime);
         TimeResultCandidates_.push_back(timeResult);
         return false;
     }
@@ -84,48 +84,52 @@ bool NtpTrustedTime::IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult)
     return true;
 }
 
+int32_t NtpTrustedTime::GetSameTimeResultCount(std::shared_ptr<TimeResult> candidateTimeResult)
+{
+    auto candidateBootTime = candidateTimeResult->GetElapsedRealtimeMillis();
+    auto candidateRealTime = candidateTimeResult->GetTimeMillis();
+    int count = 0;
+    for (size_t i = 0; i < TimeResultCandidates_.size(); i++) {
+        auto compareTime = TimeResultCandidates_[i]->CurrentTimeMillis(candidateBootTime);
+        if (std::abs(compareTime - candidateRealTime) < MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS) {
+            count += 1;
+        }
+    }
+    return count;
+}
+
 // needs to acquire the lock `mTimeResultMutex_` before calling this method
 bool NtpTrustedTime::FindBestTimeResult()
 {
-    if (TimeResultCandidates_.size() == 0) {
+    if (TimeResultCandidates_.size() == 0 || TimeResultCandidates_.size() == 1) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "no or one candidate");
         return false;
     }
-    std::vector<int64_t> sortedTimes;
+
     int64_t bootTime;
     int res = TimeUtils::GetBootTimeMs(bootTime);
     if (res != E_TIME_OK) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "getboottime failed");
         return false;
     }
-    // calculate value with same boottime
+
+    int32_t maxVotedTimeResultCount = 0;
+    std::shared_ptr<TimeResult> maxVotedTimeResult;
     for (size_t i = 0; i < TimeResultCandidates_.size(); i++) {
-        auto result = TimeResultCandidates_[i];
-        auto ntpTime = result->CurrentTimeMillis(bootTime);
-        sortedTimes.push_back(ntpTime);
-    }
-
-    std::sort(sortedTimes.begin(), sortedTimes.end());
-
-    int32_t maxVoteCount = 0;
-    int64_t maxVoteTime = 0;
-    for (size_t i = 0; i < sortedTimes.size(); ++i) {
-        int64_t candidateValue = sortedTimes[i];
-        int32_t voteCount = 0;
-
-        auto lower = std::lower_bound(sortedTimes.begin(), sortedTimes.end(), candidateValue - TRUSTED_NTP_TIME_GAP);
-        auto upper = std::upper_bound(sortedTimes.begin(), sortedTimes.end(), candidateValue + TRUSTED_NTP_TIME_GAP);
-
-        voteCount = std::distance(lower, upper);
-        if (voteCount > maxVoteCount) {
-            maxVoteCount = voteCount;
-            maxVoteTime = candidateValue;
+        auto timeResult = TimeResultCandidates_[i];
+        int32_t count = GetSameTimeResultCount(TimeResultCandidates_[i]);
+        if (count > maxVotedTimeResultCount) {
+            maxVotedTimeResultCount = count;
+            maxVotedTimeResult = timeResult;
         }
     }
 
     TimeResultCandidates_.clear();
-    if (maxVoteCount == 1) {
+    if (maxVotedTimeResultCount == 1) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "no best candidate");
         return false;
     } else {
-        mTimeResult = std::make_shared<TimeResult>(maxVoteTime, bootTime, 0);
+        mTimeResult = maxVotedTimeResult;
         return true;
     }
 }
