@@ -18,6 +18,7 @@
 #include <sys/timerfd.h>
 #include <sstream>
 #include "timer_handler.h"
+#include "timer_manager_interface.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -42,7 +43,7 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
     TimerFds fds;
     int epollfd = epoll_create(fds.size());
     if (epollfd < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "epoll_create %{public}d failed: %{public}s",
+        TIME_HILOGE(TIME_MODULE_SERVICE, "epoll_create %{public}d failed:%{public}s",
             static_cast<int>(fds.size()), strerror(errno));
         return nullptr;
     }
@@ -55,7 +56,7 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
             fds[i] = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
         }
         if (fds[i] < 0) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create %{public}d  failed: %{public}s",
+            TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create %{public}d  failed:%{public}s",
                 static_cast<int>(i), strerror(errno));
             close(epollfd);
             for (size_t j = 0; j < i; j++) {
@@ -78,7 +79,7 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
         event.events = EPOLLIN | EPOLLWAKEUP;
         event.data.u32 = i;
         if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fds[i], &event) < 0) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "epoll_ctl(EPOLL_CTL_ADD) failed: %{public}s", strerror(errno));
+            TIME_HILOGE(TIME_MODULE_SERVICE, "epoll_ctl(EPOLL_CTL_ADD) failed:%{public}s", strerror(errno));
             return nullptr;
         }
     }
@@ -93,12 +94,16 @@ int TimerHandler::SetRealTimeFd(TimerFds fds)
     itimerspec spec {};
     #ifdef SET_AUTO_REBOOT_ENABLE
     int err = timerfd_settime(fds[ALARM_TYPE_COUNT - 1], TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET, &spec, nullptr);
-    TIME_HILOGW(TIME_MODULE_SERVICE, "settime fd: %{public}d, res: %{public}d, errno: %{public}s",
-        fds[ALARM_TYPE_COUNT - 1], err, strerror(errno));
+    if (err) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "settime fd:%{public}d, res:%{public}d, errno:%{public}s",
+            fds[ALARM_TYPE_COUNT - 1], err, strerror(errno));
+    }
     #else
     int err = timerfd_settime(fds[ALARM_TYPE_COUNT], TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET, &spec, nullptr);
-    TIME_HILOGW(TIME_MODULE_SERVICE, "settime fd: %{public}d, res: %{public}d, errno: %{public}s",
-        fds[ALARM_TYPE_COUNT], err, strerror(errno));
+    if (err) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "settime fd:%{public}d, res:%{public}d, errno:%{public}s",
+            fds[ALARM_TYPE_COUNT], err, strerror(errno));
+    }
     #endif
     return err;
 }
@@ -125,13 +130,19 @@ int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when, std::chrono:
     }
 
     auto second = std::chrono::duration_cast<std::chrono::seconds>(when);
-    TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "typ:%{public}d trig: %{public}lld %{public}lld, bt: %{public}lld",
-                         type, second.count(), (when - second).count(), bootTime.time_since_epoch().count());
+    auto milliSecond = std::chrono::duration_cast<std::chrono::milliseconds>(when);
+    auto bootTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(bootTime.time_since_epoch());
+    if (type == static_cast<uint32_t>(ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP)) {
+        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "typ:%{public}d trig:%{public}lld bt:%{public}lld", type,
+            milliSecond.count(), bootTimeMs.count());
+    } else {
+        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "typ:%{public}d trig:%{public}lld", type, milliSecond.count());
+    }
     timespec ts {second.count(), (when - second).count()};
     itimerspec spec {timespec {}, ts};
     int ret = timerfd_settime(fds_[type], TFD_TIMER_ABSTIME, &spec, nullptr);
     if (ret != 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Set timer to kernel. ret: %{public}d. error: %{public}s",
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Set timer to kernel ret:%{public}d error:%{public}s",
                     ret, strerror(errno));
     }
     return ret;

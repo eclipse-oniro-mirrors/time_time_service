@@ -14,6 +14,7 @@
  */
 
 #include <memory>
+#include <chrono>
 #include "timer_manager.h"
 
 #include "time_file_utils.h"
@@ -166,7 +167,7 @@ void TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId)
 {
     if (timerNameMap_.find(uid) == timerNameMap_.end() || timerNameMap_[uid].find(name) == timerNameMap_[uid].end()) {
         timerNameMap_[uid][name] = timerId;
-        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "%{public}s: %{public}" PRId64 "", name.c_str(), timerId);
+        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "%{public}s:%{public}" PRId64 "", name.c_str(), timerId);
         return;
     }
     auto oldTimerId = timerNameMap_[uid][name];
@@ -175,8 +176,8 @@ void TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId)
         StopTimerInnerLocked(true, oldTimerId, needRecover);
         UpdateOrDeleteDatabase(true, oldTimerId, needRecover);
         timerNameMap_[uid][name] = timerId;
-        TIME_HILOGW(TIME_MODULE_SERVICE, "create %{public}" PRId64 " name: %{public}s in %{public}d already exist,"
-            "destory timer %{public}" PRId64 "", timerId, name.c_str(), uid, oldTimerId);
+        TIME_HILOGW(TIME_MODULE_SERVICE, "create:%{public}" PRId64 " name:%{public}s in %{public}d already exist "
+            "destory:%{public}" PRId64 "", timerId, name.c_str(), uid, oldTimerId);
     }
     return;
 }
@@ -191,7 +192,7 @@ void TimerManager::DeleteTimerName(int uid, std::string name, uint64_t timerId)
     }
     auto timerIter = nameIter->second.find(name);
     if (timerIter == nameIter->second.end()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "NameMap has no name:%{public}s uid: %{public}d", name.c_str(), uid);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "NameMap has no name:%{public}s uid:%{public}d", name.c_str(), uid);
         return;
     }
     if (timerIter->second == timerId) {
@@ -211,7 +212,7 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
                                   DatabaseType type)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE,
-                "Create timer: %{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}u"
+                "Create timer:%{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}u"
                 "uid:%{public}d pid:%{public}d timerId:%{public}" PRId64 "", paras.timerType, paras.windowLength,
                 paras.interval, paras.flag, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid(), timerId);
     std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
@@ -267,13 +268,13 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
         std::lock_guard<std::mutex> lock(entryMapMutex_);
         auto it = timerEntryMap_.find(timerId);
         if (it == timerEntryMap_.end()) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "id not found:%{public}" PRId64 "", timerId);
             return E_TIME_NOT_FOUND;
         }
         timerInfo = it->second;
         TIME_HILOGI(TIME_MODULE_SERVICE,
-            "id: %{public}" PRIu64 " typ:%{public}d len: %{public}" PRId64 " int: %{public}" PRId64 " "
-            "flg :%{public}d trig: %{public}s uid:%{public}d pid:%{public}d",
+            "id:%{public}" PRIu64 " typ:%{public}d len:%{public}" PRId64 " int:%{public}" PRId64 " "
+            "flg:%{public}d trig:%{public}s uid:%{public}d pid:%{public}d",
             timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
             std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
         {
@@ -317,13 +318,13 @@ int32_t TimerManager::StartTimerGroup(std::vector<std::pair<uint64_t, uint64_t>>
         std::shared_ptr<TimerEntry> timerInfo;
         auto it = timerEntryMap_.find(timerId);
         if (it == timerEntryMap_.end()) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found: %{public}" PRId64 "", timerId);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Timer id not found:%{public}" PRId64 "", timerId);
             continue;
         }
         timerInfo = it->second;
         TIME_HILOGI(TIME_MODULE_SERVICE,
-            "id: %{public}" PRIu64 " typ:%{public}d len: %{public}" PRId64 " int: %{public}" PRId64 " "
-            "flg :%{public}d trig: %{public}s uid:%{public}d pid:%{public}d",
+            "id:%{public}" PRIu64 " typ:%{public}d len:%{public}" PRId64 " int:%{public}" PRId64 " "
+            "flg :%{public}d trig:%{public}s uid:%{public}d pid:%{public}d",
             timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
             std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
         {
@@ -364,7 +365,7 @@ void TimerManager::DecreaseTimerCount(int uid)
             return pair.first == uid;
         });
     if (it == timerCount_.end()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "uid: %{public}d has no timer", uid);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "uid:%{public}d has no timer", uid);
     } else {
         it->second--;
     }
@@ -429,7 +430,7 @@ int32_t TimerManager::DestroyTimer(uint64_t timerId)
 
 int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "id: %{public}" PRId64 ", needDestroy: %{public}d", timerNumber, needDestroy);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "id:%{public}" PRId64 ", destroy:%{public}d", timerNumber, needDestroy);
     int32_t ret;
     bool needRecover = false;
     {
@@ -489,7 +490,7 @@ void TimerManager::UpdateOrDeleteDatabase(bool needDestroy, uint64_t timerNumber
 
 void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start id: %{public}" PRId64 "", alarm->id);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start id:%{public}" PRId64 "", alarm->id);
     auto bootTimePoint = TimeUtils::GetBootTimeNs();
     if (TimerProxy::GetInstance().IsProxy(alarm->uid, 0)) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, uid=%{public}d id=%{public}" PRId64 "",
@@ -526,7 +527,7 @@ void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
         auto batch = *it;
         didRemove = batch->Remove(whichAlarms);
         if (didRemove) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "remove id: %{public}" PRIu64 "", id);
+            TIME_HILOGI(TIME_MODULE_SERVICE, "remove id:%{public}" PRIu64 "", id);
             it = alarmBatches_.erase(it);
             if (batch->Size() != 0) {
                 AddBatchLocked(alarmBatches_, batch);
@@ -652,7 +653,7 @@ void TimerManager::TimerLooper()
         triggerList.clear();
 
         if ((result & TIME_CHANGED_MASK) != 0) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "ret: %{public}u", result);
+            TIME_HILOGI(TIME_MODULE_SERVICE, "ret:%{public}u", result);
             system_clock::time_point lastTimeChangeClockTime;
             system_clock::time_point expectedClockTime;
             std::lock_guard<std::mutex> lock(mutex_);
@@ -772,7 +773,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             auto alarm = batch->Get(i);
             triggerList.push_back(alarm);
             if (!IsNoLog(alarm)) {
-                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "uid: %{public}d id:%{public}" PRId64 " name:%{public}s"
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "uid:%{public}d id:%{public}" PRId64 " name:%{public}s"
                     " wk:%{public}u",
                     alarm->uid, alarm->id, alarm->bundleName.c_str(), alarm->wakeup);
             }
@@ -924,10 +925,18 @@ void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
         -1 :
         AttemptCoalesceLocked(alarm->whenElapsed, alarm->maxWhenElapsed);
     if (!IsNoLog(alarm)) {
-        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat: %{public}" PRId64 " id:%{public}" PRIu64 " "
-            "we:%{public}lld mwe:%{public}lld",
-            whichBatch, alarm->id, alarm->whenElapsed.time_since_epoch().count(),
-            alarm->maxWhenElapsed.time_since_epoch().count());
+        auto whenElapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+            alarm->whenElapsed.time_since_epoch()).count();
+        auto maxWhenElapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+            alarm->maxWhenElapsed.time_since_epoch()).count();
+        if (whenElapsedMs != maxWhenElapsedMs) {
+            TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat:%{public}" PRId64 " id:%{public}" PRIu64 " "
+                "we:%{public}lld mwe:%{public}lld",
+                whichBatch, alarm->id, whenElapsedMs, maxWhenElapsedMs);
+        } else {
+            TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat:%{public}" PRId64 " id:%{public}" PRIu64 " "
+                "we:%{public}lld", whichBatch, alarm->id, whenElapsedMs);
+        }
     }
     if (whichBatch < 0) {
         AddBatchLocked(alarmBatches_, std::make_shared<Batch>(*alarm));
@@ -982,18 +991,18 @@ int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &tim
     int foregroundUserId = -1;
     int getLocalIdErr = AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(timer->uid, userIdOfTimer);
     if (getLocalIdErr != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Get account id from uid failed, errcode: %{public}d", getLocalIdErr);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get account id from uid failed, errcode:%{public}d", getLocalIdErr);
         return E_TIME_ACCOUNT_ERROR;
     }
     int getForegroundIdErr = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(foregroundUserId);
     if (getForegroundIdErr != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Get foreground account id failed, errcode: %{public}d", getForegroundIdErr);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get foreground account id failed, errcode:%{public}d", getForegroundIdErr);
         return E_TIME_ACCOUNT_ERROR;
     }
     if (userIdOfTimer == foregroundUserId || userIdOfTimer == SYSTEM_USER_ID) {
         return E_TIME_OK;
     } else {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "WA wait switch user, uid: %{public}d, timerId: %{public}" PRId64,
+        TIME_HILOGI(TIME_MODULE_SERVICE, "WA wait switch user, uid:%{public}d, timerId:%{public}" PRId64,
             timer->uid, timer->id);
         return E_TIME_ACCOUNT_NOT_MATCH;
     }
@@ -1114,7 +1123,7 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
         #endif
         want = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::GetWant(wantAgent);
         if (want == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr, id=%{public}" PRId64 "", timer->id);
+            TIME_HILOGE(TIME_MODULE_SERVICE, "want is nullptr,id=%{public}" PRId64 "", timer->id);
             return false;
         }
     }
@@ -1122,11 +1131,13 @@ bool TimerManager::NotifyWantAgent(const std::shared_ptr<TimerInfo> &timer)
     sptr<AbilityRuntime::WantAgent::CompletedDispatcher> data;
     auto code = AbilityRuntime::WantAgent::WantAgentHelper::TriggerWantAgent(wantAgent, nullptr, paramsInfo,
         data, nullptr);
-    TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "trigWA ret: %{public}d", code);
     if (code != ERR_OK) {
+        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "trigWA id:%{public}" PRId64 " ret:%{public}d", timer->id, code);
         auto extraInfo = "timer id:" + std::to_string(timer->id);
         TimeServiceFaultReporter(ReportEventCode::TIMER_WANTAGENT_FAULT_REPORT, code, timer->uid, timer->bundleName,
             extraInfo);
+    } else {
+        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "trigWA id:%{public}" PRId64 "", timer->id);
     }
     return code == ERR_OK;
 }
@@ -1151,7 +1162,7 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (adjustPolicy_ == isAdjust && adjustInterval_ == interval && adjustDelta_ == delta) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "already deal timer adjust, flag: %{public}d", isAdjust);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "already deal timer adjust, flag:%{public}d", isAdjust);
         return false;
     }
     std::chrono::steady_clock::time_point now = TimeUtils::GetBootTimeNs();
@@ -1171,7 +1182,7 @@ bool TimerManager::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
             }
         }
         if (isChanged) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "timer adjust executing, policy: %{public}d", adjustPolicy_);
+            TIME_HILOGI(TIME_MODULE_SERVICE, "timer adjust executing, policy:%{public}d", adjustPolicy_);
             ReBatchAllTimers();
         }
     };
@@ -1525,9 +1536,8 @@ void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
             return;
         }
         auto holdLockTime = nextTimerOffset + ONE_HUNDRED_MILLI;
-        TIME_HILOGI(TIME_MODULE_SERVICE, "runningLock time:%{public}" PRIu64 ", timerId:%{public}"
-                    PRIu64", uid:%{public}d  bundleName=%{public}s", static_cast<uint64_t>(holdLockTime),
-                    firstAlarm->id, firstAlarm->uid, firstAlarm->bundleName.c_str());
+        TIME_HILOGI(TIME_MODULE_SERVICE, "time:%{public}" PRIu64 ", timerId:%{public}" PRIu64"",
+            static_cast<uint64_t>(holdLockTime), firstAlarm->id);
         lockExpiredTime_ = currentTime + holdLockTime;
         AddRunningLock(holdLockTime);
     }

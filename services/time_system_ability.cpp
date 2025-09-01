@@ -193,7 +193,7 @@ void TimeSystemAbility::OnStart()
     // This parameter is set to true by init only after all services have been started,
     // and is automatically set to false after shutdown. Otherwise it will not be modified.
     std::string bootCompleted = system::GetParameter(BOOTEVENT_PARAMETER, "");
-    TIME_HILOGI(TIME_MODULE_SERVICE, "bootCompleted: %{public}s", bootCompleted.c_str());
+    TIME_HILOGI(TIME_MODULE_SERVICE, "bootCompleted:%{public}s", bootCompleted.c_str());
     if (bootCompleted != "true") {
         #ifdef RDB_ENABLE
         TimeDatabase::GetInstance().ClearDropOnReboot();
@@ -300,7 +300,7 @@ void TimeSystemAbility::RegisterOsAccountSubscriber()
     auto userChangedSubscriber = std::make_shared<UserRemovedSubscriber>(subscribeInfo);
     int err = AccountSA::OsAccountManager::SubscribeOsAccount(userChangedSubscriber);
     if (err != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Subscribe user removed event failed, errcode: %{public}d", err);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Subscribe user removed event failed, errcode:%{public}d", err);
     }
 }
 #endif
@@ -536,7 +536,7 @@ bool TimeSystemAbility::IsValidTime(int64_t time)
 bool TimeSystemAbility::SetRealTime(int64_t time)
 {
     if (!IsValidTime(time)) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "time is invalid: %{public}s", std::to_string(time).c_str());
+        TIME_HILOGE(TIME_MODULE_SERVICE, "time is invalid:%{public}s", std::to_string(time).c_str());
         return false;
     }
     sptr<TimeSystemAbility> instance = TimeSystemAbility::GetInstance();
@@ -545,11 +545,12 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     int64_t bootTime = 0;
     TimeUtils::GetBootTimeMs(bootTime);
     TIME_HILOGW(TIME_MODULE_SERVICE,
-        "Before Current Time: %{public}s"
-        " Set time: %{public}s"
-        " Difference: %{public}s"
+        "Before Current Time:%{public}s"
+        " Set time:%{public}s"
+        " Difference:%{public}s"
         " uid:%{public}d pid:%{public}d ",
-        std::to_string(beforeTime).c_str(), std::to_string(time).c_str(), std::to_string(time - bootTime).c_str(),
+        std::to_string(beforeTime).c_str(), std::to_string(time).c_str(),
+        std::to_string(std::abs(time - beforeTime)).c_str(),
         IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
     if (time < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "input param error %{public}" PRId64 "", time);
@@ -565,16 +566,16 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     tv.tv_usec = (suseconds_t)((time % MILLI_TO_BASE) * MILLI_TO_MICR);
     int result = settimeofday(&tv, nullptr);
     if (result < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday time fail: %{public}d. error: %{public}s", result,
+        TIME_HILOGE(TIME_MODULE_SERVICE, "settimeofday time fail:%{public}d. error:%{public}s", result,
             strerror(errno));
         return false;
     }
     auto ret = SetRtcTime(tv.tv_sec);
     if (ret == E_TIME_SET_RTC_FAILED) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "set rtc fail: %{public}d", ret);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "set rtc fail:%{public}d", ret);
         return false;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "getting currentTime to milliseconds: %{public}" PRId64 "", currentTime);
+    TIME_HILOGD(TIME_MODULE_SERVICE, "getting currentTime to milliseconds:%{public}" PRId64 "", currentTime);
     if (currentTime < (time - ONE_MILLI) || currentTime > (time + ONE_MILLI)) {
         TimeServiceNotify::GetInstance().PublishTimeChangeEvents(currentTime);
     }
@@ -731,17 +732,17 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
     FILE* fd = nullptr;
     int res;
     if (rtcId < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid rtc id: %{public}s:", strerror(ENODEV));
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid rtc id:%{public}s:", strerror(ENODEV));
         return E_TIME_SET_RTC_FAILED;
     }
     std::stringstream strs;
     strs << "/dev/rtc" << rtcId;
     auto rtcDev = strs.str();
-    TIME_HILOGI(TIME_MODULE_SERVICE, "rtc_dev : %{public}s:", rtcDev.data());
+    TIME_HILOGI(TIME_MODULE_SERVICE, "rtc_dev :%{public}s:", rtcDev.data());
     auto rtcData = rtcDev.data();
     fd = fopen(rtcData, "r+");
     if (fd == NULL) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "open failed %{public}s: %{public}s", rtcDev.data(), strerror(errno));
+        TIME_HILOGE(TIME_MODULE_SERVICE, "open failed %{public}s:%{public}s", rtcDev.data(), strerror(errno));
         return E_TIME_SET_RTC_FAILED;
     }
     gmtime_res = gmtime_r(&sec, &tm);
@@ -758,16 +759,16 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
         int fd_int = fileno(fd);
         res = ioctl(fd_int, RTC_SET_TIME, &rtc);
         if (res < 0) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "ioctl RTC_SET_TIME failed,errno: %{public}s, res: %{public}d",
+            TIME_HILOGE(TIME_MODULE_SERVICE, "ioctl RTC_SET_TIME failed,errno:%{public}s, res:%{public}d",
                 strerror(errno), res);
         }
     } else {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "convert rtc time failed: %{public}s", strerror(errno));
+        TIME_HILOGE(TIME_MODULE_SERVICE, "convert rtc time failed:%{public}s", strerror(errno));
         res = E_TIME_SET_RTC_FAILED;
     }
     int result = fclose(fd);
     if (result != 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "file close failed: %{public}d", result);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "file close failed:%{public}d", result);
     }
     return res;
 }
@@ -793,7 +794,7 @@ int TimeSystemAbility::GetWallClockRtcId()
 
     std::unique_ptr<DIR, int (*)(DIR *)> dir(opendir(rtcPath.c_str()), closedir);
     if (!dir.get()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to open %{public}s: %{public}s", rtcPath.c_str(), strerror(errno));
+        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to open %{public}s:%{public}s", rtcPath.c_str(), strerror(errno));
         return -1;
     }
 
@@ -818,7 +819,7 @@ int TimeSystemAbility::GetWallClockRtcId()
     if (errno == 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "no wall clock rtc found");
     } else {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to check rtc: %{public}s", strerror(errno));
+        TIME_HILOGE(TIME_MODULE_SERVICE, "failed to check rtc:%{public}s", strerror(errno));
     }
     return -1;
 }
@@ -878,7 +879,7 @@ int32_t TimeSystemAbility::GetTimeZone(std::string &timeZoneId)
         TIME_HILOGE(TIME_MODULE_SERVICE, "get timezone failed");
         return E_TIME_DEAL_FAILED;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Current timezone : %{public}s", timeZoneId.c_str());
+    TIME_HILOGD(TIME_MODULE_SERVICE, "Current timezone :%{public}s", timeZoneId.c_str());
     return ERR_OK;
 }
 
@@ -931,7 +932,7 @@ int32_t TimeSystemAbility::AdjustTimer(bool isAdjust, uint32_t interval, uint32_
         return E_TIME_NO_PERMISSION;
     }
     if (isAdjust && interval == 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid parameter: interval");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid parameter:interval");
         return E_TIME_READ_PARCEL_ERROR;
     }
     auto timerManager = TimerManager::GetInstance();
@@ -1109,7 +1110,7 @@ void TimeSystemAbility::RecoverTimerCjson(std::string tableName)
         TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}s get table failed", tableName.c_str());
     } else {
         int count = cJSON_GetArraySize(result);
-        TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}s result rows count: %{public}d", tableName.c_str(), count);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}s result rows count:%{public}d", tableName.c_str(), count);
         #ifdef RDB_ENABLE
         CjsonIntoDatabase(result, true, tableName);
         #else
@@ -1133,7 +1134,7 @@ bool TimeSystemAbility::RecoverTimer()
     } else {
         int count;
         holdResultSet->GetRowCount(count);
-        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result rows count: %{public}d", count);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result rows count:%{public}d", count);
         RecoverTimerInner(holdResultSet, true);
     }
     if (holdResultSet != nullptr) {
@@ -1147,7 +1148,7 @@ bool TimeSystemAbility::RecoverTimer()
     } else {
         int count;
         dropResultSet->GetRowCount(count);
-        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result rows count: %{public}d", count);
+        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result rows count:%{public}d", count);
         RecoverTimerInner(dropResultSet, false);
     }
     if (dropResultSet != nullptr) {
@@ -1357,14 +1358,14 @@ void TimeSystemAbility::SetAutoReboot()
         uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 1));
         if (triggerTime < static_cast<uint64_t>(currentTime)) {
             TIME_HILOGI(TIME_MODULE_SERVICE,
-                        "triggerTime: %{public}" PRIu64" currentTime: %{public}" PRId64"", triggerTime, currentTime);
+                        "triggerTime:%{public}" PRIu64" currentTime:%{public}" PRId64"", triggerTime, currentTime);
             continue;
         }
         if (std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, 0)) != bundleList.end() ||
             std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, INDEX_TWO)) != bundleList.end()) {
             int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
             if (tmfd < 0) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error: %{public}s", strerror(errno));
+                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error:%{public}s", strerror(errno));
                 resultSet->Close();
                 return;
             }
@@ -1382,7 +1383,7 @@ void TimeSystemAbility::SetAutoReboot()
                         static_cast<int64_t>(new_value.it_value.tv_nsec));
             int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
             if (ret < 0) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error: %{public}s", strerror(errno));
+                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error:%{public}s", strerror(errno));
                 close(tmfd);
             }
             resultSet->Close();
