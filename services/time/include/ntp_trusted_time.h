@@ -30,7 +30,7 @@ public:
     int64_t CurrentTimeMillis();
     int64_t ElapsedRealtimeMillis();
     std::chrono::steady_clock::time_point GetBootTimeNs();
-    bool FindBestTimeResult();
+    bool FindBestTimeResult(size_t ntpListSize);
     class TimeResult : std::enable_shared_from_this<TimeResult> {
     public:
         TimeResult();

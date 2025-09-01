@@ -99,37 +99,38 @@ int32_t NtpTrustedTime::GetSameTimeResultCount(std::shared_ptr<TimeResult> candi
 }
 
 // needs to acquire the lock `mTimeResultMutex_` before calling this method
-bool NtpTrustedTime::FindBestTimeResult()
+bool NtpTrustedTime::FindBestTimeResult(size_t ntpListSize)
 {
+    // if only one server, use this result as best result
+    if (TimeResultCandidates_.size() == 1 && ntpListSize == 1) {
+        mTimeResult = TimeResultCandidates_[0];
+        TimeResultCandidates_.clear();
+        return true;
+    }
+
     if (TimeResultCandidates_.size() == 0 || TimeResultCandidates_.size() == 1) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "no or one candidate");
+        TimeResultCandidates_.clear();
         return false;
     }
 
-    int64_t bootTime;
-    int res = TimeUtils::GetBootTimeMs(bootTime);
-    if (res != E_TIME_OK) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "getboottime failed");
-        return false;
-    }
-
-    int32_t maxVotedTimeResultCount = 0;
-    std::shared_ptr<TimeResult> maxVotedTimeResult;
+    int32_t mostVotedTimeResultCount = 0;
+    std::shared_ptr<TimeResult> mostVotedTimeResult;
     for (size_t i = 0; i < TimeResultCandidates_.size(); i++) {
         auto timeResult = TimeResultCandidates_[i];
         int32_t count = GetSameTimeResultCount(TimeResultCandidates_[i]);
-        if (count > maxVotedTimeResultCount) {
-            maxVotedTimeResultCount = count;
-            maxVotedTimeResult = timeResult;
+        if (count > mostVotedTimeResultCount) {
+            mostVotedTimeResultCount = count;
+            mostVotedTimeResult = timeResult;
         }
     }
 
     TimeResultCandidates_.clear();
-    if (maxVotedTimeResultCount == 1) {
+    if (mostVotedTimeResultCount == 1) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "no best candidate");
         return false;
     } else {
-        mTimeResult = maxVotedTimeResult;
+        mTimeResult = mostVotedTimeResult;
         return true;
     }
 }

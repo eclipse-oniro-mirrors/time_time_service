@@ -773,7 +773,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
 
 /**
 * @tc.name: NtpTrustedTime007
-* @tc.desc: test func FindBestTimeResult.
+* @tc.desc: test func FindBestTimeResult with 3 same candidates, return true.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimeTest, NtpTrustedTime007, TestSize.Level0)
@@ -796,16 +796,14 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime007, TestSize.Level0)
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult1);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult3);
-    ret = ntpTrustedTime->FindBestTimeResult();
+    ret = ntpTrustedTime->FindBestTimeResult(5);
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetTimeMillis()- ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(),
-        wallTime - bootTime);
     EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
 }
 
 /**
 * @tc.name: NtpTrustedTime008
-* @tc.desc: test func FindBestTimeResult return false.
+* @tc.desc: test func FindBestTimeResult with 2 same candidates, return true.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimeTest, NtpTrustedTime008, TestSize.Level0)
@@ -828,16 +826,14 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime008, TestSize.Level0)
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult3);
     bool ret = false;
-    ret = ntpTrustedTime->FindBestTimeResult();
+    ret = ntpTrustedTime->FindBestTimeResult(5);
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetTimeMillis() - ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(),
-        wallTime - bootTime);
     EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
 }
 
 /**
 * @tc.name: NtpTrustedTime009
-* @tc.desc: test func FindBestTimeResult return false.
+* @tc.desc: test func FindBestTimeResult with no same candidates, return false.
 * @tc.type: FUNC
 */
 HWTEST_F(TimeServiceTimeTest, NtpTrustedTime009, TestSize.Level0)
@@ -860,7 +856,36 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime009, TestSize.Level0)
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult3);
     bool ret = true;
-    ret = ntpTrustedTime->FindBestTimeResult();
+    ret = ntpTrustedTime->FindBestTimeResult(5);
+    EXPECT_EQ(ret, false);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
+}
+
+/**
+* @tc.name: NtpTrustedTime010
+* @tc.desc: test func FindBestTimeResult with 1 candidates.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime010, TestSize.Level0)
+{
+    int64_t wallTime = 0;
+    TimeUtils::GetWallTimeMs(wallTime);
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
+
+    bool ret = true;
+    ret = ntpTrustedTime->FindBestTimeResult(3);
+    EXPECT_EQ(ret, false);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
+
+    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult);
+    ret = ntpTrustedTime->FindBestTimeResult(1);
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
+
+    ret = ntpTrustedTime->FindBestTimeResult(3);
     EXPECT_EQ(ret, false);
     EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
 }
