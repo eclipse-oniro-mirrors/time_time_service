@@ -27,7 +27,6 @@ namespace Time {
 class NapiSystemDateTime {
 public:
     static napi_value SystemDateTimeInit(napi_env env, napi_value exports);
-    static std::map<int32_t, int32_t> errcode_;
 
 private:
     static napi_value SetTime(napi_env env, napi_callback_info info);
