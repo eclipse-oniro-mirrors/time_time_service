@@ -24,7 +24,6 @@ using namespace OHOS::AppExecFwk;
 
 namespace {
 constexpr int UID_PROXY_OFFSET = 32;
-constexpr const char* NO_LOG_APP = "wifi_manager_service";
 }
 
 IMPLEMENT_SINGLE_INSTANCE(TimerProxy)
@@ -49,13 +48,9 @@ int32_t TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
         return E_TIME_NULLPTR;
     }
     int32_t ret = alarm->callback(alarm->id);
-    if (alarm->bundleName != NO_LOG_APP || alarm->wakeup) {
-        if (ret == 0) {
-            TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "cb:%{public}" PRId64 "", alarm->id);
-        } else {
-            TIME_SIMPLIFY_HILOGE(TIME_MODULE_SERVICE, "cb:%{public}" PRId64 " ret:%{public}d",
-                alarm->id, ret);
-        }
+    if (ret != 0) {
+        TIME_SIMPLIFY_HILOGE(TIME_MODULE_SERVICE, "cb:%{public}" PRId64 " ret:%{public}d",
+            alarm->id, ret);
     }
     return ret;
 }

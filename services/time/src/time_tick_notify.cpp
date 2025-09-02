@@ -51,7 +51,7 @@ void TimeTickNotify::Init()
     TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId_);
     auto trigger = RefreshNextTriggerTime();
     TimeSystemAbility::GetInstance()->StartTimer(timerId_, trigger.first);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Tick timer timerId: %{public}" PRIu64 "", timerId_);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Tick timer timerId:%{public}" PRIu64 "", timerId_);
 }
 
 void TimeTickNotify::Callback()
@@ -66,6 +66,8 @@ void TimeTickNotify::Callback()
         }
     }
     TimeSystemAbility::GetInstance()->StartTimer(timerId_, trigger.first);
+    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "tick id:%{public}" PRIu64 " time:%{public}" PRIu64 "",
+        timerId_, trigger.first / SECOND_TO_MILLISECOND);
 }
 
 std::pair<uint64_t, bool> TimeTickNotify::RefreshNextTriggerTime()
@@ -84,6 +86,11 @@ void TimeTickNotify::Stop()
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     TimeSystemAbility::GetInstance()->DestroyTimer(timerId_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
+}
+
+uint64_t TimeTickNotify::GetTickTimerId()
+{
+    return timerId_;
 }
 } // namespace MiscServices
 } // namespace OHOS

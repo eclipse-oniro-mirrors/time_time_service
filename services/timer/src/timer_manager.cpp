@@ -19,6 +19,7 @@
 
 #include "time_file_utils.h"
 #include "timer_proxy.h"
+#include "time_tick_notify.h"
 
 #ifdef RDB_ENABLE
 #include "rdb_errno.h"
@@ -272,11 +273,13 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
             return E_TIME_NOT_FOUND;
         }
         timerInfo = it->second;
-        TIME_HILOGI(TIME_MODULE_SERVICE,
-            "id:%{public}" PRIu64 " typ:%{public}d len:%{public}" PRId64 " int:%{public}" PRId64 " "
-            "flg:%{public}d trig:%{public}s uid:%{public}d pid:%{public}d",
-            timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
-            std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
+        if (timerId != TimeTickNotify::GetInstance().GetTickTimerId()) {
+            TIME_HILOGI(TIME_MODULE_SERVICE,
+                "id:%{public}" PRIu64 " typ:%{public}d len:%{public}" PRId64 " int:%{public}" PRId64 " "
+                "flg:%{public}d trig:%{public}s uid:%{public}d pid:%{public}d",
+                timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
+                std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
+        }
         {
             // To prevent the same ID from being started repeatedly,
             // the later start overwrites the earlier start.
@@ -430,7 +433,7 @@ int32_t TimerManager::DestroyTimer(uint64_t timerId)
 
 int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 {
-    TIME_HILOGI(TIME_MODULE_SERVICE, "id:%{public}" PRId64 ", destroy:%{public}d", timerNumber, needDestroy);
+    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "StopTimer id:%{public}" PRId64 ",destroy:%{public}d", timerNumber, needDestroy);
     int32_t ret;
     bool needRecover = false;
     {
@@ -527,7 +530,7 @@ void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
         auto batch = *it;
         didRemove = batch->Remove(whichAlarms);
         if (didRemove) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "remove id:%{public}" PRIu64 "", id);
+            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "remove id:%{public}" PRIu64 "", id);
             it = alarmBatches_.erase(it);
             if (batch->Size() != 0) {
                 AddBatchLocked(alarmBatches_, batch);
@@ -772,7 +775,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
         for (unsigned int i = 0; i < n; ++i) {
             auto alarm = batch->Get(i);
             triggerList.push_back(alarm);
-            if (!IsNoLog(alarm)) {
+            if (!IsNoLog(alarm) && alarm->id != TimeTickNotify::GetInstance().GetTickTimerId()) {
                 TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "uid:%{public}d id:%{public}" PRId64 " name:%{public}s"
                     " wk:%{public}u",
                     alarm->uid, alarm->id, alarm->bundleName.c_str(), alarm->wakeup);

@@ -28,6 +28,7 @@ public:
     void Init();
     void Callback();
     void Stop();
+    uint64_t GetTickTimerId();
 
 private:
     std::pair<uint64_t, bool> RefreshNextTriggerTime();
