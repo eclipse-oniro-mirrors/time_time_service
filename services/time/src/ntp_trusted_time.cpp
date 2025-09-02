@@ -99,18 +99,10 @@ int32_t NtpTrustedTime::GetSameTimeResultCount(std::shared_ptr<TimeResult> candi
 }
 
 // needs to acquire the lock `mTimeResultMutex_` before calling this method
-bool NtpTrustedTime::FindBestTimeResult(size_t ntpListSize)
+bool NtpTrustedTime::FindBestTimeResult()
 {
-    // if only one server, use this result as best result
-    if (TimeResultCandidates_.size() == 1 && ntpListSize == 1) {
-        mTimeResult = TimeResultCandidates_[0];
-        TimeResultCandidates_.clear();
-        return true;
-    }
-
     if (TimeResultCandidates_.size() == 0 || TimeResultCandidates_.size() == 1) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "no or one candidate");
-        TimeResultCandidates_.clear();
         return false;
     }
 
@@ -133,6 +125,11 @@ bool NtpTrustedTime::FindBestTimeResult(size_t ntpListSize)
         mTimeResult = mostVotedTimeResult;
         return true;
     }
+}
+
+void NtpTrustedTime::ClearTimeResultCandidates()
+{
+    TimeResultCandidates_.clear();
 }
 
 int64_t NtpTrustedTime::CurrentTimeMillis()

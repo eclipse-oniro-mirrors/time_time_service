@@ -158,17 +158,17 @@ NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
     std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.ntpServer);
     ntpSpecList.insert(ntpSpecList.end(), ntpList.begin(), ntpList.end());
     for (int i = 0; i < RETRY_TIMES; i++) {
-        auto ntpSpecListSize = ntpSpecList.size();
-        for (size_t j = 0; j < ntpSpecListSize; j++) {
+        for (size_t j = 0; j < ntpSpecList.size(); j++) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is:%{public}s", ntpSpecList[j].c_str());
             if (NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[j])) {
                 return REFRESH_SUCCESS;
             }
         }
-        if (NtpTrustedTime::GetInstance().FindBestTimeResult(ntpSpecListSize)) {
+        if (NtpTrustedTime::GetInstance().FindBestTimeResult()) {
             return REFRESH_SUCCESS;
         }
     }
+    NtpTrustedTime::GetInstance().ClearTimeResultCandidates();
     return REFRESH_FAILED;
 }
 
