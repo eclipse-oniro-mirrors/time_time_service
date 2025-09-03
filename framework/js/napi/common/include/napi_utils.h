@@ -118,6 +118,8 @@ const std::map<int32_t, std::string> CODE_TO_MESSAGE = {
     { JsErrorCode::PARAMETER_ERROR, "Parameter error" },
     { JsErrorCode::PERMISSION_ERROR, "Permission denied" },
     { JsErrorCode::ERROR, "Parameter check failed, permission denied, or system error." },
+    { JsErrorCode::NTP_UPDATE_ERROR, "Ntp update error" },
+    { JsErrorCode::NTP_NOT_UPDATE_ERROR, "Ntp not update error" },
 };
 
 class NapiUtils {
