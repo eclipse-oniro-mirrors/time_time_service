@@ -60,6 +60,12 @@ constexpr int64_t MAX_NTP_RETRY_INTERVAL = 43200000;
 const uint64_t TIMER_ID = 88888;
 constexpr int64_t MINUTE_TO_MILLISECOND = 60000;
 constexpr char BYTE_SNTP_MESSAGE = 0xD8;
+constexpr int64_t MAX_TIME_DRIFT_IN_ONE_DAY = 2000;
+constexpr int64_t MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS = 100;
+constexpr int64_t ONE_DAY = 86400000;
+constexpr int64_t ONE_HOUR = 3600000;
+constexpr int64_t TWO_SECOND = 2000;
+constexpr int64_t ONE_SECOND = 1000;
 
 static HapPolicyParams g_policyA = {
     .apl = APL_SYSTEM_CORE,
@@ -721,6 +727,206 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime004, TestSize.Level0)
     TimeResult->Clear();
     auto res = TimeResult->GetTimeMillis();
     EXPECT_EQ(res, 0);
+}
+
+/**
+* @tc.name: NtpTrustedTime005
+* @tc.desc: test func IsTimeResultTrusted.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime005, TestSize.Level0)
+{
+    int64_t wallTime = 0;
+    TimeUtils::GetWallTimeMs(wallTime);
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
+    // test mTimeResult is nullptr
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
+    ntpTrustedTime->mTimeResult = nullptr;
+    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    bool ret = true;
+    ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
+    EXPECT_EQ(ret, false);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 1);
+
+    // test mTimeResult is unavailable due to time out
+    auto wallTime1 = wallTime - 2 * ONE_DAY;
+    auto bootTime1 = bootTime - 2 * ONE_DAY;
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime1, bootTime1, 0);
+    ret = true;
+    ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
+    EXPECT_EQ(ret, false);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 2);
+
+    // test new result Within the margin of error
+    auto wallTime2 = wallTime - ONE_HOUR - MAX_TIME_DRIFT_IN_ONE_DAY;
+    auto bootTime2 = bootTime - ONE_HOUR;
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
+    ret = false;
+    ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetTimeMillis(), wallTime);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(), bootTime);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
+
+    auto wallTime3 = wallTime - ONE_HOUR + MAX_TIME_DRIFT_IN_ONE_DAY;
+    auto bootTime3 = bootTime - ONE_HOUR;
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
+    ret = false;
+    ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetTimeMillis(), wallTime);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(), bootTime);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
+}
+
+/**
+* @tc.name: NtpTrustedTime006
+* @tc.desc: test func IsTimeResultTrusted.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
+{
+    int64_t wallTime = 0;
+    TimeUtils::GetWallTimeMs(wallTime);
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
+    // test mTimeResult is nullptr
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
+    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    
+    // test new result out of the margin of error
+    auto wallTime1 = wallTime - ONE_HOUR - MAX_TIME_DRIFT_IN_ONE_DAY - TWO_SECOND;
+    auto bootTime1 = bootTime - ONE_HOUR;
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime1, bootTime1, 0);
+    auto ret = true;
+    ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
+    EXPECT_EQ(ret, false);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetTimeMillis(), wallTime1);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(), bootTime1);
+    EXPECT_EQ(ret, false);
+
+    auto wallTime2 = wallTime - ONE_HOUR + MAX_TIME_DRIFT_IN_ONE_DAY + TWO_SECOND;
+    auto bootTime2 = bootTime - ONE_HOUR;
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
+    ret = true;
+    ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
+    EXPECT_EQ(ret, false);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetTimeMillis(), wallTime2);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(), bootTime2);
+}
+
+/**
+* @tc.name: NtpTrustedTime007
+* @tc.desc: test func FindBestTimeResult with 3 same candidates, return true.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime007, TestSize.Level0)
+{
+    int64_t wallTime = 0;
+    TimeUtils::GetWallTimeMs(wallTime);
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
+
+    // three time is similar, vote for 3 candidate
+    auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    auto wallTime2 = wallTime + ONE_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS;
+    auto bootTime2 = bootTime + ONE_SECOND;
+    auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
+    auto wallTime3 = wallTime + TWO_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS / 2;
+    auto bootTime3 = bootTime + TWO_SECOND;
+    auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
+    bool ret = true;
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult1);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult3);
+    ret = ntpTrustedTime->FindBestTimeResult();
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
+}
+
+/**
+* @tc.name: NtpTrustedTime008
+* @tc.desc: test func FindBestTimeResult with 2 same candidates, return true.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime008, TestSize.Level0)
+{
+    int64_t wallTime = 0;
+    TimeUtils::GetWallTimeMs(wallTime);
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
+
+    // two time is similar, vote for 3 candidate
+    auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    auto wallTime2 = wallTime + TWO_SECOND;
+    auto bootTime2 = bootTime + ONE_SECOND;
+    auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
+    auto wallTime3 = wallTime + TWO_SECOND;
+    auto bootTime3 = bootTime + TWO_SECOND;
+    auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult1);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult3);
+    bool ret = false;
+    ret = ntpTrustedTime->FindBestTimeResult();
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
+}
+
+/**
+* @tc.name: NtpTrustedTime009
+* @tc.desc: test func FindBestTimeResult with no same candidates, return false.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime009, TestSize.Level0)
+{
+    int64_t wallTime = 0;
+    TimeUtils::GetWallTimeMs(wallTime);
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
+
+    // test 3 timeResult got different time
+    auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    auto wallTime2 = wallTime + TWO_SECOND;
+    auto bootTime2 = bootTime + ONE_SECOND;
+    auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
+    auto wallTime3 = wallTime + TWO_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS * 2;
+    auto bootTime3 = bootTime + TWO_SECOND;
+    auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult1);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult3);
+    bool ret = true;
+    ret = ntpTrustedTime->FindBestTimeResult();
+    EXPECT_EQ(ret, false);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
+}
+
+/**
+* @tc.name: NtpTrustedTime010
+* @tc.desc: test func FindBestTimeResult with 0 or 1 candidates.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime010, TestSize.Level0)
+{
+    int64_t wallTime = 0;
+    TimeUtils::GetWallTimeMs(wallTime);
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
+
+    bool ret = true;
+    ret = ntpTrustedTime->FindBestTimeResult();
+    EXPECT_EQ(ret, false);
+
+    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult);
+    ret = ntpTrustedTime->FindBestTimeResult();
+    EXPECT_EQ(ret, false);
 }
 
 /**

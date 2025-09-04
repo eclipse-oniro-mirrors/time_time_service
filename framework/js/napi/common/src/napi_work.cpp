@@ -75,7 +75,7 @@ napi_value NapiWork::AsyncEnqueue(napi_env env, ContextBase *ctxt, const std::st
     NapiExecute execute, NapiComplete complete)
 {
     if (ctxt->status != napi_ok) {
-        auto message = CODE_TO_MESSAGE.find(ctxt->errCode)->second + ". Error message: " + ctxt->errMessage;
+        auto message = NapiUtils::GetErrorMessage(ctxt->errCode) + ". Error message: " + ctxt->errMessage;
         NapiUtils::ThrowError(env, message.c_str(), ctxt->errCode);
         delete ctxt;
         return NapiUtils::GetUndefinedValue(env);
@@ -137,7 +137,7 @@ void NapiWork::GenerateOutput(ContextBase *ctxt)
         napi_value message = nullptr;
         napi_value code = nullptr;
         int32_t jsErrorCode = NapiUtils::ConvertErrorCode(ctxt->errCode);
-        napi_create_string_utf8(ctxt->env, CODE_TO_MESSAGE.find(jsErrorCode)->second.c_str(), NAPI_AUTO_LENGTH,
+        napi_create_string_utf8(ctxt->env, NapiUtils::GetErrorMessage(jsErrorCode).c_str(), NAPI_AUTO_LENGTH,
             &message);
         napi_create_error(ctxt->env, nullptr, message, &result[RESULT_ERROR]);
         if (jsErrorCode != JsErrorCode::ERROR) {
@@ -167,7 +167,7 @@ napi_value NapiWork::SyncEnqueue(napi_env env, ContextBase *ctxt, const std::str
     NapiExecute execute, NapiComplete complete)
 {
     if (ctxt->status != napi_ok) {
-        auto message = CODE_TO_MESSAGE.find(ctxt->errCode)->second + ". Error message: " + ctxt->errMessage;
+        auto message = NapiUtils::GetErrorMessage(ctxt->errCode) + ". Error message: " + ctxt->errMessage;
         NapiUtils::ThrowError(env, message.c_str(), ctxt->errCode);
         delete ctxt;
         return NapiUtils::GetUndefinedValue(env);
@@ -199,7 +199,7 @@ napi_value NapiWork::GenerateOutputSync(napi_env env, ContextBase *ctxt)
         napi_value error = nullptr;
         napi_value message = nullptr;
         int32_t jsErrorCode = NapiUtils::ConvertErrorCode(ctxt->errCode);
-        napi_create_string_utf8(ctxt->env, CODE_TO_MESSAGE.find(jsErrorCode)->second.c_str(), NAPI_AUTO_LENGTH,
+        napi_create_string_utf8(ctxt->env, NapiUtils::GetErrorMessage(jsErrorCode).c_str(), NAPI_AUTO_LENGTH,
                                 &message);
         napi_create_error(ctxt->env, nullptr, message, &error);
         if (jsErrorCode != JsErrorCode::ERROR) {
