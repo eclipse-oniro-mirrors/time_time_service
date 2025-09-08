@@ -433,7 +433,8 @@ int32_t TimerManager::DestroyTimer(uint64_t timerId)
 
 int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 {
-    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "StopTimer id:%{public}" PRId64 ",destroy:%{public}d", timerNumber, needDestroy);
+    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "StopTimer id:%{public}" PRId64 ",destroy:%{public}d",
+        timerNumber, needDestroy);
     int32_t ret;
     bool needRecover = false;
     {
