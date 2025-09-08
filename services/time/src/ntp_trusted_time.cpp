@@ -26,7 +26,7 @@ constexpr int64_t TIME_RESULT_UNINITED = -1;
 constexpr int64_t HALF = 2;
 constexpr int NANO_TO_SECOND =  1000000000;
 constexpr int64_t ONE_DAY = 86400000;
-// RTC has 1.7s gap one day
+// RTC has approximate 2s error per day
 constexpr int64_t MAX_TIME_DRIFT_IN_ONE_DAY = 2000;
 constexpr int64_t MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS = 100;
 } // namespace
