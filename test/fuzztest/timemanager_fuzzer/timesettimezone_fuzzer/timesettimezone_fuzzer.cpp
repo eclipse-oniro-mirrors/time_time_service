@@ -58,7 +58,7 @@ bool FuzzTimeSetTime(const uint8_t *rawData, size_t size)
     return true;
 }
 
-bool FuzzTimeGetTime(const uint8_t *rawData, size_t size)
+bool FuzzTimeGetWallTime(const uint8_t *rawData, size_t size)
 {
     FuzzedDataProvider fdp(rawData, size);
     TimeServiceClient::GetInstance()->GetWallTimeMs();
@@ -67,23 +67,38 @@ bool FuzzTimeGetTime(const uint8_t *rawData, size_t size)
     TimeServiceClient::GetInstance()->GetWallTimeNs();
     time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetWallTimeNs(time);
+    return true;
+}
 
+bool FuzzTimeGetBootTime(const uint8_t *rawData, size_t size)
+{
+    FuzzedDataProvider fdp(rawData, size);
     TimeServiceClient::GetInstance()->GetBootTimeMs();
-    time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetBootTimeMs(time);
     TimeServiceClient::GetInstance()->GetBootTimeNs();
     time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetBootTimeNs(time);
+    return true;
+}
 
+bool FuzzTimeGetMonotonicTime(const uint8_t *rawData, size_t size)
+{
+    FuzzedDataProvider fdp(rawData, size);
     TimeServiceClient::GetInstance()->GetMonotonicTimeMs();
-    time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetMonotonicTimeMs(time);
     TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
     time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetMonotonicTimeNs(time);
+    return true;
+}
 
+bool FuzzTimeGetThreadTime(const uint8_t *rawData, size_t size)
+{
+    FuzzedDataProvider fdp(rawData, size);
     TimeServiceClient::GetInstance()->GetThreadTimeMs();
-    time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = fdp.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetThreadTimeMs(time);
     TimeServiceClient::GetInstance()->GetThreadTimeNs();
     time = fdp.ConsumeIntegral<int64_t>();
@@ -144,7 +159,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     OHOS::FuzzTimeSetTimezone(data, size);
     OHOS::FuzzTimeGetTimezone(data, size);
     OHOS::FuzzTimeSetTime(data, size);
-    OHOS::FuzzTimeGetTime(data, size);
+    OHOS::FuzzTimeGetWallTime(data, size);
+    OHOS::FuzzTimeGetBootTime(data, size);
+    OHOS::FuzzTimeGetMonotonicTime(data, size);
+    OHOS::FuzzTimeGetThreadTime(data, size);
     OHOS::FuzzTimeGetNtpTimeMs(data, size);
     OHOS::FuzzTimeGetRealTimeMs(data, size);
     OHOS::FuzzTimeTimeUtilsGetWallTimeMs(data, size);
