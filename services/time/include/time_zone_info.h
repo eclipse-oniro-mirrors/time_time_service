@@ -34,6 +34,7 @@ private:
     std::string curTimezoneId_;
     std::mutex timezoneMutex_;
     std::set<std::string> GetTimeZoneAvailableIDs();
+    std::string ConvertTimeZone(const std::string &timezoneId);
 };
 } // namespace MiscServices
 } // namespace OHOS
