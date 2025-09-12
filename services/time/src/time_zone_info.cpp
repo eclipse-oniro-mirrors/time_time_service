@@ -14,6 +14,8 @@
 */
 
 #include <fstream>
+#include <cerrno>
+#include <cstring>
 #include <sys/stat.h>
 #include "time_zone_info.h"
 #include "ipc_skeleton.h"
@@ -25,6 +27,7 @@ namespace {
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
 constexpr const char *TIMEZONE_LIST_CONFIG_PATH = "/system/etc/zoneinfo/timezone_list.cfg";
 constexpr const char *DISTRO_TIMEZONE_LIST_CONFIG = "/system/etc/tzdata_distro/timezone_list.cfg";
+constexpr const char *CONVERT_TIMEZONE_LIST_PATH = "/system/etc/zoneinfo/timezone_convert.txt";
 constexpr int TIMEZONE_OK = 0;
 constexpr int CONFIG_LEN = 35;
 constexpr int HOUR_TO_MIN = 60;
@@ -59,25 +62,71 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
     }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone :%{public}s, Current timezone :%{public}s, uid:%{public}d",
         timezoneId.c_str(), curTimezoneId_.c_str(), IPCSkeleton::GetCallingUid());
+    std::string setTimeZone;
     std::set<std::string> availableTimeZoneIDs = GetTimeZoneAvailableIDs();
     if (availableTimeZoneIDs.find(timezoneId) == availableTimeZoneIDs.end()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid timezone");
-        return false;
+        setTimeZone = ConvertTimeZone(timezoneId);
+        if (setTimeZone == "") {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Invalid timezone");
+            return false;
+        }
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Convert timezone from %{public}s to %{public}s",
+            timezoneId.c_str(), setTimeZone.c_str());
+    } else {
+        setTimeZone = timezoneId;
     }
-    setenv("TZ", timezoneId.c_str(), 1);
+    setenv("TZ", setTimeZone.c_str(), 1);
     tzset();
     if (!SetTimezoneToKernel()) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone Set kernel failed");
         return false;
     }
-    auto errNo = SetParameter(TIMEZONE_KEY, timezoneId.c_str());
+    auto errNo = SetParameter(TIMEZONE_KEY, setTimeZone.c_str());
     if (errNo > TIMEZONE_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone timezoneId:%{public}d:%{public}s", errNo, timezoneId.c_str());
+        TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone timezoneId:%{public}d:%{public}s", errNo, setTimeZone.c_str());
         return false;
     }
-    curTimezoneId_ = timezoneId;
-    TimeBehaviorReport(ReportEventCode::SET_TIMEZONE, curTimezoneId_, timezoneId, 0);
+    TimeBehaviorReport(ReportEventCode::SET_TIMEZONE, curTimezoneId_, setTimeZone, 0);
+    curTimezoneId_ = setTimeZone;
     return true;
+}
+
+std::string TimeZoneInfo::ConvertTimeZone(const std::string &timezoneId)
+{
+    std::string convertTimeZone = "";
+    struct stat s;
+    if (stat(CONVERT_TIMEZONE_LIST_PATH, &s) != 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "No found convert timezone file,%{public}d:%{public}s",
+            errno, strerror(errno));
+        return convertTimeZone;
+    }
+    std::unique_ptr<char[]> resolvedPath = std::make_unique<char[]>(PATH_MAX + 1);
+    if (realpath(CONVERT_TIMEZONE_LIST_PATH, resolvedPath.get()) == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Get realpath failed,%{public}d:%{public}s", errno, strerror(errno));
+        return convertTimeZone;
+    }
+    std::ifstream file(resolvedPath.get());
+    if (!file.good()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Open timezone list config file failed");
+        return convertTimeZone;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.length() == 0) {
+            break;
+        }
+        size_t colonPos = line.find(':');
+        if (colonPos != std::string::npos) {
+            std::string key = line.substr(0, colonPos);
+            if (key == timezoneId) {
+                convertTimeZone = line.substr(colonPos + 1);
+                convertTimeZone.resize(convertTimeZone.find_last_not_of("\r\n") + 1);
+                break;
+            }
+        }
+    }
+    file.close();
+    return convertTimeZone;
 }
 
 std::set<std::string> TimeZoneInfo::GetTimeZoneAvailableIDs()
