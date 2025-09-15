@@ -115,5 +115,5 @@ console.log('end');
 
 **Time/Timezone subsystem**
 
-[time\_time\_service](https://gitee.com/openharmony/time_time_service/tree/master/)
+[time\_time\_service](https://gitcode.com/openharmony/time_time_service/tree/master/)
 
