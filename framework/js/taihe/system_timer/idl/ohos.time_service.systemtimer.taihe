@@ -15,7 +15,7 @@
 
 @!namespace("@ohos.systemTimer", "systemTimer")
 @!sts_inject("""
-static { loadLibrary("systemtimer_taihe_native.z") }
+static { loadLibraryWithPermissionCheck("systemtimer_taihe_native.z", "@ohos.systemTimer") }
 """)
 struct TimerOptions {
     type: i32;

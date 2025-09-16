@@ -20,7 +20,7 @@ export default namespace systemDateTime {
 
   const SYSTEM_ERROR: int = 401
 
-  loadLibrary("systemdatetime_ani")
+  loadLibraryWithPermissionCheck("systemdatetime_ani", "@ohos.systemDateTime")
 
   export function getCurrentTime(isNano: boolean, callback: AsyncCallback<number>): void {
     let p1 = taskpool.execute(getTime, isNano)
