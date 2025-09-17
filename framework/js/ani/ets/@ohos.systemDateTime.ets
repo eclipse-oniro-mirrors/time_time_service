@@ -18,7 +18,7 @@ import { BusinessError } from '@ohos.base';
 
 export default namespace systemDateTime {
 
-  const SYSTEM_ERROR: number = 401
+  const SYSTEM_ERROR: int = 401
 
   loadLibrary("systemdatetime_ani")
 
