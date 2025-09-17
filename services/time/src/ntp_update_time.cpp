@@ -160,11 +160,19 @@ NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
 
     std::vector<std::string> ntpSpecList = SplitNtpAddrs(autoTimeInfo_.ntpServerSpec);
     std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.ntpServer);
-    ntpSpecList.insert(ntpSpecList.end(), ntpList.begin(), ntpList.end());
+    
     for (int i = 0; i < RETRY_TIMES; i++) {
         for (size_t j = 0; j < ntpSpecList.size(); j++) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is:%{public}s", ntpSpecList[j].c_str());
-            if (NtpTrustedTime::GetInstance().ForceRefresh(ntpSpecList[j])) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpSpecList is:%{public}s", ntpSpecList[j].c_str());
+            if (NtpTrustedTime::GetInstance().ForceRefreshTrusted(ntpSpecList[j])) {
+                // if refresh time success, need to clear candidates list
+                NtpTrustedTime::GetInstance().ClearTimeResultCandidates();
+                return REFRESH_SUCCESS;
+            }
+        }
+        for (size_t j = 0; j < ntpList.size(); j++) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is:%{public}s", ntpList[j].c_str());
+            if (NtpTrustedTime::GetInstance().ForceRefresh(ntpList[j])) {
                 return REFRESH_SUCCESS;
             }
         }

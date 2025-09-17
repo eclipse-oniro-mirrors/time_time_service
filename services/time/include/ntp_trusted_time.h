@@ -26,6 +26,7 @@ class NtpTrustedTime {
 public:
     static NtpTrustedTime &GetInstance();
     bool ForceRefresh(const std::string &ntpServer);
+    bool ForceRefreshTrusted(const std::string &ntpServer);
     int64_t GetCacheAge();
     int64_t CurrentTimeMillis();
     int64_t ElapsedRealtimeMillis();
@@ -35,12 +36,14 @@ public:
     class TimeResult : std::enable_shared_from_this<TimeResult> {
     public:
         TimeResult();
-        TimeResult(int64_t mTimeMillis, int64_t mElapsedRealtimeMills, int64_t mCertaintyMillis);
+        TimeResult(int64_t mTimeMillis, int64_t mElapsedRealtimeMills, int64_t mCertaintyMillis,
+            std::string ntpServer);
         ~TimeResult();
         int64_t GetTimeMillis();
         int64_t GetElapsedRealtimeMillis();
         int64_t CurrentTimeMillis(int64_t bootTime);
         int64_t GetAgeMillis(int64_t bootTime);
+        std::string GetNtpServer();
         void Clear();
 
     private:
@@ -49,6 +52,7 @@ public:
         // Boot time when getting time from NTP server.
         int64_t mElapsedRealtimeMillis;
         int64_t mCertaintyMillis;
+        std::string mNtpServer;
     };
     bool IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult);
     int32_t GetSameTimeResultCount(std::shared_ptr<TimeResult> candidateTimeResult);

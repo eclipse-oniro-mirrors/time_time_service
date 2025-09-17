@@ -55,6 +55,10 @@ std::set<int> RESERVED_PIDLIST = {1111, 2222};
 const std::string NETWORK_TIME_STATUS_OFF = "OFF";
 const std::string NETWORK_TIME_STATUS_ON = "ON";
 const std::string AUTO_TIME_STATUS_ON = "ON";
+const std::string NTP_SERVER_A = "A";
+const std::string NTP_SERVER_B = "B";
+const std::string NTP_SERVER_C = "C";
+const std::string NTP_SERVER_D = "D";
 constexpr int64_t MIN_NTP_RETRY_INTERVAL = 10000;
 constexpr int64_t MAX_NTP_RETRY_INTERVAL = 43200000;
 const uint64_t TIMER_ID = 88888;
@@ -695,7 +699,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime001, TestSize.Level0)
 HWTEST_F(TimeServiceTimeTest, NtpTrustedTime002, TestSize.Level0)
 {
     std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
-    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(1, 1, 0);
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(1, 1, 0, NTP_SERVER_A);
     int64_t time = ntpTrustedTime->CurrentTimeMillis();
     EXPECT_GT(time, 0);
     int64_t cacheAge = ntpTrustedTime->GetCacheAge();
@@ -743,7 +747,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime005, TestSize.Level0)
     // test mTimeResult is nullptr
     std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
     ntpTrustedTime->mTimeResult = nullptr;
-    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0, NTP_SERVER_A);
     bool ret = true;
     ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
     EXPECT_EQ(ret, false);
@@ -752,7 +756,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime005, TestSize.Level0)
     // test mTimeResult is unavailable due to time out
     auto wallTime1 = wallTime - 2 * ONE_DAY;
     auto bootTime1 = bootTime - 2 * ONE_DAY;
-    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime1, bootTime1, 0);
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime1, bootTime1, 0, NTP_SERVER_B);
     ret = true;
     ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
     EXPECT_EQ(ret, false);
@@ -761,7 +765,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime005, TestSize.Level0)
     // test new result Within the margin of error
     auto wallTime2 = wallTime - ONE_HOUR - MAX_TIME_DRIFT_IN_ONE_DAY;
     auto bootTime2 = bootTime - ONE_HOUR;
-    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0, NTP_SERVER_C);
     ret = false;
     ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
     EXPECT_EQ(ret, true);
@@ -771,7 +775,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime005, TestSize.Level0)
 
     auto wallTime3 = wallTime - ONE_HOUR + MAX_TIME_DRIFT_IN_ONE_DAY;
     auto bootTime3 = bootTime - ONE_HOUR;
-    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0, NTP_SERVER_D);
     ret = false;
     ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
     EXPECT_EQ(ret, true);
@@ -793,12 +797,12 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
     TimeUtils::GetBootTimeMs(bootTime);
     // test mTimeResult is nullptr
     std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
-    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0, NTP_SERVER_A);
     
     // test new result out of the margin of error
     auto wallTime1 = wallTime - ONE_HOUR - MAX_TIME_DRIFT_IN_ONE_DAY - TWO_SECOND;
     auto bootTime1 = bootTime - ONE_HOUR;
-    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime1, bootTime1, 0);
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime1, bootTime1, 0, NTP_SERVER_B);
     auto ret = true;
     ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
     EXPECT_EQ(ret, false);
@@ -808,7 +812,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
 
     auto wallTime2 = wallTime - ONE_HOUR + MAX_TIME_DRIFT_IN_ONE_DAY + TWO_SECOND;
     auto bootTime2 = bootTime - ONE_HOUR;
-    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
+    ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0, NTP_SERVER_C);
     ret = true;
     ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
     EXPECT_EQ(ret, false);
@@ -830,13 +834,13 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime007, TestSize.Level0)
     std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
 
     // three time is similar, vote for 3 candidate
-    auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0, NTP_SERVER_A);
     auto wallTime2 = wallTime + ONE_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS;
     auto bootTime2 = bootTime + ONE_SECOND;
-    auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
+    auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0, NTP_SERVER_B);
     auto wallTime3 = wallTime + TWO_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS / 2;
     auto bootTime3 = bootTime + TWO_SECOND;
-    auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
+    auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0, NTP_SERVER_C);
     bool ret = true;
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult1);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
@@ -860,13 +864,13 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime008, TestSize.Level0)
     std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
 
     // two time is similar, vote for 3 candidate
-    auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0, NTP_SERVER_A);
     auto wallTime2 = wallTime + TWO_SECOND;
     auto bootTime2 = bootTime + ONE_SECOND;
-    auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
+    auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0, NTP_SERVER_B);
     auto wallTime3 = wallTime + TWO_SECOND;
     auto bootTime3 = bootTime + TWO_SECOND;
-    auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
+    auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0, NTP_SERVER_C);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult1);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult3);
@@ -890,13 +894,13 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime009, TestSize.Level0)
     std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
 
     // test 3 timeResult got different time
-    auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0, NTP_SERVER_A);
     auto wallTime2 = wallTime + TWO_SECOND;
     auto bootTime2 = bootTime + ONE_SECOND;
-    auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0);
+    auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0, NTP_SERVER_B);
     auto wallTime3 = wallTime + TWO_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS * 2;
     auto bootTime3 = bootTime + TWO_SECOND;
-    auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0);
+    auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0, NTP_SERVER_C);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult1);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult3);
@@ -923,10 +927,44 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime010, TestSize.Level0)
     ret = ntpTrustedTime->FindBestTimeResult();
     EXPECT_EQ(ret, false);
 
-    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0);
+    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0, NTP_SERVER_A);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult);
     ret = ntpTrustedTime->FindBestTimeResult();
     EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name: NtpTrustedTime011
+* @tc.desc: test func FindBestTimeResult with 2 VS 2 candidates, return false.
+* @tc.type: FUNC
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime011, TestSize.Level0)
+{
+    int64_t wallTime = 0;
+    TimeUtils::GetWallTimeMs(wallTime);
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
+
+    // two time is similar, vote for 3 candidate
+    auto timeResult1 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0, NTP_SERVER_A);
+    auto wallTime2 = wallTime + ONE_SECOND;
+    auto bootTime2 = bootTime + ONE_SECOND;
+    auto timeResult2 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0, NTP_SERVER_B);
+    auto wallTime3 = wallTime + ONE_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS * 2;
+    auto bootTime3 = bootTime + ONE_SECOND;
+    auto timeResult3 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime3, bootTime3, 0, NTP_SERVER_C);
+    auto wallTime4 = wallTime + TWO_SECOND + MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS * 2;
+    auto bootTime4 = bootTime + TWO_SECOND;
+    auto timeResult4 = std::make_shared<NtpTrustedTime::TimeResult>(wallTime4, bootTime4, 0, NTP_SERVER_C);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult1);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult3);
+    ntpTrustedTime->TimeResultCandidates_.push_back(timeResult4);
+    bool ret = false;
+    ret = ntpTrustedTime->FindBestTimeResult();
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
 }
 
 /**
