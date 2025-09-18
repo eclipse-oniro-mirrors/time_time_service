@@ -48,6 +48,8 @@ enum ReportEventCode : int32_t {
     SET_TIME = MODIFY_TIME_OFFSET,
     NTP_REFRESH,
     SET_TIMEZONE,
+    NTP_COMPARE_UNTRUSTED,
+    NTP_VOTE_UNTRUSTED,
 };
 void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer);
 void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime, const std::string &newTime,

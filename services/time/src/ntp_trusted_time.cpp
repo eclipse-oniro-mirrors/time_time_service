@@ -18,12 +18,14 @@
 #include <cinttypes>
 
 #include "sntp_client.h"
+#include "time_sysevent.h"
 
 namespace OHOS {
 namespace MiscServices {
 namespace {
 constexpr int64_t TIME_RESULT_UNINITED = -1;
 constexpr int64_t HALF = 2;
+constexpr int64_t TRUSTED_CANDIDATE_MINI_COUNT = 2;
 constexpr int NANO_TO_SECOND =  1000000000;
 constexpr int64_t ONE_DAY = 86400000;
 // RTC has approximate 2s error per day
@@ -39,13 +41,28 @@ NtpTrustedTime &NtpTrustedTime::GetInstance()
     return instance;
 }
 
+bool NtpTrustedTime::ForceRefreshTrusted(const std::string &ntpServer)
+{
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
+    SNTPClient client;
+    if (client.RequestTime(ntpServer)) {
+        auto timeResult = std::make_shared<TimeResult>(client.getNtpTime(), client.getNtpTimeReference(),
+            client.getRoundTripTime() / HALF, ntpServer);
+        std::lock_guard<std::mutex> lock(mTimeResultMutex_);
+        mTimeResult = timeResult;
+        return true;
+    }
+    TIME_HILOGD(TIME_MODULE_SERVICE, "false end");
+    return false;
+}
+
 bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     SNTPClient client;
     if (client.RequestTime(ntpServer)) {
         auto timeResult = std::make_shared<TimeResult>(client.getNtpTime(), client.getNtpTimeReference(),
-            client.getRoundTripTime() / HALF);
+            client.getRoundTripTime() / HALF, ntpServer);
         std::lock_guard<std::mutex> lock(mTimeResultMutex_);
         if (IsTimeResultTrusted(timeResult)) {
             return true;
@@ -76,6 +93,8 @@ bool NtpTrustedTime::IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult)
         TIME_HILOGW(TIME_MODULE_SERVICE, "NTP server is untrusted old:%{public}" PRId64 " new:%{public}" PRId64 "",
             oldNtpTime, newNtpTime);
         TimeResultCandidates_.push_back(timeResult);
+        TimeBehaviorReport(ReportEventCode::NTP_COMPARE_UNTRUSTED, timeResult->GetNtpServer(),
+            std::to_string(newNtpTime), oldNtpTime);
         return false;
     }
     // cause refresh time success, old value is invaild
@@ -101,8 +120,8 @@ int32_t NtpTrustedTime::GetSameTimeResultCount(std::shared_ptr<TimeResult> candi
 // needs to acquire the lock `mTimeResultMutex_` before calling this method
 bool NtpTrustedTime::FindBestTimeResult()
 {
-    if (TimeResultCandidates_.size() == 0 || TimeResultCandidates_.size() == 1) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "no or one candidate");
+    if (TimeResultCandidates_.size() < TRUSTED_CANDIDATE_MINI_COUNT) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "candidate < 2");
         return false;
     }
 
@@ -111,14 +130,25 @@ bool NtpTrustedTime::FindBestTimeResult()
     for (size_t i = 0; i < TimeResultCandidates_.size(); i++) {
         auto timeResult = TimeResultCandidates_[i];
         int32_t count = GetSameTimeResultCount(TimeResultCandidates_[i]);
-        if (count > mostVotedTimeResultCount) {
-            mostVotedTimeResultCount = count;
-            mostVotedTimeResult = timeResult;
+        if (count > static_cast<int32_t>(TimeResultCandidates_.size() / HALF)) {
+            if (count > mostVotedTimeResultCount) {
+                mostVotedTimeResultCount = count;
+                mostVotedTimeResult = timeResult;
+            }
+        } else {
+            int64_t bootTime = 0;
+            int res = TimeUtils::GetBootTimeMs(bootTime);
+            if (res != E_TIME_OK) {
+                continue;
+            }
+            int64_t oldNtpTime = mTimeResult ? mTimeResult->CurrentTimeMillis(bootTime) : 0;
+            TimeBehaviorReport(ReportEventCode::NTP_COMPARE_UNTRUSTED, timeResult->GetNtpServer(),
+                std::to_string(timeResult->GetTimeMillis()), oldNtpTime);
         }
     }
 
     TimeResultCandidates_.clear();
-    if (mostVotedTimeResultCount == 1) {
+    if (mostVotedTimeResultCount == 0) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "no best candidate");
         return false;
     } else {
@@ -214,6 +244,11 @@ int64_t NtpTrustedTime::TimeResult::GetAgeMillis(int64_t bootTime)
     return bootTime - this->mElapsedRealtimeMillis;
 }
 
+std::string NtpTrustedTime::TimeResult::GetNtpServer()
+{
+    return mNtpServer;
+}
+
 NtpTrustedTime::TimeResult::TimeResult()
 {
 }
@@ -221,14 +256,13 @@ NtpTrustedTime::TimeResult::~TimeResult()
 {
 }
 
-NtpTrustedTime::TimeResult::TimeResult(int64_t mTimeMillis, int64_t mElapsedRealtimeMills, int64_t mCertaintyMillis)
+NtpTrustedTime::TimeResult::TimeResult(int64_t mTimeMillis, int64_t mElapsedRealtimeMills, int64_t mCertaintyMillis,
+    std::string ntpServer)
 {
     this->mTimeMillis = mTimeMillis;
     this->mElapsedRealtimeMillis = mElapsedRealtimeMills;
     this->mCertaintyMillis = mCertaintyMillis;
-    TIME_HILOGD(TIME_MODULE_SERVICE, "mTimeMillis %{public}" PRId64 "", mTimeMillis);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "mElapsedRealtimeMills %{public}" PRId64 "", mElapsedRealtimeMills);
-    TIME_HILOGD(TIME_MODULE_SERVICE, "mCertaintyMillis %{public}" PRId64 "", mCertaintyMillis);
+    this->mNtpServer = ntpServer;
 }
 
 void NtpTrustedTime::TimeResult::Clear()
