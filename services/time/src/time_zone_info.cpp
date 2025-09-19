@@ -60,7 +60,7 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
         TIME_HILOGI(TIME_MODULE_SERVICE, "Same Timezone has been set");
         return true;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Set timezone :%{public}s, Current timezone :%{public}s, uid:%{public}d",
+    TIME_HILOGW(TIME_MODULE_SERVICE, "Set timezone :%{public}s, Current timezone :%{public}s, uid:%{public}d",
         timezoneId.c_str(), curTimezoneId_.c_str(), IPCSkeleton::GetCallingUid());
     std::string setTimeZone;
     std::set<std::string> availableTimeZoneIDs = GetTimeZoneAvailableIDs();

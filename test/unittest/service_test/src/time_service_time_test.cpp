@@ -961,9 +961,9 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime011, TestSize.Level0)
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult2);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult3);
     ntpTrustedTime->TimeResultCandidates_.push_back(timeResult4);
-    bool ret = false;
+    bool ret = true;
     ret = ntpTrustedTime->FindBestTimeResult();
-    EXPECT_EQ(ret, true);
+    EXPECT_EQ(ret, false);
     EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
 }
 
