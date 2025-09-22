@@ -51,7 +51,7 @@ bool TimeServiceNotify::PublishEvents(int64_t eventTime, const IntentWant &want,
         return false;
     }
     if (want.GetAction() == CommonEventSupport::COMMON_EVENT_TIME_TICK) {
-        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "Publish TICK");
+        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "TK");
     } else if (want.GetAction() != COMMON_EVENT_TIMER_TRIGGER) {
         TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "Publish %{public}s ", want.GetAction().c_str());
     }
