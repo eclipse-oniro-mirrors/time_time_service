@@ -15,7 +15,7 @@
 
 @!namespace("@ohos.systemDateTime", "systemDateTime")
 @!sts_inject("""
-static { loadLibrary("systemdatetime_taihe_native.z") }
+static { loadLibraryWithPermissionCheck("systemdatetime_taihe_native.z", "@ohos.systemDateTime") }
 """)
 
 enum TimeType: i32 {
