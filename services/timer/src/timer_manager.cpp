@@ -274,11 +274,9 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
         }
         timerInfo = it->second;
         if (timerId != TimeTickNotify::GetInstance().GetTickTimerId()) {
-            TIME_HILOGI(TIME_MODULE_SERVICE,
-                "id:%{public}" PRIu64 " typ:%{public}d len:%{public}" PRId64 " int:%{public}" PRId64 " "
-                "flg:%{public}d trig:%{public}s uid:%{public}d pid:%{public}d",
-                timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
-                std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
+            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "start:%{public}" PRIu64 " typ:%{public}d "
+                "int:%{public}" PRId64 " trig:%{public}s pid:%{public}d", timerId, timerInfo->type, timerInfo->interval,
+                std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingPid());
         }
         {
             // To prevent the same ID from being started repeatedly,
@@ -325,11 +323,9 @@ int32_t TimerManager::StartTimerGroup(std::vector<std::pair<uint64_t, uint64_t>>
             continue;
         }
         timerInfo = it->second;
-        TIME_HILOGI(TIME_MODULE_SERVICE,
-            "id:%{public}" PRIu64 " typ:%{public}d len:%{public}" PRId64 " int:%{public}" PRId64 " "
-            "flg :%{public}d trig:%{public}s uid:%{public}d pid:%{public}d",
-            timerId, timerInfo->type, timerInfo->windowLength, timerInfo->interval, timerInfo->flag,
-            std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid());
+        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "start:%{public}" PRIu64 " typ:%{public}d "
+            "int:%{public}" PRId64 " trig:%{public}s pid:%{public}d", timerId, timerInfo->type, timerInfo->interval,
+            std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingPid());
         {
             // To prevent the same ID from being started repeatedly,
             // the later start overwrites the earlier start
@@ -433,8 +429,11 @@ int32_t TimerManager::DestroyTimer(uint64_t timerId)
 
 int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
 {
-    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "StopTimer id:%{public}" PRId64 ",destroy:%{public}d",
-        timerNumber, needDestroy);
+    if (needDestroy) {
+        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "drop:%{public}" PRId64 "", timerNumber);
+    } else {
+        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "stop:%{public}" PRId64 "", timerNumber);
+    }
     int32_t ret;
     bool needRecover = false;
     {
@@ -531,7 +530,7 @@ void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
         auto batch = *it;
         didRemove = batch->Remove(whichAlarms);
         if (didRemove) {
-            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "remove id:%{public}" PRIu64 "", id);
+            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "remove:%{public}" PRIu64 "", id);
             it = alarmBatches_.erase(it);
             if (batch->Size() != 0) {
                 AddBatchLocked(alarmBatches_, batch);
@@ -933,12 +932,21 @@ void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
         auto maxWhenElapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             alarm->maxWhenElapsed.time_since_epoch()).count();
         if (whenElapsedMs != maxWhenElapsedMs) {
-            TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat:%{public}" PRId64 " id:%{public}" PRIu64 " "
-                "we:%{public}lld mwe:%{public}lld",
-                whichBatch, alarm->id, whenElapsedMs, maxWhenElapsedMs);
+            if (whichBatch == -1) {
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "id:%{public}" PRIu64 " we:%{public}lld mwe:%{public}lld",
+                    alarm->id, whenElapsedMs, maxWhenElapsedMs);
+            } else {
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat:%{public}" PRId64 " id:%{public}" PRIu64 " "
+                    "we:%{public}lld mwe:%{public}lld", whichBatch, alarm->id, whenElapsedMs, maxWhenElapsedMs);
+            }
         } else {
-            TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat:%{public}" PRId64 " id:%{public}" PRIu64 " "
-                "we:%{public}lld", whichBatch, alarm->id, whenElapsedMs);
+            if (whichBatch == -1) {
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "id:%{public}" PRIu64 " we:%{public}lld",
+                    alarm->id, whenElapsedMs);
+            } else {
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat:%{public}" PRId64 " id:%{public}" PRIu64 " "
+                    "we:%{public}lld", whichBatch, alarm->id, whenElapsedMs);
+            }
         }
     }
     if (whichBatch < 0) {

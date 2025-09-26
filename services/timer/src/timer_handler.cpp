@@ -133,10 +133,10 @@ int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when, std::chrono:
     auto milliSecond = std::chrono::duration_cast<std::chrono::milliseconds>(when);
     auto bootTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(bootTime.time_since_epoch());
     if (type == static_cast<uint32_t>(ITimerManager::TimerType::ELAPSED_REALTIME_WAKEUP)) {
-        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "typ:%{public}d trig:%{public}lld bt:%{public}lld", type,
+        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "t%{public}d %{public}lld bt:%{public}lld", type,
             milliSecond.count(), bootTimeMs.count());
     } else {
-        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "typ:%{public}d trig:%{public}lld", type, milliSecond.count());
+        TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "t%{public}d %{public}lld", type, milliSecond.count());
     }
     timespec ts {second.count(), (when - second).count()};
     itimerspec spec {timespec {}, ts};
