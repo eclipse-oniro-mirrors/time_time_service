@@ -15,7 +15,7 @@ import("//build/test.gni")
 import("../../../time.gni")
 
 ohos_unittest("TimeServiceNativeTest") {
-  module_out_path = "time_service/time/native"
+  module_out_path = "time_service/time_service/native"
 
   visibility = [ ":*" ]
 
