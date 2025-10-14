@@ -48,6 +48,7 @@ taihe_shared_library("systemtimer_taihe_native") {
     "src/ani_constructor.cpp",
     "src/ani_system_timer.cpp",
     "src/ohos.time_service.systemtimer.impl.cpp",
+    "../common/src/ani_utils.cpp",
   ]
   deps = [
     ":run_taihe",
