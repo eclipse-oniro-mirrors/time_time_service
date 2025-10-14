@@ -98,7 +98,9 @@ void SetTimeSync(int64_t time)
 {
     auto innerCode = TimeServiceClient::GetInstance()->SetTimeV9(time);
     if (innerCode != JsErrorCode::ERROR_OK) {
-        set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
+        int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+        std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+        set_business_error(errorCode, errorMessage);
         return;
     }
     return;

@@ -16,6 +16,10 @@
 #ifndef ANI_UTILS_H
 #define ANI_UTILS_H
 
+#include <cstdint>
+#include <string>
+#include <map>
+
 namespace OHOS {
 namespace MiscServices {
 namespace Time {
@@ -29,6 +33,22 @@ enum JsErrorCode : int32_t {
     NTP_UPDATE_ERROR = 13000001,
     NTP_NOT_UPDATE_ERROR = 13000002,
 };
+
+const std::map<int32_t, std::string> CODE_TO_MESSAGE = {
+    { JsErrorCode::SYSTEM_APP_ERROR, "Permission verification failed. A non-system application calls a system API" },
+    { JsErrorCode::PARAMETER_ERROR, "Parameter error" },
+    { JsErrorCode::PERMISSION_ERROR, "Permission denied" },
+    { JsErrorCode::ERROR, "Parameter check failed, permission denied, or system error." },
+    { JsErrorCode::NTP_UPDATE_ERROR, "Ntp update error" },
+    { JsErrorCode::NTP_NOT_UPDATE_ERROR, "Ntp not update error" },
+};
+
+class AniUtils {
+    public:
+    static int32_t ConvertErrorCode(int32_t timeErrorCode);
+    static std::string GetErrorMessage(int32_t errCode);
+};
+
 } // namespace Time
 } // namespace MiscServices
 } // namespace OHOS
