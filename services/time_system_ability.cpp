@@ -953,12 +953,8 @@ int32_t TimeSystemAbility::ProxyTimer(int32_t uid, const std::vector<int>& pidLi
         TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
         return E_TIME_NO_PERMISSION;
     }
-    if (pidList.size() > MAX_PID_LIST_SIZE) {
+    if (pidList.size() < 0 || pidList.size() > MAX_PID_LIST_SIZE) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Error pid list size");
-        return E_TIME_PARAMETERS_INVALID;
-    }
-    if (pidList.size() == 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Error pidList");
         return E_TIME_PARAMETERS_INVALID;
     }
     auto timerManager = TimerManager::GetInstance();
