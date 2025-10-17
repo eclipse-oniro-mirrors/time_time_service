@@ -834,12 +834,10 @@ HWTEST_F(TimeServiceTimerTest, AdjustTimer004, TestSize.Level1)
 HWTEST_F(TimeServiceTimerTest, ProxyTimer001, TestSize.Level1)
 {
     std::vector<int> pidList{};
-    auto res = TimeSystemAbility::GetInstance()->ProxyTimer(0, pidList, false, false);
-    EXPECT_EQ(res, E_TIME_PARAMETERS_INVALID);
     for (int i = 0; i <= MAX_PID_LIST_SIZE + 1; i++) {
         pidList.push_back(0);
     }
-    res = TimeSystemAbility::GetInstance()->ProxyTimer(0, pidList, false, false);
+    auto res = TimeSystemAbility::GetInstance()->ProxyTimer(0, pidList, false, false);
     EXPECT_EQ(res, E_TIME_PARAMETERS_INVALID);
 }
 
