@@ -44,7 +44,9 @@ int64_t CreateTimerSync(::ohos::time_service::systemtimer::TimerOptions const& o
     uint64_t timerId = 0;
     auto innerCode = TimeServiceClient::GetInstance()->CreateTimerV9(iTimerInfoInstance, timerId);
     if (innerCode != JsErrorCode::ERROR_OK) {
-        set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
+        int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+        std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+        set_business_error(errorCode, errorMessage);
         return 0;
     }
     return timerId;
@@ -54,7 +56,9 @@ void StartTimerSync(int64_t timer, int64_t triggerTime)
 {
     auto innerCode = TimeServiceClient::GetInstance()->StartTimerV9(timer, triggerTime);
     if (innerCode != JsErrorCode::ERROR_OK) {
-        set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
+        int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+        std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+        set_business_error(errorCode, errorMessage);
         return;
     }
 }
@@ -63,7 +67,9 @@ void StopTimerSync(int64_t timer)
 {
     auto innerCode = TimeServiceClient::GetInstance()->StopTimerV9(timer);
     if (innerCode != JsErrorCode::ERROR_OK) {
-        set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
+        int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+        std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+        set_business_error(errorCode, errorMessage);
         return;
     }
 }
@@ -72,7 +78,9 @@ void DestroyTimerSync(int64_t timer)
 {
     auto innerCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timer);
     if (innerCode != JsErrorCode::ERROR_OK) {
-        set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
+        int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+        std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+        set_business_error(errorCode, errorMessage);
         return;
     }
 }
