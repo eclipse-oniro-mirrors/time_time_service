@@ -86,10 +86,18 @@ bool TimeDfxTest::ExecuteCmd(const std::string &cmd, std::string &result)
 }
 
 #ifdef HIDUMPER_ENABLE
+
 /**
 * @tc.name: DumpAllTimeInfo001
-* @tc.desc: dump all time info.
+* @tc.desc: Test dumping all time information via hidumper command
+* @tc.precon: Hidumper service is enabled and accessible
+* @tc.step: 1. Execute hidumper command with -time parameter
+*           2. Capture command output
+*           3. Verify output contains time-related information
+* @tc.expect: Command executes successfully, output contains "dump all time info" and "dump the time Zone"
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
 HWTEST_F(TimeDfxTest, DumpAllTimeInfo001, TestSize.Level0)
 {
@@ -102,8 +110,15 @@ HWTEST_F(TimeDfxTest, DumpAllTimeInfo001, TestSize.Level0)
 
 /**
 * @tc.name: DumpTimerInfo001
-* @tc.desc: dump timer info.
+* @tc.desc: Test dumping all timer information via hidumper command
+* @tc.precon: Hidumper service is enabled and accessible
+* @tc.step: 1. Execute hidumper command with "-timer -a" parameters
+*           2. Capture command output
+*           3. Verify output contains timer information
+* @tc.expect: Command executes successfully, output contains "dump all timer info"
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
 HWTEST_F(TimeDfxTest, DumpTimerInfo001, TestSize.Level0)
 {
@@ -115,8 +130,16 @@ HWTEST_F(TimeDfxTest, DumpTimerInfo001, TestSize.Level0)
 
 /**
 * @tc.name: DumpTimerInfoById001
-* @tc.desc: dump timer info by id.
+* @tc.desc: Test dumping specific timer information by timer ID
+* @tc.precon: Hidumper service is enabled, timer service is available
+* @tc.step: 1. Create a realtime type timer
+*           2. Execute hidumper command with specific timer ID
+*           3. Capture and verify command output
+*           4. Destroy the created timer
+* @tc.expect: Timer creation succeeds, command output contains timer details, timer destruction succeeds
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
 HWTEST_F(TimeDfxTest, DumpTimerInfoById001, TestSize.Level0)
 {
@@ -140,8 +163,16 @@ HWTEST_F(TimeDfxTest, DumpTimerInfoById001, TestSize.Level0)
 
 /**
 * @tc.name: DumpTimerTriggerById001
-* @tc.desc: dump trigger by id.
+* @tc.desc: Test dumping timer trigger information by timer ID
+* @tc.precon: Hidumper service is enabled, timer service is available
+* @tc.step: 1. Create a realtime type timer with interval
+*           2. Execute hidumper command with timer trigger parameter
+*           3. Capture and verify command output
+*           4. Destroy the created timer
+* @tc.expect: Timer creation succeeds, command output contains trigger details, timer destruction succeeds
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
 HWTEST_F(TimeDfxTest, DumpTimerTriggerById001, TestSize.Level0)
 {
@@ -165,8 +196,15 @@ HWTEST_F(TimeDfxTest, DumpTimerTriggerById001, TestSize.Level0)
 
 /**
 * @tc.name: DumpShowHelp001
-* @tc.desc: dump show help.
+* @tc.desc: Test dumping help information via hidumper command
+* @tc.precon: Hidumper service is enabled and accessible
+* @tc.step: 1. Execute hidumper command with -h parameter
+*           2. Capture command output
+*           3. Verify output contains help information for time-related commands
+* @tc.expect: Command executes successfully, output contains expected help text for time and timer commands
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
 HWTEST_F(TimeDfxTest, DumpShowHelp001, TestSize.Level0)
 {
@@ -180,8 +218,15 @@ HWTEST_F(TimeDfxTest, DumpShowHelp001, TestSize.Level0)
 
 /**
 * @tc.name: DumpIdleTimer001
-* @tc.desc: dump idle timer when working.
+* @tc.desc: Test dumping idle timer information in working state
+* @tc.precon: Hidumper service is enabled, system is in working state
+* @tc.step: 1. Execute hidumper command with '-idle -a' parameters
+*           2. Capture command output
+*           3. Verify output indicates system is in working state (idle state = 0)
+* @tc.expect: Command executes successfully, output contains "dump idle state = 0" indicating working state
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
 HWTEST_F(TimeDfxTest, DumpIdleTimer001, TestSize.Level0)
 {
@@ -192,9 +237,17 @@ HWTEST_F(TimeDfxTest, DumpIdleTimer001, TestSize.Level0)
 }
 
 /**
-* @tc.name: DumpIdleTimer001
-* @tc.desc: dump idle timer when sleep.
+* @tc.name: DumpIdleTimer002
+* @tc.desc: Test dumping idle timer information in sleep state with active idle timer
+* @tc.precon: Hidumper service is enabled, timer service is available
+* @tc.step: 1. Create an idle type timer and start it with future trigger time
+*           2. Execute hidumper command with '-idle -a' parameters
+*           3. Capture and verify command output
+*           4. Destroy the created timer
+* @tc.expect: Timer creation and start succeed, command output contains idle timer details
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
 HWTEST_F(TimeDfxTest, DumpIdleTimer002, TestSize.Level0)
 {
@@ -218,8 +271,16 @@ HWTEST_F(TimeDfxTest, DumpIdleTimer002, TestSize.Level0)
 
 /**
 * @tc.name: DumpUidTimerMapInfo001
-* @tc.desc: dump uid timer map info.
+* @tc.desc: Test dumping UID timer map information via hidumper command
+* @tc.precon: Hidumper service is enabled, timer service is available
+* @tc.step: 1. Create and start a realtime type timer
+*           2. Execute hidumper command with "-UidTimer -l" parameters
+*           3. Capture and verify command output
+*           4. Destroy the created timer
+* @tc.expect: Timer operations succeed, command output contains UID timer map details
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
 HWTEST_F(TimeDfxTest, DumpUidTimerMapInfo001, TestSize.Level0)
 {
@@ -250,11 +311,19 @@ HWTEST_F(TimeDfxTest, DumpUidTimerMapInfo001, TestSize.Level0)
 }
 
 /**
-* @tc.name: DumpPeoxyTimerMapInfo001
-* @tc.desc: dump proxy timer map info.
+* @tc.name: DumpProxyTimerMapInfo001
+* @tc.desc: Test dumping proxy timer map information via hidumper command
+* @tc.precon: Hidumper service is enabled, timer service is available
+* @tc.step: 1. Create and start a realtime type timer
+*           2. Execute hidumper command with "-ProxyTimer -l" parameters
+*           3. Capture and verify command output
+*           4. Destroy the created timer
+* @tc.expect: Timer operations succeed, command output contains proxy timer map details
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
-HWTEST_F(TimeDfxTest, DumpPeoxyTimerMapInfo001, TestSize.Level0)
+HWTEST_F(TimeDfxTest, DumpProxyTimerMapInfo001, TestSize.Level0)
 {
     std::string result;
     auto CMD1 = std::string(CMD).append(" \"-ProxyTimer -l ").append(" \"");
@@ -283,8 +352,15 @@ HWTEST_F(TimeDfxTest, DumpPeoxyTimerMapInfo001, TestSize.Level0)
 
 /**
 * @tc.name: DumpProxyDelayTime001
-* @tc.desc: dump proxy delay time.
+* @tc.desc: Test dumping proxy delay time information via hidumper command
+* @tc.precon: Hidumper service is enabled and accessible
+* @tc.step: 1. Execute hidumper command with "-ProxyDelayTime -l" parameters
+*           2. Capture command output
+*           3. Verify output contains expected delay time value
+* @tc.expect: Command executes successfully, output contains expected delay time (259200000)
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
 HWTEST_F(TimeDfxTest, DumpProxyDelayTime001, TestSize.Level0)
 {
@@ -297,9 +373,16 @@ HWTEST_F(TimeDfxTest, DumpProxyDelayTime001, TestSize.Level0)
 }
 
 /**
-* @tc.name: DumpPeoxyTimerMapInfo001
-* @tc.desc: dump proxy timer map info.
+* @tc.name: DumpAdjustTime001
+* @tc.desc: Test dumping time adjustment information via hidumper command
+* @tc.precon: Hidumper service is enabled and accessible
+* @tc.step: 1. Execute hidumper command with "-adjust -a" parameters
+*           2. Capture command output
+*           3. Verify output contains time adjustment information
+* @tc.expect: Command executes successfully, output contains "dump adjust time" information
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
 */
 HWTEST_F(TimeDfxTest, DumpAdjustTime001, TestSize.Level0)
 {
@@ -310,6 +393,7 @@ HWTEST_F(TimeDfxTest, DumpAdjustTime001, TestSize.Level0)
     EXPECT_NE(result.find("dump adjust time"), std::string::npos);
     TIME_HILOGD(TIME_MODULE_SERVICE, "-adjust -a: %{public}s", result.c_str());
 }
+
 #endif
 } // namespace MiscServices
 } // namespace OHOS

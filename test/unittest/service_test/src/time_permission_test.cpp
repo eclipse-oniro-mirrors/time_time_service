@@ -52,8 +52,16 @@ void TimePermissionTest::TearDown(void) {
 
 /**
 * @tc.name: CheckCallingPermission001
-* @tc.desc: check calling permission.
+* @tc.desc: Test time permission checking functionality with invalid and valid permission names
+* @tc.precon: Time permission service is available and accessible
+* @tc.step: 1. Call CheckCallingPermission with empty permission name string
+*           2. Verify function returns false for empty permission
+*           3. Call CheckCallingPermission with non-empty permission name
+*           4. Verify function returns false for invalid permission name
+* @tc.expect: Both permission checks return false indicating permission denial for invalid inputs
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimePermissionTest, CheckCallingPermission001, TestSize.Level1)
 {
