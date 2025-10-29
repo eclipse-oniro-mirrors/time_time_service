@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,8 +182,14 @@ void WaitForAlarm(std::atomic<int> * data, int interval)
 
 /**
 * @tc.name: GetNtpTimeMs001
-* @tc.desc: get ntp time.
+* @tc.desc: Test basic NTP time retrieval functionality
+* @tc.precon: Time service is available and NTP server is accessible
+* @tc.step: 1. Call GetNtpTimeMs method
+*           2. Verify return code and time value
+* @tc.expect: Return code is E_TIME_OK, time value is valid
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, GetNtpTimeMs001, TestSize.Level1)
 {
@@ -195,8 +201,15 @@ HWTEST_F(TimeClientTest, GetNtpTimeMs001, TestSize.Level1)
 
 /**
 * @tc.name: GetNtpTimeMsAndGetRealTimeMs001
-* @tc.desc: get ntp time and get real time by multi thread.
+* @tc.desc: Test NTP time and real time retrieval in multi-thread environment
+* @tc.precon: Time service is available
+* @tc.step: 1. Create 4 threads to concurrently call TestNtpThread
+*           2. Each thread gets NTP time and real time
+*           3. Verify time consistency across threads
+* @tc.expect: All threads complete successfully, time values are consistent
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, GetNtpTimeMsAndGetRealTimeMs001, TestSize.Level1)
 {
@@ -212,8 +225,15 @@ HWTEST_F(TimeClientTest, GetNtpTimeMsAndGetRealTimeMs001, TestSize.Level1)
 
 /**
 * @tc.name: SetTime001
-* @tc.desc: set system time.
+* @tc.desc: Test setting system time with valid future time
+* @tc.precon: Application has system time setting permission
+* @tc.step: 1. Get current time and add 1000 seconds
+*           2. Call SetTimeV9 with the future time
+*           3. Verify return code
+* @tc.expect: Return code is E_TIME_OK, time is set successfully
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, SetTime001, TestSize.Level1)
 {
@@ -227,9 +247,15 @@ HWTEST_F(TimeClientTest, SetTime001, TestSize.Level1)
 }
 
 /**
-* @tc.name: SetTime002
-* @tc.desc: set system time with negative value.
+* @tc.name: ut_time_service_set_time_002
+* @tc.desc: Test setting system time with negative value (invalid input)
+* @tc.precon: Application has system time setting permission
+* @tc.step: 1. Call SetTimeV9 with negative value (-1)
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_DEAL_FAILED, operation fails
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, SetTime002, TestSize.Level1)
 {
@@ -239,8 +265,14 @@ HWTEST_F(TimeClientTest, SetTime002, TestSize.Level1)
 
 /**
 * @tc.name: SetTime003
-* @tc.desc: set system time with LLONG_MAX.
+* @tc.desc: Test setting system time with maximum long value (LLONG_MAX)
+* @tc.precon: Application has system time setting permission
+* @tc.step: 1. Call SetTimeV9 with LLONG_MAX
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_DEAL_FAILED, operation fails
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, SetTime003, TestSize.Level1)
 {
@@ -250,8 +282,15 @@ HWTEST_F(TimeClientTest, SetTime003, TestSize.Level1)
 
 /**
 * @tc.name: SetTime004
-* @tc.desc: set system time with no permission.
+* @tc.desc: Test setting system time without required permissions
+* @tc.precon: Application permissions have been revoked
+* @tc.step: 1. Delete system permissions
+*           2. Attempt to set time with valid future time
+*           3. Verify return codes for both V9 and legacy APIs
+* @tc.expect: V9 API returns E_TIME_NOT_SYSTEM_APP, legacy API returns false with E_TIME_NO_PERMISSION
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, SetTime004, TestSize.Level1)
 {
@@ -269,9 +308,17 @@ HWTEST_F(TimeClientTest, SetTime004, TestSize.Level1)
 }
 
 /**
-* @tc.name: SetTimeZone001
-* @tc.desc: set system time zone.
-* @tc.type: FUNC
+// @tc.name: SetTimeZone001
+// @tc.desc: Test setting and restoring system timezone
+// @tc.precon: Application has timezone setting permission
+// @tc.step: 1. Get current timezone
+//           2. Set timezone to "Asia/Nicosia"
+//           3. Verify new timezone is set
+//           4. Restore original timezone
+// @tc.expect: All operations succeed, timezone changes are applied correctly
+// @tc.type: FUNC
+// @tc.require: issue#842
+// @tc.level: level1
 */
 HWTEST_F(TimeClientTest, SetTimeZone001, TestSize.Level1)
 {
@@ -293,8 +340,14 @@ HWTEST_F(TimeClientTest, SetTimeZone001, TestSize.Level1)
 
 /**
 * @tc.name: SetTimeZone002
-* @tc.desc: set system time zone will invalid timezone.
+* @tc.desc: Test setting system timezone with invalid timezone ID
+* @tc.precon: Application has timezone setting permission
+* @tc.step: 1. Call SetTimeZoneV9 with invalid timezone "123"
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_DEAL_FAILED, operation fails
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, SetTimeZone002, TestSize.Level1)
 {
@@ -304,8 +357,15 @@ HWTEST_F(TimeClientTest, SetTimeZone002, TestSize.Level1)
 
 /**
 * @tc.name: SetTimeZone003
-* @tc.desc: set system time zone with no permission.
+* @tc.desc: Test setting system timezone without required permissions
+* @tc.precon: Application permissions have been revoked
+* @tc.step: 1. Delete system permissions
+*           2. Attempt to set timezone to "Asia/Shanghai"
+*           3. Verify return codes for both V9 and legacy APIs
+* @tc.expect: V9 API returns E_TIME_NOT_SYSTEM_APP, legacy API returns false
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, SetTimeZone003, TestSize.Level1)
 {
@@ -318,8 +378,14 @@ HWTEST_F(TimeClientTest, SetTimeZone003, TestSize.Level1)
 
 /**
 * @tc.name: GetWallTimeMs001
-* @tc.desc: get wall time (ms).
+* @tc.desc: Test retrieving wall time in milliseconds
+* @tc.precon: Time service is available
+* @tc.step: 1. Call GetWallTimeMs method
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_OK, time value is retrieved
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, GetWallTimeMs001, TestSize.Level1)
 {
@@ -330,8 +396,14 @@ HWTEST_F(TimeClientTest, GetWallTimeMs001, TestSize.Level1)
 
 /**
 * @tc.name: GetWallTimeNs001
-* @tc.desc: get wall time (ns).
+* @tc.desc: Test retrieving wall time in nanoseconds
+* @tc.precon: Time service is available
+* @tc.step: 1. Call GetWallTimeNs method
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_OK, time value is retrieved
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, GetWallTimeNs001, TestSize.Level1)
 {
@@ -342,8 +414,14 @@ HWTEST_F(TimeClientTest, GetWallTimeNs001, TestSize.Level1)
 
 /**
 * @tc.name: GetBootTimeNs001
-* @tc.desc: get boot time (ns).
+* @tc.desc: Test retrieving boot time in nanoseconds
+* @tc.precon: Time service is available
+* @tc.step: 1. Call GetBootTimeNs method
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_OK, time value is retrieved
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, GetBootTimeNs001, TestSize.Level1)
 {
@@ -354,8 +432,14 @@ HWTEST_F(TimeClientTest, GetBootTimeNs001, TestSize.Level1)
 
 /**
 * @tc.name: GetBootTimeMs001
-* @tc.desc: get boot time (ms).
+* @tc.desc: Test retrieving boot time in milliseconds
+* @tc.precon: Time service is available
+* @tc.step: 1. Call GetBootTimeMs method
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_OK, time value is retrieved
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, GetBootTimeMs001, TestSize.Level1)
 {
@@ -366,8 +450,14 @@ HWTEST_F(TimeClientTest, GetBootTimeMs001, TestSize.Level1)
 
 /**
 * @tc.name: GetMonotonicTimeMs001
-* @tc.desc: get monotonic time (ms).
+* @tc.desc: Test retrieving monotonic time in milliseconds
+* @tc.precon: Time service is available
+* @tc.step: 1. Call GetMonotonicTimeMs method
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_OK, time value is retrieved
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, GetMonotonicTimeMs001, TestSize.Level1)
 {
@@ -378,8 +468,14 @@ HWTEST_F(TimeClientTest, GetMonotonicTimeMs001, TestSize.Level1)
 
 /**
 * @tc.name: GetMonotonicTimeNs001
-* @tc.desc: get monotonic time (ns).
+* @tc.desc: Test retrieving monotonic time in nanoseconds
+* @tc.precon: Time service is available
+* @tc.step: 1. Call GetMonotonicTimeNs method
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_OK, time value is retrieved
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, GetMonotonicTimeNs001, TestSize.Level1)
 {
@@ -390,8 +486,14 @@ HWTEST_F(TimeClientTest, GetMonotonicTimeNs001, TestSize.Level1)
 
 /**
 * @tc.name: GetThreadTimeMs001
-* @tc.desc: get thread time (ms).
+* @tc.desc: Test retrieving thread time in milliseconds
+* @tc.precon: Time service is available
+* @tc.step: 1. Call GetThreadTimeMs method
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_OK, time value is retrieved
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, GetThreadTimeMs001, TestSize.Level1)
 {
@@ -402,8 +504,14 @@ HWTEST_F(TimeClientTest, GetThreadTimeMs001, TestSize.Level1)
 
 /**
 * @tc.name: GetThreadTimeNs001
-* @tc.desc: get thread time (ns).
+* @tc.desc: Test retrieving thread time in nanoseconds
+* @tc.precon: Time service is available
+* @tc.step: 1. Call GetThreadTimeNs method
+*           2. Verify return code
+* @tc.expect: Return code is E_TIME_OK, time value is retrieved
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, GetThreadTimeNs001, TestSize.Level1)
 {
@@ -414,8 +522,14 @@ HWTEST_F(TimeClientTest, GetThreadTimeNs001, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer001
-* @tc.desc: Create system timer with invalid timerid and timerinfo.
+* @tc.desc: Test timer operations with invalid timer ID
+* @tc.precon: Timer service is available
+* @tc.step: 1. Use timer ID 0 (invalid) for start, stop, and destroy operations
+*           2. Verify return codes for each operation
+* @tc.expect: All operations return E_TIME_DEAL_FAILED with invalid timer ID
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer001, TestSize.Level1)
 {
@@ -430,8 +544,16 @@ HWTEST_F(TimeClientTest, CreateTimer001, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer002
-* @tc.desc: Create system timer.
+* @tc.desc: Test complete timer lifecycle (create, start, stop, destroy)
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create timer with realtime type and callback
+*           2. Start timer with 2000ms delay
+*           3. Stop timer before it triggers
+*           4. Destroy timer
+* @tc.expect: All operations return E_TIME_OK, timer lifecycle completes successfully
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer002, TestSize.Level1)
 {
@@ -455,8 +577,15 @@ HWTEST_F(TimeClientTest, CreateTimer002, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer003
-* @tc.desc: Create system timer.
+* @tc.desc: Test timer creation with WantAgent (nullptr scenario)
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create timer with realtime type and null WantAgent
+*           2. Verify timer creation succeeds
+*           3. Destroy timer
+* @tc.expect: Timer creation returns E_TIME_OK, destruction succeeds
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer003, TestSize.Level1)
 {
@@ -475,8 +604,17 @@ HWTEST_F(TimeClientTest, CreateTimer003, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer004
-* @tc.desc: Create system timer.
+* @tc.desc: Test timer destruction before trigger time
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create timer with realtime type
+*           2. Start timer with future boot time
+*           3. Destroy timer immediately
+*           4. Verify callback is not invoked
+*           5. Attempt to stop destroyed timer
+* @tc.expect: Timer destruction succeeds, callback not invoked, stop operation fails on destroyed timer
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer004, TestSize.Level1)
 {
@@ -503,8 +641,17 @@ HWTEST_F(TimeClientTest, CreateTimer004, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer005
-* @tc.desc: Create system timer.
+* @tc.desc: Test timer with absolute time trigger
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create timer with type 0 (absolute time)
+*           2. Start timer with calculated absolute time
+*           3. Destroy timer immediately
+*           4. Verify callback is not invoked
+*           5. Attempt to stop destroyed timer
+* @tc.expect: Timer operations succeed, callback not invoked due to immediate destruction
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer005, TestSize.Level1)
 {
@@ -536,8 +683,14 @@ HWTEST_F(TimeClientTest, CreateTimer005, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer006
-* @tc.desc: Create system timer with nullprt.
+* @tc.desc: Test timer creation with null timer info
+* @tc.precon: Timer service is available
+* @tc.step: 1. Attempt to create timer with nullptr timer info
+*           2. Verify return code and timer ID
+* @tc.expect: Return code is E_TIME_NULLPTR, timer ID is 0
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer006, TestSize.Level1)
 {
@@ -549,8 +702,15 @@ HWTEST_F(TimeClientTest, CreateTimer006, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer007
-* @tc.desc: Create system timer with no permission.
+* @tc.desc: Test timer operations without required permissions
+* @tc.precon: Application permissions have been revoked
+* @tc.step: 1. Delete system permissions
+*           2. Attempt to create, start, stop, and destroy timer
+*           3. Verify return codes for all operations
+* @tc.expect: All operations return E_TIME_NOT_SYSTEM_APP or indicate failure
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer007, TestSize.Level1)
 {
@@ -580,8 +740,15 @@ HWTEST_F(TimeClientTest, CreateTimer007, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer008
-* @tc.desc: Create system timer.
+* @tc.desc: Test timer creation with auto-restore flag under different timer types
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create timer with type 0 and auto-restore true
+*           2. Create timer with realtime type and auto-restore true
+*           3. Create timer with realtime+wakeup type and auto-restore true
+* @tc.expect: All timer creations return E_TIME_DEAL_FAILED due to auto-restore incompatibility
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer008, TestSize.Level1)
 {
@@ -605,8 +772,15 @@ HWTEST_F(TimeClientTest, CreateTimer008, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer009
-* @tc.desc: Create system timer with a long name, expect false.
+* @tc.desc: Test timer creation with excessively long name
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create timer with 70-character name (exceeds limit)
+*           2. Set exact timer type with callback
+*           3. Verify return code
+* @tc.expect: Timer creation returns E_TIME_DEAL_FAILED due to name length violation
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer009, TestSize.Level1)
 {
@@ -626,8 +800,17 @@ HWTEST_F(TimeClientTest, CreateTimer009, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer010
-* @tc.desc: Create two timers with same name, expect first is destroyed.
+* @tc.desc: Test timer creation with duplicate names (first timer gets replaced)
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create first timer with name "testname"
+*           2. Verify timer is in name list
+*           3. Create second timer with same name
+*           4. Verify first timer is destroyed and replaced
+*           5. Clean up second timer
+* @tc.expect: Second timer creation succeeds, first timer is automatically destroyed
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer010, TestSize.Level1)
 {
@@ -668,9 +851,16 @@ HWTEST_F(TimeClientTest, CreateTimer010, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer011
-* @tc.desc: Create a timer with name and destroy it, create a new timer with same name,
-*           expect OK.
+* @tc.desc: Test timer name reuse after destruction
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create timer with name "testname" and destroy it
+*           2. Create new timer with same name "testname"
+*           3. Verify second creation succeeds
+*           4. Destroy second timer
+* @tc.expect: Both timer creations succeed, name can be reused after destruction
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, CreateTimer011, TestSize.Level1)
 {
@@ -701,8 +891,17 @@ HWTEST_F(TimeClientTest, CreateTimer011, TestSize.Level1)
 
 /**
 * @tc.name: StartTimer001
-* @tc.desc: Start system timer.
+* @tc.desc: Test starting exact type timer and verify callback execution
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create exact type timer with callback
+*           2. Start timer with 500ms delay
+*           3. Wait for timer trigger
+*           4. Verify callback is executed
+*           5. Destroy timer
+* @tc.expect: Timer starts successfully, callback is triggered (g_data1 becomes 1), timer is destroyed
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, StartTimer001, TestSize.Level1)
 {
@@ -726,8 +925,16 @@ HWTEST_F(TimeClientTest, StartTimer001, TestSize.Level1)
 
 /**
 * @tc.name: StartTimer002
-* @tc.desc: Start system timer.
+* @tc.desc: Test starting exact type timer with WantAgent
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create exact type timer with WantAgent
+*           2. Start timer with 1000ms delay
+*           3. Verify start operation succeeds
+*           4. Destroy timer
+* @tc.expect: Timer creation and start operations return E_TIME_OK, timer is properly destroyed
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, StartTimer002, TestSize.Level1)
 {
@@ -748,8 +955,17 @@ HWTEST_F(TimeClientTest, StartTimer002, TestSize.Level1)
 
 /**
 * @tc.name: StartTimer003
-* @tc.desc: Start system timer.
+* @tc.desc: Test starting repeat wakeup timer and verify multiple triggers
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create exact+wakeup type repeat timer with 1000ms interval
+*           2. Start timer with 500ms initial delay
+*           3. Wait for 2 seconds
+*           4. Verify callback is triggered multiple times
+*           5. Destroy timer
+* @tc.expect: Timer starts successfully, callback is triggered more than once within 2 seconds
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, StartTimer003, TestSize.Level1)
 {
@@ -772,8 +988,17 @@ HWTEST_F(TimeClientTest, StartTimer003, TestSize.Level1)
 
 /**
 * @tc.name: StartTimer004
-* @tc.desc: Start system timer.
+* @tc.desc: Test starting repeat exact timer and verify multiple triggers
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create exact type repeat timer with 1000ms interval
+*           2. Start timer with 500ms initial delay
+*           3. Wait for 2 seconds
+*           4. Verify callback is triggered multiple times
+*           5. Destroy timer
+* @tc.expect: Timer starts successfully, callback is triggered more than once within 2 seconds
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, StartTimer004, TestSize.Level1)
 {
@@ -796,8 +1021,16 @@ HWTEST_F(TimeClientTest, StartTimer004, TestSize.Level1)
 
 /**
 * @tc.name: StartTimer005
-* @tc.desc: Start a timer which is disposable. It will be destroyed by time service.
+* @tc.desc: Test disposable non-repeat timer auto-destruction after trigger
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create exact type disposable non-repeat timer
+*           2. Start timer with 500ms delay
+*           3. Wait for timer trigger
+*           4. Attempt to destroy timer (should fail as already auto-destroyed)
+* @tc.expect: Timer triggers successfully, destruction fails indicating timer was auto-destroyed
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, StartTimer005, TestSize.Level1)
 {
@@ -824,8 +1057,16 @@ HWTEST_F(TimeClientTest, StartTimer005, TestSize.Level1)
 
 /**
 * @tc.name: StartTimer006
-* @tc.desc: Start a repeat timer which is disposable. It will not be destroyed by time service.
+* @tc.desc: Test disposable repeat timer does not auto-destroy
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create exact type disposable repeat timer with 1000ms interval
+*           2. Start timer with 500ms initial delay
+*           3. Wait for timer trigger
+*           4. Destroy timer manually
+* @tc.expect: Timer starts successfully, manual destruction succeeds (repeat timers not auto-destroyed)
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, StartTimer006, TestSize.Level1)
 {
@@ -853,8 +1094,18 @@ HWTEST_F(TimeClientTest, StartTimer006, TestSize.Level1)
 
 /**
 * @tc.name: StartTimer007
-* @tc.desc: Start a loop timer at an early point in time and trigger a rearrangement. It will trigger as expected.
+* @tc.desc: Test timer rearrangement after system time adjustment
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create exact+wakeup repeat timer with 1-hour interval
+*           2. Set system time to 1 day ago
+*           3. Start timer with future trigger time
+*           4. Adjust system time forward to trigger timer
+*           5. Verify timer triggers once
+*           6. Adjust system time again and verify no additional trigger
+* @tc.expect: Timer triggers only once after first time adjustment, rearrangement prevents duplicate triggers
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
 {
@@ -890,8 +1141,16 @@ HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
 
 /**
 * @tc.name: RecoverTimer001
-* @tc.desc: Create system timer, check whether the corresponding data is recorded when the timer is created.
+* @tc.desc: Test timer recovery data recording after timer creation
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create realtime type timer
+*           2. Verify recovery info map contains timer entry
+*           3. Check timer state and trigger time in recovery data
+*           4. Destroy timer
+* @tc.expect: Recovery info map contains timer with state 0 and trigger time 0 after creation
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, RecoverTimer001, TestSize.Level1)
 {
@@ -918,9 +1177,16 @@ HWTEST_F(TimeClientTest, RecoverTimer001, TestSize.Level1)
 
 /**
 * @tc.name: RecoverTimer002
-* @tc.desc: Create system timer, then start it,
-*           check whether the corresponding data is recorded when the timer is started.
+* @tc.desc: Test timer recovery data recording after timer start
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create realtime type timer
+*           2. Start timer with 500ms boot time delay
+*           3. Verify recovery info map contains updated timer state and trigger time
+*           4. Destroy timer
+* @tc.expect: Recovery info shows timer state 1 (started) with correct trigger time after start
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, RecoverTimer002, TestSize.Level1)
 {
@@ -951,9 +1217,17 @@ HWTEST_F(TimeClientTest, RecoverTimer002, TestSize.Level1)
 
 /**
 * @tc.name: RecoverTimer003
-* @tc.desc: Create system timer, then start it, then stop it,
-*           check whether the corresponding data is recorded when the timer is stoped.
+* @tc.desc: Test timer recovery data recording after timer stop
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create realtime type timer
+*           2. Start timer with 500ms boot time delay
+*           3. Stop timer
+*           4. Verify recovery info map contains updated timer state
+*           5. Destroy timer
+* @tc.expect: Recovery info shows timer state 0 (stopped) but retains trigger time after stop
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, RecoverTimer003, TestSize.Level1)
 {
@@ -987,9 +1261,16 @@ HWTEST_F(TimeClientTest, RecoverTimer003, TestSize.Level1)
 
 /**
 * @tc.name: RecoverTimer004
-* @tc.desc: Create system timer, then start it, then destroy it,
-*           check whether the corresponding data is recorded when the timer is destroyed.
+* @tc.desc: Test timer recovery data removal after timer destruction
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create realtime type timer
+*           2. Start timer with 500ms boot time delay
+*           3. Destroy timer
+*           4. Verify recovery info map no longer contains timer entry
+* @tc.expect: Recovery info map is empty after timer destruction
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, RecoverTimer004, TestSize.Level1)
 {
@@ -1018,8 +1299,17 @@ HWTEST_F(TimeClientTest, RecoverTimer004, TestSize.Level1)
 
 /**
 * @tc.name: RecoverTimer005
-* @tc.desc: start a non-repeat timer, after the timer is triggered, check the state in RecoverTimerMap.
+* @tc.desc: Test non-repeat timer state in recovery data after trigger
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create realtime non-repeat timer
+*           2. Start timer with 500ms boot time delay
+*           3. Wait for timer trigger
+*           4. Verify recovery info shows timer state 0 (stopped) after trigger
+*           5. Destroy timer
+* @tc.expect: Timer triggers successfully, recovery info shows state 0 after completion
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, RecoverTimer005, TestSize.Level1)
 {
@@ -1052,8 +1342,17 @@ HWTEST_F(TimeClientTest, RecoverTimer005, TestSize.Level1)
 
 /**
 * @tc.name: RecoverTimer006
-* @tc.desc: start a non-repeat and disposable timer, after the timer is triggered, check the state in RecoverTimerMap.
+* @tc.desc: Test disposable non-repeat timer removal from recovery data after trigger
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create realtime disposable non-repeat timer
+*           2. Start timer with 500ms boot time delay
+*           3. Wait for timer trigger
+*           4. Verify recovery info map no longer contains timer entry
+*           5. Attempt to destroy timer (should fail)
+* @tc.expect: Timer auto-removes from recovery data after trigger, destruction fails
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
 {
@@ -1086,8 +1385,18 @@ HWTEST_F(TimeClientTest, RecoverTimer006, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimer001
-* @tc.desc: adjust timer.
+* @tc.desc: Test timer adjustment functionality with system time changes
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create exact type timer
+*           2. Start timer with 500ms delay
+*           3. Call AdjustTimer to modify timer behavior
+*           4. Wait for timer trigger
+*           5. Verify callback execution
+*           6. Destroy timer
+* @tc.expect: Timer triggers successfully despite time adjustments, callback is executed
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, AdjustTimer001, TestSize.Level1)
 {
@@ -1111,8 +1420,18 @@ HWTEST_F(TimeClientTest, AdjustTimer001, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimer002
-* @tc.desc: adjust timer.
+* @tc.desc: Test timer exemption functionality
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Set timer exemption for specific timer names
+*           2. Create exact type timer
+*           3. Start timer with 500ms delay
+*           4. Wait for timer trigger
+*           5. Verify callback execution
+*           6. Destroy timer
+* @tc.expect: Timer triggers successfully with exemption settings, callback is executed
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, AdjustTimer002, TestSize.Level1)
 {
@@ -1137,8 +1456,17 @@ HWTEST_F(TimeClientTest, AdjustTimer002, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimer003
-* @tc.desc: Create system timer and start it, after adjust system time, check whether it will be successful.
+* @tc.desc: Test timer behavior after significant system time adjustment
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create exact+wakeup type timer
+*           2. Start timer with 500ms delay
+*           3. Adjust system time forward by 1 hour
+*           4. Verify timer triggers immediately
+*           5. Destroy timer
+* @tc.expect: Timer triggers immediately after significant time adjustment, callback is executed
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, AdjustTimer003, TestSize.Level1)
 {
@@ -1169,10 +1497,19 @@ HWTEST_F(TimeClientTest, AdjustTimer003, TestSize.Level1)
 
 /**
 * @tc.name: ReBatchAllTimers001
-* @tc.desc: Start a long-time timer, then start a proxy of this timer.
-            Cancel the proxy of the timer, and then rebatch it.
-            Expect this timer does not trigger.
+* @tc.desc: Test timer proxy functionality and rebatching after cancellation
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create realtime type long-duration timer
+*           2. Start timer with 5-minute delay
+*           3. Set up timer proxy for current process
+*           4. Cancel timer proxy
+*           5. Adjust system time forward
+*           6. Verify timer does not trigger due to proxy cancellation
+*           7. Destroy timer
+* @tc.expect: Timer does not trigger after proxy cancellation and time adjustment
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
 {
@@ -1216,8 +1553,16 @@ HWTEST_F(TimeClientTest, ReBatchAllTimers001, TestSize.Level1)
 
 /**
 * @tc.name: SetAutoTime001
-* @tc.desc: test SetAutoTime.
+* @tc.desc: Test setting auto time synchronization functionality
+* @tc.precon: Time service is available, application has time setting permissions
+* @tc.step: 1. Call SetAutoTime with true to enable auto time sync
+*           2. Verify operation returns success (0)
+*           3. Call SetAutoTime with false to disable auto time sync
+*           4. Verify operation returns success (0)
+* @tc.expect: Both enable and disable operations return 0 indicating success
 * @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
 */
 HWTEST_F(TimeClientTest, SetAutoTime001, TestSize.Level1)
 {
