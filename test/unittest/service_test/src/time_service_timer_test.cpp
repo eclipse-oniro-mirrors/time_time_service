@@ -256,8 +256,16 @@ void WaitForAlarm(std::atomic<int> * data, int interval)
 
 /**
 * @tc.name: Batch001
-* @tc.desc: Verify the value of newly Batch as expected.
+* @tc.desc: Test Batch class default initialization values
+* @tc.precon: Batch class is properly implemented
+* @tc.step: 1. Create Batch instance with default constructor
+*           2. Verify start time is set to minimum time point
+*           3. Verify end time is set to maximum time point
+*           4. Verify flags are initialized to 0
+* @tc.expect: Batch instance is initialized with expected default values
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, Batch001, TestSize.Level0)
 {
@@ -269,8 +277,14 @@ HWTEST_F(TimeServiceTimerTest, Batch001, TestSize.Level0)
 
 /**
 * @tc.name: SystemAbility001
-* @tc.desc: test OnStop.
+* @tc.desc: Test TimeSystemAbility OnStop functionality
+* @tc.precon: TimeSystemAbility is properly initialized and running
+* @tc.step: 1. Call OnStop method on TimeSystemAbility instance
+*           2. Verify service state transitions to NOT_START state
+* @tc.expect: OnStop method successfully stops the service and updates state to NOT_START
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, SystemAbility001, TestSize.Level0)
 {
@@ -281,8 +295,17 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility001, TestSize.Level0)
 #ifdef RDB_ENABLE
 /**
 * @tc.name: SystemAbility002
-* @tc.desc: test RecoverTimer.
+* @tc.desc: Test timer recovery functionality from database
+* @tc.precon: RDB is enabled, TimeDatabase is properly initialized
+* @tc.step: 1. Clean up existing timer entries from timer map
+*           2. Insert test timer entries into both HOLD_ON_REBOOT and DROP_ON_REBOOT tables
+*           3. Call RecoverTimer method to restore timers
+*           4. Verify timer entries are not restored (expected behavior)
+*           5. Clean up test data from database
+* @tc.expect: RecoverTimer does not restore test timer entries, database operations succeed
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, SystemAbility002, TestSize.Level0)
 {
@@ -347,8 +370,17 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility002, TestSize.Level0)
 #ifdef SET_AUTO_REBOOT_ENABLE
 /**
 * @tc.name: SystemAbility003
-* @tc.desc: test SetAutoReboot when triggerTime is smaller than currenttime plus 2min.
+* @tc.desc: Test auto reboot functionality with immediate trigger time
+* @tc.precon: Auto reboot feature is enabled, TimeDatabase is properly initialized
+* @tc.step: 1. Call SetAutoReboot method initially
+*           2. Insert test timer entry with immediate trigger time (0)
+*           3. Call SetAutoReboot method again
+*           4. Verify timer insertion succeeds
+*           5. Clean up test data from database
+* @tc.expect: SetAutoReboot handles immediate trigger times correctly, database operations succeed
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, SystemAbility003, TestSize.Level0)
 {
@@ -379,8 +411,17 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility003, TestSize.Level0)
 
 /**
 * @tc.name: SystemAbility004
-* @tc.desc: test SetAutoReboot when triggerTime is larger than currenttime plus 2min.
+* @tc.desc: Test auto reboot functionality with distant future trigger time
+* @tc.precon: Auto reboot feature is enabled, TimeDatabase is properly initialized
+* @tc.step: 1. Call SetAutoReboot method initially
+*           2. Insert test timer entry with maximum trigger time
+*           3. Call SetAutoReboot method again
+*           4. Verify timer insertion succeeds
+*           5. Clean up test data from database
+* @tc.expect: SetAutoReboot handles distant future trigger times correctly, database operations succeed
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, SystemAbility004, TestSize.Level0)
 {
@@ -413,8 +454,14 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility004, TestSize.Level0)
 
 /**
 * @tc.name: SystemAbility005
-* @tc.desc: Verify set negative value by SetRealTime will return false.
+* @tc.desc: Test SetRealTime functionality with invalid negative value
+* @tc.precon: TimeSystemAbility is properly initialized
+* @tc.step: 1. Call SetRealTime method with negative value (-1)
+*           2. Verify operation returns false indicating failure
+* @tc.expect: SetRealTime returns false for negative time values
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, SystemAbility005, TestSize.Level0)
 {
@@ -425,8 +472,15 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility005, TestSize.Level0)
 #ifdef RDB_ENABLE
 /**
 * @tc.name: TimeDatabase001
-* @tc.desc: test TimeDatabase Insert.
+* @tc.desc: Test TimeDatabase Insert functionality with invalid column
+* @tc.precon: RDB is enabled, TimeDatabase is properly initialized
+* @tc.step: 1. Prepare ValuesBucket with invalid column name "something"
+*           2. Call Insert method on DROP_ON_REBOOT table
+*           3. Verify operation returns false indicating failure
+* @tc.expect: Insert operation fails when using invalid column names
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, TimeDatabase001, TestSize.Level0)
 {
@@ -438,8 +492,16 @@ HWTEST_F(TimeServiceTimerTest, TimeDatabase001, TestSize.Level0)
 
 /**
 * @tc.name: TimeDatabase002
-* @tc.desc: test TimeDatabase Update.
+* @tc.desc: Test TimeDatabase Update functionality with invalid predicates
+* @tc.precon: RDB is enabled, TimeDatabase is properly initialized
+* @tc.step: 1. Prepare ValuesBucket with invalid column name "something"
+*           2. Create RdbPredicates with invalid conditions
+*           3. Call Update method on DROP_ON_REBOOT table
+*           4. Verify operation returns false indicating failure
+* @tc.expect: Update operation fails when using invalid column names and predicates
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, TimeDatabase002, TestSize.Level0)
 {
@@ -453,8 +515,15 @@ HWTEST_F(TimeServiceTimerTest, TimeDatabase002, TestSize.Level0)
 
 /**
 * @tc.name: TimeDatabase003
-* @tc.desc: test TimeDatabase Delete.
+* @tc.desc: Test TimeDatabase Delete functionality with invalid predicates
+* @tc.precon: RDB is enabled, TimeDatabase is properly initialized
+* @tc.step: 1. Create RdbPredicates with invalid column condition
+*           2. Call Delete method on DROP_ON_REBOOT table
+*           3. Verify operation returns false indicating failure
+* @tc.expect: Delete operation fails when using invalid column names in predicates
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, TimeDatabase003, TestSize.Level0)
 {
@@ -467,8 +536,16 @@ HWTEST_F(TimeServiceTimerTest, TimeDatabase003, TestSize.Level0)
 
 /**
 * @tc.name: Cjson001
-* @tc.desc: Test Delete of CjsonHelper.
+* @tc.desc: Test CjsonHelper Delete functionality for timer entries
+* @tc.precon: CjsonHelper is properly initialized
+* @tc.step: 1. Insert test timer entries into both DROP_ON_REBOOT and HOLD_ON_REBOOT tables
+*           2. Verify entries are successfully inserted
+*           3. Delete entries from both tables
+*           4. Verify entries are successfully removed
+* @tc.expect: Timer entries are properly inserted and deleted from JSON storage
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, Cjson001, TestSize.Level0)
 {
@@ -495,8 +572,16 @@ HWTEST_F(TimeServiceTimerTest, Cjson001, TestSize.Level0)
 
 /**
 * @tc.name: Cjson002
-* @tc.desc: Test clear of CjsonHelper.
+* @tc.desc: Test CjsonHelper Clear functionality for entire tables
+* @tc.precon: CjsonHelper is properly initialized
+* @tc.step: 1. Insert test timer entries into both DROP_ON_REBOOT and HOLD_ON_REBOOT tables
+*           2. Verify entries are successfully inserted
+*           3. Clear entire contents of both tables
+*           4. Verify all entries are successfully removed
+* @tc.expect: Entire table contents are properly cleared from JSON storage
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, Cjson002, TestSize.Level0)
 {
@@ -523,8 +608,17 @@ HWTEST_F(TimeServiceTimerTest, Cjson002, TestSize.Level0)
 
 /**
 * @tc.name: Cjson003
-* @tc.desc: Test QueryTable of cjson.
+* @tc.desc: Test CjsonHelper QueryTable and update functionality
+* @tc.precon: CjsonHelper is properly initialized
+* @tc.step: 1. Insert test timer entry into DROP_ON_REBOOT table
+*           2. Update trigger time and verify update
+*           3. Update timer state and verify update
+*           4. Query table and verify all changes
+*           5. Clean up test entry
+* @tc.expect: Timer entry updates (trigger time and state) are properly reflected in JSON storage
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, Cjson003, TestSize.Level0)
 {
@@ -580,8 +674,16 @@ HWTEST_F(TimeServiceTimerTest, Cjson003, TestSize.Level0)
 
 /**
 * @tc.name: Cjson004
-* @tc.desc: Test QueryWant of cjson.
+* @tc.desc: Test CjsonHelper QueryWant functionality
+* @tc.precon: CjsonHelper is properly initialized
+* @tc.step: 1. Insert test timer entry with null WantAgent into DROP_ON_REBOOT table
+*           2. Query WantAgent string for the timer entry
+*           3. Verify empty string is returned for null WantAgent
+*           4. Clean up test entry
+* @tc.expect: QueryWant returns empty string for timer entries with null WantAgent
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, Cjson004, TestSize.Level0)
 {
@@ -595,8 +697,17 @@ HWTEST_F(TimeServiceTimerTest, Cjson004, TestSize.Level0)
 
 /**
 * @tc.name: Cjson005
-* @tc.desc: Test QueryAutoReboot of cjson.
+* @tc.desc: Test CjsonHelper QueryAutoReboot functionality
+* @tc.precon: CjsonHelper is properly initialized
+* @tc.step: 1. Insert auto reboot timer entry into HOLD_ON_REBOOT table
+*           2. Update trigger time for the entry
+*           3. Query auto reboot data
+*           4. Verify data is returned successfully
+*           5. Clean up test entry
+* @tc.expect: QueryAutoReboot returns non-empty data for auto reboot timer entries
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, Cjson005, TestSize.Level0)
 {
@@ -611,8 +722,16 @@ HWTEST_F(TimeServiceTimerTest, Cjson005, TestSize.Level0)
 
 /**
 * @tc.name: Cjson006
-* @tc.desc: Test GetEntry will return nullptr when cjson is incomplete and invalid.
+* @tc.desc: Test GetEntry functionality with incomplete JSON objects
+* @tc.precon: TimeSystemAbility is properly initialized
+* @tc.step: 1. Create empty JSON object and test GetEntry
+*           2. Gradually add required fields one by one
+*           3. Test GetEntry after each field addition
+*           4. Verify GetEntry returns nullptr until all required fields are present
+* @tc.expect: GetEntry returns nullptr for incomplete JSON objects, valid object only when all fields are present
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, Cjson006, TestSize.Level0)
 {
@@ -659,8 +778,15 @@ HWTEST_F(TimeServiceTimerTest, Cjson006, TestSize.Level0)
 
 /**
 * @tc.name: Cjson007
-* @tc.desc: Test GetEntry will return nullptr when cjson is complete and valid.
+* @tc.desc: Test GetEntry functionality with complete JSON object
+* @tc.precon: TimeSystemAbility is properly initialized
+* @tc.step: 1. Create complete JSON object with all required timer fields
+*           2. Call GetEntry method with the complete object
+*           3. Verify valid TimerEntry is returned
+* @tc.expect: GetEntry returns valid TimerEntry pointer for complete JSON objects
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, Cjson007, TestSize.Level0)
 {
@@ -683,8 +809,15 @@ HWTEST_F(TimeServiceTimerTest, Cjson007, TestSize.Level0)
 
 /**
 * @tc.name: Cjson008
-* @tc.desc: Test CjsonIntoDatabase.
+* @tc.desc: Test CjsonIntoDatabase functionality for data migration
+* @tc.precon: TimeSystemAbility and TimeDatabase are properly initialized
+* @tc.step: 1. Create JSON array with both invalid and valid timer objects
+*           2. Call CjsonIntoDatabase to migrate data to RDB
+*           3. Verify no data is inserted due to validation checks
+* @tc.expect: CjsonIntoDatabase properly validates JSON data and rejects invalid entries
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, Cjson008, TestSize.Level0)
 {
@@ -714,8 +847,15 @@ HWTEST_F(TimeServiceTimerTest, Cjson008, TestSize.Level0)
 
 /**
 * @tc.name: PidProxyTimer001
-* @tc.desc: proxy timer.
+* @tc.desc: Test PID proxy timer enable and disable functionality
+* @tc.precon: TimeServiceClient is properly initialized
+* @tc.step: 1. Enable PID proxy timer with retrigger enabled
+*           2. Disable PID proxy timer with retrigger enabled
+*           3. Verify both operations succeed
+* @tc.expect: PID proxy timer operations succeed for both enable and disable with retrigger
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, PidProxyTimer001, TestSize.Level0)
 {
@@ -727,8 +867,15 @@ HWTEST_F(TimeServiceTimerTest, PidProxyTimer001, TestSize.Level0)
 
 /**
 * @tc.name: PidProxyTimer002
-* @tc.desc: proxy timer.
+* @tc.desc: Test PID proxy timer reset functionality
+* @tc.precon: TimeServiceClient is properly initialized
+* @tc.step: 1. Enable PID proxy timer
+*           2. Call ResetAllProxy to clear all proxy settings
+*           3. Verify both operations succeed
+* @tc.expect: PID proxy timer enable and reset operations succeed
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, PidProxyTimer002, TestSize.Level0)
 {
@@ -741,8 +888,14 @@ HWTEST_F(TimeServiceTimerTest, PidProxyTimer002, TestSize.Level0)
 
 /**
 * @tc.name: PidProxyTimer003
-* @tc.desc: proxy timer.
+* @tc.desc: Test PID proxy timer disable without prior enable
+* @tc.precon: TimeServiceClient is properly initialized
+* @tc.step: 1. Disable PID proxy timer without prior enable
+*           2. Verify operation returns false
+* @tc.expect: Disabling non-existent PID proxy returns false
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, PidProxyTimer003, TestSize.Level0)
 {
@@ -752,8 +905,15 @@ HWTEST_F(TimeServiceTimerTest, PidProxyTimer003, TestSize.Level0)
 
 /**
 * @tc.name: PidProxyTimer004
-* @tc.desc: proxy timer.
+* @tc.desc: Test PID proxy timer without retrigger functionality
+* @tc.precon: TimeServiceClient is properly initialized
+* @tc.step: 1. Enable PID proxy timer with retrigger disabled
+*           2. Disable PID proxy timer with retrigger disabled
+*           3. Verify both operations succeed
+* @tc.expect: PID proxy timer operations succeed with retrigger disabled
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, PidProxyTimer004, TestSize.Level0)
 {
@@ -765,8 +925,16 @@ HWTEST_F(TimeServiceTimerTest, PidProxyTimer004, TestSize.Level0)
 
 /**
 * @tc.name: AdjustTimer001
-* @tc.desc: adjust timer.
+* @tc.desc: Test timer adjustment functionality via TimeServiceClient
+* @tc.precon: TimeServiceClient is properly initialized
+* @tc.step: 1. Test adjust timer with 0 interval (should fail)
+*           2. Test adjust timer with valid interval (should succeed)
+*           3. Test disable timer adjustment with 0 interval (should succeed)
+*           4. Test disable timer adjustment with valid interval (should succeed)
+* @tc.expect: Timer adjustment operations return appropriate error codes
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, AdjustTimer001, TestSize.Level0)
 {
@@ -782,8 +950,16 @@ HWTEST_F(TimeServiceTimerTest, AdjustTimer001, TestSize.Level0)
 
 /**
 * @tc.name: AdjustTimer002
-* @tc.desc: Check AdjustTimer.
+* @tc.desc: Test timer adjustment functionality via TimeSystemAbility
+* @tc.precon: TimeSystemAbility is properly initialized
+* @tc.step: 1. Test adjust timer with 0 interval (should fail)
+*           2. Test adjust timer with valid interval (should succeed)
+*           3. Test disable timer adjustment with 0 interval (should succeed)
+*           4. Test disable timer adjustment with valid interval (should succeed)
+* @tc.expect: Timer adjustment operations return appropriate error codes
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, AdjustTimer002, TestSize.Level1)
 {
@@ -799,8 +975,15 @@ HWTEST_F(TimeServiceTimerTest, AdjustTimer002, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimer003
-* @tc.desc: exemption timer.
+* @tc.desc: Test timer exemption functionality
+* @tc.precon: TimeServiceClient is properly initialized
+* @tc.step: 1. Disable timer exemption for test timer names
+*           2. Enable timer exemption for test timer names
+*           3. Verify both operations succeed
+* @tc.expect: Timer exemption operations succeed for both enable and disable
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, AdjustTimer003, TestSize.Level0)
 {
@@ -813,8 +996,15 @@ HWTEST_F(TimeServiceTimerTest, AdjustTimer003, TestSize.Level0)
 
 /**
 * @tc.name: AdjustTimer004
-* @tc.desc: Verify SetTimerExemption will return PARAMETERS_INVALID when nameArr is larger than MAX_EXEMPTION_SIZE.
+* @tc.desc: Test timer exemption with oversized name array
+* @tc.precon: TimeServiceClient is properly initialized
+* @tc.step: 1. Create name array exceeding maximum exemption size limit
+*           2. Call SetTimerExemption with oversized array
+*           3. Verify operation returns parameter error
+* @tc.expect: SetTimerExemption returns E_TIME_PARAMETERS_INVALID for oversized name arrays
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, AdjustTimer004, TestSize.Level1)
 {
@@ -828,8 +1018,15 @@ HWTEST_F(TimeServiceTimerTest, AdjustTimer004, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimer001
-* @tc.desc: Verify ProxyTimer will return PARAMETERS_INVALID when pidList is larger than MAX_PID_LIST_SIZE.
+* @tc.desc: Test ProxyTimer parameter validation with oversized PID list
+* @tc.precon: TimeSystemAbility is properly initialized
+* @tc.step: 1. Create PID list exceeding maximum allowed size
+*           2. Call ProxyTimer with oversized PID list
+*           3. Verify operation returns parameter error
+* @tc.expect: ProxyTimer returns E_TIME_PARAMETERS_INVALID when PID list exceeds MAX_PID_LIST_SIZE
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, ProxyTimer001, TestSize.Level1)
 {
@@ -843,8 +1040,16 @@ HWTEST_F(TimeServiceTimerTest, ProxyTimer001, TestSize.Level1)
 
 /**
 * @tc.name: IdleTimer001
-* @tc.desc: test create idle timer for app.
+* @tc.desc: Test idle timer creation functionality for applications
+* @tc.precon: TimeServiceClient is properly initialized
+* @tc.step: 1. Create timer info with IDLE type
+*           2. Create timer using CreateTimerV9
+*           3. Verify timer is created successfully
+*           4. Destroy the created timer
+* @tc.expect: Idle timer is successfully created and destroyed
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, IdleTimer001, TestSize.Level0)
 {
@@ -859,8 +1064,18 @@ HWTEST_F(TimeServiceTimerTest, IdleTimer001, TestSize.Level0)
 
 /**
 * @tc.name: IdleTimer002
-* @tc.desc: test public app start timer when device is sleeping and device sleep quit greater than timer callback.
+* @tc.desc: Test timer behavior when device sleep duration exceeds timer callback time
+* @tc.precon: TimeServiceClient is properly initialized, idle timer mechanism works
+* @tc.step: 1. Create inexact reminder timer with callback
+*           2. Start idle timer to simulate device sleep
+*           3. Start timer with 500ms delay during device sleep
+*           4. Verify timer doesn't trigger during sleep
+*           5. Destroy idle timer to wake device
+*           6. Wait for timer callback and verify trigger
+* @tc.expect: Timer callback is delayed until device wakes from sleep when sleep duration exceeds callback time
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, IdleTimer002, TestSize.Level0)
 {
@@ -887,8 +1102,18 @@ HWTEST_F(TimeServiceTimerTest, IdleTimer002, TestSize.Level0)
 
 /**
 * @tc.name: IdleTimer003
-* @tc.desc: test public app start timer when device is sleeping and device sleep quit less than timer callback.
+* @tc.desc: Test timer behavior when device sleep duration is less than timer callback time
+* @tc.precon: TimeServiceClient is properly initialized, idle timer mechanism works
+* @tc.step: 1. Create inexact reminder timer with callback
+*           2. Start idle timer to simulate device sleep
+*           3. Start timer with 500ms delay during device sleep
+*           4. Verify timer doesn't trigger during sleep
+*           5. Destroy idle timer to wake device
+*           6. Wait for timer callback and verify trigger
+* @tc.expect: Timer callback executes normally when device wakes before callback time
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, IdleTimer003, TestSize.Level0)
 {
@@ -914,9 +1139,18 @@ HWTEST_F(TimeServiceTimerTest, IdleTimer003, TestSize.Level0)
 
 /**
 * @tc.name: IdleTimer004
-* @tc.desc: test public app start timer when device is working, device sleep immediately
-*           and timer callback greater than idle quit.
+* @tc.desc: Test timer behavior when device enters sleep immediately after timer start
+* @tc.precon: TimeServiceClient is properly initialized, idle timer mechanism works
+* @tc.step: 1. Create inexact reminder timer with callback
+*           2. Start timer with 500ms delay during normal operation
+*           3. Immediately start idle timer to simulate device sleep
+*           4. Wait for timer callback during sleep
+*           5. Destroy idle timer to wake device
+*           6. Verify timer callback executes after device wake
+* @tc.expect: Timer callback executes after device wakes when sleep occurs immediately after timer start
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeServiceTimerTest, IdleTimer004, TestSize.Level0)
 {
@@ -942,8 +1176,18 @@ HWTEST_F(TimeServiceTimerTest, IdleTimer004, TestSize.Level0)
 
 /**
 * @tc.name: CreateTimer001
-* @tc.desc: Create system timer.
+* @tc.desc: Test timer operations with invalid timer ID (0)
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Attempt to start timer with ID 0
+*           3. Attempt to stop timer with ID 0
+*           4. Attempt to destroy timer with ID 0
+*           5. Verify all operations fail
+*           6. Remove permissions
+* @tc.expect: All timer operations fail when using invalid timer ID (0)
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, CreateTimer001, TestSize.Level1)
 {
@@ -960,8 +1204,19 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer001, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer002
-* @tc.desc: Create system timer.
+* @tc.desc: Test complete timer lifecycle with realtime type timer
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Create realtime type timer with callback
+*           3. Start timer with 2000ms delay
+*           4. Stop timer before trigger
+*           5. Destroy timer
+*           6. Verify all operations succeed
+*           7. Remove permissions
+* @tc.expect: Complete timer lifecycle operations succeed for realtime type timer
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, CreateTimer002, TestSize.Level1)
 {
@@ -986,8 +1241,16 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer002, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer003
-* @tc.desc: Create system timer.
+* @tc.desc: Test timer creation with WantAgent parameter
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Create realtime type timer with WantAgent
+*           3. Verify timer is created successfully
+*           4. Remove permissions
+* @tc.expect: Timer creation succeeds with WantAgent parameter
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, CreateTimer003, TestSize.Level1)
 {
@@ -1006,8 +1269,19 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer003, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer004
-* @tc.desc: Create system timer.
+* @tc.desc: Test timer destruction before trigger time
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Create realtime type timer with callback
+*           3. Start timer with future boot time
+*           4. Destroy timer immediately before trigger
+*           5. Verify callback is not invoked
+*           6. Attempt to stop destroyed timer
+*           7. Remove permissions
+* @tc.expect: Timer destruction succeeds before trigger, callback not invoked, stop operation fails on destroyed timer
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, CreateTimer004, TestSize.Level1)
 {
@@ -1035,8 +1309,19 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer004, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer005
-* @tc.desc: Create system timer.
+* @tc.desc: Test timer with absolute time trigger and immediate destruction
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Create timer with type 0 (absolute time)
+*           3. Start timer with calculated absolute time
+*           4. Destroy timer immediately
+*           5. Verify callback is not invoked
+*           6. Attempt to stop destroyed timer
+*           7. Remove permissions
+* @tc.expect: Timer operations succeed, callback not invoked due to immediate destruction
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, CreateTimer005, TestSize.Level1)
 {
@@ -1072,8 +1357,16 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer005, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer006
-* @tc.desc: Create system timer.
+* @tc.desc: Test timer creation with null timer info
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Attempt to create timer with null timer info
+*           3. Verify timer creation fails
+*           4. Remove permissions
+* @tc.expect: Timer creation returns 0 when timer info is null
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, CreateTimer006, TestSize.Level1)
 {
@@ -1086,8 +1379,18 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer006, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer007
-* @tc.desc: Create system timer with TIMER_TYPE_EXACT, then start timer with uint64_t::max.
+* @tc.desc: Test exact type timer with maximum trigger time value
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Create exact type timer with callback
+*           3. Start timer with maximum uint64_t value
+*           4. Verify timer doesn't trigger immediately
+*           5. Stop and destroy timer
+*           6. Remove permissions
+* @tc.expect: Exact timer with maximum trigger time doesn't trigger immediately, operations succeed
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, CreateTimer007, TestSize.Level1)
 {
@@ -1114,8 +1417,18 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer007, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer008
-* @tc.desc: Create system timer with TIMER_TYPE_REALTIME and TIMER_TYPE_EXACT, then start timer with uint64_t::max.
+* @tc.desc: Test combined realtime and exact type timer with maximum trigger time
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Create timer with realtime and exact type combination
+*           3. Start timer with maximum uint64_t value
+*           4. Verify timer doesn't trigger immediately
+*           5. Stop and destroy timer
+*           6. Remove permissions
+* @tc.expect: Combined type timer with maximum trigger time doesn't trigger immediately, operations succeed
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, CreateTimer008, TestSize.Level1)
 {
@@ -1142,8 +1455,20 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer008, TestSize.Level1)
 
 /**
 * @tc.name: CreateTimer009
-* @tc.desc: Create system timer start with one day later, then setTime to one day later.
+* @tc.desc: Test repeat timer behavior with system time adjustment
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Calculate time one day in future
+*           3. Create exact type repeat timer with 1000ms interval
+*           4. Start timer with future time
+*           5. Set system time to future time to trigger timer
+*           6. Wait for multiple timer triggers
+*           7. Stop and destroy timer
+*           8. Remove permissions
+* @tc.expect: Repeat timer triggers multiple times after system time adjustment
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeServiceTimerTest, CreateTimer009, TestSize.Level1)
 {
@@ -1183,11 +1508,22 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer009, TestSize.Level1)
 }
 
 /**
- * @tc.name: CreateTimer010
- * @tc.desc: Create system timer.
- * @tc.type: FUNC
- */
-HWTEST_F(TimeServiceTimerTest, CreateTimer010, TestSize.Level1) {
+* @tc.name: CreateTimer010
+* @tc.desc: Test asynchronous timer destruction with invalid timer ID
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Attempt to start timer with ID 0
+*           3. Attempt to stop timer with ID 0
+*           4. Attempt asynchronous destruction of timer with ID 0
+*           5. Verify asynchronous destruction succeeds
+*           6. Remove permissions
+* @tc.expect: Asynchronous timer destruction succeeds even with invalid timer ID
+* @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
+*/
+HWTEST_F(TimeServiceTimerTest, CreateTimer010, TestSize.Level1)
+{
     AddPermission();
     uint64_t timerId = 0;
     auto ret = TimeServiceClient::GetInstance()->StartTimer(timerId, 5);
@@ -1200,11 +1536,23 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer010, TestSize.Level1) {
 }
 
 /**
- * @tc.name: CreateTimer011
- * @tc.desc: Create system timer.
- * @tc.type: FUNC
- */
-HWTEST_F(TimeServiceTimerTest, CreateTimer011, TestSize.Level1) {
+* @tc.name: CreateTimer011
+* @tc.desc: Test combined timer type with maximum trigger time and asynchronous destruction
+* @tc.precon: TimeServiceClient is properly initialized, application has required permissions
+* @tc.step: 1. Add required permissions
+*           2. Create timer with realtime and exact type combination
+*           3. Start timer with maximum uint64_t value
+*           4. Verify timer doesn't trigger immediately
+*           5. Stop timer
+*           6. Destroy timer asynchronously
+*           7. Remove permissions
+* @tc.expect: Combined type timer operations succeed with maximum trigger time and asynchronous destruction
+* @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
+*/
+HWTEST_F(TimeServiceTimerTest, CreateTimer011, TestSize.Level1)
+{
     AddPermission();
     g_data1 = 0;
     auto timerInfo = std::make_shared<TimerInfoTest>();
@@ -1228,10 +1576,18 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer011, TestSize.Level1) {
 }
 
 /**
-* @tc.name: TimerManager001
-* @tc.desc: test ReCreateTimer.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager001
+ * @tc.desc: Test ReCreateTimer function with valid timer entry
+ * @tc.precon: TimerManager instance is available and timer entry map is accessible
+ * @tc.step: 1. Create a TimerEntry with valid parameters
+ *           2. Call ReCreateTimer to add timer to entry map
+ *           3. Verify timer exists in timerEntryMap
+ *           4. Clean up by removing timer from map
+ * @tc.expect: Timer is successfully added to timerEntryMap and can be found
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager001, TestSize.Level0)
 {
     auto timerId1 = TIMER_ID;
@@ -1249,10 +1605,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager001, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager002
-* @tc.desc: test SetHandler with interval = milliseconds(10) < second(1).
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager002
+ * @tc.desc: Test SetHandler with interval less than one second
+ * @tc.precon: TimerManager instance is available and timer info can be created
+ * @tc.step: 1. Create TimerInfo with interval = 10ms < 1s
+ *           2. Call SetHandlerLocked to process the timer
+ *           3. Verify timer is added to timerEntryMap
+ *           4. Clean up timer entry
+ * @tc.expect: Timer with small interval is successfully processed and added to entry map
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager002, TestSize.Level0)
 {
     uint64_t max = std::numeric_limits<uint64_t>::max();
@@ -1281,10 +1645,17 @@ HWTEST_F(TimeServiceTimerTest, TimerManager002, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager003
-* @tc.desc: test Set() with type > ALARM_TYPE_COUNT.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager003
+ * @tc.desc: Test Set function with invalid alarm type (type > ALARM_TYPE_COUNT)
+ * @tc.precon: TimerManager handler is properly initialized
+ * @tc.step: 1. Prepare invalid alarm type (6) exceeding ALARM_TYPE_COUNT
+ *           2. Call Set function with invalid type
+ *           3. Verify function returns error code
+ * @tc.expect: Set function returns -1 for invalid alarm type
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager003, TestSize.Level0)
 {
     auto when = std::chrono::nanoseconds::zero();
@@ -1294,10 +1665,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager003, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager004
-* @tc.desc: test StartTimer with UidProxy and PidProxy.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager004
+ * @tc.desc: Test StartTimer with UidProxy and PidProxy configurations
+ * @tc.precon: TimerManager and TimerProxy instances are available
+ * @tc.step: 1. Create timer entry with UID and PID
+ *           2. Setup proxy timers for UID and PID combinations
+ *           3. Call StartTimer and verify success for different proxy keys
+ *           4. Clean up proxy timers and destroy timer
+ * @tc.expect: StartTimer returns E_TIME_OK for both UID proxy and PID proxy configurations
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager004, TestSize.Level0)
 {
     TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
@@ -1344,10 +1723,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager004, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager005
-* @tc.desc: test NotifyWantAgent.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager005
+ * @tc.desc: Test NotifyWantAgent function with different timer states
+ * @tc.precon: TimerManager instance is available and database is accessible
+ * @tc.step: 1. Create TimerInfo and call NotifyWantAgent
+ *           2. Insert timer data to database (RDB or JSON based on configuration)
+ *           3. Call NotifyWantAgent again with database entry
+ *           4. Clean up database entries
+ * @tc.expect: NotifyWantAgent returns false for both cases with valid cleanup
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager005, TestSize.Level0)
 {
     auto duration = std::chrono::milliseconds::zero();
@@ -1387,10 +1774,19 @@ HWTEST_F(TimeServiceTimerTest, TimerManager005, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager006
-* @tc.desc: test AdjustTimer.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager006
+ * @tc.desc: Test AdjustTimer function with different adjustment parameters
+ * @tc.precon: TimerManager instance is available and adjustment parameters can be modified
+ * @tc.step: 1. Save current adjustment interval and policy
+ *           2. Test AdjustTimer with same policy and interval
+ *           3. Test AdjustTimer with different policy
+ *           4. Test AdjustTimer with different interval
+ *           5. Restore original adjustment settings
+ * @tc.expect: AdjustTimer returns appropriate results based on parameter changes
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager006, TestSize.Level0)
 {
     uint32_t interval;
@@ -1419,10 +1815,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager006, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager007
-* @tc.desc: test AdjustDeliveryTimeBasedOnDeviceIdle.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager007
+ * @tc.desc: Test AdjustDeliveryTimeBasedOnDeviceIdle under different device states
+ * @tc.precon: TimerManager instance is available and idle state can be simulated
+ * @tc.step: 1. Set mPendingIdleUntil and test adjustment
+ *           2. Clear mPendingIdleUntil and add delayed timer
+ *           3. Test adjustment with different timer types and durations
+ *           4. Restore original mPendingIdleUntil state
+ * @tc.expect: AdjustDeliveryTimeBasedOnDeviceIdle returns correct results for various device idle scenarios
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager007, TestSize.Level0)
 {
     auto duration = std::chrono::milliseconds::zero();
@@ -1455,10 +1859,17 @@ HWTEST_F(TimeServiceTimerTest, TimerManager007, TestSize.Level0)
 
 #ifdef HIDUMPER_ENABLE
 /**
-* @tc.name: TimerManager008
-* @tc.desc: test ShowTimerEntryById TIMER_ID not in timerEntryMap_.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager008
+ * @tc.desc: Test ShowTimerEntryById when timer ID not exists in timerEntryMap
+ * @tc.precon: TimerManager instance is available and timer is not created
+ * @tc.step: 1. Ensure timer is destroyed and not in timerEntryMap
+ *           2. Call ShowTimerEntryById with non-existent timer ID
+ *           3. Verify function returns false
+ * @tc.expect: ShowTimerEntryById returns false for non-existent timer ID
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager008, TestSize.Level0)
 {
     TimerManager::GetInstance()->DestroyTimer(TIMER_ID);
@@ -1468,10 +1879,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager008, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager009.
-* @tc.desc: test ShowTimerTriggerById TIMER_ID in alarmBatches_.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager009
+ * @tc.desc: Test ShowTimerTriggerById when timer exists in alarmBatches
+ * @tc.precon: TimerManager instance is available and timer can be created
+ * @tc.step: 1. Create timer entry and add to timerEntryMap
+ *           2. Start timer with maximum trigger time
+ *           3. Call ShowTimerTriggerById and verify result
+ *           4. Clean up by destroying timer
+ * @tc.expect: ShowTimerTriggerById returns true for existing timer in alarmBatches
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager009, TestSize.Level0)
 {
     auto entry = std::make_shared<TimerEntry>(
@@ -1486,10 +1905,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager009, TestSize.Level0)
 #endif
 
 /**
-* @tc.name: TimerManager010
-* @tc.desc: test HandleRSSDeath.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager010
+ * @tc.desc: Test HandleRSSDeath function for resource cleanup
+ * @tc.precon: TimerManager instance is available and RSS death handler is functional
+ * @tc.step: 1. Clear mPendingIdleUntil and call HandleRSSDeath
+ *           2. Set mPendingIdleUntil and create timer entry
+ *           3. Call HandleRSSDeath and verify timer cleanup
+ *           4. Restore original mPendingIdleUntil state
+ * @tc.expect: HandleRSSDeath properly cleans up resources and timers
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager010, TestSize.Level0)
 {
     std::shared_ptr<TimerInfo> alarm;
@@ -1522,10 +1949,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager010, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager011
-* @tc.desc: test OnPackageRemoved.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager011
+ * @tc.desc: Test OnPackageRemoved function for package-based timer cleanup
+ * @tc.precon: TimerManager instance is available and timer entry map is accessible
+ * @tc.step: 1. Clear timerEntryMap
+ *           2. Create timer entry with specific UID
+ *           3. Call OnPackageRemoved with the UID
+ *           4. Verify timer is removed from timerEntryMap
+ * @tc.expect: OnPackageRemoved successfully removes all timers associated with the specified UID
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager011, TestSize.Level0)
 {
     auto timerManager = TimerManager::GetInstance();
@@ -1551,10 +1986,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager011, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager012
-* @tc.desc: test record and delete of timerCount_.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager012
+ * @tc.desc: Test timer count recording and deletion functionality
+ * @tc.precon: TimerManager instance is available and timerCount map is accessible
+ * @tc.step: 1. Clear timerCount map
+ *           2. Increase timer count for multiple UIDs
+ *           3. Verify timer count values
+ *           4. Decrease timer count and verify updated values
+ * @tc.expect: Timer count is properly maintained for different UIDs with correct increment/decrement
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager012, TestSize.Level0)
 {
     int uid1 = UID;
@@ -1586,10 +2029,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager012, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager013
-* @tc.desc: test when create and delete timer, the change of timerOutOfRangeTimes_.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager013
+ * @tc.desc: Test timer out-of-range counter when creating excessive timers
+ * @tc.precon: TimerManager instance is available and alarm count threshold is defined
+ * @tc.step: 1. Clear timer entry map and out-of-range counter
+ *           2. Create timers exceeding TIMER_ALARM_COUNT limit
+ *           3. Verify out-of-range counter increments appropriately
+ *           4. Create more timers to trigger additional out-of-range events
+ * @tc.expect: timerOutOfRangeTimes_ increments when timer count exceeds defined limits
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager013, TestSize.Level0)
 {
     TimerManager::GetInstance()->timerEntryMap_.clear();
@@ -1611,10 +2062,19 @@ HWTEST_F(TimeServiceTimerTest, TimerManager013, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager014
-* @tc.desc: test create two timer with same name.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager014
+ * @tc.desc: Test timer creation with duplicate names for same UID
+ * @tc.precon: TimerManager instance is available and timer name map is accessible
+ * @tc.step: 1. Clear timerNameMap
+ *           2. Create timer with specific name and UID
+ *           3. Verify timer name mapping
+ *           4. Create another timer with same name but different ID for same UID
+ *           5. Verify name mapping is updated and original timer is not found
+ * @tc.expect: Later timer with same name overwrites previous mapping for the same UID
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager014, TestSize.Level0)
 {
     TIME_HILOGI(TIME_MODULE_CLIENT, "TimerManager014 start");
@@ -1639,10 +2099,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager014, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager015
-* @tc.desc: test check timer.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager015
+ * @tc.desc: Test timer count checking and out-of-range time updating
+ * @tc.precon: TimerManager instance is available and timer count checking is enabled
+ * @tc.step: 1. Clear timerNameMap and create multiple timers
+ *           2. Set lastTimerOutOfRangeTime to past time
+ *           3. Call CheckTimerCount function
+ *           4. Verify lastTimerOutOfRangeTime is updated
+ * @tc.expect: CheckTimerCount updates lastTimerOutOfRangeTime when appropriate conditions are met
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager015, TestSize.Level0)
 {
     TimerManager::GetInstance()->timerNameMap_.clear();
@@ -1660,10 +2128,17 @@ HWTEST_F(TimeServiceTimerTest, TimerManager015, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager016
-* @tc.desc: test update or delete database.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager016
+ * @tc.desc: Test database update and deletion operations
+ * @tc.precon: TimeDatabase instance is available and accessible
+ * @tc.step: 1. Insert timer data into HOLD_ON_REBOOT table
+ *           2. Call UpdateOrDeleteDatabase with delete flag
+ *           3. Query database to verify deletion
+ * @tc.expect: Timer data is successfully deleted from database after UpdateOrDeleteDatabase call
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager016, TestSize.Level0)
 {
     OHOS::NativeRdb::ValuesBucket insertValues;
@@ -1688,10 +2163,18 @@ HWTEST_F(TimeServiceTimerTest, TimerManager016, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerManager017
-* @tc.desc: test timer database when store is nullptr.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerManager017
+ * @tc.desc: Test database operations when store pointer is null
+ * @tc.precon: TimeDatabase instance is available but store can be set to null
+ * @tc.step: 1. Clear database and set store pointer to null
+ *           2. Attempt various database operations (insert, update, query, delete)
+ *           3. Verify operations handle null store gracefully
+ *           4. Restore original store pointer
+ * @tc.expect: All database operations return appropriate error results when store is null
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerManager017, TestSize.Level0)
 {
     auto DataBase = TimeDatabase::GetInstance();
@@ -1715,10 +2198,17 @@ HWTEST_F(TimeServiceTimerTest, TimerManager017, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo001
-* @tc.desc: test UpdateWhenElapsedFromNow.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerInfo001
+ * @tc.desc: Test UpdateWhenElapsedFromNow function with zero duration
+ * @tc.precon: TimerInfo instance can be created and time points are available
+ * @tc.step: 1. Create TimerInfo with zero duration parameters
+ *           2. Call UpdateWhenElapsedFromNow with current time and zero duration
+ *           3. Verify function returns false
+ * @tc.expect: UpdateWhenElapsedFromNow returns false for zero duration update
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerInfo001, TestSize.Level0)
 {
     auto duration = std::chrono::milliseconds::zero();
@@ -1730,10 +2220,17 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo001, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo002
-* @tc.desc: test AdjustTimer.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerInfo002
+ * @tc.desc: Test AdjustTimer function with valid adjustment parameters
+ * @tc.precon: TimerInfo instance can be created and adjustment parameters are valid
+ * @tc.step: 1. Create TimerInfo with zero duration parameters
+ *           2. Call AdjustTimer with current time and adjustment parameters
+ *           3. Verify function returns true
+ * @tc.expect: AdjustTimer returns true for valid adjustment operation
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerInfo002, TestSize.Level0)
 {
     auto duration = std::chrono::milliseconds(0);
@@ -1745,10 +2242,17 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo002, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo003
-* @tc.desc: test CreateTimerInfo.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerInfo003
+ * @tc.desc: Test CreateTimerInfo static function with RTC timer type
+ * @tc.precon: System time functions are available and TimerInfo creation is supported
+ * @tc.step: 1. Get current time using gettimeofday
+ *           2. Create TimerInfo with RTC type and future trigger time
+ *           3. Verify all TimerInfo attributes are correctly initialized
+ * @tc.expect: TimerInfo is created with correct attributes including converted elapsed times
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerInfo003, TestSize.Level0)
 {
     struct timeval timeOfDay {};
@@ -1791,10 +2295,17 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo003, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo004
-* @tc.desc: test MaxTriggerTime.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerInfo004
+ * @tc.desc: Test MaxTriggerTime static function with different time windows
+ * @tc.precon: TimeUtils functions are available and time calculations are supported
+ * @tc.step: 1. Get current boot time as reference
+ *           2. Calculate max trigger time for different whenElapsed and windowLength combinations
+ *           3. Verify max trigger time calculations are correct
+ * @tc.expect: MaxTriggerTime returns correct values based on window length and elapsed time rules
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerInfo004, TestSize.Level0)
 {
     auto currentBootTime = TimeUtils::GetBootTimeNs();
@@ -1820,10 +2331,18 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo004, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo005
-* @tc.desc: test ConvertToElapsed.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerInfo005
+ * @tc.desc: Test ConvertToElapsed static function for RTC and ELAPSED_REALTIME types
+ * @tc.precon: System time functions are available and time conversion is supported
+ * @tc.step: 1. Get current system time and boot time
+ *           2. Test RTC type conversion with duration offset
+ *           3. Test ELAPSED_REALTIME type conversion with duration offset
+ *           4. Verify converted elapsed times are within expected ranges
+ * @tc.expect: ConvertToElapsed returns correct elapsed time for both timer types
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerInfo005, TestSize.Level0)
 {
     struct timeval timeOfDay {};
@@ -1852,10 +2371,17 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo005, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo006
-* @tc.desc: test CalculateWhenElapsed.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerInfo006
+ * @tc.desc: Test CalculateWhenElapsed function for RTC timer type
+ * @tc.precon: TimerInfo instance can be created and time calculation functions are available
+ * @tc.step: 1. Create TimerInfo with RTC type and current time
+ *           2. Call CalculateWhenElapsed with epoch time point
+ *           3. Verify whenElapsed and maxWhenElapsed are correctly calculated
+ * @tc.expect: CalculateWhenElapsed sets correct elapsed times within expected range
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerInfo006, TestSize.Level0)
 {
     struct timeval timeOfDay {};
@@ -1881,10 +2407,17 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo006, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo007
-* @tc.desc: test CalculateOriWhenElapsed.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerInfo007
+ * @tc.desc: Test CalculateOriWhenElapsed function for RTC timer type
+ * @tc.precon: TimerInfo instance can be created and original time calculation is supported
+ * @tc.step: 1. Create TimerInfo with RTC type and current time
+ *           2. Call CalculateOriWhenElapsed function
+ *           3. Verify originWhenElapsed and originMaxWhenElapsed are correctly calculated
+ * @tc.expect: CalculateOriWhenElapsed sets correct original elapsed times within expected range
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerInfo007, TestSize.Level0)
 {
     struct timeval timeOfDay {};
@@ -1909,10 +2442,17 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo007, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo008
-* @tc.desc: test ProxyTimer.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerInfo008
+ * @tc.desc: Test ProxyTimer function for ELAPSED_REALTIME timer type
+ * @tc.precon: TimerInfo instance can be created and proxy functionality is available
+ * @tc.step: 1. Create TimerInfo with ELAPSED_REALTIME type
+ *           2. Call ProxyTimer with 3000ms delay
+ *           3. Verify timer state and time attributes are updated correctly
+ * @tc.expect: ProxyTimer updates state to PROXY and adjusts time attributes appropriately
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerInfo008, TestSize.Level0)
 {
     auto zero = milliseconds(0);
@@ -1928,10 +2468,18 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo008, TestSize.Level0)
 }
 
 /**
-* @tc.name: TimerInfo009
-* @tc.desc: test RestoreProxyTimer.
-* @tc.type: FUNC
-*/
+ * @tc.name: TimerInfo009
+ * @tc.desc: Test RestoreProxyTimer function for different timer states
+ * @tc.precon: TimerInfo instance can be created and proxy restoration is supported
+ * @tc.step: 1. Create TimerInfo and test restore from INIT state
+ *           2. Test restore from ADJUST state
+ *           3. Set timer to PROXY state and test restore
+ *           4. Verify state and time attributes are restored correctly
+ * @tc.expect: RestoreProxyTimer correctly restores timer attributes only from PROXY state
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, TimerInfo009, TestSize.Level0)
 {
     auto zero = milliseconds(0);
@@ -1961,10 +2509,19 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo009, TestSize.Level0)
 
 #ifdef SET_AUTO_REBOOT_ENABLE
 /**
-* @tc.name: IsPowerOnTimer001.
-* @tc.desc: Test function IsPowerOnTimer, use four timer to check the return of function.
-* @tc.type: FUNC
-*/
+ * @tc.name: IsPowerOnTimer001
+ * @tc.desc: Test IsPowerOnTimer function with different timer name and bundle name combinations
+ * @tc.precon: TimerManager instance is available and powerOnApps list is configured
+ * @tc.step: 1. Configure powerOnApps with test bundle and timer names
+ *           2. Test timers with only timer name matching
+ *           3. Test timers with only bundle name matching
+ *           4. Test timers with autoRestore flag and name matching
+ *           5. Test timers with autoRestore flag and bundle name matching
+ * @tc.expect: IsPowerOnTimer returns true only for autoRestore timers with matching names
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, IsPowerOnTimer001, TestSize.Level0)
 {
     auto timerManager = TimerManager::GetInstance();
@@ -1998,10 +2555,19 @@ HWTEST_F(TimeServiceTimerTest, IsPowerOnTimer001, TestSize.Level0)
 }
 
 /**
-* @tc.name: AddPowerOnTimer001.
-* @tc.desc: Test function SetHandlerLocked, to prevent same timer put into TriggerTimerList.
-* @tc.type: FUNC
-*/
+ * @tc.name: AddPowerOnTimer001
+ * @tc.desc: Test SetHandlerLocked function to prevent duplicate timers in powerOnTriggerTimerList
+ * @tc.precon: TimerManager instance is available and powerOnApps list is configured
+ * @tc.step: 1. Clear powerOnTriggerTimerList and configure powerOnApps
+ *           2. Create power-on timer with autoRestore flag
+ *           3. Call SetHandlerLocked multiple times with same timer
+ *           4. Verify timer is only added once to the list
+ *           5. Remove timer and verify list is cleared
+ * @tc.expect: Same timer is not duplicated in powerOnTriggerTimerList and can be properly removed
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, AddPowerOnTimer001, TestSize.Level0)
 {
     auto timerManager = TimerManager::GetInstance();
@@ -2028,10 +2594,18 @@ HWTEST_F(TimeServiceTimerTest, AddPowerOnTimer001, TestSize.Level0)
 }
 
 /**
-* @tc.name: DeleteTimerFromPowerOnTimerListById001.
-* @tc.desc: Test function ReschedulePowerOnTimer, check delete a timer in powerOnTriggerTimerList_ by timer id.
-* @tc.type: FUNC
-*/
+ * @tc.name: DeleteTimerFromPowerOnTimerListById001
+ * @tc.desc: Test DeleteTimerFromPowerOnTimerListById function for timer removal
+ * @tc.precon: TimerManager instance is available and powerOnTriggerTimerList can be modified
+ * @tc.step: 1. Add timer to powerOnTriggerTimerList
+ *           2. Verify timer is added successfully
+ *           3. Call DeleteTimerFromPowerOnTimerListById with timer ID
+ *           4. Verify timer is removed from the list
+ * @tc.expect: Timer is successfully removed from powerOnTriggerTimerList by ID
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, DeleteTimerFromPowerOnTimerListById001, TestSize.Level0)
 {
     auto timerManager = TimerManager::GetInstance();
@@ -2046,10 +2620,19 @@ HWTEST_F(TimeServiceTimerTest, DeleteTimerFromPowerOnTimerListById001, TestSize.
 }
 
 /**
-* @tc.name: ReschedulePowerOnTimerLocked001.
-* @tc.desc: Test function ReschedulePowerOnTimer, use three timer to test the schedule.
-* @tc.type: FUNC
-*/
+ * @tc.name: ReschedulePowerOnTimerLocked001
+ * @tc.desc: Test ReschedulePowerOnTimerLocked function with multiple timer scenarios
+ * @tc.precon: TimerManager instance is available and lastSetTime can be modified
+ * @tc.step: 1. Reset lastSetTime and add timer with 1000ms trigger
+ *           2. Add timer with 2000ms trigger and verify scheduling
+ *           3. Add timer with 500ms trigger (earliest) and verify rescheduling
+ *           4. Remove timers in sequence and verify lastSetTime updates
+ *           5. Clear all timers and verify default scheduling
+ * @tc.expect: ReschedulePowerOnTimerLocked always schedules the earliest trigger time
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked001, TestSize.Level0)
 {
     auto timerManager = TimerManager::GetInstance();
@@ -2099,10 +2682,17 @@ HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked001, TestSize.Level0)
 #endif
 
 /**
-* @tc.name: ResetAllProxy001.
-* @tc.desc: test RefreshNetworkTimeByTimer.
-* @tc.type: FUNC
-*/
+ * @tc.name: ResetAllProxy001
+ * @tc.desc: Test ResetAllProxy function without required permissions
+ * @tc.precon: TimeSystemAbility instance is available and permissions can be removed
+ * @tc.step: 1. Remove required permissions using DeletePermission
+ *           2. Call ResetAllProxy function
+ *           3. Verify function returns permission error
+ * @tc.expect: ResetAllProxy returns E_TIME_NO_PERMISSION when permissions are missing
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, ResetAllProxy001, TestSize.Level0)
 {
     DeletePermission();
@@ -2111,10 +2701,17 @@ HWTEST_F(TimeServiceTimerTest, ResetAllProxy001, TestSize.Level0)
 }
 
 /**
-* @tc.name: ExactRepeatTimer001.
-* @tc.desc: test exact & repeat tiemr.
-* @tc.type: FUNC
-*/
+ * @tc.name: ExactRepeatTimer001
+ * @tc.desc: Test exact repeat timer handling in HandleRepeatTimer function
+ * @tc.precon: TimerManager and TimerProxy instances are available
+ * @tc.step: 1. Create repeat timer with 20-second interval
+ *           2. Call HandleRepeatTimer with current boot time
+ *           3. Verify timer is added to uidTimersMap with correct attributes
+ * @tc.expect: Repeat timer is properly registered with equal whenElapsed and maxWhenElapsed times
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, ExactRepeatTimer001, TestSize.Level0)
 {
     auto windowLength = std::chrono::milliseconds::zero();
@@ -2138,10 +2735,18 @@ HWTEST_F(TimeServiceTimerTest, ExactRepeatTimer001, TestSize.Level0)
 
 #ifdef MULTI_ACCOUNT_ENABLE
 /**
-* @tc.name: CheckUserIdForNotify001
-* @tc.desc: test CheckUserIdForNotify.
-* @tc.type: FUNC
-*/
+ * @tc.name: CheckUserIdForNotify001
+ * @tc.desc: Test CheckUserIdForNotify function with different user ID values
+ * @tc.precon: TimerManager instance is available and multi-account feature is enabled
+ * @tc.step: 1. Create timer with invalid user ID (-1)
+ *           2. Verify CheckUserIdForNotify returns account error
+ *           3. Create timer with valid user ID (0)
+ *           4. Verify CheckUserIdForNotify returns success
+ * @tc.expect: CheckUserIdForNotify validates user IDs correctly and returns appropriate error codes
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, CheckUserIdForNotify001, TestSize.Level0)
 {
     auto duration = std::chrono::milliseconds::zero();
@@ -2158,10 +2763,17 @@ HWTEST_F(TimeServiceTimerTest, CheckUserIdForNotify001, TestSize.Level0)
 #endif
 
 /**
-* @tc.name: AdjustTimerWithNoPermission001
-* @tc.desc: Verify AdjustTimer with no permission.
-* @tc.type: FUNC
-*/
+ * @tc.name: AdjustTimerWithNoPermission001
+ * @tc.desc: Test AdjustTimer function without required permissions
+ * @tc.precon: TimeSystemAbility instance is available and permissions can be removed
+ * @tc.step: 1. Remove required permissions using DeletePermission
+ *           2. Call AdjustTimer with adjustment parameters
+ *           3. Verify function returns permission error
+ * @tc.expect: AdjustTimer returns E_TIME_NO_PERMISSION when permissions are missing
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, AdjustTimerWithNoPermission001, TestSize.Level0)
 {
     DeletePermission();
@@ -2170,10 +2782,17 @@ HWTEST_F(TimeServiceTimerTest, AdjustTimerWithNoPermission001, TestSize.Level0)
 }
 
 /**
-* @tc.name:ProxyTimerWithNoPermission001
-* @tc.desc: Verify ProxyTimer with no permission.
-* @tc.type: FUNC
-*/
+ * @tc.name: ProxyTimerWithNoPermission001
+ * @tc.desc: Test ProxyTimer function without required permissions
+ * @tc.precon: TimeSystemAbility instance is available and permissions can be removed
+ * @tc.step: 1. Remove required permissions using DeletePermission
+ *           2. Call ProxyTimer with PID list and parameters
+ *           3. Verify function returns permission error
+ * @tc.expect: ProxyTimer returns E_TIME_NO_PERMISSION when permissions are missing
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, ProxyTimerWithNoPermission001, TestSize.Level0)
 {
     DeletePermission();
@@ -2183,10 +2802,17 @@ HWTEST_F(TimeServiceTimerTest, ProxyTimerWithNoPermission001, TestSize.Level0)
 }
 
 /**
-* @tc.name: SetTimerExemptionyWithNoPermission001
-* @tc.desc: Verify SetTimerExemption with no permission.
-* @tc.type: FUNC
-*/
+ * @tc.name: SetTimerExemptionWithNoPermission001
+ * @tc.desc: Test SetTimerExemption function without required permissions
+ * @tc.precon: TimeSystemAbility instance is available and permissions can be removed
+ * @tc.step: 1. Remove required permissions using DeletePermission
+ *           2. Call SetTimerExemption with timer name array
+ *           3. Verify function returns permission error
+ * @tc.expect: SetTimerExemption returns E_TIME_NO_PERMISSION when permissions are missing
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, SetTimerExemptionWithNoPermission001, TestSize.Level0)
 {
     DeletePermission();
@@ -2196,10 +2822,17 @@ HWTEST_F(TimeServiceTimerTest, SetTimerExemptionWithNoPermission001, TestSize.Le
 }
 
 /**
-* @tc.name: ResetAllProxyWithNoPermission004.
-* @tc.desc: Verify ResetAllProxy with no permission.
-* @tc.type: FUNC
-*/
+ * @tc.name: ResetAllProxyWithNoPermission001
+ * @tc.desc: Test ResetAllProxy function without required permissions
+ * @tc.precon: TimeSystemAbility instance is available and permissions can be removed
+ * @tc.step: 1. Remove required permissions using DeletePermission
+ *           2. Call ResetAllProxy function
+ *           3. Verify function returns permission error
+ * @tc.expect: ResetAllProxy returns E_TIME_NO_PERMISSION when permissions are missing
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
 HWTEST_F(TimeServiceTimerTest, ResetAllProxyWithNoPermission001, TestSize.Level0)
 {
     DeletePermission();
