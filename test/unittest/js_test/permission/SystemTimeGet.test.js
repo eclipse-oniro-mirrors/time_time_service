@@ -23,12 +23,18 @@ describe('SystemTimeGetTest', function () {
     const NANO_TO_MILLI = NANO_TO_BASE / MILLI_TO_BASE;
 
     /**
+     * @tc.number: TestGetCurrentTimeMs001
      * @tc.name: TestGetCurrentTimeMs001
-     * @tc.desc: test getCurrentTime ms for promise.
+     * @tc.desc: Test getCurrentTime API returns current time in milliseconds using Promise
+     * @tc.precon: SystemTime service is available and time functions are accessible
+     * @tc.step: 1. Get current timestamp as reference using Date.getTime()
+     *           2. Call getCurrentTime API using Promise (default milliseconds)
+     *           3. Verify returned time is number type and not less than reference time
+     * @tc.expect: getCurrentTime returns valid millisecond timestamp greater than or equal to reference time
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetCurrentTimeMs001', 0, async function (done) {
         console.log("testGetCurrentTimeMs001 start");
@@ -41,12 +47,18 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetCurrentTimeMs002
      * @tc.name: TestGetCurrentTimeMs002
-     * @tc.desc: test getCurrentTime ms for callback.
+     * @tc.desc: Test getCurrentTime API returns current time in milliseconds using Callback
+     * @tc.precon: SystemTime service is available and time functions are accessible
+     * @tc.step: 1. Get current timestamp as reference using Date.getTime()
+     *           2. Call getCurrentTime API using Callback (default milliseconds)
+     *           3. Verify returned time is number type and not less than reference time
+     * @tc.expect: getCurrentTime callback returns valid millisecond timestamp greater than or equal to reference time
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetCurrentTimeMs002', 0, async function (done) {
         console.log("testGetCurrentTimeMs002 start");
@@ -62,12 +74,18 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetCurrentTimeMs003
      * @tc.name: TestGetCurrentTimeMs003
-     * @tc.desc: test getCurrentTime ms for promise when isNano is false.
+     * @tc.desc: Test getCurrentTime API returns current time in milliseconds with explicit isNano=false using Promise
+     * @tc.precon: SystemTime service is available and time functions are accessible
+     * @tc.step: 1. Get current timestamp as reference using Date.getTime()
+     *           2. Call getCurrentTime API with isNano=false using Promise
+     *           3. Verify returned time is number type and not less than reference time
+     * @tc.expect: getCurrentTime returns valid millisecond timestamp when isNano parameter is explicitly set to false
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetCurrentTimeMs003', 0, async function (done) {
         console.log("testGetCurrentTimeMs003 start");
@@ -80,12 +98,18 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetCurrentTimeMs004
      * @tc.name: TestGetCurrentTimeMs004
-     * @tc.desc: test getCurrentTime ms for callback when isNano is false.
+     * @tc.desc: Test getCurrentTime API returns current time in milliseconds with explicit isNano=false using Callback
+     * @tc.precon: SystemTime service is available and time functions are accessible
+     * @tc.step: 1. Get current timestamp as reference using Date.getTime()
+     *           2. Call getCurrentTime API with isNano=false using Callback
+     *           3. Verify returned time is number type and not less than reference time
+     * @tc.expect: getCurrentTime callback returns valid millisecond timestamp when isNano parameter is explicitly set to false
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetCurrentTimeMs004', 0, async function (done) {
         console.log("testGetCurrentTimeMs004 start");
@@ -101,12 +125,18 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetCurrentTimeNs001
      * @tc.name: TestGetCurrentTimeNs001
-     * @tc.desc: test getCurrentTime ns for promise when inNano is true
+     * @tc.desc: Test getCurrentTime API returns current time in nanoseconds with isNano=true using Promise
+     * @tc.precon: SystemTime service is available and time functions are accessible
+     * @tc.step: 1. Get current timestamp as reference using Date.getTime()
+     *           2. Call getCurrentTime API with isNano=true using Promise
+     *           3. Convert nanoseconds to milliseconds and verify not less than reference time
+     * @tc.expect: getCurrentTime returns valid nanosecond timestamp that converts to correct millisecond value
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetCurrentTimeNs001', 0, async function (done) {
         console.log("testGetCurrentTimeNs001 start");
@@ -120,12 +150,18 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetCurrentTimeNs002
      * @tc.name: TestGetCurrentTimeNs002
-     * @tc.desc: test getCurrentTime ns for promise when inNano is true
+     * @tc.desc: Test getCurrentTime API returns current time in nanoseconds with isNano=true using Callback
+     * @tc.precon: SystemTime service is available and time functions are accessible
+     * @tc.step: 1. Get current timestamp as reference using Date.getTime()
+     *           2. Call getCurrentTime API with isNano=true using Callback
+     *           3. Convert nanoseconds to milliseconds and verify not less than reference time
+     * @tc.expect: getCurrentTime callback returns valid nanosecond timestamp that converts to correct millisecond value
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetCurrentTimeNs002', 0, async function (done) {
         console.log("testGetCurrentTimeNs002 start");
@@ -141,12 +177,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealActiveTimeMs001
      * @tc.name: TestGetRealActiveTimeMs001
-     * @tc.desc: test getRealActiveTime ms for promise.
+     * @tc.desc: Test getRealActiveTime API returns active time in milliseconds using Promise
+     * @tc.precon: SystemTime service is available and active time tracking is enabled
+     * @tc.step: 1. Call getRealActiveTime API using Promise (default milliseconds)
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealActiveTime returns valid positive millisecond timestamp for system active time
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealActiveTimeMs001', 0, async function (done) {
         console.log("testGetRealActiveTimeMs001 start");
@@ -158,12 +199,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealActiveTimeMs002
      * @tc.name: TestGetRealActiveTimeMs002
-     * @tc.desc: test getRealActiveTime ms for callback.
+     * @tc.desc: Test getRealActiveTime API returns active time in milliseconds using Callback
+     * @tc.precon: SystemTime service is available and active time tracking is enabled
+     * @tc.step: 1. Call getRealActiveTime API using Callback (default milliseconds)
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealActiveTime callback returns valid positive millisecond timestamp for system active time
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealActiveTimeMs002', 0, async function (done) {
         console.log("testGetRealActiveTimeMs002 start");
@@ -178,12 +224,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealActiveTimeMs003
      * @tc.name: TestGetRealActiveTimeMs003
-     * @tc.desc: test getRealActiveTime ms for promise when isNano is false.
+     * @tc.desc: Test getRealActiveTime API returns active time in milliseconds with explicit isNano=false using Promise
+     * @tc.precon: SystemTime service is available and active time tracking is enabled
+     * @tc.step: 1. Call getRealActiveTime API with isNano=false using Promise
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealActiveTime returns valid positive millisecond timestamp when isNano parameter is explicitly set to false
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealActiveTimeMs003', 0, async function (done) {
         console.log("testGetRealActiveTimeMs003 start");
@@ -194,12 +245,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealActiveTimeMs004
      * @tc.name: TestGetRealActiveTimeMs004
-     * @tc.desc: test getRealActiveTime ms for callback when isNano is false.
+     * @tc.desc: Test getRealActiveTime API returns active time in milliseconds with explicit isNano=false using Callback
+     * @tc.precon: SystemTime service is available and active time tracking is enabled
+     * @tc.step: 1. Call getRealActiveTime API with isNano=false using Callback
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealActiveTime callback returns valid positive millisecond timestamp when isNano parameter is explicitly set to false
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealActiveTimeMs004', 0, async function (done) {
         console.log("testGetRealActiveTimeMs004 start");
@@ -214,12 +270,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealActiveTimeNs001
      * @tc.name: TestGetRealActiveTimeNs001
-     * @tc.desc: test getRealActiveTime ns for promise when isNano is true.
+     * @tc.desc: Test getRealActiveTime API returns active time in nanoseconds with isNano=true using Promise
+     * @tc.precon: SystemTime service is available and active time tracking is enabled
+     * @tc.step: 1. Call getRealActiveTime API with isNano=true using Promise
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealActiveTime returns valid positive nanosecond timestamp for system active time
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealActiveTimeNs001', 0, async function (done) {
         console.log("testGetRealActiveTimeNs001 start");
@@ -231,12 +292,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealActiveTimeNs002
      * @tc.name: TestGetRealActiveTimeNs002
-     * @tc.desc: test getRealActiveTime ns for callback when isNano is true.
+     * @tc.desc: Test getRealActiveTime API returns active time in nanoseconds with isNano=true using Callback
+     * @tc.precon: SystemTime service is available and active time tracking is enabled
+     * @tc.step: 1. Call getRealActiveTime API with isNano=true using Callback
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealActiveTime callback returns valid positive nanosecond timestamp for system active time
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealActiveTimeNs002', 0, async function (done) {
         console.log("testGetRealActiveTimeNs002 start");
@@ -251,12 +317,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealTimeMs001
      * @tc.name: TestGetRealTimeMs001
-     * @tc.desc: test getRealTime ms for promise.
+     * @tc.desc: Test getRealTime API returns real time in milliseconds using Promise
+     * @tc.precon: SystemTime service is available and real time functions are accessible
+     * @tc.step: 1. Call getRealTime API using Promise (default milliseconds)
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealTime returns valid positive millisecond timestamp for system real time
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealTimeMs001', 0, async function (done) {
         console.log("testGetRealTimeMs001 start");
@@ -268,12 +339,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealTimeMs002
      * @tc.name: TestGetRealTimeMs002
-     * @tc.desc: test getRealTime ms for callback.
+     * @tc.desc: Test getRealTime API returns real time in milliseconds using Callback
+     * @tc.precon: SystemTime service is available and real time functions are accessible
+     * @tc.step: 1. Call getRealTime API using Callback (default milliseconds)
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealTime callback returns valid positive millisecond timestamp for system real time
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealTimeMs002', 0, async function (done) {
         console.log("testGetRealTimeMs002 start");
@@ -288,12 +364,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealTimeMs003
      * @tc.name: TestGetRealTimeMs003
-     * @tc.desc: test getRealTime ms for promise when isNano is false.
+     * @tc.desc: Test getRealTime API returns real time in milliseconds with explicit isNano=false using Promise
+     * @tc.precon: SystemTime service is available and real time functions are accessible
+     * @tc.step: 1. Call getRealTime API with isNano=false using Promise
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealTime returns valid positive millisecond timestamp when isNano parameter is explicitly set to false
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealTimeMs003', 0, async function (done) {
         console.log("testGetRealTimeMs003 start");
@@ -305,12 +386,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealTimeMs004
      * @tc.name: TestGetRealTimeMs004
-     * @tc.desc: test getRealTime ms for callback when isNano is false.
+     * @tc.desc: Test getRealTime API returns real time in milliseconds with explicit isNano=false using Callback
+     * @tc.precon: SystemTime service is available and real time functions are accessible
+     * @tc.step: 1. Call getRealTime API with isNano=false using Callback
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealTime callback returns valid positive millisecond timestamp when isNano parameter is explicitly set to false
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealTimeMs004', 0, async function (done) {
         console.log("testGetRealTimeMs004 start");
@@ -325,12 +411,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealTimeNs001
      * @tc.name: TestGetRealTimeNs001
-     * @tc.desc: test getRealTime ns for promise when isNano is true.
+     * @tc.desc: Test getRealTime API returns real time in nanoseconds with isNano=true using Promise
+     * @tc.precon: SystemTime service is available and real time functions are accessible
+     * @tc.step: 1. Call getRealTime API with isNano=true using Promise
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealTime returns valid positive nanosecond timestamp for system real time
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealTimeNs001', 0, async function (done) {
         console.log("testGetRealTimeNs001 start");
@@ -342,12 +433,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealTimeNs002
      * @tc.name: TestGetRealTimeNs002
-     * @tc.desc: test getRealTime ns for callback when isNano is true.
+     * @tc.desc: Test getRealTime API returns real time in nanoseconds with isNano=true using Callback
+     * @tc.precon: SystemTime service is available and real time functions are accessible
+     * @tc.step: 1. Call getRealTime API with isNano=true using Callback
+     *           2. Verify returned time is positive number and correct type
+     * @tc.expect: getRealTime callback returns valid positive nanosecond timestamp for system real time
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealTimeNs002', 0, async function (done) {
         console.log("testGetRealTimeNs002 start");
@@ -362,12 +458,18 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetDate001
      * @tc.name: TestGetDate001
-     * @tc.desc: test getDate for promise.
+     * @tc.desc: Test getDate API returns current date using Promise after setting specific date
+     * @tc.precon: SystemTime service is available and date setting permission is granted
+     * @tc.step: 1. Set specific date (2022-02-01) using setDate API
+     *           2. Call getDate API using Promise to retrieve current date
+     *           3. Verify returned date matches the set date
+     * @tc.expect: getDate returns correct Date object matching the previously set date
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetDate001', 0, async function (done) {
         console.log("testGetDate001 start");
@@ -380,12 +482,18 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetDate002
      * @tc.name: TestGetDate002
-     * @tc.desc: test getDate for callback.
+     * @tc.desc: Test getDate API returns current date using Callback after setting specific date
+     * @tc.precon: SystemTime service is available and date setting permission is granted
+     * @tc.step: 1. Set specific date (2022-02-01) using setDate API
+     *           2. Call getDate API using Callback to retrieve current date
+     *           3. Verify returned date matches the set date
+     * @tc.expect: getDate callback returns correct Date object matching the previously set date
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetDate002', 0, async function (done) {
         console.log("testGetDate002 start");
@@ -402,12 +510,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetCurrentTimeInvalidParam001
      * @tc.name: TestGetCurrentTimeInvalidParam001
-     * @tc.desc: test getCurrentTime for promise with invalid param.
+     * @tc.desc: Test getCurrentTime API handles string parameter "true" correctly using Promise
+     * @tc.precon: SystemTime service is available and parameter validation is enabled
+     * @tc.step: 1. Call getCurrentTime API with string parameter "true" using Promise
+     *           2. Verify the API handles the string parameter without throwing exception
+     * @tc.expect: getCurrentTime should handle string parameter "true" gracefully without errors
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetCurrentTimeInvalidParam001', 0, async function (done) {
         console.log("testGetCurrentTimeInvalidParam001 start");
@@ -424,12 +537,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetCurrentTimeInvalidParam002
      * @tc.name: TestGetCurrentTimeInvalidParam002
-     * @tc.desc: test getCurrentTime for callback with invalid param.
+     * @tc.desc: Test getCurrentTime API handles string parameter "true" correctly using Callback
+     * @tc.precon: SystemTime service is available and parameter validation is enabled
+     * @tc.step: 1. Call getCurrentTime API with string parameter "true" using Callback
+     *           2. Verify the API handles the string parameter without returning error
+     * @tc.expect: getCurrentTime callback should handle string parameter "true" gracefully without errors
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetCurrentTimeInvalidParam002', 0, async function (done) {
         console.log("testGetCurrentTimeInvalidParam002 start");
@@ -449,15 +567,20 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
-     * @tc.name: TestGetCurrentTimeInvalidParam002
-     * @tc.desc: test getRealActiveTime for callback with invalid param.
+     * @tc.number: TestGetRealActiveTimeInvalidParam001
+     * @tc.name: TestGetRealActiveTimeInvalidParam001
+     * @tc.desc: Test getRealActiveTime API handles string parameter "true" correctly using Promise
+     * @tc.precon: SystemTime service is available and parameter validation is enabled
+     * @tc.step: 1. Call getRealActiveTime API with string parameter "true" using Promise
+     *           2. Verify the API handles the string parameter without throwing exception
+     * @tc.expect: getRealActiveTime should handle string parameter "true" gracefully without errors
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
-    it('testGetCurrentTimeInvalidParam002', 0, async function (done) {
-        console.log("testGetCurrentTimeInvalidParam002 start");
+    it('testGetRealActiveTimeInvalidParam001', 0, async function (done) {
+        console.log("testGetRealActiveTimeInvalidParam001 start");
         try {
             systemTime.getRealActiveTime("true").then((time) => {
                 expect(true).assertTrue();
@@ -467,19 +590,24 @@ describe('SystemTimeGetTest', function () {
             expect(false).assertTrue();
             done();
         }
-        console.log('testGetCurrentTimeInvalidParam002 end');
+        console.log('testGetRealActiveTimeInvalidParam001 end');
     })
 
     /**
-     * @tc.name: TestGetRealActiveTimeInvalidParam001
-     * @tc.desc: test getRealActiveTime for promise with invalid param.
+     * @tc.number: TestGetRealActiveTimeInvalidParam002
+     * @tc.name: TestGetRealActiveTimeInvalidParam002
+     * @tc.desc: Test getRealActiveTime API handles string parameter "true" correctly using Callback
+     * @tc.precon: SystemTime service is available and parameter validation is enabled
+     * @tc.step: 1. Call getRealActiveTime API with string parameter "true" using Callback
+     *           2. Verify the API handles the string parameter without returning error
+     * @tc.expect: getRealActiveTime callback should handle string parameter "true" gracefully without errors
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
-    it('testGetRealActiveTimeInvalidParam001', 0, async function (done) {
-        console.log("testGetRealActiveTimeInvalidParam001 start");
+    it('testGetRealActiveTimeInvalidParam002', 0, async function (done) {
+        console.log("testGetRealActiveTimeInvalidParam002 start");
         try {
             systemTime.getRealActiveTime("true", function (err) {
                 if (err) {
@@ -492,16 +620,21 @@ describe('SystemTimeGetTest', function () {
             expect(false).assertTrue();
             done();
         }
-        console.log('testGetRealActiveTimeInvalidParam001 end');
+        console.log('testGetRealActiveTimeInvalidParam002 end');
     })
 
     /**
-     * @tc.name: TestGetRealActiveTimeInvalidParam001
-     * @tc.desc: test getRealTime for promise with invalid param.
+     * @tc.number: TestGetRealTimeInvalidParam001
+     * @tc.name: TestGetRealTimeInvalidParam001
+     * @tc.desc: Test getRealTime API handles string parameter "true" correctly using Promise
+     * @tc.precon: SystemTime service is available and parameter validation is enabled
+     * @tc.step: 1. Call getRealTime API with string parameter "true" using Promise
+     *           2. Verify the API handles the string parameter without throwing exception
+     * @tc.expect: getRealTime should handle string parameter "true" gracefully without errors
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealTimeInvalidParam001', 0, async function (done) {
         console.log("testGetRealTimeInvalidParam001 start");
@@ -518,12 +651,17 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetRealTimeInvalidParam002
      * @tc.name: TestGetRealTimeInvalidParam002
-     * @tc.desc: test getRealTime for callback with invalid param.
+     * @tc.desc: Test getRealTime API handles string parameter "true" correctly using Callback
+     * @tc.precon: SystemTime service is available and parameter validation is enabled
+     * @tc.step: 1. Call getRealTime API with string parameter "true" using Callback
+     *           2. Verify the API handles the string parameter without returning error
+     * @tc.expect: getRealTime callback should handle string parameter "true" gracefully without errors
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetRealTimeInvalidParam002', 0, async function (done) {
         console.log("testGetRealTimeInvalidParam002 start");
@@ -543,12 +681,19 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetTimezone001
      * @tc.name: TestGetTimezone001
-     * @tc.desc: test getTimezone for promise.
+     * @tc.desc: Test getTimezone API returns current timezone using Promise after setting specific timezone
+     * @tc.precon: SystemTime service is available and timezone setting permission is granted
+     * @tc.step: 1. Set specific timezone to "Pacific/Majuro"
+     *           2. Call getTimezone API using Promise to retrieve current timezone
+     *           3. Verify returned timezone matches the set timezone
+     *           4. Restore timezone to "Asia/Shanghai"
+     * @tc.expect: getTimezone returns correct timezone string matching the previously set timezone
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetTimezone001', 0, async function (done) {
         console.log("testGetTimezone001 start");
@@ -562,12 +707,19 @@ describe('SystemTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetTimezone002
      * @tc.name: TestGetTimezone002
-     * @tc.desc: test getTimezone for callback.
+     * @tc.desc: Test getTimezone API returns current timezone using Callback after setting specific timezone
+     * @tc.precon: SystemTime service is available and timezone setting permission is granted
+     * @tc.step: 1. Set specific timezone to "Pacific/Majuro"
+     *           2. Call getTimezone API using Callback to retrieve current timezone
+     *           3. Verify returned timezone matches the set timezone
+     *           4. Restore timezone to "Asia/Shanghai"
+     * @tc.expect: getTimezone callback returns correct timezone string matching the previously set timezone
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testGetTimezone002', 0, async function (done) {
         console.log("testGetTimezone002 start");

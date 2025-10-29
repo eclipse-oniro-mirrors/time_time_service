@@ -22,11 +22,16 @@ describe('SystemDateTimeTest', function () {
     /**
      * @tc.number: TestSetTimeNoPermission001
      * @tc.name: TestSetTimeNoPermission001
-     * @tc.desc: Test setTime no permission for promise
+     * @tc.desc: Test setTime API returns permission error when called without required permission using Promise
+     * @tc.precon: SystemDateTime service is available and system time permissions are properly configured
+     * @tc.step: 1. Get current timestamp using Date.getTime()
+     *           2. Call setTime API using Promise without required permissions
+     *           3. Catch the rejection and verify error code equals 202
+     * @tc.expect: setTime Promise call should reject with error code 202 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testSetTimeNoPermission001', 0, async function (done) {
         console.log("testSetTimeNoPermission001 start");
@@ -44,11 +49,16 @@ describe('SystemDateTimeTest', function () {
     /**
      * @tc.number: TestSetTimeNoPermission002
      * @tc.name: TestSetTimeNoPermission002
-     * @tc.desc: Test setTime no permission for callback
+     * @tc.desc: Test setTime API returns permission error when called without required permission using Callback
+     * @tc.precon: SystemDateTime service is available and system time permissions are properly configured
+     * @tc.step: 1. Get current timestamp using Date.getTime()
+     *           2. Call setTime API using Callback without required permissions
+     *           3. Check error object and verify error code equals 202
+     * @tc.expect: setTime Callback should return error with code 202 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testSetTimeNoPermission002', 0, async function (done) {
         console.log("testSetTimeNoPermission002 start");
@@ -67,11 +77,16 @@ describe('SystemDateTimeTest', function () {
     /**
      * @tc.number: TestSetTimezoneNoPermission001
      * @tc.name: TestSetTimezoneNoPermission001
-     * @tc.desc: Test setTimezone no permission for promise
+     * @tc.desc: Test setTimezone API returns permission error when called without required permission using Promise
+     * @tc.precon: SystemDateTime service is available and timezone database is accessible
+     * @tc.step: 1. Set target timezone to "Antarctica/McMurdo"
+     *           2. Call setTimezone API using Promise without required permissions
+     *           3. Catch the rejection and verify error code equals 202
+     * @tc.expect: setTimezone Promise call should reject with error code 202 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testSetTimezoneNoPermission001', 0, async function (done) {
         console.log("testSetTimezoneNoPermission001 start");
@@ -89,11 +104,16 @@ describe('SystemDateTimeTest', function () {
     /**
      * @tc.number: TestSetTimezoneNoPermission002
      * @tc.name: TestSetTimezoneNoPermission002
-     * @tc.desc: Test setTimezone no permission for callback
+     * @tc.desc: Test setTimezone API returns permission error when called without required permission using Callback
+     * @tc.precon: SystemDateTime service is available and timezone database is accessible
+     * @tc.step: 1. Set target timezone to "Antarctica/McMurdo"
+     *           2. Call setTimezone API using Callback without required permissions
+     *           3. Check error object and verify error code equals 202
+     * @tc.expect: setTimezone Callback should return error with code 202 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testSetTimezoneNoPermission002', 0, async function (done) {
         console.log("testSetTimezoneNoPermission002 start");
@@ -112,15 +132,18 @@ describe('SystemDateTimeTest', function () {
     /**
      * @tc.number: TestUpdateNtpTimeNoPermission001
      * @tc.name: TestUpdateNtpTimeNoPermission001
-     * @tc.desc: Test UpdateNtpTime no permission for promise
+     * @tc.desc: Test updateNtpTime API returns permission error when called without required permission using Promise
+     * @tc.precon: SystemDateTime service is available and NTP time synchronization is supported
+     * @tc.step: 1. Call updateNtpTime API using Promise without required permissions
+     *           2. Catch the rejection and verify error code equals 202
+     * @tc.expect: updateNtpTime Promise call should reject with error code 202 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('TestUpdateNtpTimeNoPermission001', 0, async function (done) {
         console.log("TestUpdateNtpTimeNoPermission001 start");
-        const timezone = "Antarctica/McMurdo";
         systemDateTime.updateNtpTime().then(() => {
             expect(false).assertTrue();
             done();
@@ -129,20 +152,23 @@ describe('SystemDateTimeTest', function () {
             done();
         })
         console.log('TestUpdateNtpTimeNoPermission001 end');
-    })   
+    })
 
     /**
-     * @tc.number:TestgetNtpTimeNoPermission001
+     * @tc.number: TestgetNtpTimeNoPermission001
      * @tc.name: TestgetNtpTimeNoPermission001
-     * @tc.desc: Test getNtpTime no permission
+     * @tc.desc: Test getNtpTime API returns permission error when called without required permission
+     * @tc.precon: SystemDateTime service is available and NTP time data is accessible
+     * @tc.step: 1. Call getNtpTime API without required permissions
+     *           2. Catch the exception and verify error code equals 202
+     * @tc.expect: getNtpTime should throw exception with error code 202 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('TestgetNtpTimeNoPermission001', 0, async function (done) {
         console.log("TestgetNtpTimeNoPermission001 start");
-        const timezone = "Antarctica/McMurdo";
         try{
             systemDateTime.getNtpTime();
         }catch(err){
@@ -150,16 +176,20 @@ describe('SystemDateTimeTest', function () {
             done();
         }
         console.log('TestgetNtpTimeNoPermission001 end');
-    })      
+    })
 
     /**
-     * @tc.number:TestSetAutoTimeNoPermission001
+     * @tc.number: TestSetAutoTimeNoPermission001
      * @tc.name: TestSetAutoTimeNoPermission001
-     * @tc.desc: Test getNtpTime no permission
+     * @tc.desc: Test setAutoTimeStatus API returns permission error when called without required permission using Callback
+     * @tc.precon: SystemDateTime service is available and auto-time configuration is accessible
+     * @tc.step: 1. Call setAutoTimeStatus API with true value using Callback
+     *           2. Check error object and verify error code equals 202
+     * @tc.expect: setAutoTimeStatus should return error with code 202 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('TestSetAutoTimeNoPermission001', 0, async function (done) {
         console.log("TestSetAutoTimeNoPermission001 start");
