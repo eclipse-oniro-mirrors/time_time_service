@@ -114,9 +114,16 @@ void WaitForAlarm(std::atomic<int> * data, int interval)
 
 /**
 * @tc.name: UidTimerMap001
-* @tc.desc: start a timer, it can be added into UidTimerMap
-            and can be erase when stop.
+* @tc.desc: Test UID timer map management - timer addition on start and removal on stop
+* @tc.precon: Timer proxy service is available, UID timer map is accessible
+* @tc.step: 1. Create and start timer for specific UID and PID
+*           2. Verify timer is added to UID timer map with correct structure
+*           3. Stop timer and verify removal from UID timer map
+*           4. Destroy timer
+* @tc.expect: Timer is properly added to UID map on start, completely removed on stop
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, UidTimerMap001, TestSize.Level1)
 {
@@ -145,9 +152,15 @@ HWTEST_F(TimeProxyTest, UidTimerMap001, TestSize.Level1)
 
 /**
 * @tc.name: UidTimerMap002
-* @tc.desc: start a timer, it can be added into UidTimerMap
-            and can be erase when destory.
+* @tc.desc: Test UID timer map management - timer removal on destruction
+* @tc.precon: Timer proxy service is available, UID timer map is accessible
+* @tc.step: 1. Create and start timer for specific UID and PID
+*           2. Destroy timer without explicit stop
+*           3. Verify timer is removed from UID timer map
+* @tc.expect: Timer is properly removed from UID map upon destruction
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, UidTimerMap002, TestSize.Level1)
 {
@@ -164,9 +177,17 @@ HWTEST_F(TimeProxyTest, UidTimerMap002, TestSize.Level1)
 
 /**
 * @tc.name: UidTimerMap003
-* @tc.desc: start a timer, it can be added into UidTimerMap
-            and can be erase when triggered.
+* @tc.desc: Test UID timer map management - timer removal on trigger completion
+* @tc.precon: Timer proxy service is available, callback mechanism works
+* @tc.step: 1. Create elapsed realtime wakeup timer with callback
+*           2. Start timer with short duration
+*           3. Verify timer is added to UID timer map
+*           4. Wait for timer trigger and callback execution
+*           5. Verify timer is removed from UID timer map after trigger
+* @tc.expect: Timer is added to UID map on start, removed after successful trigger
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
 {
@@ -199,8 +220,16 @@ HWTEST_F(TimeProxyTest, UidTimerMap003, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByUid001
-* @tc.desc: test proxytimer in uid.
+* @tc.desc: Test UID-based timer proxy functionality - enable and disable proxy
+* @tc.precon: Timer proxy service is available, proxy timer map is accessible
+* @tc.step: 1. Enable proxy for specific UID without PID list
+*           2. Verify proxy timer map contains UID entry
+*           3. Disable proxy for the UID
+*           4. Verify proxy timer map is cleared
+* @tc.expect: Proxy is successfully enabled and disabled, proxy map is properly updated
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByUid001, TestSize.Level1)
 {
@@ -227,8 +256,17 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid001, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByUid002
-* @tc.desc: test proxy by uid, the map proxyTimers_ acts.
+* @tc.desc: Test UID-based timer proxy with active timer - timing adjustment behavior
+* @tc.precon: Timer proxy service is available, has active timer for testing
+* @tc.step: 1. Create and start timer for specific UID
+*           2. Record original trigger time
+*           3. Enable proxy for UID
+*           4. Verify timer is added to proxy map and timing is adjusted
+*           5. Disable proxy and verify timing is restored
+* @tc.expect: Proxy adjusts timer timing when enabled, restores original timing when disabled
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByUid002, TestSize.Level1)
 {
@@ -275,8 +313,16 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid002, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByUid003
-* @tc.desc: reset all proxy.
+* @tc.desc: Test multiple UID proxy management and bulk reset functionality
+* @tc.precon: Timer proxy service is available, supports multiple UID proxies
+* @tc.step: 1. Enable proxy for three different UIDs
+*           2. Verify all proxies are recorded in proxy timer map
+*           3. Execute bulk reset of all proxies
+*           4. Verify proxy timer map is completely cleared
+* @tc.expect: Multiple UID proxies are properly managed, bulk reset clears all proxies
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByUid003, TestSize.Level1)
 {
@@ -316,11 +362,18 @@ HWTEST_F(TimeProxyTest, ProxyTimerByUid003, TestSize.Level1)
     EXPECT_TRUE(TimerProxy::GetInstance().proxyTimers_.empty());
 }
 
-
 /**
 * @tc.name: AdjustTimer001
-* @tc.desc: adjust timer test.
+* @tc.desc: Test timer adjustment functionality - enable and disable unified timing
+* @tc.precon: Timer proxy service is available, adjustment mechanism works
+* @tc.step: 1. Enable timer adjustment with 100ms interval
+*           2. Verify adjustment is processed (adjust timer list may be empty initially)
+*           3. Disable timer adjustment
+*           4. Verify adjustment is properly cleared
+* @tc.expect: Timer adjustment is successfully enabled and disabled
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
 {
@@ -341,8 +394,17 @@ HWTEST_F(TimeProxyTest, AdjustTimer001, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimer002
-* @tc.desc: set timer exemption.
+* @tc.desc: Test timer exemption functionality with adjustment
+* @tc.precon: Timer proxy service is available, exemption list is configurable
+* @tc.step: 1. Create and start timer for specific UID/PID
+*           2. Add application to timer exemption list
+*           3. Verify exemption list is updated
+*           4. Enable timer adjustment
+*           5. Verify exempted timer is not included in adjustment
+* @tc.expect: Exempted applications are excluded from unified timing adjustments
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
 {
@@ -369,8 +431,16 @@ HWTEST_F(TimeProxyTest, AdjustTimer002, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByPid001
-* @tc.desc: test proxytimer in Pid.
+* @tc.desc: Test PID-based timer proxy functionality - enable and disable proxy
+* @tc.precon: Timer proxy service is available, supports PID-level proxy
+* @tc.step: 1. Enable proxy for specific PID within UID
+*           2. Verify proxy timer map contains PID entry
+*           3. Disable proxy for the PID
+*           4. Verify proxy timer map is cleared
+* @tc.expect: PID-based proxy is successfully enabled and disabled
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByPid001, TestSize.Level1)
 {
@@ -397,8 +467,17 @@ HWTEST_F(TimeProxyTest, ProxyTimerByPid001, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerByPid002
-* @tc.desc: test proxy by pid, the map proxyTimers_ acts.
+* @tc.desc: Test PID-based timer proxy with active timer - timing adjustment behavior
+* @tc.precon: Timer proxy service is available, has active timer for testing
+* @tc.step: 1. Create and start timer for specific UID/PID
+*           2. Record original trigger time
+*           3. Enable proxy for specific PID
+*           4. Verify timer is added to proxy map and timing is adjusted
+*           5. Disable proxy and verify timing is restored
+* @tc.expect: PID-based proxy adjusts timer timing when enabled, restores original timing when disabled
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, ProxyTimerByPid002, TestSize.Level1)
 {
@@ -446,8 +525,16 @@ HWTEST_F(TimeProxyTest, ProxyTimerByPid002, TestSize.Level1)
 
 /**
 * @tc.name: PidProxyTimer003
-* @tc.desc: reset all proxy tests.
+* @tc.desc: Test multiple PID proxy management within same UID and bulk reset
+* @tc.precon: Timer proxy service is available, supports multiple PID proxies
+* @tc.step: 1. Enable proxy for three different PIDs within same UID
+*           2. Verify all PID proxies are recorded in proxy timer map
+*           3. Execute bulk reset of all proxies
+*           4. Verify all PID proxies are cleared
+* @tc.expect: Multiple PID proxies are properly managed within UID, bulk reset clears all
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
 {
@@ -483,8 +570,16 @@ HWTEST_F(TimeProxyTest, PidProxyTimer003, TestSize.Level1)
 
 /**
 * @tc.name: PidProxyTimer004
-* @tc.desc: test proxy of same pid but different uid.
+* @tc.desc: Test PID proxy isolation between different UIDs with same PID
+* @tc.precon: Timer proxy service is available, supports UID-level isolation
+* @tc.step: 1. Create timers for two different UIDs with same PID
+*           2. Enable proxy for first UID only
+*           3. Verify only first UID's timer is proxied
+*           4. Check proxy status for both UIDs
+* @tc.expect: PID proxy is UID-specific, enabling for one UID doesn't affect other UIDs
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, PidProxyTimer004, TestSize.Level1)
 {
@@ -512,8 +607,16 @@ HWTEST_F(TimeProxyTest, PidProxyTimer004, TestSize.Level1)
 
 /**
 * @tc.name: PidProxyTimer005
-* @tc.desc: test the value of needtrigger is false.
+* @tc.desc: Test PID proxy with needRetrigger=false - timer removal behavior
+* @tc.precon: Timer proxy service is available, supports retrigger configuration
+* @tc.step: 1. Clear existing proxies and UID timer map
+*           2. Create and start timer for specific UID/PID
+*           3. Enable proxy with needRetrigger=false
+*           4. Verify timer is removed from UID timer map
+* @tc.expect: When needRetrigger is false, timer is removed from UID map upon proxy
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, PidProxyTimer005, TestSize.Level1)
 {
@@ -538,8 +641,17 @@ HWTEST_F(TimeProxyTest, PidProxyTimer005, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimerProxy001
-* @tc.desc: Determine whether to unify the heartbeat when the timer proxy is disabled.
+* @tc.desc: Test timer adjustment behavior with proxy disabled
+* @tc.precon: Timer proxy service is available, adjustment and proxy features work
+* @tc.step: 1. Create timer and clear existing maps
+*           2. Start timer and verify UID map recording
+*           3. Enable proxy and verify proxy map recording
+*           4. Disable proxy and verify proxy map clearance
+*           5. Enable timer adjustment and verify adjustment processing
+* @tc.expect: Timer adjustment works independently of proxy status after proxy is disabled
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
 {
@@ -582,8 +694,15 @@ HWTEST_F(TimeProxyTest, AdjustTimerProxy001, TestSize.Level1)
 
 /**
 * @tc.name: AdjustTimerExemption001
-* @tc.desc: test adjust timer exemption list.
+* @tc.desc: Test timer exemption list functionality
+* @tc.precon: Timer proxy service is available, exemption list is configurable
+* @tc.step: 1. Add bundle and timer name to exemption set
+*           2. Create timer info matching exemption criteria
+*           3. Verify timer is identified as exempted
+* @tc.expect: Timer matching exemption criteria is correctly identified as exempted
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
 */
 HWTEST_F(TimeProxyTest, AdjustTimerExemption001, TestSize.Level0)
 {
@@ -601,8 +720,14 @@ HWTEST_F(TimeProxyTest, AdjustTimerExemption001, TestSize.Level0)
 
 /**
 * @tc.name: ProxyTimerCover001
-* @tc.desc: test CallbackAlarmIfNeed.
+* @tc.desc: Test callback alarm functionality with null input
+* @tc.precon: Timer proxy service is available, callback mechanism works
+* @tc.step: 1. Call CallbackAlarmIfNeed with nullptr parameter
+*           2. Verify function returns appropriate error code
+* @tc.expect: Function handles null input gracefully and returns E_TIME_NULLPTR
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover001, TestSize.Level1)
 {
@@ -612,8 +737,14 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover001, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerCover002
-* @tc.desc: test UID.
+* @tc.desc: Test UID-based proxy timer map cleanup functionality
+* @tc.precon: Timer proxy service is available, proxy map management works
+* @tc.step: 1. Enable proxy for specific UID
+*           2. Execute timer removal from proxy map for the UID
+* @tc.expect: Proxy operations complete without errors
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
 {
@@ -623,11 +754,17 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover002, TestSize.Level1)
     TimerProxy::GetInstance().EraseTimerFromProxyTimerMap(0, UID, 0);
 }
 
-
 /**
 * @tc.name: ProxyTimerCover003
-* @tc.desc: test PID.
+* @tc.desc: Test PID-based proxy timer map cleanup functionality
+* @tc.precon: Timer proxy service is available, supports PID-level proxy
+* @tc.step: 1. Clear existing maps
+*           2. Enable proxy for specific PID within UID
+*           3. Execute timer removal from proxy map for the PID
+* @tc.expect: PID-based proxy operations complete without errors
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
 {
@@ -643,8 +780,16 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover003, TestSize.Level1)
 
 /**
 * @tc.name: ProxyTimerCover004
-* @tc.desc: test CallbackAlarmIfNeed.
+* @tc.desc: Test UID timer map record and removal functionality
+* @tc.precon: Timer proxy service is available, UID map management works
+* @tc.step: 1. Test record and remove with null timer info
+*           2. Create valid timer info and record in UID map
+*           3. Verify timer is properly recorded
+*           4. Remove timer from UID map and verify clearance
+* @tc.expect: UID timer map properly manages timer records for addition and removal
 * @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level1
 */
 HWTEST_F(TimeProxyTest, ProxyTimerCover004, TestSize.Level1)
 {
