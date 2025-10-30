@@ -105,9 +105,48 @@ void SetTimeSync(int64_t time)
     }
     return;
 }
+
+void SetTimezoneSync(::taihe::string_view timezone)
+{
+    std::string zone = std::string(timezone);
+    auto innerCode = TimeServiceClient::GetInstance()->SetTimeZoneV9(zone);
+    if (innerCode != JsErrorCode::ERROR_OK) {
+        int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+        std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+        set_business_error(errorCode, errorMessage);
+    }
+}
+
+void UpdateNtpTimeSync()
+{
+    int64_t time = 0;
+    int32_t innerCode = TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
+    if (innerCode != JsErrorCode::ERROR_OK) {
+        int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+        std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+        set_business_error(errorCode, errorMessage);
+        return;
+    }
+}
+
+int64_t getNtpTime()
+{
+    int64_t time = 0;
+    int32_t innerCode = TimeServiceClient::GetInstance()->GetRealTimeMs(time);
+    if (innerCode != JsErrorCode::ERROR_OK) {
+        int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+        std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+        set_business_error(errorCode, errorMessage);
+        return 0;
+    }
+    return time;
+}
 }  // namespace
 
 TH_EXPORT_CPP_API_GetTimezoneSync(GetTimezoneSync);
 TH_EXPORT_CPP_API_GetUptime(GetUptime);
 TH_EXPORT_CPP_API_GetTime(GetTime);
 TH_EXPORT_CPP_API_SetTimeSync(SetTimeSync);
+TH_EXPORT_CPP_API_SetTimezoneSync(SetTimezoneSync);
+TH_EXPORT_CPP_API_UpdateNtpTimeSync(UpdateNtpTimeSync);
+TH_EXPORT_CPP_API_getNtpTime(getNtpTime);

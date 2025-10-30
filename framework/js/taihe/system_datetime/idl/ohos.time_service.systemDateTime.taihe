@@ -33,4 +33,13 @@ function GetTime(isNanoseconds: Optional<bool>): i64;
 
 @gen_promise("setTime")
 @gen_async("setTime")
-function SetTimeSync(time: i64);
+function SetTimeSync(time: i64): void;
+
+@gen_promise("setTimezone")
+@gen_async("setTimezone")
+function SetTimezoneSync(timezone: String): void;
+
+@gen_promise("updateNtpTime")
+function UpdateNtpTimeSync(): void;
+
+function getNtpTime(): i64;
