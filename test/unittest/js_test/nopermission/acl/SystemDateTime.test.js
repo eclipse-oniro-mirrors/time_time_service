@@ -24,11 +24,16 @@ describe('SystemDateTimeTest', function () {
     /**
      * @tc.number: TestSetTimeNoPermission001
      * @tc.name: TestSetTimeNoPermission001
-     * @tc.desc: Test setTime no acl permission for promise
+     * @tc.desc: Test setTime API returns permission error when called without ACL permission using Promise
+     * @tc.precon: SystemDateTime service is available and ACL permissions are properly configured
+     * @tc.step: 1. Get current timestamp
+     *           2. Call setTime API using Promise without required permissions
+     *           3. Verify the operation fails with ACL_ERROR code
+     * @tc.expect: setTime Promise call should reject with ACL_ERROR when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('TestSetTimeNoPermission001', 0, async function (done) {
         console.log("testSetTimeNoPermission001 start");
@@ -46,11 +51,16 @@ describe('SystemDateTimeTest', function () {
     /**
      * @tc.number: TestSetTimeNoPermission002
      * @tc.name: TestSetTimeNoPermission002
-     * @tc.desc: Test setTime no acl permission for callback
+     * @tc.desc: Test setTime API returns permission error when called without ACL permission using Callback
+     * @tc.precon: SystemDateTime service is available and ACL permissions are properly configured
+     * @tc.step: 1. Get current timestamp
+     *           2. Call setTime API using Callback without required permissions
+     *           3. Verify the operation fails with ACL_ERROR code
+     * @tc.expect: setTime Callback should return ACL_ERROR when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testSetTimeNoPermission002', 0, async function (done) {
         console.log("testSetTimeNoPermission002 start");
@@ -69,11 +79,16 @@ describe('SystemDateTimeTest', function () {
     /**
      * @tc.number: TestSetTimezoneNoPermission001
      * @tc.name: TestSetTimezoneNoPermission001
-     * @tc.desc: Test setTimezone no permission for promise
+     * @tc.desc: Test setTimezone API returns permission error when called without required permission using Promise
+     * @tc.precon: SystemDateTime service is available and timezone data is accessible
+     * @tc.step: 1. Set target timezone to "Antarctica/McMurdo"
+     *           2. Call setTimezone API using Promise without required permissions
+     *           3. Verify the operation fails with ACL_ERROR code
+     * @tc.expect: setTimezone Promise call should reject with ACL_ERROR when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('TestSetTimezoneNoPermission001', 0, async function (done) {
         console.log("testSetTimezoneNoPermission001 start");
@@ -91,11 +106,16 @@ describe('SystemDateTimeTest', function () {
     /**
      * @tc.number: TestSetTimezoneNoPermission002
      * @tc.name: TestSetTimezoneNoPermission002
-     * @tc.desc: Test setTime no acl permission for callback
+     * @tc.desc: Test setTimezone API returns permission error when called without required permission using Callback
+     * @tc.precon: SystemDateTime service is available and timezone data is accessible
+     * @tc.step: 1. Set target timezone to "Antarctica/McMurdo"
+     *           2. Call setTimezone API using Callback without required permissions
+     *           3. Verify the operation fails with ACL_ERROR code
+     * @tc.expect: setTimezone Callback should return ACL_ERROR when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('TestSetTimezoneNoPermission002', 0, async function (done) {
         console.log("testSetTimezoneNoPermission002 start");
@@ -114,11 +134,15 @@ describe('SystemDateTimeTest', function () {
     /**
      * @tc.number: TestSetAutoTimeNoPermission001
      * @tc.name: TestSetAutoTimeNoPermission001
-     * @tc.desc: Test setAutoTimeStatus without permission
+     * @tc.desc: Test setAutoTimeStatus API returns permission error when called without required permission
+     * @tc.precon: SystemDateTime service is available and auto-time configuration is accessible
+     * @tc.step: 1. Call setAutoTimeStatus API with true value using Callback
+     *           2. Verify the operation fails with ACL_ERROR code due to missing permissions
+     * @tc.expect: setAutoTimeStatus should return ACL_ERROR when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('TestSetAutoTimeNoPermission001', 0, async function (done) {
         systemDateTime.setAutoTimeStatus(true, (err) => {

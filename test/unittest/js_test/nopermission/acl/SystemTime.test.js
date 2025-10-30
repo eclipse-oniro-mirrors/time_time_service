@@ -22,11 +22,16 @@ describe('SystemTimeTest', function () {
     /**
      * @tc.number: TestSetTimeNoPermission001
      * @tc.name: TestSetTimeNoPermission001
-     * @tc.desc: Test setTime no permission for promise
+     * @tc.desc: Test setTime API returns permission error when called without required permission using Promise
+     * @tc.precon: SystemTime service is available and system time permissions are properly configured
+     * @tc.step: 1. Get current timestamp using Date.getTime()
+     *           2. Call setTime API using Promise without required permissions
+     *           3. Catch the rejection and verify error code equals -1
+     * @tc.expect: setTime Promise call should reject with error code -1 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testSetTimeNoPermission001', 0, async function (done) {
         console.log("testSetTimeNoPermission001 start");
@@ -44,11 +49,16 @@ describe('SystemTimeTest', function () {
     /**
      * @tc.number: TestSetTimeNoPermission002
      * @tc.name: TestSetTimeNoPermission002
-     * @tc.desc: Test setTime no permission for callback
+     * @tc.desc: Test setTime API returns permission error when called without required permission using Callback
+     * @tc.precon: SystemTime service is available and system time permissions are properly configured
+     * @tc.step: 1. Get current timestamp using Date.getTime()
+     *           2. Call setTime API using Callback without required permissions
+     *           3. Check error object and verify error code equals -1
+     * @tc.expect: setTime Callback should return error with code -1 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testSetTimeNoPermission002', 0, async function (done) {
         console.log("testSetTimeNoPermission002 start");
@@ -67,11 +77,16 @@ describe('SystemTimeTest', function () {
     /**
      * @tc.number: TestSetTimezoneNoPermission001
      * @tc.name: TestSetTimezoneNoPermission001
-     * @tc.desc: Test setTimezone no permission for promise
+     * @tc.desc: Test setTimezone API returns permission error when called without required permission using Promise
+     * @tc.precon: SystemTime service is available and timezone database is accessible
+     * @tc.step: 1. Set target timezone to "Antarctica/McMurdo"
+     *           2. Call setTimezone API using Promise without required permissions
+     *           3. Catch the rejection and verify error code equals -1
+     * @tc.expect: setTimezone Promise call should reject with error code -1 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testSetTimezoneNoPermission001', 0, async function (done) {
         console.log("testSetTimezoneNoPermission001 start");
@@ -89,11 +104,16 @@ describe('SystemTimeTest', function () {
     /**
      * @tc.number: TestSetTimezoneNoPermission002
      * @tc.name: TestSetTimezoneNoPermission002
-     * @tc.desc: Test setTime no permission for callback
+     * @tc.desc: Test setTimezone API returns permission error when called without required permission using Callback
+     * @tc.precon: SystemTime service is available and timezone database is accessible
+     * @tc.step: 1. Set target timezone to "Antarctica/McMurdo"
+     *           2. Call setTimezone API using Callback without required permissions
+     *           3. Check error object and verify error code equals -1
+     * @tc.expect: setTimezone Callback should return error with code -1 when permissions are missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testSetTimezoneNoPermission002', 0, async function (done) {
         console.log("testSetTimezoneNoPermission002 start");

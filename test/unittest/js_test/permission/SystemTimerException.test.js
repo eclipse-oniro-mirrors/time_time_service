@@ -60,11 +60,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerType001
      * @tc.name: TestCreateTimerType001
-     * @tc.desc: Test createTimer for promise when type is 16.
+     * @tc.desc: Test createTimer API creates timer successfully with valid type 16 using Promise
+     * @tc.precon: SystemTimer service is available and timer creation is supported
+     * @tc.step: 1. Prepare timer options with type=16 and repeat=false
+     *           2. Call createTimer API using Promise
+     *           3. Verify timer ID is returned and not zero
+     * @tc.expect: createTimer should successfully create timer and return valid timer ID
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerType001', 0, async function (done) {
         console.log("testCreateTimerType001 start")
@@ -82,11 +87,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerType002
      * @tc.name: TestCreateTimerType002
-     * @tc.desc: Test createTimer for promise when type is string.
+     * @tc.desc: Test createTimer API handles string type parameter using Promise
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options with string type parameter
+     *           2. Call createTimer API using Promise
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer should reject with error code 401 when type parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerType002', 0, async function (done) {
         console.log("testCreateTimerType002 start")
@@ -101,11 +111,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerRepeat003
      * @tc.name: TestCreateTimerRepeat003
-     * @tc.desc: Test createTimer for promise when repeat is string.
+     * @tc.desc: Test createTimer API handles string repeat parameter using Promise
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options with string repeat parameter
+     *           2. Call createTimer API using Promise
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer should reject with error code 401 when repeat parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerRepeat003', 0, async function (done) {
         console.log("testCreateTimerRepeat003 start")
@@ -117,15 +132,19 @@ describe('SystemTimerExceptionTest', function () {
         console.log('testCreateTimerRepeat003 end');
     });
 
-
     /**
      * @tc.number: TestCreateTimerWantAgent004
      * @tc.name: TestCreateTimerWantAgent004
-     * @tc.desc: Test createTimer for promise when wantAgent is number.
+     * @tc.desc: Test createTimer API handles number wantAgent parameter using Promise
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options with number wantAgent parameter
+     *           2. Call createTimer API using Promise
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer should reject with error code 401 when wantAgent parameter is invalid number
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerWantAgent004', 0, async function (done) {
         console.log("testCreateTimerWantAgent004 start")
@@ -141,11 +160,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerCallback005
      * @tc.name: TestCreateTimerCallback005
-     * @tc.desc: Test createTimer for promise when callback is number.
+     * @tc.desc: Test createTimer API handles number callback parameter using Promise
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options with number callback parameter
+     *           2. Call createTimer API using Promise
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer should reject with error code 401 when callback parameter is invalid number
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerCallback005', 0, async function (done) {
         console.log("testCreateTimerCallback005 start")
@@ -161,11 +185,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerNull006
      * @tc.name: TestCreateTimerNull006
-     * @tc.desc: Test createTimer for promise when option is null.
+     * @tc.desc: Test createTimer API handles null options parameter using Promise
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Call createTimer API with null options using Promise
+     *           2. Verify operation fails with error code 401
+     * @tc.expect: createTimer should reject with error code 401 when options parameter is null
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerNull006', 0, async function (done) {
         console.log("testCreateTimerNull006 start")
@@ -184,11 +212,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerRepeat007
      * @tc.name: TestCreateTimerRepeat007
-     * @tc.desc: Test createTimer for promise when not repeat.
+     * @tc.desc: Test createTimer API handles missing repeat parameter using Promise
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options without repeat parameter
+     *           2. Call createTimer API using Promise
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer should reject with error code 401 when repeat parameter is missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerRepeat007', 0, async function (done) {
         console.log("testCreateTimerRepeat007 start")
@@ -202,11 +235,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerInterval008
      * @tc.name: TestCreateTimerInterval008
-     * @tc.desc: Test createTimer for promise when interval is string .
+     * @tc.desc: Test createTimer API handles string interval parameter using Promise
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options with string interval parameter
+     *           2. Call createTimer API using Promise
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer should reject with error code 401 when interval parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerInterval008', 0, async function (done) {
         console.log("testCreateTimerInterval008 start")
@@ -222,11 +260,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerType009
      * @tc.name: TestCreateTimerType009
-     * @tc.desc: Test createTimer for callback when type is 16.
+     * @tc.desc: Test createTimer API creates timer successfully with valid type 16 using Callback
+     * @tc.precon: SystemTimer service is available and timer creation is supported
+     * @tc.step: 1. Prepare timer options with type=16 and repeat=false
+     *           2. Call createTimer API using Callback
+     *           3. Verify timer creation succeeds without errors
+     * @tc.expect: createTimer should successfully create timer using callback without errors
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerType009', 0, async function (done) {
         console.log("testCreateTimerType009 start")
@@ -252,11 +295,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerType010
      * @tc.name: TestCreateTimerType010
-     * @tc.desc: Test createTimer for callback when type is string .
+     * @tc.desc: Test createTimer API handles string type parameter using Callback
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options with string type parameter
+     *           2. Call createTimer API using Callback
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer callback should return error code 401 when type parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerType010', 0, async function (done) {
         console.log("testCreateTimerType010 start")
@@ -271,11 +319,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerRepeat011
      * @tc.name: TestCreateTimerRepeat011
-     * @tc.desc: Test createTimer for callback when repeat is string .
+     * @tc.desc: Test createTimer API handles string repeat parameter using Callback
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options with string repeat parameter
+     *           2. Call createTimer API using Callback
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer callback should return error code 401 when repeat parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerRepeat011', 0, async function (done) {
         console.log("testCreateTimerRepeat011 start")
@@ -290,11 +343,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerWantAgent012
      * @tc.name: TestCreateTimerWantAgent012
-     * @tc.desc: Test createTimer for callback when wantAgent is number.
+     * @tc.desc: Test createTimer API handles number wantAgent parameter using Callback
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options with number wantAgent parameter
+     *           2. Call createTimer API using Callback
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer callback should return error code 401 when wantAgent parameter is invalid number
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerWantAgent012', 0, async function (done) {
         console.log("testCreateTimerWantAgent012 start")
@@ -310,11 +368,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerCallback013
      * @tc.name: TestCreateTimerCallback013
-     * @tc.desc: Test createTimer for callback when callback is number.
+     * @tc.desc: Test createTimer API handles number callback parameter using Callback
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options with number callback parameter
+     *           2. Call createTimer API using Callback
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer callback should return error code 401 when callback parameter is invalid number
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerCallback013', 0, async function (done) {
         console.log("testCreateTimerCallback013 start")
@@ -330,11 +393,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerNull014
      * @tc.name: TestCreateTimerNull014
-     * @tc.desc: Test createTimer for callback when option is null.
+     * @tc.desc: Test createTimer API handles null options parameter using Callback
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Call createTimer API with null options using Callback
+     *           2. Verify operation fails with error code 401
+     * @tc.expect: createTimer callback should return error code 401 when options parameter is null
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerNull014', 0, async function (done) {
         console.log("testCreateTimerNull014 start")
@@ -357,11 +424,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerRepeat015
      * @tc.name: TestCreateTimerRepeat015
-     * @tc.desc: Test createTimer for callback when not repeat.
+     * @tc.desc: Test createTimer API handles missing repeat parameter using Callback
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options without repeat parameter
+     *           2. Call createTimer API using Callback
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer callback should return error code 401 when repeat parameter is missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerRepeat015', 0, async function (done) {
         console.log("testCreateTimerRepeat015 start")
@@ -375,14 +447,19 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestCreateTimerInterval016
      * @tc.name: TestCreateTimerInterval016
-     * @tc.desc: Test createTimer for callback when interval is string .
+     * @tc.desc: Test createTimer API handles string interval parameter using Callback
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Prepare timer options with string interval parameter
+     *           2. Call createTimer API using Callback
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: createTimer callback should return error code 401 when interval parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testCreateTimerInterval016', 0, async function (done) {
-        console.log("testCreateTimerInterval008 start")
+        console.log("testCreateTimerInterval016 start")
         let options = {
             type: systemTimer.TIMER_TYPE_EXACT,
             repeat: false,
@@ -407,11 +484,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStartTimerLackParam001
      * @tc.name: TestStartTimerLackParam001
-     * @tc.desc: Test startTimer for callback when not triggerTime.
+     * @tc.desc: Test startTimer API handles missing triggerTime parameter using Callback
+     * @tc.precon: SystemTimer service is available and timer creation is supported
+     * @tc.step: 1. Create valid timer with repeat mode
+     *           2. Call startTimer API without triggerTime using Callback
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: startTimer should return error code 401 when triggerTime parameter is missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStartTimerLackParam001', 0, async function (done) {
         console.log("testStartTimerLackParam001 start")
@@ -437,11 +519,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStartTimerLackParam002
      * @tc.name: TestStartTimerLackParam002
-     * @tc.desc: Test startTimer for promise when not triggerTime.
+     * @tc.desc: Test startTimer API handles missing triggerTime parameter using Promise
+     * @tc.precon: SystemTimer service is available and timer creation is supported
+     * @tc.step: 1. Create valid timer with repeat mode
+     *           2. Call startTimer API without triggerTime using Promise
+     *           3. Verify operation fails with error code 401
+     * @tc.expect: startTimer should reject with error code 401 when triggerTime parameter is missing
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStartTimerLackParam002', 0, async function (done) {
         console.log("testStartTimerLackParam002 start")
@@ -467,11 +554,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStartTimerInvalidParam003
      * @tc.name: TestStartTimerInvalidParam003
-     * @tc.desc: Test startTimer for callback when timerId is string.
+     * @tc.desc: Test startTimer API handles string timerId parameter using Callback
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Call startTimer API with string timerId using Callback
+     *           2. Verify operation fails with error code 401
+     * @tc.expect: startTimer should return error code 401 when timerId parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStartTimerInvalidParam003', 0, async function (done) {
         console.log("testStartTimerInvalidParam003 start")
@@ -490,11 +581,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStartTimerInvalidParam004
      * @tc.name: TestStartTimerInvalidParam004
-     * @tc.desc: Test startTimer for promise when timerId is string.
+     * @tc.desc: Test startTimer API handles string timerId parameter using Promise
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Call startTimer API with string timerId using Promise
+     *           2. Verify operation fails with error code 401
+     * @tc.expect: startTimer should reject with error code 401 when timerId parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStartTimerInvalidParam004', 0, async function (done) {
         console.log("testStartTimerInvalidParam004 start")
@@ -513,11 +608,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStartTimerInvalidValue005
      * @tc.name: TestStartTimerInvalidValue005
-     * @tc.desc: Test startTimer for callback when timerId is invalid.
+     * @tc.desc: Test startTimer API handles invalid timerId value using Callback
+     * @tc.precon: SystemTimer service is available and timer validation is enabled
+     * @tc.step: 1. Call startTimer API with invalid timerId (123456) using Callback
+     *           2. Verify operation fails as expected
+     * @tc.expect: startTimer should return error when timerId value is invalid
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStartTimerInvalidValue005', 0, async function (done) {
         console.log("testStartTimerInvalidValue005 start")
@@ -537,11 +636,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStartTimerInvalidValue006
      * @tc.name: TestStartTimerInvalidValue006
-     * @tc.desc: Test startTimer for promise when timerId is invalid.
+     * @tc.desc: Test startTimer API handles invalid timerId value using Promise
+     * @tc.precon: SystemTimer service is available and timer validation is enabled
+     * @tc.step: 1. Call startTimer API with invalid timerId (123456) using Promise
+     *           2. Verify operation fails as expected
+     * @tc.expect: startTimer should reject when timerId value is invalid
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStartTimerInvalidValue006', 0, async function (done) {
         console.log("testStartTimerInvalidValue006 start")
@@ -565,11 +668,16 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStartTimerInvalidValue007
      * @tc.name: TestStartTimerInvalidValue007
-     * @tc.desc: Test startTimer for callback when triggerTime is -1.
+     * @tc.desc: Test startTimer API handles negative triggerTime value using Callback
+     * @tc.precon: SystemTimer service is available and timer creation is supported
+     * @tc.step: 1. Create valid timer
+     *           2. Call startTimer API with triggerTime=-1 using Callback
+     *           3. Verify operation succeeds and timer is destroyed
+     * @tc.expect: startTimer should handle negative triggerTime value gracefully using callback
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStartTimerInvalidValue007', 0, async function (done) {
         console.log("testStartTimerInvalidValue007 start")
@@ -592,14 +700,19 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStartTimerInvalidValue008
      * @tc.name: TestStartTimerInvalidValue008
-     * @tc.desc: Test startTimer for callback when triggerTime is -1.
+     * @tc.desc: Test startTimer API handles negative triggerTime value using Promise
+     * @tc.precon: SystemTimer service is available and timer creation is supported
+     * @tc.step: 1. Create valid timer
+     *           2. Call startTimer API with triggerTime=-1 using Promise
+     *           3. Verify operation succeeds
+     * @tc.expect: startTimer should handle negative triggerTime value gracefully using promise
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
-    it('SUB_time_systemTimer_startTimer_0008', 0, async function (done) {
-        console.log("SUB_time_systemTimer_startTimer_0008 start")
+    it('testStartTimerInvalidValue008', 0, async function (done) {
+        console.log("testStartTimerInvalidValue008 start")
         let options = {
             type: systemTimer.TIMER_TYPE_REALTIME,
             repeat: false
@@ -617,17 +730,21 @@ describe('SystemTimerExceptionTest', function () {
             expect(false).assertTrue();
             done()
         }
-        console.log('SUB_time_systemTimer_startTimer_0008 end');
+        console.log('testStartTimerInvalidValue008 end');
     });
 
     /**
      * @tc.number: TestDestroyTimerInvalidParam001
      * @tc.name: TestDestroyTimerInvalidParam001
-     * @tc.desc: Test destroyTimer for callback when timerId is string.
+     * @tc.desc: Test destroyTimer API handles string timerId parameter using Callback
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Call destroyTimer API with string timerId using Callback
+     *           2. Verify operation fails with error code 401
+     * @tc.expect: destroyTimer should return error code 401 when timerId parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testDestroyTimerInvalidParam001', 0, async function (done) {
         console.log("testDestroyTimerInvalidParam001 start");
@@ -646,11 +763,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestDestroyTimerInvalidParam002
      * @tc.name: TestDestroyTimerInvalidParam002
-     * @tc.desc: Test destroyTimer for promise when timerId is string.
+     * @tc.desc: Test destroyTimer API handles string timerId parameter using Promise
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Call destroyTimer API with string timerId using Promise
+     *           2. Verify operation fails with error code 401
+     * @tc.expect: destroyTimer should reject with error code 401 when timerId parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testDestroyTimerInvalidParam002', 0, async function (done) {
         console.log("testDestroyTimerInvalidParam002 start");
@@ -669,11 +790,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestDestroyTimerInvalidValue003
      * @tc.name: TestDestroyTimerInvalidValue003
-     * @tc.desc: Test destroyTimer for callback when timerId is invalid.
+     * @tc.desc: Test destroyTimer API handles invalid timerId value using Callback
+     * @tc.precon: SystemTimer service is available and timer validation is enabled
+     * @tc.step: 1. Call destroyTimer API with invalid timerId (123456) using Callback
+     *           2. Verify operation fails as expected
+     * @tc.expect: destroyTimer should return error when timerId value is invalid
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testDestroyTimerInvalidValue003', 0, async function (done) {
         console.log("testDestroyTimerInvalidValue003 start");
@@ -689,11 +814,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestDestroyTimerInvalidValue004
      * @tc.name: TestDestroyTimerInvalidValue004
-     * @tc.desc: Test destroyTimer for promise when timerId is invalid.
+     * @tc.desc: Test destroyTimer API handles invalid timerId value using Promise
+     * @tc.precon: SystemTimer service is available and timer validation is enabled
+     * @tc.step: 1. Call destroyTimer API with invalid timerId (123456) using Promise
+     *           2. Verify operation fails as expected
+     * @tc.expect: destroyTimer should reject when timerId value is invalid
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testDestroyTimerInvalidValue004', 0, async function (done) {
         console.log("testDestroyTimerInvalidValue004 start");
@@ -715,11 +844,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStopTimerInvalidParam001
      * @tc.name: TestStopTimerInvalidParam001
-     * @tc.desc: Test stopTimer for promise when timerId is string.
+     * @tc.desc: Test stopTimer API handles string timerId parameter using Promise
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Call stopTimer API with string timerId using Promise
+     *           2. Verify operation fails with error code 401
+     * @tc.expect: stopTimer should reject with error code 401 when timerId parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStopTimerInvalidParam001', 0, async function (done) {
         try {
@@ -736,11 +869,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStopTimerInvalidParam002
      * @tc.name: TestStopTimerInvalidParam002
-     * @tc.desc: Test stopTimer for callback when timerId is string.
+     * @tc.desc: Test stopTimer API handles string timerId parameter using Callback
+     * @tc.precon: SystemTimer service is available and parameter validation is enabled
+     * @tc.step: 1. Call stopTimer API with string timerId using Callback
+     *           2. Verify operation fails with error code 401
+     * @tc.expect: stopTimer should return error code 401 when timerId parameter is invalid string
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStopTimerInvalidParam002', 0, async function (done) {
         try {
@@ -757,11 +894,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStopTimerInvalidValue003
      * @tc.name: TestStopTimerInvalidValue003
-     * @tc.desc: Test stopTimer for callback when timerId is invalid.
+     * @tc.desc: Test stopTimer API handles invalid timerId value using Callback
+     * @tc.precon: SystemTimer service is available and timer validation is enabled
+     * @tc.step: 1. Call stopTimer API with invalid timerId (123456) using Callback
+     *           2. Verify operation fails as expected
+     * @tc.expect: stopTimer should return error when timerId value is invalid
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStopTimerInvalidValue003', 0, async function (done) {
         try {
@@ -775,11 +916,15 @@ describe('SystemTimerExceptionTest', function () {
     /**
      * @tc.number: TestStopTimerInvalidValue004
      * @tc.name: TestStopTimerInvalidValue004
-     * @tc.desc: Test stopTimer for promise when timerId is invalid.
+     * @tc.desc: Test stopTimer API handles invalid timerId value using Promise
+     * @tc.precon: SystemTimer service is available and timer validation is enabled
+     * @tc.step: 1. Call stopTimer API with invalid timerId (123456) using Promise
+     *           2. Verify operation fails as expected
+     * @tc.expect: stopTimer should reject when timerId value is invalid
      * @tc.size: MediumTest
      * @tc.type: Function
-     * @tc.level: Level 1
-     * @tc.require:
+     * @tc.level: Level1
+     * @tc.require: issue#844
      */
     it('testStopTimerInvalidValue004', 0, async function (done) {
         try {
