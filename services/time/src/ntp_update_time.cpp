@@ -176,7 +176,6 @@ NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
                 return REFRESH_SUCCESS;
             }
         }
-        std::lock_guard<std::mutex> lock(NtpTrustedTime::GetInstance().mTimeResultMutex_);
         if (NtpTrustedTime::GetInstance().FindBestTimeResult()) {
             return REFRESH_SUCCESS;
         }
