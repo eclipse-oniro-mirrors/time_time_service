@@ -54,6 +54,7 @@ taihe_shared_library("systemdatetime_taihe_native") {
     "//base/time/time_service/interfaces/inner_api:time_client",
   ]
   external_deps = [
+    "ability_base:configuration",
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hilog:libhilog",

@@ -60,6 +60,7 @@ ohos_unittest("TimeServiceTimeTest") {
     defines += [ "SET_AUTO_REBOOT_ENABLE" ]
   }
   external_deps = [
+    "ability_base:configuration",
     "ability_base:want",
     "ability_runtime:runtime",
     "ability_runtime:wantagent_innerkits",
@@ -112,6 +113,7 @@ ohos_unittest("TimeServiceTimerTest") {
     defines += [ "SET_AUTO_REBOOT_ENABLE" ]
   }
   external_deps = [
+    "ability_base:configuration",
     "ability_base:want",
     "ability_runtime:runtime",
     "ability_runtime:wantagent_innerkits",
@@ -160,6 +162,7 @@ ohos_unittest("TimeClientTest") {
     debug = false
   }
   external_deps = [
+    "ability_base:configuration",
     "ability_base:want",
     "ability_runtime:runtime",
     "ability_runtime:wantagent_innerkits",
@@ -196,6 +199,7 @@ ohos_unittest("TimeDfxTest") {
     debug = false
   }
   external_deps = [
+    "ability_base:configuration",
     "ability_base:want",
     "ability_runtime:runtime",
     "ability_runtime:wantagent_innerkits",
@@ -262,6 +266,7 @@ ohos_unittest("TimeProxyTest") {
     debug = false
   }
   external_deps = [
+    "ability_base:configuration",
     "ability_base:want",
     "ability_runtime:runtime",
     "ability_runtime:wantagent_innerkits",
