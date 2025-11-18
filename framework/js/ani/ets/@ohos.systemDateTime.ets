@@ -24,7 +24,7 @@ export default namespace systemDateTime {
 
   export function getCurrentTime(isNano: boolean, callback: AsyncCallback<number>): void {
     let p1 = taskpool.execute(getTime, isNano)
-    p1.then((e :NullishType) => {
+    p1.then((e :Any) => {
       let error = new BusinessError<void>
       error.code = 0
       callback(error, e as number)
@@ -33,7 +33,7 @@ export default namespace systemDateTime {
 
   export function getCurrentTime(callback: AsyncCallback<number>): void {
     let p1 = taskpool.execute(getTime)
-    p1.then((e :NullishType) => {
+    p1.then((e :Any) => {
       let error = new BusinessError<void>
       error.code = 0
       callback(error, e as number)
@@ -43,7 +43,7 @@ export default namespace systemDateTime {
   export function getCurrentTime(isNano?: boolean): Promise<number> {
     let p = new Promise<number>((resolve: (value: number) => void, reject: (error: Error) => void): void => {
       let p1 = taskpool.execute(getTime, isNano);
-      p1.then((e: NullishType): void => {
+      p1.then((e: Any): void => {
         resolve(e as number);
       });
     });
@@ -55,7 +55,7 @@ export default namespace systemDateTime {
 
   export function getTimezone(callback: AsyncCallback<string>): void{
     let p1 = taskpool.execute(getTimezoneSync)
-    p1.then((e :NullishType) => {
+    p1.then((e :Any) => {
       let s = e as string
       let error = new BusinessError<void>
       if (s === "") {
@@ -70,7 +70,7 @@ export default namespace systemDateTime {
   export function getTimezone(): Promise<string> {
     let p = new Promise<string>((resolve: (value: string) => void, reject: (error: Error) => void): void => {
       let p1 = taskpool.execute(getTimezoneSync);
-      p1.then((e: NullishType): void => {
+      p1.then((e: Any): void => {
         let s = e as string
         if (s === "") {
           let error = new BusinessError<void>
