@@ -41,6 +41,7 @@ ohos_shared_library("time_client") {
   ]
   deps = [ "${time_service_path}:timeservice_proxy" ]
   external_deps = [
+    "ability_base:configuration",
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hilog:libhilog",
