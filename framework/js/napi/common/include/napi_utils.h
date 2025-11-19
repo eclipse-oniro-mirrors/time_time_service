@@ -17,12 +17,16 @@
 #define NAPI_UTILS_H
 
 #include <map>
+#include <functional>
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 namespace OHOS {
 namespace MiscServices {
 namespace Time {
+
+#define RETVAL_NOTHING
+
 #define NAPI_ASSERTS_BASE_RETURN(env, assertion, code, message, retVal) \
     do {                                                         \
         if (!(assertion)) {                                      \
@@ -33,6 +37,21 @@ namespace Time {
 
 #define NAPI_ASSERTP_RETURN(env, assertion, message) \
     NAPI_ASSERTS_BASE_RETURN(env, assertion, ERROR, message, nullptr)
+
+
+#define TIME_SERVICE_NAPI_CALL_BASE(env, theCall, code, message, retVal) \
+    do {                                                         \
+        if ((theCall) != napi_ok) {                                      \
+            NapiUtils::ThrowError(env, message, code);           \
+            return retVal;                                       \
+        }                                                        \
+    } while (0)
+
+#define TIME_SERVICE_NAPI_CALL(env, theCall, code, message) \
+    TIME_SERVICE_NAPI_CALL_BASE(env, theCall, code, message, nullptr)
+
+#define TIME_SERVICE_NAPI_CALL_RETURN_VOID(env, theCall, code, message) \
+    TIME_SERVICE_NAPI_CALL_BASE(env, theCall, code, message, RETVAL_NOTHING)
 
 /* check condition related to argc/argv, return and logging. */
 #define CHECK_ARGS_RETURN_VOID(module, context, condition, message, code)                                   \

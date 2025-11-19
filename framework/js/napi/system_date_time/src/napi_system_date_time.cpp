@@ -40,12 +40,13 @@ napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value expor
     napi_value timeType = nullptr;
     napi_value startup = nullptr;
     napi_value active = nullptr;
-    NAPI_CALL(env, napi_create_int32(env, STARTUP, &startup));
-    NAPI_CALL(env, napi_create_int32(env, ACTIVE, &active));
-    NAPI_CALL(env, napi_create_object(env, &timeType));
-    NAPI_CALL(env, napi_set_named_property(env, timeType, "STARTUP", startup));
-    NAPI_CALL(env, napi_set_named_property(env, timeType, "ACTIVE", active));
-
+    TIME_SERVICE_NAPI_CALL(env, napi_create_int32(env, STARTUP, &startup), ERROR, "napi_create_int32 failed");
+    TIME_SERVICE_NAPI_CALL(env, napi_create_int32(env, ACTIVE, &active), ERROR, "napi_create_int32 failed");
+    TIME_SERVICE_NAPI_CALL(env, napi_create_object(env, &timeType), ERROR, "napi_create_object failed");
+    TIME_SERVICE_NAPI_CALL(env, napi_set_named_property(env, timeType, "STARTUP", startup), ERROR,
+        "napi_set_named_property failed");
+    TIME_SERVICE_NAPI_CALL(env, napi_set_named_property(env, timeType, "ACTIVE", active), ERROR,
+        "napi_set_named_property failed");
     napi_property_descriptor descriptors[] = {
         DECLARE_NAPI_STATIC_FUNCTION("setTime", SetTime),
         DECLARE_NAPI_STATIC_FUNCTION("getCurrentTime", GetCurrentTime),
@@ -64,7 +65,6 @@ napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value expor
         DECLARE_NAPI_STATIC_FUNCTION("setAutoTimeStatus", SetAutoTimeStatus),
         DECLARE_NAPI_STATIC_PROPERTY("TimeType", timeType),
     };
-
     napi_status status =
         napi_define_properties(env, exports, sizeof(descriptors) / sizeof(napi_property_descriptor), descriptors);
     if (status != napi_ok) {

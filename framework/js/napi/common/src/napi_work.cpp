@@ -119,7 +119,7 @@ napi_value NapiWork::AsyncEnqueue(napi_env env, ContextBase *ctxt, const std::st
     if (ret != napi_ok) {
         napi_delete_async_work(env, ctxt->work);
         delete ctxt;
-        NAPI_CALL(env, ret);
+        TIME_SERVICE_NAPI_CALL(env, ret, ERROR, "napi_queue_async_work_with_qos failed");
     }
     return promise;
 }
