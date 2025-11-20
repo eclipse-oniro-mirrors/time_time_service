@@ -56,11 +56,11 @@ public:
     };
     bool IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult);
     int32_t GetSameTimeResultCount(std::shared_ptr<TimeResult> candidateTimeResult);
-    static std::mutex mTimeResultMutex_;
 
 private:
     std::shared_ptr<TimeResult> mTimeResult {};
     std::vector<std::shared_ptr<TimeResult>> TimeResultCandidates_ {};
+    static std::mutex mTimeResultMutex_;
 };
 } // namespace MiscServices
 } // namespace OHOS
