@@ -70,6 +70,7 @@ constexpr int64_t ONE_DAY = 86400000;
 constexpr int64_t ONE_HOUR = 3600000;
 constexpr int64_t TWO_SECOND = 2000;
 constexpr int64_t ONE_SECOND = 1000;
+constexpr int64_t ONE_MILLISECOND = 1;
 
 static HapPolicyParams g_policyA = {
     .apl = APL_SYSTEM_CORE,
@@ -977,9 +978,6 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime004, TestSize.Level0)
 * @tc.desc: Test NtpTrustedTime time result trust verification under different scenarios
 * @tc.precon: NtpTrustedTime class is available, time utilities work correctly
 * @tc.step: 1. Test with null current time result - should not trust new result
-*           2. Test with outdated current time result - should not trust new result
-*           3. Test with current result within error margin - should trust new result and update
-*           4. Test with current result at upper error margin - should trust new result and update
 * @tc.expect: Time result is trusted only when within acceptable time drift margin, candidates list is properly managed
 * @tc.type: FUNC
 * @tc.require: issue#842
@@ -999,21 +997,63 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime005, TestSize.Level0)
     ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
     EXPECT_EQ(ret, false);
     EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 1);
+    ntpTrustedTime->TimeResultCandidates_.clear();
+}
+
+/**
+* @tc.name: NtpTrustedTime006
+* @tc.desc: Test NtpTrustedTime time result trust verification under different scenarios
+* @tc.precon: NtpTrustedTime class is available, time utilities work correctly
+* @tc.step: 1. Test with outdated current time result - should not trust new result
+* @tc.expect: Time result is trusted only when within acceptable time drift margin, candidates list is properly managed
+* @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
+{
+    int64_t wallTime = 0;
+    TimeUtils::GetWallTimeMs(wallTime);
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
 
     // test mTimeResult is unavailable due to time out
     auto wallTime1 = wallTime - 2 * ONE_DAY;
     auto bootTime1 = bootTime - 2 * ONE_DAY;
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
     ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime1, bootTime1, 0, NTP_SERVER_B);
-    ret = true;
+    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0, NTP_SERVER_A);
+    bool ret = true;
     ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
     EXPECT_EQ(ret, false);
-    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 2);
+    EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 1);
+}
+
+/**
+* @tc.name: NtpTrustedTime007
+* @tc.desc: Test NtpTrustedTime time result trust verification under different scenarios
+* @tc.precon: NtpTrustedTime class is available, time utilities work correctly
+* @tc.step: 1. Test with current result within error margin - should trust new result and update
+*           2. Test with current result at upper error margin - should trust new result and update
+* @tc.expect: Time result is trusted only when within acceptable time drift margin, candidates list is properly managed
+* @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime007, TestSize.Level0)
+{
+    int64_t wallTime = 0;
+    TimeUtils::GetWallTimeMs(wallTime);
+    int64_t bootTime = 0;
+    TimeUtils::GetBootTimeMs(bootTime);
 
     // test new result Within the margin of error
+    auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0, NTP_SERVER_A);
     auto wallTime2 = wallTime - ONE_HOUR - MAX_TIME_DRIFT_IN_ONE_DAY;
     auto bootTime2 = bootTime - ONE_HOUR;
+    std::shared_ptr<NtpTrustedTime> ntpTrustedTime = std::make_shared<NtpTrustedTime>();
     ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0, NTP_SERVER_C);
-    ret = false;
+    bool ret = false;
     ret = ntpTrustedTime->IsTimeResultTrusted(timeResult);
     EXPECT_EQ(ret, true);
     EXPECT_EQ(ntpTrustedTime->mTimeResult->GetTimeMillis(), wallTime);
@@ -1032,7 +1072,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime005, TestSize.Level0)
 }
 
 /**
-* @tc.name: NtpTrustedTime006
+* @tc.name: NtpTrustedTime008
 * @tc.desc: Test NtpTrustedTime time result trust verification with results outside error margin
 * @tc.precon: NtpTrustedTime class is available, time utilities work correctly
 * @tc.step: 1. Test with new result below lower error margin - should not trust and keep current result
@@ -1042,7 +1082,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime005, TestSize.Level0)
 * @tc.require: issue#842
 * @tc.level: level0
 */
-HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime008, TestSize.Level0)
 {
     int64_t wallTime = 0;
     TimeUtils::GetWallTimeMs(wallTime);
@@ -1053,7 +1093,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
     auto timeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime, bootTime, 0, NTP_SERVER_A);
     
     // test new result out of the margin of error
-    auto wallTime1 = wallTime - ONE_HOUR - MAX_TIME_DRIFT_IN_ONE_DAY - TWO_SECOND;
+    auto wallTime1 = wallTime - ONE_HOUR - MAX_TIME_DRIFT_IN_ONE_DAY - ONE_MILLISECOND;
     auto bootTime1 = bootTime - ONE_HOUR;
     ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime1, bootTime1, 0, NTP_SERVER_B);
     auto ret = true;
@@ -1063,7 +1103,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
     EXPECT_EQ(ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(), bootTime1);
     EXPECT_EQ(ret, false);
 
-    auto wallTime2 = wallTime - ONE_HOUR + MAX_TIME_DRIFT_IN_ONE_DAY + TWO_SECOND;
+    auto wallTime2 = wallTime - ONE_HOUR + MAX_TIME_DRIFT_IN_ONE_DAY + ONE_MILLISECOND;
     auto bootTime2 = bootTime - ONE_HOUR;
     ntpTrustedTime->mTimeResult = std::make_shared<NtpTrustedTime::TimeResult>(wallTime2, bootTime2, 0, NTP_SERVER_C);
     ret = true;
@@ -1074,7 +1114,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
 }
 
 /**
-* @tc.name: NtpTrustedTime007
+* @tc.name: NtpTrustedTime009
 * @tc.desc: Test FindBestTimeResult with 3 similar time candidates (consensus scenario)
 * @tc.precon: NtpTrustedTime class is available, time utilities work correctly
 * @tc.step: 1. Create 3 time results with similar timestamps within tolerance
@@ -1086,7 +1126,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime006, TestSize.Level0)
 * @tc.require: issue#842
 * @tc.level: level0
 */
-HWTEST_F(TimeServiceTimeTest, NtpTrustedTime007, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime009, TestSize.Level0)
 {
     int64_t wallTime = 0;
     TimeUtils::GetWallTimeMs(wallTime);
@@ -1109,10 +1149,12 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime007, TestSize.Level0)
     ret = ntpTrustedTime->FindBestTimeResult();
     EXPECT_EQ(ret, true);
     EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetTimeMillis(), wallTime3);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(), bootTime3);
 }
 
 /**
-* @tc.name: NtpTrustedTime008
+* @tc.name: NtpTrustedTime010
 * @tc.desc: Test FindBestTimeResult with 2 similar time candidates (majority scenario)
 * @tc.precon: NtpTrustedTime class is available, time utilities work correctly
 * @tc.step: 1. Create 3 time results with 2 having similar timestamps
@@ -1124,7 +1166,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime007, TestSize.Level0)
 * @tc.require: issue#842
 * @tc.level: level0
 */
-HWTEST_F(TimeServiceTimeTest, NtpTrustedTime008, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime010, TestSize.Level0)
 {
     int64_t wallTime = 0;
     TimeUtils::GetWallTimeMs(wallTime);
@@ -1147,10 +1189,12 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime008, TestSize.Level0)
     ret = ntpTrustedTime->FindBestTimeResult();
     EXPECT_EQ(ret, true);
     EXPECT_EQ(ntpTrustedTime->TimeResultCandidates_.size(), 0);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetTimeMillis(), wallTime);
+    EXPECT_EQ(ntpTrustedTime->mTimeResult->GetElapsedRealtimeMillis(), bootTime);
 }
 
 /**
-* @tc.name: NtpTrustedTime009
+* @tc.name: NtpTrustedTime011
 * @tc.desc: Test FindBestTimeResult with no consensus among time candidates
 * @tc.precon: NtpTrustedTime class is available, time utilities work correctly
 * @tc.step: 1. Create 3 time results with significantly different timestamps
@@ -1162,7 +1206,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime008, TestSize.Level0)
 * @tc.require: issue#842
 * @tc.level: level0
 */
-HWTEST_F(TimeServiceTimeTest, NtpTrustedTime009, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime011, TestSize.Level0)
 {
     int64_t wallTime = 0;
     TimeUtils::GetWallTimeMs(wallTime);
@@ -1188,7 +1232,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime009, TestSize.Level0)
 }
 
 /**
-* @tc.name: NtpTrustedTime010
+* @tc.name: NtpTrustedTime012
 * @tc.desc: Test FindBestTimeResult with insufficient candidate count
 * @tc.precon: NtpTrustedTime class is available
 * @tc.step: 1. Test with empty candidates list
@@ -1199,7 +1243,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime009, TestSize.Level0)
 * @tc.require: issue#842
 * @tc.level: level0
 */
-HWTEST_F(TimeServiceTimeTest, NtpTrustedTime010, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime012, TestSize.Level0)
 {
     int64_t wallTime = 0;
     TimeUtils::GetWallTimeMs(wallTime);
@@ -1218,7 +1262,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime010, TestSize.Level0)
 }
 
 /**
-* @tc.name: NtpTrustedTime011
+* @tc.name: NtpTrustedTime013
 * @tc.desc: Test FindBestTimeResult with tie scenario (2 vs 2 candidates)
 * @tc.precon: NtpTrustedTime class is available, time utilities work correctly
 * @tc.step: 1. Create 4 time results forming two distinct groups
@@ -1230,7 +1274,7 @@ HWTEST_F(TimeServiceTimeTest, NtpTrustedTime010, TestSize.Level0)
 * @tc.require: issue#842
 * @tc.level: level0
 */
-HWTEST_F(TimeServiceTimeTest, NtpTrustedTime011, TestSize.Level0)
+HWTEST_F(TimeServiceTimeTest, NtpTrustedTime013, TestSize.Level0)
 {
     int64_t wallTime = 0;
     TimeUtils::GetWallTimeMs(wallTime);

@@ -43,7 +43,6 @@ NtpTrustedTime &NtpTrustedTime::GetInstance()
 
 bool NtpTrustedTime::ForceRefreshTrusted(const std::string &ntpServer)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     SNTPClient client;
     if (client.RequestTime(ntpServer)) {
         auto timeResult = std::make_shared<TimeResult>(client.getNtpTime(), client.getNtpTimeReference(),
@@ -52,13 +51,11 @@ bool NtpTrustedTime::ForceRefreshTrusted(const std::string &ntpServer)
         mTimeResult = timeResult;
         return true;
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "false end");
     return false;
 }
 
 bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     SNTPClient client;
     if (client.RequestTime(ntpServer)) {
         auto timeResult = std::make_shared<TimeResult>(client.getNtpTime(), client.getNtpTimeReference(),
@@ -68,7 +65,6 @@ bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
             return true;
         }
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "false end");
     return false;
 }
 
@@ -83,14 +79,14 @@ bool NtpTrustedTime::IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult)
     // mTimeResult is invaild, push into candidate list
     auto oldNtpTime = mTimeResult->CurrentTimeMillis(timeResult->GetElapsedRealtimeMillis());
     if (oldNtpTime == TIME_RESULT_UNINITED) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "mTimeResult time is invaild");
+        TIME_HILOGW(TIME_MODULE_SERVICE, "mTimeResult is invaild");
         TimeResultCandidates_.push_back(timeResult);
         return false;
     }
     // mTimeResult is beyond max value of kernel gap, this server is untrusted
     auto newNtpTime = timeResult->GetTimeMillis();
     if (std::abs(newNtpTime - oldNtpTime) > MAX_TIME_DRIFT_IN_ONE_DAY) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "NTP server is untrusted old:%{public}" PRId64 " new:%{public}" PRId64 "",
+        TIME_HILOGW(TIME_MODULE_SERVICE, "NTPserver is untrusted old:%{public}" PRId64 " new:%{public}" PRId64 "",
             oldNtpTime, newNtpTime);
         TimeResultCandidates_.push_back(timeResult);
         TimeBehaviorReport(ReportEventCode::NTP_COMPARE_UNTRUSTED, timeResult->GetNtpServer(),
@@ -168,7 +164,6 @@ void NtpTrustedTime::ClearTimeResultCandidates()
 
 int64_t NtpTrustedTime::CurrentTimeMillis()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lock(mTimeResultMutex_);
     if (mTimeResult == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Missing authoritative time source");
@@ -185,7 +180,6 @@ int64_t NtpTrustedTime::CurrentTimeMillis()
 
 int64_t NtpTrustedTime::ElapsedRealtimeMillis()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lock(mTimeResultMutex_);
     if (mTimeResult == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Missing authoritative time source");
@@ -274,6 +268,7 @@ void NtpTrustedTime::TimeResult::Clear()
     mTimeMillis = 0;
     mElapsedRealtimeMillis = 0;
     mCertaintyMillis = 0;
+    mNtpServer = "";
 }
 } // namespace MiscServices
 } // namespace OHOS

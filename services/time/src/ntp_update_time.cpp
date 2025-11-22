@@ -58,12 +58,11 @@ NtpUpdateTime& NtpUpdateTime::GetInstance()
 
 void NtpUpdateTime::Init()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "Ntp Update Time start");
     std::string ntpServer = system::GetParameter(NTP_SERVER_SYSTEM_PARAMETER, DEFAULT_NTP_SERVER);
     std::string ntpServerSpec = system::GetParameter(NTP_SERVER_SPECIFIC_SYSTEM_PARAMETER, "");
     std::string autoTime = system::GetParameter(AUTO_TIME_SYSTEM_PARAMETER, "ON");
     if ((ntpServer.empty() && ntpServerSpec.empty()) || autoTime.empty()) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "No found parameter from system parameter");
+        TIME_HILOGW(TIME_MODULE_SERVICE, "No parameter from system");
         return;
     }
     RegisterSystemParameterListener();
@@ -101,9 +100,8 @@ void NtpUpdateTime::UpdateNITZSetTime()
     auto bootTimeNano = steady_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
     if (TimeUtils::GetBootTimeMs(lastNITZUpdateTime_) != ERR_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time fail");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get boottime fail");
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "nitz time changed");
     nitzUpdateTimeMilli_ = static_cast<uint64_t>(bootTimeMilli);
 }
 
@@ -163,7 +161,7 @@ NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
     
     for (int i = 0; i < RETRY_TIMES; i++) {
         for (size_t j = 0; j < ntpSpecList.size(); j++) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpSpecList is:%{public}s", ntpSpecList[j].c_str());
+            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpSpecServer is:%{public}s", ntpSpecList[j].c_str());
             if (NtpTrustedTime::GetInstance().ForceRefreshTrusted(ntpSpecList[j])) {
                 // if refresh time success, need to clear candidates list
                 NtpTrustedTime::GetInstance().ClearTimeResultCandidates();
@@ -334,7 +332,6 @@ bool NtpUpdateTime::IsValidNITZTime()
 
 void NtpUpdateTime::Stop()
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     TimeSystemAbility::GetInstance()->DestroyTimer(timerId_);
 }
 
