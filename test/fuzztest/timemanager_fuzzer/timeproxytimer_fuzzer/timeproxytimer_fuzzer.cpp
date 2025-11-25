@@ -57,6 +57,14 @@ bool FuzzTimeSetTimerExemption(const uint8_t *rawData, size_t size)
     return true;
 }
 
+bool FuzzTimeAdjustPolicy(const uint8_t *rawData, size_t size)
+{
+    std::string name(reinterpret_cast<const char *>(rawData), size);
+    std::unordered_map<std::string, uint32_t> policyMap{ {name, 1} };
+    TimeServiceClient::GetInstance()->SetAdjustPolicy(policyMap);
+    return true;
+}
+
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
@@ -72,6 +80,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     OHOS::FuzzTimeProxyTimer(data, size);
     OHOS::FuzzTimeAdjustTimer(data, size);
     OHOS::FuzzTimeSetTimerExemption(data, size);
+    OHOS::FuzzTimeAdjustPolicy(data, size);
     return 0;
 }
 }

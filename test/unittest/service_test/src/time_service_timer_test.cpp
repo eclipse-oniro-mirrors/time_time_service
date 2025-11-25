@@ -2237,8 +2237,14 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo002, TestSize.Level0)
     auto timePoint = std::chrono::steady_clock::now();
     auto timerInfo = TimerInfo("", 0, 0, duration, timePoint, duration, timePoint, duration, nullptr,
                                           nullptr, 0, false, 0, 0, "");
-    auto res = timerInfo.AdjustTimer(timePoint, 1, 0);
+    auto res = timerInfo.AdjustTimer(timePoint, 1, 0, 0);
     EXPECT_TRUE(res);
+    res = timerInfo.AdjustTimer(timePoint, 1, 0, 1);
+    EXPECT_FALSE(res);
+    res = timerInfo.AdjustTimer(timePoint, 1, 0, 2);
+    EXPECT_TRUE(res);
+    res = timerInfo.AdjustTimer(timePoint, 1, 0, 3);
+    EXPECT_FALSE(res);
 }
 
 /**
@@ -2838,5 +2844,32 @@ HWTEST_F(TimeServiceTimerTest, ResetAllProxyWithNoPermission001, TestSize.Level0
     DeletePermission();
     auto res = TimeSystemAbility::GetInstance()->ResetAllProxy();
     EXPECT_EQ(res, E_TIME_NO_PERMISSION);
+}
+
+
+/**
+ * @tc.name: ConvertAdjustPolicy001
+ * @tc.desc: Test ConvertAdjustPolicy function without required permissions
+ * @tc.precon: TimeSystemAbility instance is available and permissions can be removed
+ * @tc.step: 1. Convert adjustment strategy
+ * @tc.expect: ConvertAdjustPolicy returns chrono count when the adjustment takes effect
+ * @tc.type: FUNC
+ * @tc.require: issue#851
+ * @tc.level: level0
+ */
+HWTEST_F(TimeServiceTimerTest, ConvertAdjustPolicy001, TestSize.Level0)
+{
+    auto zero = milliseconds(0);
+    std::chrono::steady_clock::time_point empty (zero);
+    auto timerInfo = TimerInfo("", 0, ITimerManager::ELAPSED_REALTIME, zero, empty, zero, empty, zero, nullptr,
+                               nullptr, 0, false, 0, 0, "");
+    std::chrono::seconds ret = timerInfo.ConvertAdjustPolicy(300, 0);
+    EXPECT_TRUE(ret.count() > 0);
+    ret = timerInfo.ConvertAdjustPolicy(300, 1);
+    EXPECT_FALSE(ret.count() > 0);
+    ret = timerInfo.ConvertAdjustPolicy(300, 2);
+    EXPECT_TRUE(ret.count() > 0);
+    ret = timerInfo.ConvertAdjustPolicy(300, 3);
+    EXPECT_FALSE(ret.count() > 0);
 }
 } // namespace

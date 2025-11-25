@@ -1229,6 +1229,12 @@ void TimerManager::SetTimerExemption(const std::unordered_set<std::string> &name
     TimerProxy::GetInstance().SetTimerExemption(nameArr, isExemption);
 }
 
+void TimerManager::SetAdjustPolicy(const std::unordered_map<std::string, uint32_t> &policyMap)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    TimerProxy::GetInstance().SetAdjustPolicy(policyMap);
+}
+
 bool TimerManager::AdjustSingleTimer(std::shared_ptr<TimerInfo> timer)
 {
     if (!adjustPolicy_ || TimerProxy::GetInstance().IsProxy(timer->uid, 0)

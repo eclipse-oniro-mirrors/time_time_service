@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace MiscServices {
 using namespace std::chrono;
-static constexpr uint32_t HALF_SECEND = 2;
+static constexpr uint32_t HALF_SECOND = 2;
 const auto INTERVAL_HOUR = hours(1);
 const auto INTERVAL_HALF_DAY = hours(12);
 constexpr int64_t MAX_MILLISECOND = std::numeric_limits<int64_t>::max() / 1000000;
@@ -200,21 +200,24 @@ bool TimerInfo::RestoreProxyTimer()
 }
 
 bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now,
-                            const uint32_t interval, const uint32_t delta)
+                            const uint32_t interval, const uint32_t delta, const uint32_t policy)
 {
     auto oldWhenElapsed = whenElapsed;
     auto oldMaxWhenElapsed = maxWhenElapsed;
-    std::chrono::duration<int, std::ratio<1, HALF_SECEND>> halfIntervalSec(interval);
+    std::chrono::seconds auxiliaryCalcuSec = ConvertAdjustPolicy(interval, policy);
+    if (interval == 0) {
+        return false;
+    }
     std::chrono::duration<int, std::ratio<1, 1>> intervalSec(interval);
     std::chrono::duration<int, std::ratio<1, 1>> deltaSec(delta);
     auto oldTimeSec = std::chrono::duration_cast<std::chrono::seconds>(whenElapsed.time_since_epoch());
-    auto timeSec = ((oldTimeSec + halfIntervalSec) / intervalSec) * intervalSec + deltaSec;
+    auto timeSec = ((oldTimeSec + auxiliaryCalcuSec) / intervalSec) * intervalSec + deltaSec;
     whenElapsed = std::chrono::steady_clock::time_point(timeSec);
     if (windowLength == std::chrono::milliseconds::zero()) {
         maxWhenElapsed = whenElapsed;
     } else {
         auto oldMaxTimeSec = std::chrono::duration_cast<std::chrono::seconds>(maxWhenElapsed.time_since_epoch());
-        auto maxTimeSec = ((oldMaxTimeSec + halfIntervalSec) / intervalSec) * intervalSec + deltaSec;
+        auto maxTimeSec = ((oldMaxTimeSec + auxiliaryCalcuSec) / intervalSec) * intervalSec + deltaSec;
         maxWhenElapsed = std::chrono::steady_clock::time_point(maxTimeSec);
     }
     if (whenElapsed < now) {
@@ -226,7 +229,29 @@ bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now,
     auto elapsedDelta = std::chrono::duration_cast<std::chrono::milliseconds>(
         whenElapsed.time_since_epoch() - oldWhenElapsed.time_since_epoch());
     when = when + elapsedDelta;
+    TIME_HILOGD(TIME_MODULE_SERVICE, "adjust timer id: %{public}" PRId64
+                ", old elapsed: %{public}lld, when elapsed: %{public}lld"
+                ", interval: %{public}u, policy: %{public}u",
+                id, oldWhenElapsed.time_since_epoch().count(),
+                whenElapsed.time_since_epoch().count(), interval, policy);
     return (oldWhenElapsed != whenElapsed) || (oldMaxWhenElapsed != maxWhenElapsed);
+}
+
+std::chrono::seconds TimerInfo::ConvertAdjustPolicy(const uint32_t interval, const uint32_t policy)
+{
+    switch (policy) {
+        case FORWARD:
+            return std::chrono::seconds(0);
+        case BACKWARD: {
+            std::chrono::duration<int, std::ratio<1, 1>> wholeSec(interval);
+            return std::chrono::duration_cast<std::chrono::seconds>(wholeSec);
+        }
+        case NORMAL:
+        default: {
+            std::chrono::duration<int, std::ratio<1, HALF_SECOND>> halfSec(interval);
+            return std::chrono::duration_cast<std::chrono::seconds>(halfSec);
+        }
+    }
 }
 
 bool TimerInfo::RestoreAdjustTimer()

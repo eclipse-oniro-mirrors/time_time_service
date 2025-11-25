@@ -51,6 +51,7 @@ public:
     bool ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger) override;
     bool AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta) override;
     void SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) override;
+    void SetAdjustPolicy(const std::unordered_map<std::string, uint32_t> &policyMap) override;
     bool ResetAllProxy() override;
     #ifndef RDB_ENABLE
     int32_t StartTimerGroup(std::vector<std::pair<uint64_t, uint64_t>> timerVec, std::string tableName);

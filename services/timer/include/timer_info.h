@@ -40,6 +40,12 @@ public:
         ADJUST,
         PROXY,
     };
+
+    enum PolicyState : int {
+        NORMAL = 0,
+        FORWARD,
+        BACKWARD,
+    };
     std::chrono::milliseconds when;
     std::chrono::milliseconds windowLength;
     std::chrono::steady_clock::time_point originWhenElapsed;
@@ -87,10 +93,12 @@ public:
     bool UpdateWhenElapsedFromNow(std::chrono::steady_clock::time_point now, std::chrono::nanoseconds offset);
     bool ProxyTimer(const std::chrono::steady_clock::time_point &now, std::chrono::nanoseconds deltaTime);
     bool RestoreProxyTimer();
-    bool AdjustTimer(const std::chrono::steady_clock::time_point &now, const uint32_t interval, const uint32_t delta);
+    bool AdjustTimer(const std::chrono::steady_clock::time_point &now, const uint32_t interval,
+                     const uint32_t delta, const uint32_t policy);
     bool RestoreAdjustTimer();
 private:
     bool RestoreTimer();
+    std::chrono::seconds ConvertAdjustPolicy(const uint32_t interval, const uint32_t policy);
 };
 } // MiscService
 } // OHOS

@@ -63,6 +63,14 @@ bool FuzzTimerSetTimerExemption(const uint8_t *data, size_t size)
     return true;
 }
 
+bool FuzzTimerSetAdjustPolicy(const uint8_t *data, size_t size)
+{
+    std::string name(reinterpret_cast<const char *>(data), size);
+    std::unordered_map<std::string, uint32_t> policyMap{ {name, 1} };
+    TimerProxy::GetInstance().SetAdjustPolicy(policyMap);
+    return true;
+}
+
 bool FuzzTimerResetProxy(const uint8_t *data, size_t size)
 {
     uint64_t offset = static_cast<uint64_t>(*data);
@@ -114,5 +122,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     OHOS::FuzzTimerEraseTimer(data, size);
     OHOS::FuzzTimerRemoveTimerMap(data, size);
     OHOS::FuzzTimerIsProxy(data, size);
+    OHOS::FuzzTimerSetAdjustPolicy(data, size);
     return 0;
 }

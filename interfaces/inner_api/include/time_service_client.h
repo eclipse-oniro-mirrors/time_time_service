@@ -410,6 +410,14 @@ public:
     TIME_API int32_t SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption);
 
     /**
+     * @brief SetAdjustPolicy
+     * set policy for adjust timer
+     * @param policyMap adjust policy map.
+     * @return int32_t return error code.
+     */
+    TIME_API int32_t SetAdjustPolicy(const std::unordered_map<std::string, uint32_t> &policyMap);
+
+    /**
      * @brief ResetAllProxy
      *
      * Wake up all timers by proxy.
