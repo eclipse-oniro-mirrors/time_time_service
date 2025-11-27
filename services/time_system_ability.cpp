@@ -68,14 +68,6 @@ constexpr const char* AUTOTIME_KEY = "persist.time.auto_time";
 static constexpr int MAX_PID_LIST_SIZE = 1024;
 static constexpr uint32_t MAX_EXEMPTION_SIZE = 1000;
 
-#ifdef SET_AUTO_REBOOT_ENABLE
-constexpr int64_t MILLISECOND_TO_NANO = 1000000;
-constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
-constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
-constexpr int CLOCK_POWEROFF_ALARM = 12;
-constexpr size_t INDEX_TWO = 2;
-#endif
-
 #ifdef MULTI_ACCOUNT_ENABLE
 constexpr const char* SUBSCRIBE_REMOVED = "UserRemoved";
 #endif
@@ -1074,7 +1066,7 @@ void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
 {
     // Clears `drop_on_reboot` table.
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnSyncShutdown");
-    TimeSystemAbility::GetInstance()->SetAutoReboot();
+    TimerManager::GetInstance()->ShutDownReschedulePowerOnTimer();
     #ifdef RDB_ENABLE
     TimeDatabase::GetInstance().ClearDropOnReboot();
     TimeDatabase::GetInstance().ClearInvaildDataInHoldOnReboot();
@@ -1333,60 +1325,6 @@ void TimeSystemAbility::RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestor
         }
     }
     timerManager->StartTimerGroup(timerVec, tableName);
-}
-#endif
-
-#ifdef SET_AUTO_REBOOT_ENABLE
-void TimeSystemAbility::SetAutoReboot()
-{
-    auto database = TimeDatabase::GetInstance();
-    OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
-    holdRdbPredicates.EqualTo("state", 1)->OrderByAsc("triggerTime");
-    auto resultSet = database.Query(holdRdbPredicates, { "bundleName", "triggerTime", "name" });
-    if (resultSet == nullptr) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "no need to set RTC");
-        return;
-    }
-    int64_t currentTime = 0;
-    TimeUtils::GetWallTimeMs(currentTime);
-    auto bundleList = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
-    do {
-        uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 1));
-        if (triggerTime < static_cast<uint64_t>(currentTime)) {
-            TIME_HILOGI(TIME_MODULE_SERVICE,
-                        "triggerTime:%{public}" PRIu64" currentTime:%{public}" PRId64"", triggerTime, currentTime);
-            continue;
-        }
-        if (std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, 0)) != bundleList.end() ||
-            std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, INDEX_TWO)) != bundleList.end()) {
-            int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
-            if (tmfd < 0) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error:%{public}s", strerror(errno));
-                resultSet->Close();
-                return;
-            }
-            if (static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > triggerTime) {
-                TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
-                triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
-            }
-            struct itimerspec new_value;
-            std::chrono::nanoseconds nsec(triggerTime * MILLISECOND_TO_NANO);
-            auto second = std::chrono::duration_cast<std::chrono::seconds>(nsec);
-            new_value.it_value.tv_sec = second.count();
-            new_value.it_value.tv_nsec = (nsec - second).count();
-            TIME_HILOGI(TIME_MODULE_SERVICE, "currentTime:%{public}" PRId64 ", second:%{public}" PRId64 ","
-                        "nanosecond:%{public}" PRId64"", currentTime, static_cast<int64_t>(new_value.it_value.tv_sec),
-                        static_cast<int64_t>(new_value.it_value.tv_nsec));
-            int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
-            if (ret < 0) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error:%{public}s", strerror(errno));
-                close(tmfd);
-            }
-            resultSet->Close();
-            return;
-        }
-    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
-    resultSet->Close();
 }
 #endif
 } // namespace MiscServices
