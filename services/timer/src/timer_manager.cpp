@@ -66,6 +66,7 @@ constexpr const char* AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer
 #ifdef SET_AUTO_REBOOT_ENABLE
 constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 constexpr int64_t TEN_YEARS_TO_SECOND = 10 * 365 * 24 * 60 * 60;
+constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
 #endif
 constexpr std::array<const char*, 2> NO_LOG_APP_LIST = { "wifi_manager_service", "telephony" };
 
@@ -604,7 +605,7 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
         if (timerInfo == powerOnTriggerTimerList_.end()) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "alarm needs power on, id=%{public}" PRId64 "", alarm->id);
             powerOnTriggerTimerList_.push_back(alarm);
-            ReschedulePowerOnTimerLocked();
+            ReschedulePowerOnTimerLocked(false);
         }
     }
     #endif
@@ -850,10 +851,10 @@ void TimerManager::DeleteTimerFromPowerOnTimerListById(uint64_t timerId)
         return;
     }
     powerOnTriggerTimerList_.erase(deleteTimerInfo);
-    ReschedulePowerOnTimerLocked();
+    ReschedulePowerOnTimerLocked(false);
 }
 
-void TimerManager::ReschedulePowerOnTimerLocked()
+void TimerManager::ReschedulePowerOnTimerLocked(bool isShutDown)
 {
     auto bootTime = TimeUtils::GetBootTimeNs();
     int64_t currentTime = 0;
@@ -888,10 +889,21 @@ void TimerManager::ReschedulePowerOnTimerLocked()
         timerInfo = powerOnTriggerTimerList_[0];
         setTimePoint = timerInfo->when;
     }
+    if (isShutDown && static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > setTimePoint.count()) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
+        auto triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
+        setTimePoint = std::chrono::milliseconds(triggerTime);
+    }
     if (setTimePoint.count() != lastSetTime_[POWER_ON_ALARM]) {
         SetLocked(POWER_ON_ALARM, setTimePoint, bootTime);
         lastSetTime_[POWER_ON_ALARM] = setTimePoint.count();
     }
+}
+
+void TimerManager::ShutDownReschedulePowerOnTimer()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    ReschedulePowerOnTimerLocked(true);
 }
 #endif
 
