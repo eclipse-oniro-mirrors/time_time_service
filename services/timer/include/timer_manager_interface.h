@@ -72,6 +72,7 @@ public:
     virtual bool AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta) = 0;
     virtual void SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption) = 0;
     virtual bool ResetAllProxy() = 0;
+    virtual void SetAdjustPolicy(const std::unordered_map<std::string, uint32_t> &policyMap) = 0;
 }; // ITimerManager
 } // MiscService
 } // OHOS

@@ -990,6 +990,25 @@ int32_t TimeSystemAbility::SetTimerExemption(const std::vector<std::string> &nam
     return E_TIME_OK;
 }
 
+int32_t TimeSystemAbility::SetAdjustPolicy(const std::unordered_map<std::string, uint32_t> &policyMap)
+{
+    TimeXCollie timeXCollie("TimeService::SetAdjustPolicy");
+    if (!TimePermission::CheckProxyCallingPermission()) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Set adjust policy permission check failed");
+        return E_TIME_NO_PERMISSION;
+    }
+    if (policyMap.size() > MAX_EXEMPTION_SIZE) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Exceeded the maximum number");
+        return E_TIME_PARAMETERS_INVALID;
+    }
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    timerManager->SetAdjustPolicy(policyMap);
+    return E_TIME_OK;
+}
+
 int32_t TimeSystemAbility::ResetAllProxy()
 {
     if (!TimePermission::CheckProxyCallingPermission()) {

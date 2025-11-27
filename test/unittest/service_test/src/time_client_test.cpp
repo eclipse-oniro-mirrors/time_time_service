@@ -1571,4 +1571,22 @@ HWTEST_F(TimeClientTest, SetAutoTime001, TestSize.Level1)
     res = TimeServiceClient::GetInstance()->SetAutoTime(false);
     EXPECT_EQ(res, 0);
 }
+
+/**
+* @tc.name: SetAdjustPolicy001
+* @tc.desc: Test adjust policy.
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Setting policies for adjusting timers.
+* @tc.expect: Adjusted timer policy takes effect, callback is executed
+* @tc.type: FUNC
+* @tc.require: issue#851
+* @tc.level: level1
+*/
+HWTEST_F(TimeClientTest, SetAdjustPolicy001, TestSize.Level1)
+{
+    DeletePermission();
+    std::unordered_map<std::string, uint32_t> policyMap{ {"timer", 1} };
+    auto errCode = TimeServiceClient::GetInstance()->SetAdjustPolicy(policyMap);
+    EXPECT_EQ(errCode, TimeError::E_TIME_NO_PERMISSION);
+}
 } // namespace

@@ -33,6 +33,7 @@ public:
         std::function<void(AdjustTimerCallback adjustTimer)> updateTimerDeliveries);
     bool SetTimerExemption(const std::unordered_set<std::string> &nameArr, bool isExemption);
     bool IsTimerExemption(std::shared_ptr<TimerInfo> time);
+    void SetAdjustPolicy(const std::unordered_map<std::string, uint32_t> &policyMap);
     bool ResetAllProxy(const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)> insertAlarmCallback);
     void EraseTimerFromProxyTimerMap(const uint64_t id, const int uid, const int pid);
@@ -82,6 +83,7 @@ private:
     std::mutex adjustMutex_;
     std::unordered_set<std::string> adjustExemptionList_ { "time_service" };
     std::unordered_set<uint64_t> adjustTimers_ {};
+    std::unordered_map<std::string, uint32_t> adjustPolicyList_ {};
     /* ms for 3 days */
     int64_t proxyDelayTime_ = 3 * 24 * 60 * 60 * 1000;
 }; // timer_proxy

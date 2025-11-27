@@ -112,7 +112,12 @@ bool TimerProxy::UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_p
         "uid:%{public}d, bundleName:%{public}s",
         timer->id, timer->uid, timer->bundleName.c_str());
     adjustTimers_.insert(timer->id);
-    return timer->AdjustTimer(now, interval, delta);
+    uint32_t policy = 0;
+    auto it = adjustPolicyList_.find(timer->bundleName);
+    if (it != adjustPolicyList_.end()) {
+        policy = it->second;
+    }
+    return timer->AdjustTimer(now, interval, delta, policy);
 }
 
 bool TimerProxy::RestoreAdjustWhenElapsed(std::shared_ptr<TimerInfo> &timer)
@@ -147,6 +152,14 @@ bool TimerProxy::IsTimerExemption(std::shared_ptr<TimerInfo> timer)
         return true;
     }
     return false;
+}
+
+void TimerProxy::SetAdjustPolicy(const std::unordered_map<std::string, uint32_t> &policyMap)
+{
+    std::lock_guard<std::mutex> lockProxy(adjustMutex_);
+    for (const auto& policy : policyMap) {
+        adjustPolicyList_[policy.first] = policy.second;
+    }
 }
 
 bool TimerProxy::ResetAllProxy(const std::chrono::steady_clock::time_point &now,

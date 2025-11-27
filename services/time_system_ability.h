@@ -83,6 +83,7 @@ public:
     int32_t ResetAllProxy() override;
     int32_t GetNtpTimeMs(int64_t &time) override;
     int32_t GetRealTimeMs(int64_t &time) override;
+    int32_t SetAdjustPolicy(const std::unordered_map<std::string, uint32_t> &policyMap) override;
     #ifdef HIDUMPER_ENABLE
     int Dump(int fd, const std::vector<std::u16string> &args) override;
     void DumpAllTimeInfo(int fd, const std::vector<std::string> &input);

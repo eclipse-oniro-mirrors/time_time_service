@@ -39,4 +39,5 @@ interface OHOS.MiscServices.ITimeService {
     void SetTimerExemption([in] List<String> nameArr, [in] boolean isExemption);
     void GetNtpTimeMs([out] long time);
     void GetRealTimeMs([out] long time);
+    void SetAdjustPolicy([in] Map<String, unsigned int> policyMap);
 }

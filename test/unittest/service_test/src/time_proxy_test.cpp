@@ -814,5 +814,21 @@ HWTEST_F(TimeProxyTest, ProxyTimerCover004, TestSize.Level1)
     }
 }
 
+/**
+* @tc.name: SetAdjustPolicy001
+* @tc.desc: Test adjust policy.
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Setting policies for adjusting timers.
+* @tc.expect: Adjusted timer policy takes effect, callback is executed
+* @tc.type: FUNC
+* @tc.require: issue#851
+* @tc.level: level1
+*/
+HWTEST_F(TimeProxyTest, SetAdjustPolicy001, TestSize.Level1)
+{
+    std::unordered_map<std::string, uint32_t> policyMap{ {"timer", 1} };
+    TimerProxy::GetInstance().SetAdjustPolicy(policyMap);
+    EXPECT_EQ(TimerProxy::GetInstance().adjustPolicyList_["timer"], 1);
+}
 }  // MiscServices
 }  // OHOS

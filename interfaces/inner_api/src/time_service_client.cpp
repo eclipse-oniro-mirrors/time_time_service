@@ -836,6 +836,25 @@ int32_t TimeServiceClient::SetTimerExemption(const std::unordered_set<std::strin
     return code;
 }
 
+int32_t TimeServiceClient::SetAdjustPolicy(const std::unordered_map<std::string, uint32_t> &policyMap)
+{
+    TIME_HILOGD(TIME_MODULE_CLIENT, "set adjust policy size: %{public}zu", policyMap.size());
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    if (policyMap.empty()) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Nothing need cache");
+        return E_TIME_NOT_FOUND;
+    }
+    auto code = proxy->SetAdjustPolicy(policyMap);
+    code = ConvertErrCode(code);
+    return code;
+}
+
 bool TimeServiceClient::ResetAllProxy()
 {
     TIME_HILOGD(TIME_MODULE_CLIENT, "ResetAllProxy");
