@@ -96,6 +96,7 @@ public:
     bool AdjustTimer(const std::chrono::steady_clock::time_point &now, const uint32_t interval,
                      const uint32_t delta, const uint32_t policy);
     bool RestoreAdjustTimer();
+    bool ChangeStatusToAdjust();
 private:
     bool RestoreTimer();
     std::chrono::seconds ConvertAdjustPolicy(const uint32_t interval, const uint32_t policy);

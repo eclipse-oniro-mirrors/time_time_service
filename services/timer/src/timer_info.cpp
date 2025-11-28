@@ -29,7 +29,6 @@ const auto MIN_INTERVAL_ONE_SECONDS = seconds(1);
 const auto MAX_INTERVAL = hours(24 * 365);
 const auto MIN_FUZZABLE_INTERVAL = milliseconds(10000);
 constexpr float_t BATCH_WINDOW_COE = 0.75;
-const auto ZERO_FUTURITY = seconds(0);
 
 bool TimerInfo::operator==(const TimerInfo &other) const
 {
@@ -100,22 +99,19 @@ std::shared_ptr<TimerInfo> TimerInfo::CreateTimerInfo(std::string _name, uint64_
         intervalDuration = MAX_INTERVAL;
     }
 
-    auto nowElapsed = TimeUtils::GetBootTimeNs();
     auto triggerTime = milliseconds(_triggerAtTime > MAX_MILLISECOND ? MAX_MILLISECOND : _triggerAtTime);
     auto nominalTrigger = ConvertToElapsed(triggerTime, _type);
-    auto minTrigger = nowElapsed + ZERO_FUTURITY;
-    auto triggerElapsed = (nominalTrigger > minTrigger) ? nominalTrigger : minTrigger;
 
     steady_clock::time_point maxElapsed;
     if (windowLengthDuration == milliseconds::zero()) {
-        maxElapsed = triggerElapsed;
+        maxElapsed = nominalTrigger;
     } else if (windowLengthDuration < milliseconds::zero()) {
-        maxElapsed = MaxTriggerTime(nominalTrigger, triggerElapsed, intervalDuration);
-        windowLengthDuration = duration_cast<milliseconds>(maxElapsed - triggerElapsed);
+        maxElapsed = MaxTriggerTime(nominalTrigger, nominalTrigger, intervalDuration);
+        windowLengthDuration = duration_cast<milliseconds>(maxElapsed - nominalTrigger);
     } else {
-        maxElapsed = triggerElapsed + windowLengthDuration;
+        maxElapsed = nominalTrigger + windowLengthDuration;
     }
-    return std::make_shared<TimerInfo>(_name, _id, _type, triggerTime, triggerElapsed, windowLengthDuration, maxElapsed,
+    return std::make_shared<TimerInfo>(_name, _id, _type, triggerTime, nominalTrigger, windowLengthDuration, maxElapsed,
         intervalDuration, std::move(_callback), _wantAgent, _flag, _autoRestore, _uid,
         _pid, _bundleName);
 }
@@ -199,9 +195,30 @@ bool TimerInfo::RestoreProxyTimer()
     return RestoreTimer();
 }
 
+bool TimerInfo::ChangeStatusToAdjust()
+{
+    //Change timer state
+    switch (state) {
+        case INIT:
+        case ADJUST:
+            state = ADJUST;
+            return true;
+        case PROXY:
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Adjust timer in proxy state, id: %{public}" PRIu64 "", id);
+            break;
+        default:
+            TIME_HILOGD(TIME_MODULE_SERVICE, "Error state, id: %{public}" PRIu64 ", state: %{public}d", id, state);
+    }
+    return false;
+}
+
 bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now,
                             const uint32_t interval, const uint32_t delta, const uint32_t policy)
 {
+    if (!ChangeStatusToAdjust()) {
+        return false;
+    }
+    CalculateOriWhenElapsed();
     auto oldWhenElapsed = whenElapsed;
     auto oldMaxWhenElapsed = maxWhenElapsed;
     std::chrono::seconds auxiliaryCalcuSec = ConvertAdjustPolicy(interval, policy);
@@ -210,13 +227,13 @@ bool TimerInfo::AdjustTimer(const std::chrono::steady_clock::time_point &now,
     }
     std::chrono::duration<int, std::ratio<1, 1>> intervalSec(interval);
     std::chrono::duration<int, std::ratio<1, 1>> deltaSec(delta);
-    auto oldTimeSec = std::chrono::duration_cast<std::chrono::seconds>(whenElapsed.time_since_epoch());
+    auto oldTimeSec = std::chrono::duration_cast<std::chrono::seconds>(originWhenElapsed.time_since_epoch());
     auto timeSec = ((oldTimeSec + auxiliaryCalcuSec) / intervalSec) * intervalSec + deltaSec;
     whenElapsed = std::chrono::steady_clock::time_point(timeSec);
     if (windowLength == std::chrono::milliseconds::zero()) {
         maxWhenElapsed = whenElapsed;
     } else {
-        auto oldMaxTimeSec = std::chrono::duration_cast<std::chrono::seconds>(maxWhenElapsed.time_since_epoch());
+        auto oldMaxTimeSec = std::chrono::duration_cast<std::chrono::seconds>(originWhenElapsed.time_since_epoch());
         auto maxTimeSec = ((oldMaxTimeSec + auxiliaryCalcuSec) / intervalSec) * intervalSec + deltaSec;
         maxWhenElapsed = std::chrono::steady_clock::time_point(maxTimeSec);
     }
