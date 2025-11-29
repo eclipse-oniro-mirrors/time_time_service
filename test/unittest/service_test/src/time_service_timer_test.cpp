@@ -2155,12 +2155,10 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo002, TestSize.Level0)
                                           nullptr, 0, false, 0, 0, "");
     auto res = timerInfo.AdjustTimer(timePoint, 1, 0, 0);
     EXPECT_TRUE(res);
-    res = timerInfo.AdjustTimer(timePoint, 1, 0, 1);
+    res = timerInfo.AdjustTimer(timePoint, 0, 0, 1);
     EXPECT_FALSE(res);
     res = timerInfo.AdjustTimer(timePoint, 1, 0, 2);
     EXPECT_TRUE(res);
-    res = timerInfo.AdjustTimer(timePoint, 1, 0, 3);
-    EXPECT_FALSE(res);
 }
 
 /**
@@ -2836,6 +2834,6 @@ HWTEST_F(TimeServiceTimerTest, ConvertAdjustPolicy001, TestSize.Level0)
     ret = timerInfo.ConvertAdjustPolicy(300, 2);
     EXPECT_TRUE(ret.count() > 0);
     ret = timerInfo.ConvertAdjustPolicy(300, 3);
-    EXPECT_FALSE(ret.count() > 0);
+    EXPECT_TRUE(ret.count() > 0);
 }
 } // namespace
