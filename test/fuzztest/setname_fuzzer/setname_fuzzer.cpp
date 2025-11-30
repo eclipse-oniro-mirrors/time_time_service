@@ -15,8 +15,8 @@
  
 #include "setname_fuzzer.h"
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <fuzzer/FuzzedDataProvider.h>
 #include <cstring>
 
