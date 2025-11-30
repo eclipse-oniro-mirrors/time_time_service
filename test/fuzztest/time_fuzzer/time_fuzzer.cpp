@@ -82,126 +82,55 @@ void TimeFuzzer::FuzzTest(const uint8_t* data, size_t size)
 void TimeFuzzer::DispatchTimeOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
 {
     switch (opType) {
-        case FuzzOperationType::SET_TIME:
-            FuzzSetTime(data, size);
-            break;
-        case FuzzOperationType::SET_TIME_V9:
-            FuzzSetTimeV9(data, size);
-            break;
-        case FuzzOperationType::SET_AUTO_TIME:
-            FuzzSetAutoTime(data, size);
-            break;
-        case FuzzOperationType::SET_TIMEZONE:
-            FuzzSetTimeZone(data, size);
-            break;
-        case FuzzOperationType::SET_TIMEZONE_V9:
-            FuzzSetTimeZoneV9(data, size);
-            break;
-        case FuzzOperationType::GET_TIMEZONE:
-            FuzzGetTimeZone(data, size);
-            break;
-        case FuzzOperationType::GET_WALL_TIME_MS:
-            FuzzGetWallTimeMs(data, size);
-            break;
-        case FuzzOperationType::GET_WALL_TIME_NS:
-            FuzzGetWallTimeNs(data, size);
-            break;
-        case FuzzOperationType::GET_BOOT_TIME_MS:
-            FuzzGetBootTimeMs(data, size);
-            break;
-        case FuzzOperationType::GET_BOOT_TIME_NS:
-            FuzzGetBootTimeNs(data, size);
-            break;
-        case FuzzOperationType::GET_MONOTONIC_TIME_MS:
-            FuzzGetMonotonicTimeMs(data, size);
-            break;
-        case FuzzOperationType::GET_MONOTONIC_TIME_NS:
-            FuzzGetMonotonicTimeNs(data, size);
-            break;
-        case FuzzOperationType::GET_THREAD_TIME_MS:
-            FuzzGetThreadTimeMs(data, size);
-            break;
-        case FuzzOperationType::GET_THREAD_TIME_NS:
-            FuzzGetThreadTimeNs(data, size);
-            break;
-        case FuzzOperationType::GET_NTP_TIME_MS:
-            FuzzGetNtpTimeMs(data, size);
-            break;
-        case FuzzOperationType::GET_REAL_TIME_MS:
-            FuzzGetRealTimeMs(data, size);
-            break;
-        default:
-            break;
+        case FuzzOperationType::SET_TIME: FuzzSetTime(data, size); break;
+        case FuzzOperationType::SET_TIME_V9: FuzzSetTimeV9(data, size); break;
+        case FuzzOperationType::SET_AUTO_TIME: FuzzSetAutoTime(data, size); break;
+        case FuzzOperationType::SET_TIMEZONE: FuzzSetTimeZone(data, size); break;
+        case FuzzOperationType::SET_TIMEZONE_V9: FuzzSetTimeZoneV9(data, size); break;
+        case FuzzOperationType::GET_TIMEZONE: FuzzGetTimeZone(data, size); break;
+        case FuzzOperationType::GET_WALL_TIME_MS: FuzzGetWallTimeMs(data, size); break;
+        case FuzzOperationType::GET_WALL_TIME_NS: FuzzGetWallTimeNs(data, size); break;
+        case FuzzOperationType::GET_BOOT_TIME_MS: FuzzGetBootTimeMs(data, size); break;
+        case FuzzOperationType::GET_BOOT_TIME_NS: FuzzGetBootTimeNs(data, size); break;
+        case FuzzOperationType::GET_MONOTONIC_TIME_MS: FuzzGetMonotonicTimeMs(data, size); break;
+        case FuzzOperationType::GET_MONOTONIC_TIME_NS: FuzzGetMonotonicTimeNs(data, size); break;
+        case FuzzOperationType::GET_THREAD_TIME_MS: FuzzGetThreadTimeMs(data, size); break;
+        case FuzzOperationType::GET_THREAD_TIME_NS: FuzzGetThreadTimeNs(data, size); break;
+        case FuzzOperationType::GET_NTP_TIME_MS: FuzzGetNtpTimeMs(data, size); break;
+        case FuzzOperationType::GET_REAL_TIME_MS: FuzzGetRealTimeMs(data, size); break;
+        default: break;
     }
 }
 
 void TimeFuzzer::DispatchTimerOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
 {
     switch (opType) {
-        case FuzzOperationType::CREATE_TIMER:
-            FuzzCreateTimer(data, size);
-            break;
-        case FuzzOperationType::CREATE_TIMER_V9:
-            FuzzCreateTimerV9(data, size);
-            break;
-        case FuzzOperationType::START_TIMER:
-            FuzzStartTimer(data, size);
-            break;
-        case FuzzOperationType::START_TIMER_V9:
-            FuzzStartTimerV9(data, size);
-            break;
-        case FuzzOperationType::STOP_TIMER:
-            FuzzStopTimer(data, size);
-            break;
-        case FuzzOperationType::STOP_TIMER_V9:
-            FuzzStopTimerV9(data, size);
-            break;
-        case FuzzOperationType::DESTROY_TIMER:
-            FuzzDestroyTimer(data, size);
-            break;
-        case FuzzOperationType::DESTROY_TIMER_ASYNC:
-            FuzzDestroyTimerAsync(data, size);
-            break;
-        case FuzzOperationType::PROXY_TIMER:
-            FuzzProxyTimer(data, size);
-            break;
-        case FuzzOperationType::RESET_ALL_PROXY:
-            FuzzResetAllProxy(data, size);
-            break;
-        case FuzzOperationType::ADJUST_TIMER:
-            FuzzAdjustTimer(data, size);
-            break;
-        case FuzzOperationType::SET_TIMER_EXEMPTION:
-            FuzzSetTimerExemption(data, size);
-            break;
-        case FuzzOperationType::SET_ADJUST_POLICY:
-            FuzzSetAdjustPolicy(data, size);
-            break;
-        default:
-            break;
+        case FuzzOperationType::CREATE_TIMER: FuzzCreateTimer(data, size); break;
+        case FuzzOperationType::CREATE_TIMER_V9: FuzzCreateTimerV9(data, size); break;
+        case FuzzOperationType::START_TIMER: FuzzStartTimer(data, size); break;
+        case FuzzOperationType::START_TIMER_V9: FuzzStartTimerV9(data, size); break;
+        case FuzzOperationType::STOP_TIMER: FuzzStopTimer(data, size); break;
+        case FuzzOperationType::STOP_TIMER_V9: FuzzStopTimerV9(data, size); break;
+        case FuzzOperationType::DESTROY_TIMER: FuzzDestroyTimer(data, size); break;
+        case FuzzOperationType::DESTROY_TIMER_ASYNC: FuzzDestroyTimerAsync(data, size); break;
+        case FuzzOperationType::PROXY_TIMER: FuzzProxyTimer(data, size); break;
+        case FuzzOperationType::RESET_ALL_PROXY: FuzzResetAllProxy(data, size); break;
+        case FuzzOperationType::ADJUST_TIMER: FuzzAdjustTimer(data, size); break;
+        case FuzzOperationType::SET_TIMER_EXEMPTION: FuzzSetTimerExemption(data, size); break;
+        case FuzzOperationType::SET_ADJUST_POLICY: FuzzSetAdjustPolicy(data, size); break;
+        default: break;
     }
 }
 
 void TimeFuzzer::DispatchSpecialOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
 {
     switch (opType) {
-        case FuzzOperationType::BOUNDARY_TEST:
-            FuzzBoundaryTest(data, size);
-            break;
-        case FuzzOperationType::CONCURRENT_TEST:
-            FuzzConcurrentTest(data, size);
-            break;
-        case FuzzOperationType::COMBO_SCENARIO:
-            FuzzComboScenario(data, size);
-            break;
-        case FuzzOperationType::TIMER_LIFECYCLE:
-            FuzzTimerLifecycle(data, size);
-            break;
-        case FuzzOperationType::STRESS_TEST:
-            FuzzStressTest(data, size);
-            break;
-        default:
-            break;
+        case FuzzOperationType::BOUNDARY_TEST: FuzzBoundaryTest(data, size); break;
+        case FuzzOperationType::CONCURRENT_TEST: FuzzConcurrentTest(data, size); break;
+        case FuzzOperationType::COMBO_SCENARIO: FuzzComboScenario(data, size); break;
+        case FuzzOperationType::TIMER_LIFECYCLE: FuzzTimerLifecycle(data, size); break;
+        case FuzzOperationType::STRESS_TEST: FuzzStressTest(data, size); break;
+        default: break;
     }
 }
 
