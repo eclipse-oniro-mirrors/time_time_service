@@ -32,6 +32,8 @@ const int64_t MIN_TIME_MS = 0;
 const int64_t MAX_TIME_MS = 253402300799000LL; // 9999-12-31 23:59:59
 const int32_t MAX_TIMER_TYPE = 4;
 const int32_t MAX_THREADS = 5;
+const uint64_t DEFAULT_TIMER_INTERVAL_MS = 1000; // 默认Timer间隔1秒
+const uint64_t DEFAULT_TRIGGER_TIME_MS = 100;    // 默认触发时间100毫秒
 } // namespace
 
 // ==================== 构造和析构 ====================
@@ -66,115 +68,138 @@ void TimeFuzzer::FuzzTest(const uint8_t* data, size_t size)
     FuzzOperationType opType =
         static_cast<FuzzOperationType>(data[0] % static_cast<uint8_t>(FuzzOperationType::OP_MAX));
 
+    // 根据操作类型分发到不同的处理函数
+    if (opType >= FuzzOperationType::SET_TIME && opType <= FuzzOperationType::GET_REAL_TIME_MS) {
+        DispatchTimeOperation(opType, data + 1, size - 1);
+    } else if (opType >= FuzzOperationType::CREATE_TIMER && opType <= FuzzOperationType::SET_ADJUST_POLICY) {
+        DispatchTimerOperation(opType, data + 1, size - 1);
+    } else if (opType >= FuzzOperationType::BOUNDARY_TEST && opType <= FuzzOperationType::STRESS_TEST) {
+        DispatchSpecialOperation(opType, data + 1, size - 1);
+    }
+}
+
+// ==================== 操作分发辅助函数 ====================
+void TimeFuzzer::DispatchTimeOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
+{
     switch (opType) {
-        // Time API测试
         case FuzzOperationType::SET_TIME:
-            FuzzSetTime(data + 1, size - 1);
+            FuzzSetTime(data, size);
             break;
         case FuzzOperationType::SET_TIME_V9:
-            FuzzSetTimeV9(data + 1, size - 1);
+            FuzzSetTimeV9(data, size);
             break;
         case FuzzOperationType::SET_AUTO_TIME:
-            FuzzSetAutoTime(data + 1, size - 1);
+            FuzzSetAutoTime(data, size);
             break;
         case FuzzOperationType::SET_TIMEZONE:
-            FuzzSetTimeZone(data + 1, size - 1);
+            FuzzSetTimeZone(data, size);
             break;
         case FuzzOperationType::SET_TIMEZONE_V9:
-            FuzzSetTimeZoneV9(data + 1, size - 1);
+            FuzzSetTimeZoneV9(data, size);
             break;
         case FuzzOperationType::GET_TIMEZONE:
-            FuzzGetTimeZone(data + 1, size - 1);
+            FuzzGetTimeZone(data, size);
             break;
         case FuzzOperationType::GET_WALL_TIME_MS:
-            FuzzGetWallTimeMs(data + 1, size - 1);
+            FuzzGetWallTimeMs(data, size);
             break;
         case FuzzOperationType::GET_WALL_TIME_NS:
-            FuzzGetWallTimeNs(data + 1, size - 1);
+            FuzzGetWallTimeNs(data, size);
             break;
         case FuzzOperationType::GET_BOOT_TIME_MS:
-            FuzzGetBootTimeMs(data + 1, size - 1);
+            FuzzGetBootTimeMs(data, size);
             break;
         case FuzzOperationType::GET_BOOT_TIME_NS:
-            FuzzGetBootTimeNs(data + 1, size - 1);
+            FuzzGetBootTimeNs(data, size);
             break;
         case FuzzOperationType::GET_MONOTONIC_TIME_MS:
-            FuzzGetMonotonicTimeMs(data + 1, size - 1);
+            FuzzGetMonotonicTimeMs(data, size);
             break;
         case FuzzOperationType::GET_MONOTONIC_TIME_NS:
-            FuzzGetMonotonicTimeNs(data + 1, size - 1);
+            FuzzGetMonotonicTimeNs(data, size);
             break;
         case FuzzOperationType::GET_THREAD_TIME_MS:
-            FuzzGetThreadTimeMs(data + 1, size - 1);
+            FuzzGetThreadTimeMs(data, size);
             break;
         case FuzzOperationType::GET_THREAD_TIME_NS:
-            FuzzGetThreadTimeNs(data + 1, size - 1);
+            FuzzGetThreadTimeNs(data, size);
             break;
         case FuzzOperationType::GET_NTP_TIME_MS:
-            FuzzGetNtpTimeMs(data + 1, size - 1);
+            FuzzGetNtpTimeMs(data, size);
             break;
         case FuzzOperationType::GET_REAL_TIME_MS:
-            FuzzGetRealTimeMs(data + 1, size - 1);
+            FuzzGetRealTimeMs(data, size);
             break;
+        default:
+            break;
+    }
+}
 
-        // Timer API测试
+void TimeFuzzer::DispatchTimerOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
+{
+    switch (opType) {
         case FuzzOperationType::CREATE_TIMER:
-            FuzzCreateTimer(data + 1, size - 1);
+            FuzzCreateTimer(data, size);
             break;
         case FuzzOperationType::CREATE_TIMER_V9:
-            FuzzCreateTimerV9(data + 1, size - 1);
+            FuzzCreateTimerV9(data, size);
             break;
         case FuzzOperationType::START_TIMER:
-            FuzzStartTimer(data + 1, size - 1);
+            FuzzStartTimer(data, size);
             break;
         case FuzzOperationType::START_TIMER_V9:
-            FuzzStartTimerV9(data + 1, size - 1);
+            FuzzStartTimerV9(data, size);
             break;
         case FuzzOperationType::STOP_TIMER:
-            FuzzStopTimer(data + 1, size - 1);
+            FuzzStopTimer(data, size);
             break;
         case FuzzOperationType::STOP_TIMER_V9:
-            FuzzStopTimerV9(data + 1, size - 1);
+            FuzzStopTimerV9(data, size);
             break;
         case FuzzOperationType::DESTROY_TIMER:
-            FuzzDestroyTimer(data + 1, size - 1);
+            FuzzDestroyTimer(data, size);
             break;
         case FuzzOperationType::DESTROY_TIMER_ASYNC:
-            FuzzDestroyTimerAsync(data + 1, size - 1);
+            FuzzDestroyTimerAsync(data, size);
             break;
         case FuzzOperationType::PROXY_TIMER:
-            FuzzProxyTimer(data + 1, size - 1);
+            FuzzProxyTimer(data, size);
             break;
         case FuzzOperationType::RESET_ALL_PROXY:
-            FuzzResetAllProxy(data + 1, size - 1);
+            FuzzResetAllProxy(data, size);
             break;
         case FuzzOperationType::ADJUST_TIMER:
-            FuzzAdjustTimer(data + 1, size - 1);
+            FuzzAdjustTimer(data, size);
             break;
         case FuzzOperationType::SET_TIMER_EXEMPTION:
-            FuzzSetTimerExemption(data + 1, size - 1);
+            FuzzSetTimerExemption(data, size);
             break;
         case FuzzOperationType::SET_ADJUST_POLICY:
-            FuzzSetAdjustPolicy(data + 1, size - 1);
+            FuzzSetAdjustPolicy(data, size);
             break;
+        default:
+            break;
+    }
+}
 
-        // 特殊场景测试
+void TimeFuzzer::DispatchSpecialOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
+{
+    switch (opType) {
         case FuzzOperationType::BOUNDARY_TEST:
-            FuzzBoundaryTest(data + 1, size - 1);
+            FuzzBoundaryTest(data, size);
             break;
         case FuzzOperationType::CONCURRENT_TEST:
-            FuzzConcurrentTest(data + 1, size - 1);
+            FuzzConcurrentTest(data, size);
             break;
         case FuzzOperationType::COMBO_SCENARIO:
-            FuzzComboScenario(data + 1, size - 1);
+            FuzzComboScenario(data, size);
             break;
         case FuzzOperationType::TIMER_LIFECYCLE:
-            FuzzTimerLifecycle(data + 1, size - 1);
+            FuzzTimerLifecycle(data, size);
             break;
         case FuzzOperationType::STRESS_TEST:
-            FuzzStressTest(data + 1, size - 1);
+            FuzzStressTest(data, size);
             break;
-
         default:
             break;
     }
@@ -267,7 +292,6 @@ std::string TimeFuzzer::ExtractString(const uint8_t* data, size_t& offset, size_
     size_t strLen = ExtractUint8(data, offset, size);
     strLen = std::min(strLen, maxLen);
     strLen = std::min(strLen, size - offset);
-
     if (strLen == 0 || !IsOffsetValid(offset, size, strLen)) {
         return "";
     }
@@ -540,7 +564,7 @@ void TimeFuzzer::FuzzCreateTimer(const uint8_t* data, size_t size)
     bool repeat = ExtractBool(data, offset, size);
     uint64_t interval = ExtractUint64(data, offset, size);
     if (interval == 0) {
-        interval = 1000; // 默认1秒
+        interval = DEFAULT_TIMER_INTERVAL_MS;
     }
 
     auto timerInfo = std::make_shared<SimpleTimerInfo>("FuzzTimer", timerType, repeat, false, false, interval, nullptr);
@@ -567,7 +591,7 @@ void TimeFuzzer::FuzzCreateTimerV9(const uint8_t* data, size_t size)
     bool repeat = ExtractBool(data, offset, size);
     uint64_t interval = ExtractUint64(data, offset, size);
     if (interval == 0) {
-        interval = 1000; // 默认1秒
+        interval = DEFAULT_TIMER_INTERVAL_MS;
     }
 
     auto timerInfo =
@@ -804,7 +828,7 @@ void TimeFuzzer::FuzzBoundaryTest(const uint8_t* data, size_t size)
     // 测试Timer ID边界
     std::vector<uint64_t> timerIds = {0, 1, UINT64_MAX - 1, UINT64_MAX};
     for (auto timerId : timerIds) {
-        client_->StartTimer(timerId, 1000);
+        client_->StartTimer(timerId, DEFAULT_TIMER_INTERVAL_MS);
         client_->StopTimer(timerId);
         client_->DestroyTimer(timerId);
     }
@@ -882,7 +906,9 @@ void TimeFuzzer::FuzzComboScenario(const uint8_t* data, size_t size)
     }
 
     // 场景3: 获取各种时间类型
-    int64_t bootTime, monotonicTime, threadTime;
+    int64_t bootTime;
+    int64_t monotonicTime;
+    int64_t threadTime;
     client_->GetBootTimeMs(bootTime);
     client_->GetMonotonicTimeMs(monotonicTime);
     client_->GetThreadTimeMs(threadTime);
@@ -901,7 +927,7 @@ void TimeFuzzer::FuzzTimerLifecycle(const uint8_t* data, size_t size)
     bool repeat = ExtractBool(data, offset, size);
     uint64_t interval = ExtractUint64(data, offset, size);
     if (interval == 0) {
-        interval = 1000;
+        interval = DEFAULT_TIMER_INTERVAL_MS;
     }
 
     auto timerInfo =
@@ -912,12 +938,11 @@ void TimeFuzzer::FuzzTimerLifecycle(const uint8_t* data, size_t size)
 
     uint64_t timerId = 0;
     int32_t ret = client_->CreateTimerV9(timerInfo, timerId);
-
     if (ret == 0 && timerId > 0) {
         // 启动Timer
         uint64_t triggerTime = ExtractUint64(data, offset, size);
         if (triggerTime == 0) {
-            triggerTime = 1000;
+            triggerTime = DEFAULT_TIMER_INTERVAL_MS;
         }
         client_->StartTimerV9(timerId, triggerTime);
 
@@ -955,11 +980,12 @@ void TimeFuzzer::FuzzStressTest(const uint8_t* data, size_t size)
         client_->GetMonotonicTimeMs();
 
         // 快速创建和销毁Timer
-        auto timerInfo = std::make_shared<SimpleTimerInfo>("FuzzStressTimer", 0, false, false, false, 1000, nullptr);
+        auto timerInfo = std::make_shared<SimpleTimerInfo>(
+            "FuzzStressTimer", 0, false, false, false, DEFAULT_TIMER_INTERVAL_MS, nullptr);
         if (timerInfo != nullptr) {
             uint64_t timerId = client_->CreateTimer(timerInfo);
             if (timerId > 0) {
-                client_->StartTimer(timerId, 100);
+                client_->StartTimer(timerId, DEFAULT_TRIGGER_TIME_MS);
                 client_->StopTimer(timerId);
                 client_->DestroyTimer(timerId);
             }

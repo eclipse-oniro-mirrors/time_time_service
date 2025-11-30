@@ -24,6 +24,7 @@ ohos_fuzztest("TimeFuzzer") {
 
   include_dirs = [
     "${time_service_path}",
+    "${time_service_path}/time/include",
     "${time_utils_path}/native/include",
     "${api_path}/include",
   ]
