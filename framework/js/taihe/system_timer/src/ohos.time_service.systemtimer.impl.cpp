@@ -19,14 +19,30 @@
 #include "stdexcept"
 #include "ani_system_timer.h"
 #include "ani_utils.h"
+#include "time_hilog.h"
+#include "ani_common_want_agent.h"
 
 using namespace taihe;
 using namespace ohos::time_service::systemtimer;
 using namespace OHOS::MiscServices;
 using namespace OHOS::MiscServices::Time;
+using namespace OHOS;
 
 namespace {
 // To be implemented.
+
+ani_status GetWantAgent(ani_env *env, const ani_object &value,
+    std::shared_ptr<AbilityRuntime::WantAgent::WantAgent> &wantAgent)
+{
+    AbilityRuntime::WantAgent::WantAgent *wantAgentPtr = nullptr;
+    AppExecFwk::UnwrapWantAgent(env, value, reinterpret_cast<void **>(&wantAgentPtr));
+    if (wantAgentPtr == nullptr) {
+        TIME_HILOGI(TIME_MODULE_JS_NAPI, "wantAgentPtr is nullptr");
+        return ANI_ERROR;
+    }
+    wantAgent = std::make_shared<AbilityRuntime::WantAgent::WantAgent>(*wantAgentPtr);
+    return ANI_OK;
+}
 
 int64_t CreateTimerSync(::ohos::time_service::systemtimer::TimerOptions const& options)
 {
@@ -37,9 +53,20 @@ int64_t CreateTimerSync(::ohos::time_service::systemtimer::TimerOptions const& o
     iTimerInfoInstance->SetInterval(intervalValue);
     std::string nameValue = std::string(options.name.value_or(""));
     iTimerInfoInstance->SetName(nameValue);
+    bool autoRestoreValue = options.autoRestore.value_or(false);
+    iTimerInfoInstance->SetAutoRestore(autoRestoreValue);
     auto callback = options.callback;
     if (callback.has_value()) {
         iTimerInfoInstance->SetCallbackInfo(std::function<void()>(callback.value()));
+    }
+    auto wantAgent = options.wantAgent;
+    if (wantAgent.has_value()) {
+        auto env = taihe::get_env();
+        std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgentPtr =
+            std::make_shared<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+        if (GetWantAgent(env, reinterpret_cast<ani_object>(wantAgent.value()), wantAgentPtr) == ANI_OK) {
+            iTimerInfoInstance->SetWantAgent(wantAgentPtr);
+        }
     }
     uint64_t timerId = 0;
     auto innerCode = TimeServiceClient::GetInstance()->CreateTimerV9(iTimerInfoInstance, timerId);
