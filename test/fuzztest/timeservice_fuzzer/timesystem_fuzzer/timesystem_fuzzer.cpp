@@ -17,6 +17,7 @@
 #include "itime_service.h"
 #include "timesystem_fuzzer.h"
 #include "time_system_ability.h"
+#include "simple_timer_info.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -216,6 +217,43 @@ bool GetRealTimeMsFuzzTest(FuzzedDataProvider &provider)
     TimeSystemAbility::GetInstance()->GetRealTimeMs(time);
     return true;
 }
+
+bool SimpleTimerInfoSetTypeFuzzTest(FuzzedDataProvider &provider)
+{
+    auto ability = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int64_t num = provider.ConsumeIntegral<int64_t>();
+    std::shared_ptr<SimpleTimerInfo> timerInfo = std::make_shared<SimpleTimerInfo>(
+        "name", 1, false, false, false, 0, nullptr);
+    timerInfo->SetType(num);
+    timerInfo->SetWantAgent(ability);
+    timerInfo->OnTrigger();
+    return true;
+}
+
+bool SimpleTimerInfoSetRepeatFuzzTest(FuzzedDataProvider &provider)
+{
+    auto ability = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int64_t num = provider.ConsumeIntegral<int64_t>();
+    std::shared_ptr<SimpleTimerInfo> timerInfo = std::make_shared<SimpleTimerInfo>(
+        "name", 1, false, false, false, 0, nullptr);
+    bool repeat = ((num & 1) == 1 ? true : false);
+    timerInfo->SetRepeat(repeat);
+    timerInfo->SetWantAgent(ability);
+    timerInfo->OnTrigger();
+    return true;
+}
+
+bool SimpleTimerInfoSetIntervalFuzzTest(FuzzedDataProvider &provider)
+{
+    auto ability = std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent>();
+    int64_t num = provider.ConsumeIntegral<int64_t>();
+    std::shared_ptr<SimpleTimerInfo> timerInfo = std::make_shared<SimpleTimerInfo>(
+        "name", 1, false, false, false, 0, nullptr);
+    timerInfo->SetInterval(num);
+    timerInfo->SetWantAgent(ability);
+    timerInfo->OnTrigger();
+    return true;
+}
 } // namespace OHOS
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
@@ -239,6 +277,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     OHOS::SetTimerExemptionFuzzTest(provider);
     OHOS::GetNtpTimeMsFuzzTest(provider);
     OHOS::GetRealTimeMsFuzzTest(provider);
+    OHOS::SimpleTimerInfoSetTypeFuzzTest(provider);
+    OHOS::SimpleTimerInfoSetRepeatFuzzTest(provider);
+    OHOS::SimpleTimerInfoSetIntervalFuzzTest(provider);
     return 0;
 }
 
