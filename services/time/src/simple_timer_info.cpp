@@ -58,6 +58,8 @@ void SimpleTimerInfo::OnTrigger()
 {
 }
 
+// LCOV_EXCL_START
+// Non-public interfaces, do not require fuzz testing coverage.
 bool SimpleTimerInfo::Marshalling(Parcel& parcel) const
 {
     if (!parcel.WriteString(name)) {
@@ -120,5 +122,6 @@ SimpleTimerInfo *SimpleTimerInfo::Unmarshalling(Parcel& parcel)
     }
     return simpleTimerInfo;
 }
+// LCOV_EXCL_STOP
 } // namespace MiscServices
 } // namespace OHOS
