@@ -66,6 +66,7 @@ constexpr int FIVE_HUNDRED = 500;
 constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
 constexpr int TIMER_ALARM_COUNT = 50;
 static const int MAX_PID_LIST_SIZE = 1024;
+constexpr uint64_t NANO_TO_MILLISECOND = 1000000;
 #ifdef SET_AUTO_REBOOT_ENABLE
 static const int POWER_ON_ALARM = 6;
 constexpr int64_t TEN_YEARS_TO_SECOND = 10 * 365 * 24 * 60 * 60;
@@ -2425,6 +2426,75 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo009, TestSize.Level0)
     EXPECT_EQ(timerInfo.whenElapsed, empty);
     EXPECT_EQ(timerInfo.maxWhenElapsed, empty);
     EXPECT_EQ(timerInfo.when, milliseconds(0));
+}
+
+/**
+ * @tc.name: TimerInfo010
+ * @tc.desc: test ChangeStatusToAdjust.
+ * @tc.precon: TimerInfo instance can be created and adjust restoration is supported
+ * @tc.step: 1. Create TimerInfo and test restore from INIT state
+ *           2. Test adjust from INIT state
+ *           3. Test adjust from ADJUST state
+ *           4. Test adjust from PROXY state
+ * @tc.expect: RestoreProxyTimer correctly restores timer attributes only from PROXY state
+ * @tc.type: FUNC
+ * @tc.require: issue#853
+ * @tc.level: level0
+ */
+HWTEST_F(TimeServiceTimerTest, TimerInfo010, TestSize.Level0)
+{
+    auto zero = milliseconds(0);
+    std::chrono::steady_clock::time_point empty (zero);
+    auto timerInfo = TimerInfo("", 0, ITimerManager::ELAPSED_REALTIME, zero, empty, zero, empty, zero, nullptr,
+                               nullptr, 0, false, 0, 0, "");
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::INIT);
+    auto timePoint = std::chrono::steady_clock::now();
+    timerInfo.AdjustTimer(timePoint, 1, 0, 0);
+    EXPECT_TRUE(timerInfo.ChangeStatusToAdjust());
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::ADJUST);
+
+    timerInfo.ProxyTimer(empty, milliseconds(3000));
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::PROXY);
+    EXPECT_FALSE(timerInfo.ChangeStatusToAdjust());
+}
+
+/**
+ * @tc.name: TimerInfo011
+ * @tc.desc: Test repeat timer with triggertime before currenttime
+ * @tc.precon: the calculate of timer must be correct
+ * @tc.step: 1. Create repeat timer with ealier tirggertime
+ *           2. Timer triggered and system handler repeat timer, create a new timer
+ *           3. The New timer has the same gap time between when and whenelapsed as the old timer's gap
+ * @tc.expect: RestoreProxyTimer correctly restores timer attributes only from PROXY state
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
+HWTEST_F(TimeServiceTimerTest, TimerInfo011, TestSize.Level0)
+{
+    int64_t currentTime = 0;
+    TimeUtils::GetWallTimeMs(currentTime);
+    auto triggerTime = currentTime - 5000000;
+    auto callback = [this](uint64_t id) -> int32_t {
+        return 0;
+    };
+    auto timerInfo = TimerInfo::CreateTimerInfo("", TIMER_ID, 0, triggerTime, 0, 1800000, 1, false, callback,
+        nullptr, UID, PID, "");
+    auto bootTime = TimeUtils::GetBootTimeNs();
+
+    auto origWhen = timerInfo->origWhen;
+    auto origWhenElapsed = timerInfo->whenElapsed;
+    auto origGap = (origWhen- origWhenElapsed.time_since_epoch()).count();
+    TimerManager::GetInstance()->HandleRepeatTimer(timerInfo, bootTime);
+
+    auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
+    auto it1 = uidTimersMap.find(UID);
+    EXPECT_NE(it1, uidTimersMap.end());
+    auto it2 = it1->second.find(TIMER_ID);
+    EXPECT_NE(it2, it1->second.end());
+    auto newGap = (it2->second->when - it2->second->maxWhenElapsed.time_since_epoch()).count();
+    EXPECT_LE(std::abs(origGap - newGap), NANO_TO_MILLISECOND);
+    TimerManager::GetInstance()->RemoveLocked(TIMER_ID, false);
 }
 
 #ifdef SET_AUTO_REBOOT_ENABLE
