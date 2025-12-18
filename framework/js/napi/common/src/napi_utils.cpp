@@ -104,15 +104,17 @@ napi_value NapiUtils::GetCallbackErrorValue(napi_env env, int32_t errCode, const
         napi_get_undefined(env, &result);
         return result;
     }
-    NAPI_CALL(env, napi_create_object(env, &result));
+    TIME_SERVICE_NAPI_CALL(env, napi_create_object(env, &result), ERROR, "napi_create_object failed");
     if (errCode == JsErrorCode::ERROR) {
-        NAPI_CALL(env, napi_create_int32(env, errCode, &eCode));
-        NAPI_CALL(env, napi_set_named_property(env, result, "code", eCode));
-
+        TIME_SERVICE_NAPI_CALL(env, napi_create_int32(env, errCode, &eCode), ERROR, "napi_create_int32 failed");
+        TIME_SERVICE_NAPI_CALL(env, napi_set_named_property(env, result, "code", eCode), ERROR,
+            "napi_set_named_property failed");
         napi_value str;
         size_t str_len = strlen(message.c_str());
-        NAPI_CALL(env, napi_create_string_utf8(env, message.c_str(), str_len, &str));
-        NAPI_CALL(env, napi_set_named_property(env, result, "message", str));
+        TIME_SERVICE_NAPI_CALL(env, napi_create_string_utf8(env, message.c_str(), str_len, &str), ERROR,
+            "napi_create_string_utf8 failed");
+        TIME_SERVICE_NAPI_CALL(env, napi_set_named_property(env, result, "message", str), ERROR,
+            "napi_set_named_property failed");
     }
     return result;
 }
@@ -128,10 +130,12 @@ void NapiUtils::SetPromise(napi_env env, napi_deferred deferred, int32_t errorCo
     napi_value result)
 {
     if (errorCode == JsErrorCode::ERROR_OK) {
-        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, deferred, result));
+        TIME_SERVICE_NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, deferred, result), ERROR,
+            "napi_resolve_deferred failed");
         return;
     }
-    NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, deferred, GetCallbackErrorValue(env, errorCode, message)));
+    TIME_SERVICE_NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, deferred,
+        GetCallbackErrorValue(env, errorCode, message)), ERROR, "napi_reject_deferred failed");
 }
 
 void NapiUtils::SetCallback(napi_env env, napi_ref callbackIn, int32_t errorCode, const std::string &message,
@@ -146,7 +150,9 @@ void NapiUtils::SetCallback(napi_env env, napi_ref callbackIn, int32_t errorCode
     napi_value results[2] = { 0 };
     results[0] = GetCallbackErrorValue(env, errorCode, message);
     results[1] = result;
-    NAPI_CALL_RETURN_VOID(env, napi_call_function(env, undefined, callback, ARGC_TWO, &results[0], &resultOut));
+    TIME_SERVICE_NAPI_CALL_RETURN_VOID(env,
+        napi_call_function(env, undefined, callback, ARGC_TWO, &results[0], &resultOut), ERROR,
+        "napi_call_function failed");
 }
 
 void NapiUtils::ReturnCallbackPromise(napi_env env, const CallbackPromiseInfo &info, napi_value result)
@@ -178,7 +184,7 @@ napi_value NapiUtils::ParseParametersBySetTime(napi_env env, const napi_value (&
     napi_valuetype valueType = napi_undefined;
 
     // argv[0]: times or date object
-    NAPI_CALL(env, napi_typeof(env, argv[0], &valueType));
+    TIME_SERVICE_NAPI_CALL(env, napi_typeof(env, argv[0], &valueType), ERROR, "napi_typeof failed");
     NAPI_ASSERTP_RETURN(env, valueType == napi_number || valueType == napi_object,
                         "Parameter error. The type of time must be number or date.");
     if (valueType == napi_number) {
@@ -187,21 +193,23 @@ napi_value NapiUtils::ParseParametersBySetTime(napi_env env, const napi_value (&
     } else {
         bool hasProperty = false;
         napi_valuetype resValueType = napi_undefined;
-        NAPI_CALL(env, napi_has_named_property(env, argv[0], "getTime", &hasProperty));
+        TIME_SERVICE_NAPI_CALL(env, napi_has_named_property(env, argv[0], "getTime", &hasProperty), ERROR,
+            "napi_has_named_property failed");
         NAPI_ASSERTP_RETURN(env, hasProperty, "type expected.");
         napi_value getTimeFunc = nullptr;
         napi_get_named_property(env, argv[0], "getTime", &getTimeFunc);
         napi_value getTimeResult = nullptr;
         napi_call_function(env, argv[0], getTimeFunc, 0, nullptr, &getTimeResult);
-        NAPI_CALL(env, napi_typeof(env, getTimeResult, &resValueType));
+        TIME_SERVICE_NAPI_CALL(env, napi_typeof(env, getTimeResult, &resValueType), ERROR, "napi_typeof failed");
         NAPI_ASSERTP_RETURN(env, resValueType == napi_number, "type mismatch");
         napi_get_value_int64(env, getTimeResult, &times);
     }
 
     // argv[1]:callback
     if (argc >= SET_TIME_MAX_PARA) {
-        NAPI_CALL(env, napi_typeof(env, argv[1], &valueType));
-        NAPI_ASSERTP_RETURN(env, valueType == napi_function, "Parameter error. The type of callback must be function.");
+        TIME_SERVICE_NAPI_CALL(env, napi_typeof(env, argv[1], &valueType), ERROR, "napi_typeof failed");
+        NAPI_ASSERTP_RETURN(env, valueType == napi_function,
+            "Parameter error. The type of callback must be function.");
         napi_create_reference(env, argv[1], 1, &callback);
     }
     return NapiGetNull(env);
@@ -214,7 +222,7 @@ napi_value NapiUtils::ParseParametersBySetTimezone(napi_env env, const napi_valu
     napi_valuetype valueType = napi_undefined;
 
     // argv[0]: timezoneid
-    NAPI_CALL(env, napi_typeof(env, argv[0], &valueType));
+    TIME_SERVICE_NAPI_CALL(env, napi_typeof(env, argv[0], &valueType), ERROR, "napi_typeof failed");
     NAPI_ASSERTP_RETURN(env, valueType == napi_string, "Parameter error. The type of timezone must be string.");
     char timeZoneChars[MAX_TIME_ZONE_ID];
     size_t copied;
@@ -225,8 +233,9 @@ napi_value NapiUtils::ParseParametersBySetTimezone(napi_env env, const napi_valu
 
     // argv[1]:callback
     if (argc >= SET_TIMEZONE_MAX_PARA) {
-        NAPI_CALL(env, napi_typeof(env, argv[1], &valueType));
-        NAPI_ASSERTP_RETURN(env, valueType == napi_function, "Parameter error. The type of callback must be function.");
+        TIME_SERVICE_NAPI_CALL(env, napi_typeof(env, argv[1], &valueType), ERROR, "napi_typeof failed");
+        NAPI_ASSERTP_RETURN(env, valueType == napi_function,
+            "Parameter error. The type of callback must be function.");
         napi_create_reference(env, argv[1], 1, &callback);
     }
     return NapiGetNull(env);
@@ -237,8 +246,9 @@ napi_value NapiUtils::ParseParametersGet(napi_env env, const napi_value (&argv)[
 {
     napi_valuetype valueType = napi_undefined;
     if (argc == 1) {
-        NAPI_CALL(env, napi_typeof(env, argv[0], &valueType));
-        NAPI_ASSERTP_RETURN(env, valueType == napi_function, "Parameter error. The type of callback must be function.");
+        TIME_SERVICE_NAPI_CALL(env, napi_typeof(env, argv[0], &valueType), ERROR, "napi_typeof failed");
+        NAPI_ASSERTP_RETURN(env, valueType == napi_function,
+            "Parameter error. The type of callback must be function.");
         napi_create_reference(env, argv[0], 1, &callback);
     }
     return NapiGetNull(env);
@@ -249,7 +259,7 @@ napi_value NapiUtils::ParseParametersGetNA(napi_env env, const napi_value (&argv
 {
     napi_valuetype valueType = napi_undefined;
     if (argc == 1) {
-        NAPI_CALL(env, napi_typeof(env, argv[0], &valueType));
+        TIME_SERVICE_NAPI_CALL(env, napi_typeof(env, argv[0], &valueType), ERROR, "napi_typeof failed");
         if (valueType == napi_function) {
             napi_create_reference(env, argv[0], 1, &callback);
         } else if (valueType == napi_boolean) {
