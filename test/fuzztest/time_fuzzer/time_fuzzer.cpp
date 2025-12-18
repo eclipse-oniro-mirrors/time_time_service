@@ -37,12 +37,12 @@ const uint64_t DEFAULT_TRIGGER_TIME_MS = 100;    // 默认触发时间100毫秒
 } // namespace
 
 // ==================== 构造和析构 ====================
-TimeFuzzer::TimeFuzzer()
+TimeFuzzTest::TimeFuzzTest()
 {
     client_ = TimeServiceClient::GetInstance();
 }
 
-TimeFuzzer::~TimeFuzzer()
+TimeFuzzTest::~TimeFuzzTest()
 {
     // 清理所有创建的Timer
     for (auto timerId : createdTimers_) {
@@ -54,7 +54,7 @@ TimeFuzzer::~TimeFuzzer()
 }
 
 // ==================== 主入口 ====================
-void TimeFuzzer::FuzzTest(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzTest(const uint8_t* data, size_t size)
 {
     if (data == nullptr || size < MIN_FUZZ_DATA_LEN) {
         return;
@@ -79,7 +79,7 @@ void TimeFuzzer::FuzzTest(const uint8_t* data, size_t size)
 }
 
 // ==================== 操作分发辅助函数 ====================
-void TimeFuzzer::DispatchTimeOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
+void TimeFuzzTest::DispatchTimeOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
 {
     switch (opType) {
         case FuzzOperationType::SET_TIME: FuzzSetTime(data, size); break;
@@ -102,7 +102,7 @@ void TimeFuzzer::DispatchTimeOperation(FuzzOperationType opType, const uint8_t* 
     }
 }
 
-void TimeFuzzer::DispatchTimerOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
+void TimeFuzzTest::DispatchTimerOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
 {
     switch (opType) {
         case FuzzOperationType::CREATE_TIMER: FuzzCreateTimer(data, size); break;
@@ -122,7 +122,7 @@ void TimeFuzzer::DispatchTimerOperation(FuzzOperationType opType, const uint8_t*
     }
 }
 
-void TimeFuzzer::DispatchSpecialOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
+void TimeFuzzTest::DispatchSpecialOperation(FuzzOperationType opType, const uint8_t* data, size_t size)
 {
     switch (opType) {
         case FuzzOperationType::BOUNDARY_TEST: FuzzBoundaryTest(data, size); break;
@@ -135,12 +135,12 @@ void TimeFuzzer::DispatchSpecialOperation(FuzzOperationType opType, const uint8_
 }
 
 // ==================== 工具方法实现 ====================
-bool TimeFuzzer::IsOffsetValid(size_t offset, size_t size, size_t needSize)
+bool TimeFuzzTest::IsOffsetValid(size_t offset, size_t size, size_t needSize)
 {
     return (offset + needSize <= size);
 }
 
-int64_t TimeFuzzer::ExtractInt64(const uint8_t* data, size_t& offset, size_t size)
+int64_t TimeFuzzTest::ExtractInt64(const uint8_t* data, size_t& offset, size_t size)
 {
     if (!IsOffsetValid(offset, size, sizeof(int64_t))) {
         return 0;
@@ -153,7 +153,7 @@ int64_t TimeFuzzer::ExtractInt64(const uint8_t* data, size_t& offset, size_t siz
     return value;
 }
 
-uint64_t TimeFuzzer::ExtractUint64(const uint8_t* data, size_t& offset, size_t size)
+uint64_t TimeFuzzTest::ExtractUint64(const uint8_t* data, size_t& offset, size_t size)
 {
     if (!IsOffsetValid(offset, size, sizeof(uint64_t))) {
         return 0;
@@ -166,7 +166,7 @@ uint64_t TimeFuzzer::ExtractUint64(const uint8_t* data, size_t& offset, size_t s
     return value;
 }
 
-int32_t TimeFuzzer::ExtractInt32(const uint8_t* data, size_t& offset, size_t size)
+int32_t TimeFuzzTest::ExtractInt32(const uint8_t* data, size_t& offset, size_t size)
 {
     if (!IsOffsetValid(offset, size, sizeof(int32_t))) {
         return 0;
@@ -179,7 +179,7 @@ int32_t TimeFuzzer::ExtractInt32(const uint8_t* data, size_t& offset, size_t siz
     return value;
 }
 
-uint32_t TimeFuzzer::ExtractUint32(const uint8_t* data, size_t& offset, size_t size)
+uint32_t TimeFuzzTest::ExtractUint32(const uint8_t* data, size_t& offset, size_t size)
 {
     if (!IsOffsetValid(offset, size, sizeof(uint32_t))) {
         return 0;
@@ -192,7 +192,7 @@ uint32_t TimeFuzzer::ExtractUint32(const uint8_t* data, size_t& offset, size_t s
     return value;
 }
 
-uint8_t TimeFuzzer::ExtractUint8(const uint8_t* data, size_t& offset, size_t size)
+uint8_t TimeFuzzTest::ExtractUint8(const uint8_t* data, size_t& offset, size_t size)
 {
     if (!IsOffsetValid(offset, size, sizeof(uint8_t))) {
         return 0;
@@ -202,7 +202,7 @@ uint8_t TimeFuzzer::ExtractUint8(const uint8_t* data, size_t& offset, size_t siz
     return value;
 }
 
-bool TimeFuzzer::ExtractBool(const uint8_t* data, size_t& offset, size_t size)
+bool TimeFuzzTest::ExtractBool(const uint8_t* data, size_t& offset, size_t size)
 {
     if (!IsOffsetValid(offset, size, sizeof(uint8_t))) {
         return false;
@@ -212,7 +212,7 @@ bool TimeFuzzer::ExtractBool(const uint8_t* data, size_t& offset, size_t size)
     return value;
 }
 
-std::string TimeFuzzer::ExtractString(const uint8_t* data, size_t& offset, size_t size, size_t maxLen)
+std::string TimeFuzzTest::ExtractString(const uint8_t* data, size_t& offset, size_t size, size_t maxLen)
 {
     if (!IsOffsetValid(offset, size, sizeof(uint8_t))) {
         return "";
@@ -230,7 +230,7 @@ std::string TimeFuzzer::ExtractString(const uint8_t* data, size_t& offset, size_
     return result;
 }
 
-std::vector<int> TimeFuzzer::ExtractIntVector(const uint8_t* data, size_t& offset, size_t size)
+std::vector<int> TimeFuzzTest::ExtractIntVector(const uint8_t* data, size_t& offset, size_t size)
 {
     std::vector<int> result;
     if (!IsOffsetValid(offset, size, sizeof(uint8_t))) {
@@ -247,7 +247,7 @@ std::vector<int> TimeFuzzer::ExtractIntVector(const uint8_t* data, size_t& offse
     return result;
 }
 
-std::vector<std::string> TimeFuzzer::ExtractStringVector(const uint8_t* data, size_t& offset, size_t size)
+std::vector<std::string> TimeFuzzTest::ExtractStringVector(const uint8_t* data, size_t& offset, size_t size)
 {
     std::vector<std::string> result;
     if (!IsOffsetValid(offset, size, sizeof(uint8_t))) {
@@ -264,7 +264,7 @@ std::vector<std::string> TimeFuzzer::ExtractStringVector(const uint8_t* data, si
     return result;
 }
 
-std::unordered_set<std::string> TimeFuzzer::ExtractStringSet(const uint8_t* data, size_t& offset, size_t size)
+std::unordered_set<std::string> TimeFuzzTest::ExtractStringSet(const uint8_t* data, size_t& offset, size_t size)
 {
     std::unordered_set<std::string> result;
     if (!IsOffsetValid(offset, size, sizeof(uint8_t))) {
@@ -282,7 +282,7 @@ std::unordered_set<std::string> TimeFuzzer::ExtractStringSet(const uint8_t* data
 }
 
 // ==================== Time API Fuzz方法实现 ====================
-void TimeFuzzer::FuzzSetTime(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzSetTime(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -294,7 +294,7 @@ void TimeFuzzer::FuzzSetTime(const uint8_t* data, size_t size)
     client_->SetTime(time);
 }
 
-void TimeFuzzer::FuzzSetTimeV9(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzSetTimeV9(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -306,7 +306,7 @@ void TimeFuzzer::FuzzSetTimeV9(const uint8_t* data, size_t size)
     client_->SetTimeV9(time);
 }
 
-void TimeFuzzer::FuzzSetAutoTime(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzSetAutoTime(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -318,7 +318,7 @@ void TimeFuzzer::FuzzSetAutoTime(const uint8_t* data, size_t size)
     client_->SetAutoTime(autoTime);
 }
 
-void TimeFuzzer::FuzzSetTimeZone(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzSetTimeZone(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -330,7 +330,7 @@ void TimeFuzzer::FuzzSetTimeZone(const uint8_t* data, size_t size)
     client_->SetTimeZone(timeZoneId);
 }
 
-void TimeFuzzer::FuzzSetTimeZoneV9(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzSetTimeZoneV9(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -342,7 +342,7 @@ void TimeFuzzer::FuzzSetTimeZoneV9(const uint8_t* data, size_t size)
     client_->SetTimeZoneV9(timeZoneId);
 }
 
-void TimeFuzzer::FuzzGetTimeZone(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetTimeZone(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -355,7 +355,7 @@ void TimeFuzzer::FuzzGetTimeZone(const uint8_t* data, size_t size)
     client_->GetTimeZone(timeZone2);
 }
 
-void TimeFuzzer::FuzzGetWallTimeMs(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetWallTimeMs(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -368,7 +368,7 @@ void TimeFuzzer::FuzzGetWallTimeMs(const uint8_t* data, size_t size)
     client_->GetWallTimeMs(time2);
 }
 
-void TimeFuzzer::FuzzGetWallTimeNs(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetWallTimeNs(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -381,7 +381,7 @@ void TimeFuzzer::FuzzGetWallTimeNs(const uint8_t* data, size_t size)
     client_->GetWallTimeNs(time2);
 }
 
-void TimeFuzzer::FuzzGetBootTimeMs(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetBootTimeMs(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -394,7 +394,7 @@ void TimeFuzzer::FuzzGetBootTimeMs(const uint8_t* data, size_t size)
     client_->GetBootTimeMs(time2);
 }
 
-void TimeFuzzer::FuzzGetBootTimeNs(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetBootTimeNs(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -407,7 +407,7 @@ void TimeFuzzer::FuzzGetBootTimeNs(const uint8_t* data, size_t size)
     client_->GetBootTimeNs(time2);
 }
 
-void TimeFuzzer::FuzzGetMonotonicTimeMs(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetMonotonicTimeMs(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -420,7 +420,7 @@ void TimeFuzzer::FuzzGetMonotonicTimeMs(const uint8_t* data, size_t size)
     client_->GetMonotonicTimeMs(time2);
 }
 
-void TimeFuzzer::FuzzGetMonotonicTimeNs(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetMonotonicTimeNs(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -433,7 +433,7 @@ void TimeFuzzer::FuzzGetMonotonicTimeNs(const uint8_t* data, size_t size)
     client_->GetMonotonicTimeNs(time2);
 }
 
-void TimeFuzzer::FuzzGetThreadTimeMs(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetThreadTimeMs(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -446,7 +446,7 @@ void TimeFuzzer::FuzzGetThreadTimeMs(const uint8_t* data, size_t size)
     client_->GetThreadTimeMs(time2);
 }
 
-void TimeFuzzer::FuzzGetThreadTimeNs(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetThreadTimeNs(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -459,7 +459,7 @@ void TimeFuzzer::FuzzGetThreadTimeNs(const uint8_t* data, size_t size)
     client_->GetThreadTimeNs(time2);
 }
 
-void TimeFuzzer::FuzzGetNtpTimeMs(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetNtpTimeMs(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -469,7 +469,7 @@ void TimeFuzzer::FuzzGetNtpTimeMs(const uint8_t* data, size_t size)
     client_->GetNtpTimeMs(time);
 }
 
-void TimeFuzzer::FuzzGetRealTimeMs(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzGetRealTimeMs(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -480,7 +480,7 @@ void TimeFuzzer::FuzzGetRealTimeMs(const uint8_t* data, size_t size)
 }
 
 // ==================== Timer API Fuzz方法实现 ====================
-void TimeFuzzer::FuzzCreateTimer(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzCreateTimer(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -507,7 +507,7 @@ void TimeFuzzer::FuzzCreateTimer(const uint8_t* data, size_t size)
     }
 }
 
-void TimeFuzzer::FuzzCreateTimerV9(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzCreateTimerV9(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -536,7 +536,7 @@ void TimeFuzzer::FuzzCreateTimerV9(const uint8_t* data, size_t size)
     }
 }
 
-void TimeFuzzer::FuzzStartTimer(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzStartTimer(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -555,7 +555,7 @@ void TimeFuzzer::FuzzStartTimer(const uint8_t* data, size_t size)
     client_->StartTimer(timerId, triggerTime);
 }
 
-void TimeFuzzer::FuzzStartTimerV9(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzStartTimerV9(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -574,7 +574,7 @@ void TimeFuzzer::FuzzStartTimerV9(const uint8_t* data, size_t size)
     client_->StartTimerV9(timerId, triggerTime);
 }
 
-void TimeFuzzer::FuzzStopTimer(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzStopTimer(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -592,7 +592,7 @@ void TimeFuzzer::FuzzStopTimer(const uint8_t* data, size_t size)
     client_->StopTimer(timerId);
 }
 
-void TimeFuzzer::FuzzStopTimerV9(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzStopTimerV9(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -610,7 +610,7 @@ void TimeFuzzer::FuzzStopTimerV9(const uint8_t* data, size_t size)
     client_->StopTimerV9(timerId);
 }
 
-void TimeFuzzer::FuzzDestroyTimer(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzDestroyTimer(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -629,7 +629,7 @@ void TimeFuzzer::FuzzDestroyTimer(const uint8_t* data, size_t size)
     client_->DestroyTimer(timerId);
 }
 
-void TimeFuzzer::FuzzDestroyTimerAsync(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzDestroyTimerAsync(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -648,7 +648,7 @@ void TimeFuzzer::FuzzDestroyTimerAsync(const uint8_t* data, size_t size)
     client_->DestroyTimerAsync(timerId);
 }
 
-void TimeFuzzer::FuzzProxyTimer(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzProxyTimer(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -664,7 +664,7 @@ void TimeFuzzer::FuzzProxyTimer(const uint8_t* data, size_t size)
     client_->ProxyTimer(uid, pidSet, isProxy, needRetrigger);
 }
 
-void TimeFuzzer::FuzzResetAllProxy(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzResetAllProxy(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -673,7 +673,7 @@ void TimeFuzzer::FuzzResetAllProxy(const uint8_t* data, size_t size)
     client_->ResetAllProxy();
 }
 
-void TimeFuzzer::FuzzAdjustTimer(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzAdjustTimer(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -687,7 +687,7 @@ void TimeFuzzer::FuzzAdjustTimer(const uint8_t* data, size_t size)
     client_->AdjustTimer(isAdjust, interval, delta);
 }
 
-void TimeFuzzer::FuzzSetTimerExemption(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzSetTimerExemption(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -700,7 +700,7 @@ void TimeFuzzer::FuzzSetTimerExemption(const uint8_t* data, size_t size)
     client_->SetTimerExemption(nameArr, isExemption);
 }
 
-void TimeFuzzer::FuzzSetAdjustPolicy(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzSetAdjustPolicy(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -724,7 +724,7 @@ void TimeFuzzer::FuzzSetAdjustPolicy(const uint8_t* data, size_t size)
 }
 
 // ==================== 特殊场景Fuzz方法实现 ====================
-void TimeFuzzer::FuzzBoundaryTest(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzBoundaryTest(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -763,7 +763,7 @@ void TimeFuzzer::FuzzBoundaryTest(const uint8_t* data, size_t size)
     }
 }
 
-void TimeFuzzer::FuzzConcurrentTest(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzConcurrentTest(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -803,7 +803,7 @@ void TimeFuzzer::FuzzConcurrentTest(const uint8_t* data, size_t size)
     }
 }
 
-void TimeFuzzer::FuzzComboScenario(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzComboScenario(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -843,7 +843,7 @@ void TimeFuzzer::FuzzComboScenario(const uint8_t* data, size_t size)
     client_->GetThreadTimeMs(threadTime);
 }
 
-void TimeFuzzer::FuzzTimerLifecycle(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzTimerLifecycle(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -890,7 +890,7 @@ void TimeFuzzer::FuzzTimerLifecycle(const uint8_t* data, size_t size)
     }
 }
 
-void TimeFuzzer::FuzzStressTest(const uint8_t* data, size_t size)
+void TimeFuzzTest::FuzzStressTest(const uint8_t* data, size_t size)
 {
     if (client_ == nullptr) {
         return;
@@ -932,7 +932,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         return 0;
     }
 
-    static OHOS::MiscServices::TimeFuzzer fuzzer;
+    static OHOS::MiscServices::TimeFuzzTest fuzzer;
     fuzzer.FuzzTest(data, size);
 
     return 0;

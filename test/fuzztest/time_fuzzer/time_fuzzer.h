@@ -77,10 +77,10 @@ enum class FuzzOperationType : uint8_t {
     OP_MAX
 };
 
-class TimeFuzzer {
+class TimeFuzzTest {
 public:
-    TimeFuzzer();
-    ~TimeFuzzer();
+    TimeFuzzTest();
+    ~TimeFuzzTest();
 
     void FuzzTest(const uint8_t* data, size_t size);
 

@@ -17,7 +17,7 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 
 ##############################fuzztest##########################################
-ohos_fuzztest("TimeFuzzer") {
+ohos_fuzztest("TimeFuzzTest") {
   module_out_path = "time_service/time_service"
 
   fuzz_config_file = "${time_root_path}/test/fuzztest/time_fuzzer"
@@ -56,10 +56,9 @@ ohos_fuzztest("TimeFuzzer") {
 ###############################################################################
 group("fuzztest") {
   testonly = true
-  deps = []
-  deps += [
+  deps = [
     # deps file
-    ":TimeFuzzer",
+    ":TimeFuzzTest",
   ]
 }
 ###############################################################################
