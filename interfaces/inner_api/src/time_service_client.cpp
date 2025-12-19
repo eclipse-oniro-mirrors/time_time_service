@@ -526,6 +526,7 @@ void TimeServiceClient::HandleRecoverMap(uint64_t timerId)
     if (info->second->timerInfo->disposable == true) {
         TIME_HILOGD(TIME_MODULE_CLIENT, "timer:%{public}" PRId64 "is disposable", timerId);
         recoverTimerInfoMap_.erase(timerId);
+        TimerCallback::GetInstance()->RemoveTimerCallbackInfo(timerId);
         return;
     }
     TIME_HILOGD(TIME_MODULE_CLIENT, "timer:%{public}" PRId64 "change state by trigger", timerId);
