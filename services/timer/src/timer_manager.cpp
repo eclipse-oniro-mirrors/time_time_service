@@ -63,6 +63,7 @@ constexpr int MAX_TIMER_ALARM_COUNT = 100;
 constexpr int TIMER_ALRAM_INTERVAL = 60;
 constexpr int TIMER_COUNT_TOP_NUM = 5;
 constexpr const char* AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
+constexpr int MAX_RANDOM_TIMES = 100;
 #ifdef SET_AUTO_REBOOT_ENABLE
 constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 constexpr int64_t TEN_YEARS_TO_SECOND = 10 * 365 * 24 * 60 * 60;
@@ -225,15 +226,17 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     std::shared_ptr<TimerEntry> timerInfo;
     {
         std::lock_guard<std::mutex> lock(entryMapMutex_);
-        while (timerId == 0) {
+        int retryCount;
+        for (retryCount = 0; retryCount < MAX_RANDOM_TIMES; retryCount++) {
             // random_() needs to be protected in a lock.
             timerId = random_();
+            if (timerId != 0 && timerEntryMap_.find(timerId) == timerEntryMap_.end()) {
+                break;
+            }
         }
         timerInfo = std::make_shared<TimerEntry>(TimerEntry {timerName, timerId, paras.timerType, paras.windowLength,
             paras.interval, paras.flag, paras.autoRestore, std::move(callback), wantAgent, uid, pid, bundleName});
-        if (timerEntryMap_.find(timerId) == timerEntryMap_.end()) {
-            IncreaseTimerCount(uid);
-        }
+        IncreaseTimerCount(uid);
         timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
         if (timerName != "") {
             AddTimerName(uid, timerName, timerId);
