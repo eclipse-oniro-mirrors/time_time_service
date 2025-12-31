@@ -2519,13 +2519,13 @@ HWTEST_F(TimeServiceTimerTest, IsPowerOnTimer001, TestSize.Level0)
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
 
-    auto timerInfo1 = std::make_shared<TimerInfo>("testTimerName", TIMER_ID, 0, duration, timePoint, duration,
+    auto timerInfo1 = std::make_shared<TimerInfo>("testTimerName", TIMER_ID, 2, duration, timePoint, duration,
         timePoint, duration, nullptr, nullptr, 0, false, 0, 0, "");
     bool ret = true;
     ret = timerManager->IsPowerOnTimer(timerInfo1);
     EXPECT_EQ(ret, false);
 
-    auto timerInfo2 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+    auto timerInfo2 = std::make_shared<TimerInfo>("", TIMER_ID, 3, duration, timePoint, duration, timePoint, duration,
         nullptr, nullptr, 0, false, 0, 0, "testBundleName");
     ret = true;
     ret = timerManager->IsPowerOnTimer(timerInfo2);
@@ -2542,6 +2542,12 @@ HWTEST_F(TimeServiceTimerTest, IsPowerOnTimer001, TestSize.Level0)
     ret = false;
     ret = timerManager->IsPowerOnTimer(timerInfo4);
     EXPECT_EQ(ret, true);
+
+    auto timerInfo5 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+        nullptr, nullptr, 0, true, 0, 0, "");
+    ret = true;
+    ret = timerManager->IsPowerOnTimer(timerInfo5);
+    EXPECT_EQ(ret, false);
 }
 
 /**
