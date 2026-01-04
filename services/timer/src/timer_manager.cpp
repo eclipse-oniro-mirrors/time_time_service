@@ -226,12 +226,14 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     std::shared_ptr<TimerEntry> timerInfo;
     {
         std::lock_guard<std::mutex> lock(entryMapMutex_);
-        int retryCount;
-        for (retryCount = 0; retryCount < MAX_RANDOM_TIMES; retryCount++) {
-            // random_() needs to be protected in a lock.
-            timerId = random_();
-            if (timerId != 0 && timerEntryMap_.find(timerId) == timerEntryMap_.end()) {
-                break;
+        if (timerId == 0) {
+            int retryCount;
+            for (retryCount = 0; retryCount < MAX_RANDOM_TIMES; retryCount++) {
+                // random_() needs to be protected in a lock.
+                timerId = random_();
+                if (timerId != 0 && timerEntryMap_.find(timerId) == timerEntryMap_.end()) {
+                    break;
+                }
             }
         }
         timerInfo = std::make_shared<TimerEntry>(TimerEntry {timerName, timerId, paras.timerType, paras.windowLength,
