@@ -73,7 +73,7 @@
           "//base/time/time_service/services/etc:time.para.dac"
         ]
       },
-      "inner_api": [
+      "inner_kits": [
         {
           "name": "//base/time/time_service/interfaces/inner_api:time_client",
           "header": {
