@@ -36,6 +36,8 @@ enum TimeSubModule : int8_t {
 
 static constexpr unsigned int BASE_TIME_DOMAIN_ID = 0xD001C40;
 
+static constexpr uint64_t BASE_TIME_FDSAN_TAG = 0xD001C40;
+
 enum TimeDomainId : int32_t {
     TIME_INNERKIT_DOMAIN = BASE_TIME_DOMAIN_ID + TIME_MODULE_INNERKIT,
     TIME_CLIENT_DOMAIN,
