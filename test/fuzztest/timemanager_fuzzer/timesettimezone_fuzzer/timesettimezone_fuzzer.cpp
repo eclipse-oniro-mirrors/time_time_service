@@ -23,126 +23,126 @@
 #include "time_service_client.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
+const int MAX_LENGTH = 64;
+
 using namespace OHOS::MiscServices;
 
 namespace OHOS {
 
-bool FuzzTimeSetTimezone(const uint8_t *rawData, size_t size)
+bool FuzzTimeSetTimezone(FuzzedDataProvider &provider)
 {
-    std::string timeZone(reinterpret_cast<const char *>(rawData), size);
+    std::string timeZone = provider.ConsumeRandomLengthString(MAX_LENGTH);
     TimeServiceClient::GetInstance()->SetTimeZone(timeZone);
+    timeZone = provider.ConsumeRandomLengthString(MAX_LENGTH);
     TimeServiceClient::GetInstance()->SetTimeZone(timeZone);
+    timeZone = provider.ConsumeRandomLengthString(MAX_LENGTH);
     TimeServiceClient::GetInstance()->SetTimeZoneV9(timeZone);
     int32_t code;
+    timeZone = provider.ConsumeRandomLengthString(MAX_LENGTH);
     TimeServiceClient::GetInstance()->SetTimeZone(timeZone, code);
     return true;
 }
 
-bool FuzzTimeGetTimezone(const uint8_t *rawData, size_t size)
+bool FuzzTimeGetTimezone(FuzzedDataProvider &provider)
 {
     TimeServiceClient::GetInstance()->GetTimeZone();
-    std::string timezoneId(reinterpret_cast<const char *>(rawData), size);
+    std::string timezoneId = provider.ConsumeRandomLengthString(MAX_LENGTH);
     TimeServiceClient::GetInstance()->GetTimeZone(timezoneId);
     return true;
 }
 
-bool FuzzTimeSetTime(const uint8_t *rawData, size_t size)
+bool FuzzTimeSetTime(FuzzedDataProvider &provider)
 {
-    int64_t time = static_cast<int64_t>(*rawData);
+    int64_t time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->SetTime(time);
+    time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->SetTime(time);
+    time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->SetTimeV9(time);
+    time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->SetTimeV9(time);
     int32_t code;
+    time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->SetTime(time, code);
     return true;
 }
 
-bool FuzzTimeGetWallTime(const uint8_t *rawData, size_t size)
+bool FuzzTimeGetWallTime(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(rawData, size);
     TimeServiceClient::GetInstance()->GetWallTimeMs();
-    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetWallTimeMs(time);
     TimeServiceClient::GetInstance()->GetWallTimeNs();
-    time = fdp.ConsumeIntegral<int64_t>();
+    time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetWallTimeNs(time);
     return true;
 }
 
-bool FuzzTimeGetBootTime(const uint8_t *rawData, size_t size)
+bool FuzzTimeGetBootTime(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(rawData, size);
     TimeServiceClient::GetInstance()->GetBootTimeMs();
-    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetBootTimeMs(time);
     TimeServiceClient::GetInstance()->GetBootTimeNs();
-    time = fdp.ConsumeIntegral<int64_t>();
+    time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetBootTimeNs(time);
     return true;
 }
 
-bool FuzzTimeGetMonotonicTime(const uint8_t *rawData, size_t size)
+bool FuzzTimeGetMonotonicTime(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(rawData, size);
     TimeServiceClient::GetInstance()->GetMonotonicTimeMs();
-    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetMonotonicTimeMs(time);
     TimeServiceClient::GetInstance()->GetMonotonicTimeNs();
-    time = fdp.ConsumeIntegral<int64_t>();
+    time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetMonotonicTimeNs(time);
     return true;
 }
 
-bool FuzzTimeGetThreadTime(const uint8_t *rawData, size_t size)
+bool FuzzTimeGetThreadTime(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(rawData, size);
     TimeServiceClient::GetInstance()->GetThreadTimeMs();
-    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetThreadTimeMs(time);
     TimeServiceClient::GetInstance()->GetThreadTimeNs();
-    time = fdp.ConsumeIntegral<int64_t>();
+    time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetThreadTimeNs(time);
     return true;
 }
 
-bool FuzzTimeGetNtpTimeMs(const uint8_t *rawData, size_t size)
+bool FuzzTimeGetNtpTimeMs(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(rawData, size);
-    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
     return true;
 }
 
-bool FuzzTimeGetRealTimeMs(const uint8_t *rawData, size_t size)
+bool FuzzTimeGetRealTimeMs(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(rawData, size);
-    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = provider.ConsumeIntegral<int64_t>();
     TimeServiceClient::GetInstance()->GetRealTimeMs(time);
     return true;
 }
 
-bool FuzzTimeTimeUtilsGetWallTimeMs(const uint8_t *rawData, size_t size)
+bool FuzzTimeTimeUtilsGetWallTimeMs(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(rawData, size);
-    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = provider.ConsumeIntegral<int64_t>();
     TimeUtils::GetWallTimeMs(time);
     return true;
 }
 
-bool FuzzTimeTimeUtilsGetBootTimeNs(const uint8_t *rawData, size_t size)
+bool FuzzTimeTimeUtilsGetBootTimeNs(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(rawData, size);
-    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = provider.ConsumeIntegral<int64_t>();
     TimeUtils::GetBootTimeNs(time);
     TimeUtils::GetBootTimeNs();
     return true;
 }
 
-bool FuzzTimeTimeUtilsGetBootTimeMs(const uint8_t *rawData, size_t size)
+bool FuzzTimeTimeUtilsGetBootTimeMs(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(rawData, size);
-    int64_t time = fdp.ConsumeIntegral<int64_t>();
+    int64_t time = provider.ConsumeIntegral<int64_t>();
     TimeUtils::GetBootTimeNs(time);
     return true;
 }
@@ -156,17 +156,18 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::FuzzTimeSetTimezone(data, size);
-    OHOS::FuzzTimeGetTimezone(data, size);
-    OHOS::FuzzTimeSetTime(data, size);
-    OHOS::FuzzTimeGetWallTime(data, size);
-    OHOS::FuzzTimeGetBootTime(data, size);
-    OHOS::FuzzTimeGetMonotonicTime(data, size);
-    OHOS::FuzzTimeGetThreadTime(data, size);
-    OHOS::FuzzTimeGetNtpTimeMs(data, size);
-    OHOS::FuzzTimeGetRealTimeMs(data, size);
-    OHOS::FuzzTimeTimeUtilsGetWallTimeMs(data, size);
-    OHOS::FuzzTimeTimeUtilsGetBootTimeNs(data, size);
-    OHOS::FuzzTimeTimeUtilsGetBootTimeMs(data, size);
+    FuzzedDataProvider provider(data, size);
+    OHOS::FuzzTimeSetTimezone(provider);
+    OHOS::FuzzTimeGetTimezone(provider);
+    OHOS::FuzzTimeSetTime(provider);
+    OHOS::FuzzTimeGetWallTime(provider);
+    OHOS::FuzzTimeGetBootTime(provider);
+    OHOS::FuzzTimeGetMonotonicTime(provider);
+    OHOS::FuzzTimeGetThreadTime(provider);
+    OHOS::FuzzTimeGetNtpTimeMs(provider);
+    OHOS::FuzzTimeGetRealTimeMs(provider);
+    OHOS::FuzzTimeTimeUtilsGetWallTimeMs(provider);
+    OHOS::FuzzTimeTimeUtilsGetBootTimeNs(provider);
+    OHOS::FuzzTimeTimeUtilsGetBootTimeMs(provider);
     return 0;
 }

@@ -20,6 +20,7 @@
 #include <string>
 #include <securec.h>
 #include <string_ex.h>
+#include <fuzzer/FuzzedDataProvider.h>
 
 #include "accesstoken_kit.h"
 #include "message_parcel.h"
@@ -35,25 +36,32 @@ using namespace OHOS::MiscServices;
 
 namespace OHOS {
 constexpr size_t THRESHOLD = 4;
-constexpr int32_t NTP_PACKAGE_SIZE = 48;
+constexpr size_t NTP_PACKAGE_SIZE = 48;
+constexpr int MAX_NUM = 20;
+constexpr int MAX_LENGTH = 64;
 const std::u16string TIMESERVICE_INTERFACE_TOKEN = u"ohos.miscservices.time.ITimeService";
 
 #ifdef HIDUMPER_ENABLE
-bool FuzzTimeDump(const uint8_t *rawData, size_t size)
+bool FuzzTimeDump(FuzzedDataProvider &provider)
 {
     std::vector<std::u16string> args;
-    std::string str(reinterpret_cast<const char *>(rawData), size);
-    args.push_back(Str8ToStr16(str));
+    int len = provider.ConsumeIntegralInRange<int>(1, MAX_NUM);
+    for (int i = 0; i < len; i++) {
+        std::string str = provider.ConsumeRandomLengthString(MAX_LENGTH);
+        args.push_back(Str8ToStr16(str));
+    }
     int fd = 0;
     TimeSystemAbility::GetInstance()->Dump(fd, args);
     return true;
 }
 #endif
 
-bool FuzzTimeReceivedMessage(const uint8_t *data, size_t size)
+bool FuzzTimeReceivedMessage(FuzzedDataProvider &provider)
 {
     char buffer[NTP_PACKAGE_SIZE] = { 0 };
-    if (memcpy_s(buffer, NTP_PACKAGE_SIZE, data, size) != EOK) {
+    auto bytes = provider.ConsumeBytes<uint8_t>(NTP_PACKAGE_SIZE);
+    errno_t ret = memcpy_s(buffer, sizeof(buffer), bytes.data(), NTP_PACKAGE_SIZE);
+    if (ret != EOK) {
         return true;
     }
     auto client = std::make_shared<SNTPClient>();
@@ -65,13 +73,14 @@ bool FuzzTimeReceivedMessage(const uint8_t *data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
-    if (size < OHOS::THRESHOLD) {
+    if (data == nullptr || size < OHOS::THRESHOLD) {
         return 0;
     }
     /* Run your code on data */
+    FuzzedDataProvider provider(data, size);
 #ifdef HIDUMPER_ENABLE
-    OHOS::FuzzTimeDump(data, size);
+    OHOS::FuzzTimeDump(provider);
 #endif
-    OHOS::FuzzTimeReceivedMessage(data, size);
+    OHOS::FuzzTimeReceivedMessage(provider);
     return 0;
 }

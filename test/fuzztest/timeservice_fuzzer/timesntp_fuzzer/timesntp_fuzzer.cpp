@@ -18,6 +18,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <string_ex.h>
+#include <securec.h>
+#include <fuzzer/FuzzedDataProvider.h>
 
 #include "time_service_fuzz_utils.h"
 #define private public
@@ -28,44 +30,41 @@ using namespace OHOS::MiscServices;
 namespace OHOS {
 constexpr size_t THRESHOLD = 4;
 constexpr size_t NTP_PACKAGE_SIZE = 48;
+constexpr int MAX_LENGTH = 64;
 
-void Convert(const uint8_t *data, size_t size, char* buf)
-{
-    size_t copySize = (size < NTP_PACKAGE_SIZE) ? size : NTP_PACKAGE_SIZE;
-
-    for (size_t i = 0; i < copySize; ++i) {
-        buf[i] = static_cast<char>(data[i]);
-    }
-    for (size_t i = copySize; i < NTP_PACKAGE_SIZE; ++i) {
-        buf[i] = 0;
-    }
-}
-
-bool FuzzTimeCreateMessage(const uint8_t *data, size_t size)
+bool FuzzTimeCreateMessage(FuzzedDataProvider &provider)
 {
     char sendBuf[NTP_PACKAGE_SIZE] = { 0 };
-
-    Convert(data, size, sendBuf);
-
+    auto bytes = provider.ConsumeBytes<uint8_t>(NTP_PACKAGE_SIZE);
+    errno_t ret = memcpy_s(sendBuf, sizeof(sendBuf), bytes.data(), NTP_PACKAGE_SIZE);
+    if (ret != EOK) {
+        return true;
+    }
     SNTPClient client;
     client.CreateMessage(sendBuf);
     return true;
 }
 
-bool FuzzTimeReceivedMessage(const uint8_t *data, size_t size)
+bool FuzzTimeReceivedMessage(FuzzedDataProvider &provider)
 {
     char sendBuf[NTP_PACKAGE_SIZE] = { 0 };
-
-    Convert(data, size, sendBuf);
-
+    auto bytes = provider.ConsumeBytes<uint8_t>(NTP_PACKAGE_SIZE);
+    size_t copySize = bytes.size();
+    if (copySize > sizeof(sendBuf)) {
+        copySize = sizeof(sendBuf);
+    }
+    errno_t ret = memcpy_s(sendBuf, sizeof(sendBuf), bytes.data(), NTP_PACKAGE_SIZE);
+    if (ret != EOK) {
+        return true;
+    }
     SNTPClient client;
     client.ReceivedMessage(sendBuf);
     return true;
 }
 
-bool FuzzTimeRequestTime(const uint8_t *data, size_t size)
+bool FuzzTimeRequestTime(FuzzedDataProvider &provider)
 {
-    std::string host(reinterpret_cast<const char *>(data), size);
+    std::string host = provider.ConsumeRandomLengthString(MAX_LENGTH);
     SNTPClient client;
     client.RequestTime(host);
     return true;
@@ -75,13 +74,14 @@ bool FuzzTimeRequestTime(const uint8_t *data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
-    if (size < OHOS::THRESHOLD) {
+    if (data == nullptr || size < OHOS::THRESHOLD) {
         return 0;
     }
 
     /* Run your code on data */
-    OHOS::FuzzTimeCreateMessage(data, size);
-    OHOS::FuzzTimeReceivedMessage(data, size);
-    OHOS::FuzzTimeRequestTime(data, size);
+    FuzzedDataProvider provider(data, size);
+    OHOS::FuzzTimeCreateMessage(provider);
+    OHOS::FuzzTimeReceivedMessage(provider);
+    OHOS::FuzzTimeRequestTime(provider);
     return 0;
 }
