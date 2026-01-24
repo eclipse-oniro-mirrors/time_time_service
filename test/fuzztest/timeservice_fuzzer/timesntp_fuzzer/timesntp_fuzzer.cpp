@@ -36,7 +36,7 @@ bool FuzzTimeCreateMessage(FuzzedDataProvider &provider)
 {
     char sendBuf[NTP_PACKAGE_SIZE] = { 0 };
     auto bytes = provider.ConsumeBytes<uint8_t>(NTP_PACKAGE_SIZE);
-    errno_t ret = memcpy_s(sendBuf, sizeof(sendBuf), bytes.data(), NTP_PACKAGE_SIZE);
+    errno_t ret = memcpy_s(sendBuf, sizeof(sendBuf), bytes.data(), bytes.size());
     if (ret != EOK) {
         return true;
     }
@@ -49,11 +49,7 @@ bool FuzzTimeReceivedMessage(FuzzedDataProvider &provider)
 {
     char sendBuf[NTP_PACKAGE_SIZE] = { 0 };
     auto bytes = provider.ConsumeBytes<uint8_t>(NTP_PACKAGE_SIZE);
-    size_t copySize = bytes.size();
-    if (copySize > sizeof(sendBuf)) {
-        copySize = sizeof(sendBuf);
-    }
-    errno_t ret = memcpy_s(sendBuf, sizeof(sendBuf), bytes.data(), NTP_PACKAGE_SIZE);
+    errno_t ret = memcpy_s(sendBuf, sizeof(sendBuf), bytes.data(), bytes.size());
     if (ret != EOK) {
         return true;
     }
