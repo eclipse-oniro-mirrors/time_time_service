@@ -60,7 +60,7 @@ bool FuzzTimeReceivedMessage(FuzzedDataProvider &provider)
 {
     char buffer[NTP_PACKAGE_SIZE] = { 0 };
     auto bytes = provider.ConsumeBytes<uint8_t>(NTP_PACKAGE_SIZE);
-    errno_t ret = memcpy_s(buffer, sizeof(buffer), bytes.data(), NTP_PACKAGE_SIZE);
+    errno_t ret = memcpy_s(buffer, sizeof(buffer), bytes.data(), bytes.size());
     if (ret != EOK) {
         return true;
     }
