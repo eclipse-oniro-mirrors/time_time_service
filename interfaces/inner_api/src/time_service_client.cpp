@@ -100,6 +100,10 @@ TimeServiceClient::~TimeServiceClient()
             remoteObject->RemoveDeathRecipient(deathRecipient_);
         }
     }
+
+    sptr<ISystemAbilityManager> systemAbilityManager =
+        SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    UnsubscribeSA(systemAbilityManager);
 }
 
 sptr<TimeServiceClient> TimeServiceClient::GetInstance()
@@ -125,6 +129,26 @@ bool TimeServiceClient::SubscribeSA(sptr<ISystemAbilityManager> systemAbilityMan
         TIME_HILOGE(TIME_MODULE_CLIENT, "SubscribeSystemAbility failed: %{public}d", ret);
         return false;
     }
+    return true;
+}
+
+bool TimeServiceClient::UnsubscribeSA(sptr<ISystemAbilityManager> systemAbilityManager)
+{
+    if (listener_ == nullptr) {
+        return true;
+    }
+    if (systemAbilityManager == nullptr) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "Getting SystemAbilityManager failed.");
+        return false;
+    }
+    auto ret = systemAbilityManager->UnSubscribeSystemAbility(TIME_SERVICE_ID, listener_);
+    if (ret != 0) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "UnsubscribeSystemAbility failed.");
+        return false;
+    }
+    listener_ = nullptr;
+
+    TIME_HILOGI(TIME_MODULE_CLIENT, "UnsubscribeSA Success");
     return true;
 }
 
