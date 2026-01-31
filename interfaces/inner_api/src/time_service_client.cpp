@@ -146,7 +146,6 @@ bool TimeServiceClient::UnsubscribeSA(sptr<ISystemAbilityManager> systemAbilityM
         TIME_HILOGE(TIME_MODULE_CLIENT, "UnsubscribeSystemAbility failed.");
         return false;
     }
-    listener_ = nullptr;
 
     TIME_HILOGI(TIME_MODULE_CLIENT, "UnsubscribeSA Success");
     return true;

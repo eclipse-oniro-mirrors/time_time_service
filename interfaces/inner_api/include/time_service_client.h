@@ -489,7 +489,7 @@ private:
 
     sptr<TimeServiceListener> listener_;
     static std::mutex instanceLock_;
-    static sptr<TimeServiceClient> instance_;
+    __attribute__((no_destroy)) static sptr<TimeServiceClient> instance_;
     TIME_API std::vector<std::string> timerNameList_;
     TIME_API std::map<uint64_t, std::shared_ptr<RecoverTimerInfo>> recoverTimerInfoMap_;
     TIME_API std::mutex recoverTimerInfoLock_;
