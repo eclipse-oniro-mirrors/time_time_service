@@ -47,6 +47,7 @@ ohos_source_set("time_utils") {
     "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_single",
+    "os_account:authorization_innerkits",
   ]
   defines = []
 

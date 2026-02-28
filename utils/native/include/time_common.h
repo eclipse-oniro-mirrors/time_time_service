@@ -59,6 +59,7 @@ enum TimeError : int32_t {
     E_TIME_NO_TIMER_ADJUST,                 // 77856780
     E_TIME_NTP_UPDATE_FAILED,               // 77856781
     E_TIME_NTP_NOT_UPDATE,                  // 77856782
+    E_TIME_AUTHORIZATION_FAILED,            // 77856783
     #ifdef MULTI_ACCOUNT_ENABLE
     E_TIME_ACCOUNT_NOT_MATCH,
     E_TIME_ACCOUNT_ERROR,

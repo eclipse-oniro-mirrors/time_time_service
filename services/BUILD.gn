@@ -117,6 +117,7 @@ ohos_shared_library("time_system_ability") {
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "os_account:authorization_innerkits",
   ]
   defines = []
   if (time_service_debug_able) {
@@ -215,6 +216,7 @@ ohos_static_library("time_system_ability_static") {
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "os_account:authorization_innerkits",
   ]
   defines = []
   if (time_service_debug_able) {
