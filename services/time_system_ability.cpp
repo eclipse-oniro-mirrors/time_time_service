@@ -590,6 +590,11 @@ int32_t TimeSystemAbility::SetTime(int64_t time, int8_t apiVersion)
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
+    // 添加 CheckAuthorization 校验
+    if (!TimePermission::CheckAuthorization(TimePermission::setTimePrivilege)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "CheckAuthorization failed for SET_TIME");
+        return E_TIME_AUTHORIZATION_FAILED;
+    }
     return SetTimeInner(time, apiVersion);
 }
 
@@ -827,6 +832,11 @@ int32_t TimeSystemAbility::SetAutoTime(bool autoTime)
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
+    // 添加 CheckAuthorization 校验
+    if (!TimePermission::CheckAuthorization(TimePermission::setTimePrivilege)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "CheckAuthorization failed for SetAutoTime");
+        return E_TIME_AUTHORIZATION_FAILED;
+    }
     auto errNo = SetParameter(AUTOTIME_KEY, autoTime ? "ON" : "OFF");
     if (errNo != AUTOTIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "SetAutoTime FAIL,errNo: %{public}d", errNo);
@@ -848,6 +858,11 @@ int32_t TimeSystemAbility::SetTimeZone(const std::string &timeZoneId, int8_t api
     if (!TimePermission::CheckCallingPermission(TimePermission::setTimeZone)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
+    }
+    // 添加 CheckAuthorization 校验
+    if (!TimePermission::CheckAuthorization(TimePermission::setTimePrivilege)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "CheckAuthorization failed for SetTimeZone");
+        return E_TIME_AUTHORIZATION_FAILED;
     }
     return SetTimeZoneInner(timeZoneId, apiVersion);
 }
