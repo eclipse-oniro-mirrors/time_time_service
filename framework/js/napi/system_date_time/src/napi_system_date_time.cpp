@@ -21,6 +21,8 @@
 #include "napi_utils.h"
 #include "time_common.h"
 #include "time_service_client.h"
+#include "application_context.h"
+#include "time_sysevent.h"
 
 using namespace OHOS::MiscServices;
 
@@ -35,6 +37,15 @@ constexpr int32_t STARTUP = 0;
 constexpr int32_t ACTIVE = 1;
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
 constexpr const char *AUTOTIME_KEY = "persist.time.auto_time";
+
+static std::string GetCallerBundleName()
+{
+    auto context = OHOS::AbilityRuntime::ApplicationContext::GetInstance();
+    if (context != nullptr) {
+        return context->GetBundleName();
+    }
+    return "";
+}
 
 napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value exports)
 {
@@ -271,6 +282,11 @@ napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
     getTimeContext->GetCbInfo(env, info, inputParser, true);
     auto executor = [getTimeContext]() {
         int32_t innerCode = GetDeviceTime(CLOCK_REALTIME, getTimeContext->isNano, getTimeContext->time);
+        if (getTimeContext->isNano) {
+            auto bundleName = GetCallerBundleName();
+            TimeBehaviorReport(ReportEventCode::GET_TIME_NANO, std::to_string(getTimeContext->time), "", 0,
+                bundleName);
+        }
         if (innerCode != JsErrorCode::ERROR_OK) {
             getTimeContext->errCode = innerCode;
             getTimeContext->status = napi_generic_failure;

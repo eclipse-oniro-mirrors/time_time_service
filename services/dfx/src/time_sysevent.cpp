@@ -87,6 +87,25 @@ void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime
     }
 }
 
+void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime, const std::string &newTime,
+    int64_t ntpTime, const std::string &bundleName)
+{
+    struct HiSysEventParam params[] = {
+        {"EVENT_CODE",    HISYSEVENT_INT32,  {.i32 = eventCode},                           0},
+        {"CALLER_UID",    HISYSEVENT_INT32,  {.i32 = IPCSkeleton::GetCallingUid()},        0},
+        {"CALLER_NAME",   HISYSEVENT_STRING, {.s = const_cast<char*>(bundleName.c_str())}, 0},
+        {"ORIGINAL_TIME", HISYSEVENT_STRING, {.s = const_cast<char*>(originTime.c_str())}, 0},
+        {"SET_TIME",      HISYSEVENT_STRING, {.s = const_cast<char*>(newTime.c_str())},    0},
+        {"NTP_TIME",      HISYSEVENT_INT64,  {.i64 = ntpTime},                             0}
+    };
+    int ret = OH_HiSysEvent_Write("TIME", "BEHAVIOR_TIME", HISYSEVENT_BEHAVIOR, params,
+        sizeof(params)/sizeof(params[0]));
+    if (ret != 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "TimeBehaviorReport failed! eventCode %{public}d, name:%{public}s,"
+            "ret:%{public}d", eventCode, bundleName.c_str(), ret);
+    }
+}
+
 void TimerBehaviorReport(std::shared_ptr<TimerInfo> timer, bool isStart)
 {
     if (timer == nullptr) {
