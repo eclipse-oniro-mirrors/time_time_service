@@ -92,7 +92,7 @@ void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime
 {
     struct HiSysEventParam params[] = {
         {"EVENT_CODE",    HISYSEVENT_INT32,  {.i32 = eventCode},                           0},
-        {"CALLER_UID",    HISYSEVENT_INT32,  {.i32 = IPCSkeleton::GetCallingUid()},        0},
+        {"CALLER_UID",    HISYSEVENT_INT32,  {.i32 = 0},                                   0},
         {"CALLER_NAME",   HISYSEVENT_STRING, {.s = const_cast<char*>(bundleName.c_str())}, 0},
         {"ORIGINAL_TIME", HISYSEVENT_STRING, {.s = const_cast<char*>(originTime.c_str())}, 0},
         {"SET_TIME",      HISYSEVENT_STRING, {.s = const_cast<char*>(newTime.c_str())},    0},

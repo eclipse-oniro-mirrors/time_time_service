@@ -22,7 +22,6 @@
 #include "time_common.h"
 #include "time_service_client.h"
 #include "application_context.h"
-#include "time_sysevent.h"
 
 using namespace OHOS::MiscServices;
 
@@ -37,6 +36,7 @@ constexpr int32_t STARTUP = 0;
 constexpr int32_t ACTIVE = 1;
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
 constexpr const char *AUTOTIME_KEY = "persist.time.auto_time";
+std::atomic<bool> NapiSystemDateTime::hasSendEvent = false;
 
 static std::string GetCallerBundleName()
 {
@@ -45,6 +45,14 @@ static std::string GetCallerBundleName()
         return context->GetBundleName();
     }
     return "";
+}
+
+void NapiSystemDateTime::SendHiSysevent(bool isNano, ReportEventCode eventCode, int64_t time, std::string bundleName)
+{
+    if (isNano && !hasSendEvent.load(std::memory_order_seq_cst)) {
+        TimeBehaviorReport(eventCode, std::to_string(time), "", 0, bundleName);
+        hasSendEvent.store(true, std::memory_order_seq_cst)
+    }
 }
 
 napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value exports)
@@ -261,6 +269,7 @@ napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
     struct GetTimeContext : public ContextBase {
         int64_t time = 0;
         bool isNano = false;
+        std::string bundleName = GetCallerBundleName();
     };
     auto *getTimeContext = new (std::nothrow) GetTimeContext();
     if (getTimeContext == nullptr) {
@@ -282,11 +291,8 @@ napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
     getTimeContext->GetCbInfo(env, info, inputParser, true);
     auto executor = [getTimeContext]() {
         int32_t innerCode = GetDeviceTime(CLOCK_REALTIME, getTimeContext->isNano, getTimeContext->time);
-        if (getTimeContext->isNano) {
-            auto bundleName = GetCallerBundleName();
-            TimeBehaviorReport(ReportEventCode::GET_TIME_NANO, std::to_string(getTimeContext->time), "", 0,
-                bundleName);
-        }
+        SendHiSysevent(getTimeContext->isNano, GETTIME_NANO, getTimeContext->time,
+            getTimeContext->bundleName);
         if (innerCode != JsErrorCode::ERROR_OK) {
             getTimeContext->errCode = innerCode;
             getTimeContext->status = napi_generic_failure;
@@ -349,7 +355,8 @@ napi_value NapiSystemDateTime::GetUptime(napi_env env, napi_callback_info info)
     struct GetUpTimeContext : public ContextBase {
         int64_t time = 0;
         int32_t timeType = STARTUP;
-        bool isNanoseconds = false;
+        bool isNano = false;
+        std::string bundleName = GetCallerBundleName();
     };
     auto *getUpTimeContext = new (std::nothrow) GetUpTimeContext();
     if (getUpTimeContext == nullptr) {
@@ -370,18 +377,18 @@ napi_value NapiSystemDateTime::GetUptime(napi_env env, napi_callback_info info)
             napi_typeof(env, argv[ARGV_SECOND], &valueType);
             if (valueType == napi_boolean) {
                 getUpTimeContext->status =
-                    napi_get_value_bool(env, argv[ARGV_SECOND], &getUpTimeContext->isNanoseconds);
+                    napi_get_value_bool(env, argv[ARGV_SECOND], &getUpTimeContext->isNano);
                 CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext, getUpTimeContext->status == napi_ok,
-                    "get isNanoseconds failed", JsErrorCode::PARAMETER_ERROR);
+                    "get isNano failed", JsErrorCode::PARAMETER_ERROR);
             }
         }
         getUpTimeContext->status = napi_ok;
     };
     getUpTimeContext->GetCbInfo(env, info, inputParser, true);
     auto executor = [getUpTimeContext]() {
-        int32_t innerCode;
-        innerCode = GetDeviceTime(getUpTimeContext->isNanoseconds, getUpTimeContext->timeType,
+        int32_t innerCode = GetDeviceTime(getUpTimeContext->isNano, getUpTimeContext->timeType,
             getUpTimeContext->time);
+        SendHiSysevent(getUpTimeContext->isNano, GETUPTIME_NANO, getUpTimeContext->time, getUpTimeContext->bundleName);
         if (innerCode != JsErrorCode::ERROR_OK) {
             getUpTimeContext->errCode = innerCode;
             getUpTimeContext->status = napi_generic_failure;

@@ -50,7 +50,8 @@ enum ReportEventCode : int32_t {
     SET_TIMEZONE,
     NTP_COMPARE_UNTRUSTED,
     NTP_VOTE_UNTRUSTED,
-    GET_TIME_NANO,
+    GETTIME_NANO,
+    GETUPTIME_NANO,
 };
 void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer);
 void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime, const std::string &newTime,
