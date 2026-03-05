@@ -32,6 +32,7 @@ declare_args() {
   time_service_set_auto_reboot = false
   time_service_multi_account = true
   time_service_rdb_enable = true
+  time_service_callback_autoboot_enable = false
   if (defined(global_parts_info) &&
       !defined(global_parts_info.resourceschedule_device_standby)) {
     device_standby = false
