@@ -20,7 +20,8 @@
       "time_service_hidumper_able",
       "time_service_rdb_enable",
       "time_service_set_auto_reboot",
-      "time_service_multi_account"
+      "time_service_multi_account",
+      "time_service_callback_autoboot_enable"
     ],
     "hisysevent_config": [
       "//base/time/time_service/hisysevent.yaml"

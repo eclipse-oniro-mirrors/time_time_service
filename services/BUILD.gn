@@ -135,6 +135,10 @@ ohos_shared_library("time_system_ability") {
     defines += [ "SET_AUTO_REBOOT_ENABLE" ]
   }
 
+  if (!is_emulator && time_service_callback_autoboot_enable) {
+    defines += [ "CALLBACK_AUTOBOOT_ENABLE" ]
+  }
+
   if (time_service_multi_account) {
     defines += [ "MULTI_ACCOUNT_ENABLE" ]
     external_deps += [ "os_account:os_account_innerkits" ]
@@ -237,6 +241,10 @@ ohos_static_library("time_system_ability_static") {
 
   if (!is_emulator && time_service_set_auto_reboot) {
     defines += [ "SET_AUTO_REBOOT_ENABLE" ]
+  }
+
+  if (!is_emulator && time_service_callback_autoboot_enable) {
+    defines += [ "CALLBACK_AUTOBOOT_ENABLE" ]
   }
 
   if (time_service_multi_account) {
