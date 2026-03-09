@@ -17,7 +17,7 @@
 #define NAPI_SYSTEM_TIME_H
 
 #include <map>
-#include<atomic>
+#include <atomic>
 
 #include "napi/native_node_api.h"
 #include "time_sysevent.h"
@@ -52,7 +52,8 @@ private:
     static int32_t GetDeviceTime(clockid_t clockId, bool isNano, int64_t &time);
     static int32_t GetDeviceTime(bool isNano, int32_t timeType, int64_t &time);
     static void SendHiSysevent(bool isNano, ReportEventCode eventCode, int64_t time, std::string bundleName);
-    static std::atomic<bool> hasSendEvent;
+    static std::atomic<bool> hasSendGetTimeNano;
+    static std::atomic<bool> hasSendGetUptimeNano;
 };
 } // namespace Time
 } // namespace MiscServices

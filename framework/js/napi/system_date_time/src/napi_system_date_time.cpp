@@ -36,7 +36,8 @@ constexpr int32_t STARTUP = 0;
 constexpr int32_t ACTIVE = 1;
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
 constexpr const char *AUTOTIME_KEY = "persist.time.auto_time";
-std::atomic<bool> NapiSystemDateTime::hasSendEvent = false;
+std::atomic<bool> NapiSystemDateTime::hasSendGetTimeNano{false};
+std::atomic<bool> NapiSystemDateTime::hasSendGetUptimeNano{false};
 
 static std::string GetCallerBundleName()
 {
@@ -49,9 +50,19 @@ static std::string GetCallerBundleName()
 
 void NapiSystemDateTime::SendHiSysevent(bool isNano, ReportEventCode eventCode, int64_t time, std::string bundleName)
 {
-    if (isNano && !hasSendEvent.load(std::memory_order_seq_cst)) {
+    if (!isNano) {
+        return;
+    }
+    std::atomic<bool>* flagPtr = nullptr;
+    if (eventCode == GETTIME_NANO) {
+        flagPtr = &hasSendGetTimeNano;
+    } else if (eventCode == GETUPTIME_NANO) {
+        flagPtr = &hasSendGetUptimeNano;
+    } else {
+        return;
+    }
+    if (!flagPtr->exchange(true, std::memory_order_relaxed)) {
         TimeBehaviorReport(eventCode, std::to_string(time), "", 0, bundleName);
-        hasSendEvent.store(true, std::memory_order_seq_cst)
     }
 }
 
