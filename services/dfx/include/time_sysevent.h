@@ -50,10 +50,14 @@ enum ReportEventCode : int32_t {
     SET_TIMEZONE,
     NTP_COMPARE_UNTRUSTED,
     NTP_VOTE_UNTRUSTED,
+    GETTIME_NANO,
+    GETUPTIME_NANO,
 };
 void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer);
 void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime, const std::string &newTime,
     int64_t ntpTime);
+void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime, const std::string &newTime,
+    int64_t ntpTime, const std::string &bundleName);
 void TimerBehaviorReport(std::shared_ptr<TimerInfo> timer, bool isStart);
 void TimerCountStaticReporter(int count, int (&uidArr)[COUNT_REPORT_ARRAY_LENGTH],
     int (&createTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH], int (&startTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH]);
