@@ -137,6 +137,9 @@ private:
     #endif
     #ifdef SET_AUTO_REBOOT_ENABLE
     void RegisterPowerStateListener();
+    #ifndef CALLBACK_AUTOBOOT_ENABLE
+    void SetAutoReboot();
+    #endif
     #endif
 
     ServiceRunningState state_;
