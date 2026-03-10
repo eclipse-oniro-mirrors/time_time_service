@@ -21,7 +21,9 @@
 #include "napi_utils.h"
 #include "time_common.h"
 #include "time_service_client.h"
+#ifndef CROSSPLATFORM
 #include "application_context.h"
+#endif
 
 using namespace OHOS::MiscServices;
 
@@ -36,6 +38,7 @@ constexpr int32_t STARTUP = 0;
 constexpr int32_t ACTIVE = 1;
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
 constexpr const char *AUTOTIME_KEY = "persist.time.auto_time";
+#ifndef CROSSPLATFORM
 std::atomic<bool> NapiSystemDateTime::hasSendGetTimeNano{false};
 std::atomic<bool> NapiSystemDateTime::hasSendGetUptimeNano{false};
 
@@ -65,6 +68,7 @@ void NapiSystemDateTime::SendHiSysevent(bool isNano, ReportEventCode eventCode, 
         TimeBehaviorReport(eventCode, std::to_string(time), "", 0, bundleName);
     }
 }
+#endif
 
 napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value exports)
 {
@@ -280,7 +284,9 @@ napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
     struct GetTimeContext : public ContextBase {
         int64_t time = 0;
         bool isNano = false;
+    #ifndef CROSSPLATFORM
         std::string bundleName = GetCallerBundleName();
+    #endif
     };
     auto *getTimeContext = new (std::nothrow) GetTimeContext();
     if (getTimeContext == nullptr) {
@@ -302,8 +308,10 @@ napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
     getTimeContext->GetCbInfo(env, info, inputParser, true);
     auto executor = [getTimeContext]() {
         int32_t innerCode = GetDeviceTime(CLOCK_REALTIME, getTimeContext->isNano, getTimeContext->time);
+    #ifndef CROSSPLATFORM
         SendHiSysevent(getTimeContext->isNano, GETTIME_NANO, getTimeContext->time,
             getTimeContext->bundleName);
+    #endif
         if (innerCode != JsErrorCode::ERROR_OK) {
             getTimeContext->errCode = innerCode;
             getTimeContext->status = napi_generic_failure;
@@ -367,7 +375,9 @@ napi_value NapiSystemDateTime::GetUptime(napi_env env, napi_callback_info info)
         int64_t time = 0;
         int32_t timeType = STARTUP;
         bool isNano = false;
+        #ifndef CROSSPLATFORM
         std::string bundleName = GetCallerBundleName();
+        #endif
     };
     auto *getUpTimeContext = new (std::nothrow) GetUpTimeContext();
     if (getUpTimeContext == nullptr) {
@@ -399,7 +409,9 @@ napi_value NapiSystemDateTime::GetUptime(napi_env env, napi_callback_info info)
     auto executor = [getUpTimeContext]() {
         int32_t innerCode = GetDeviceTime(getUpTimeContext->isNano, getUpTimeContext->timeType,
             getUpTimeContext->time);
+        #ifndef CROSSPLATFORM
         SendHiSysevent(getUpTimeContext->isNano, GETUPTIME_NANO, getUpTimeContext->time, getUpTimeContext->bundleName);
+        #endif
         if (innerCode != JsErrorCode::ERROR_OK) {
             getUpTimeContext->errCode = innerCode;
             getUpTimeContext->status = napi_generic_failure;

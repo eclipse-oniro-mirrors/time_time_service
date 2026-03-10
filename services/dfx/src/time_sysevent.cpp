@@ -87,6 +87,7 @@ void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime
     }
 }
 
+#ifndef CROSSPLATFORM
 void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime, const std::string &newTime,
     int64_t ntpTime, const std::string &bundleName)
 {
@@ -105,6 +106,7 @@ void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime
             "ret:%{public}d", eventCode, bundleName.c_str(), ret);
     }
 }
+#endif
 
 void TimerBehaviorReport(std::shared_ptr<TimerInfo> timer, bool isStart)
 {
