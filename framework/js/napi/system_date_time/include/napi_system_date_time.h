@@ -20,7 +20,9 @@
 #include <atomic>
 
 #include "napi/native_node_api.h"
+#ifndef CROSSPLATFORM
 #include "time_sysevent.h"
+#endif
 
 namespace OHOS {
 namespace MiscServices {
@@ -51,9 +53,12 @@ private:
     static int32_t GetAutoTime(bool &autoTime);
     static int32_t GetDeviceTime(clockid_t clockId, bool isNano, int64_t &time);
     static int32_t GetDeviceTime(bool isNano, int32_t timeType, int64_t &time);
+
+#ifndef CROSSPLATFORM
     static void SendHiSysevent(bool isNano, ReportEventCode eventCode, int64_t time, std::string bundleName);
     static std::atomic<bool> hasSendGetTimeNano;
     static std::atomic<bool> hasSendGetUptimeNano;
+#endif
 };
 } // namespace Time
 } // namespace MiscServices
