@@ -67,7 +67,9 @@ constexpr int MAX_RANDOM_TIMES = 100;
 #ifdef SET_AUTO_REBOOT_ENABLE
 constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
 constexpr int64_t TEN_YEARS_TO_SECOND = 10 * 365 * 24 * 60 * 60;
+#ifdef CALLBACK_AUTOBOOT_ENABLE
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
+#endif
 #endif
 constexpr std::array<const char*, 2> NO_LOG_APP_LIST = { "wifi_manager_service", "telephony" };
 
@@ -610,7 +612,11 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
         if (timerInfo == powerOnTriggerTimerList_.end()) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "alarm needs power on, id=%{public}" PRId64 "", alarm->id);
             powerOnTriggerTimerList_.push_back(alarm);
+            #ifdef CALLBACK_AUTOBOOT_ENABLE
             ReschedulePowerOnTimerLocked(false);
+            #else
+            ReschedulePowerOnTimerLocked();
+            #endif
         }
     }
     #endif
@@ -838,11 +844,19 @@ void TimerManager::RescheduleKernelTimerLocked()
 #ifdef SET_AUTO_REBOOT_ENABLE
 bool TimerManager::IsPowerOnTimer(std::shared_ptr<TimerInfo> timerInfo)
 {
+    #ifdef CALLBACK_AUTOBOOT_ENABLE
     if (timerInfo != nullptr) {
         return (std::find(powerOnApps_.begin(), powerOnApps_.end(), timerInfo->name) != powerOnApps_.end() ||
             std::find(powerOnApps_.begin(), powerOnApps_.end(), timerInfo->bundleName) != powerOnApps_.end()) &&
             (timerInfo->type == RTC || timerInfo->type == RTC_WAKEUP);
     }
+    #else
+    if (timerInfo != nullptr) {
+        return (std::find(powerOnApps_.begin(), powerOnApps_.end(), timerInfo->name) != powerOnApps_.end() ||
+            std::find(powerOnApps_.begin(), powerOnApps_.end(), timerInfo->bundleName) != powerOnApps_.end()) &&
+            CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type, timerInfo->autoRestore);
+    }
+    #endif
     return false;
 }
 
@@ -856,10 +870,18 @@ void TimerManager::DeleteTimerFromPowerOnTimerListById(uint64_t timerId)
         return;
     }
     powerOnTriggerTimerList_.erase(deleteTimerInfo);
+    #ifdef CALLBACK_AUTOBOOT_ENABLE
     ReschedulePowerOnTimerLocked(false);
+    #else
+    ReschedulePowerOnTimerLocked();
+    #endif
 }
 
+#ifdef CALLBACK_AUTOBOOT_ENABLE
 void TimerManager::ReschedulePowerOnTimerLocked(bool isShutDown)
+#else
+void TimerManager::ReschedulePowerOnTimerLocked()
+#endif
 {
     auto bootTime = TimeUtils::GetBootTimeNs();
     int64_t currentTime = 0;
@@ -894,22 +916,26 @@ void TimerManager::ReschedulePowerOnTimerLocked(bool isShutDown)
         timerInfo = powerOnTriggerTimerList_[0];
         setTimePoint = timerInfo->when;
     }
+    #ifdef CALLBACK_AUTOBOOT_ENABLE
     if (isShutDown && static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > setTimePoint.count()) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
         auto triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
         setTimePoint = std::chrono::milliseconds(triggerTime);
     }
+    #endif
     if (setTimePoint.count() != lastSetTime_[POWER_ON_ALARM]) {
         SetLocked(POWER_ON_ALARM, setTimePoint, bootTime);
         lastSetTime_[POWER_ON_ALARM] = setTimePoint.count();
     }
 }
 
+#ifdef CALLBACK_AUTOBOOT_ENABLE
 void TimerManager::ShutDownReschedulePowerOnTimer()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     ReschedulePowerOnTimerLocked(true);
 }
+#endif
 #endif
 
 // needs to acquire the lock `mutex_` before calling this method
