@@ -65,7 +65,8 @@ constexpr int TIMER_COUNT_TOP_NUM = 5;
 constexpr const char* AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
 constexpr int MAX_RANDOM_TIMES = 100;
 #ifdef SET_AUTO_REBOOT_ENABLE
-constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
+constexpr const char* PERSIST_SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
+constexpr const char* CONST_SCHEDULED_POWER_ON_APPS = "const.time.scheduled_power_on_apps";
 constexpr int64_t TEN_YEARS_TO_SECOND = 10 * 365 * 24 * 60 * 60;
 #ifdef CALLBACK_AUTOBOOT_ENABLE
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
@@ -105,6 +106,20 @@ TimerManager* TimerManager::instance_ = nullptr;
 
 extern bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &batch);
 
+#ifdef SET_AUTO_REBOOT_ENABLE
+std::vector<std::string> TimerManager::GetPowerOnApps()
+{
+    auto persistPowerOnApps = TimeFileUtils::GetParameterList(PERSIST_SCHEDULED_POWER_ON_APPS);
+    auto constPowerOnApps = TimeFileUtils::GetParameterList(CONST_SCHEDULED_POWER_ON_APPS);
+    std::vector<std::string> powerOnApps(persistPowerOnApps);
+    powerOnApps.insert(powerOnApps.end(), constPowerOnApps.begin(), constPowerOnApps.end());
+    std::sort(powerOnApps.begin(), powerOnApps.end());
+    auto last = std::unique(powerOnApps.begin(), powerOnApps.end());
+    powerOnApps.erase(last, powerOnApps.end());
+    return powerOnApps;
+}
+#endif
+
 TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
     : random_ {static_cast<uint64_t>(time(nullptr))},
       runFlag_ {true},
@@ -115,7 +130,7 @@ TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
 {
     alarmThread_.reset(new std::thread([this] { this->TimerLooper(); }));
     #ifdef SET_AUTO_REBOOT_ENABLE
-    powerOnApps_ = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
+    powerOnApps_ = GetPowerOnApps();
     #endif
 }
 

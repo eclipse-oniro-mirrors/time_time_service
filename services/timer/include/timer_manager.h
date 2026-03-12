@@ -70,10 +70,9 @@ public:
     void HandleRSSDeath();
     static TimerManager* GetInstance();
     #ifdef SET_AUTO_REBOOT_ENABLE
+    std::vector<std::string> GetPowerOnApps();
     #ifdef CALLBACK_AUTOBOOT_ENABLE
     void ShutDownReschedulePowerOnTimer();
-    #else
-    std::vector<std::string> powerOnApps_;
     #endif
     #endif
 
@@ -169,9 +168,7 @@ private:
     std::chrono::steady_clock::time_point lastTimerOutOfRangeTime_;
     #ifdef SET_AUTO_REBOOT_ENABLE
     std::vector<std::shared_ptr<TimerInfo>> powerOnTriggerTimerList_;
-    #ifdef CALLBACK_AUTOBOOT_ENABLE
     std::vector<std::string> powerOnApps_;
-    #endif
     #endif
     #ifdef POWER_MANAGER_ENABLE
     std::mutex runningLockMutex_;
