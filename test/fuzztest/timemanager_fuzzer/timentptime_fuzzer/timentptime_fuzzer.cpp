@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "timesettimezone_fuzzer.h"
+#include "timentptime_fuzzer.h"
 #include "time_common.h"
 
 #include <cstddef>
@@ -23,31 +23,21 @@
 #include "time_service_client.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
-const int MAX_LENGTH = 64;
-
 using namespace OHOS::MiscServices;
 
 namespace OHOS {
 
-bool FuzzTimeSetTimezone(FuzzedDataProvider &provider)
+bool FuzzTimeGetNtpTimeMs(FuzzedDataProvider &provider)
 {
-    std::string timeZone = provider.ConsumeRandomLengthString(MAX_LENGTH);
-    TimeServiceClient::GetInstance()->SetTimeZone(timeZone);
-    timeZone = provider.ConsumeRandomLengthString(MAX_LENGTH);
-    TimeServiceClient::GetInstance()->SetTimeZone(timeZone);
-    timeZone = provider.ConsumeRandomLengthString(MAX_LENGTH);
-    TimeServiceClient::GetInstance()->SetTimeZoneV9(timeZone);
-    int32_t code;
-    timeZone = provider.ConsumeRandomLengthString(MAX_LENGTH);
-    TimeServiceClient::GetInstance()->SetTimeZone(timeZone, code);
+    int64_t time = provider.ConsumeIntegral<int64_t>();
+    TimeServiceClient::GetInstance()->GetNtpTimeMs(time);
     return true;
 }
 
-bool FuzzTimeGetTimezone(FuzzedDataProvider &provider)
+bool FuzzTimeGetRealTimeMs(FuzzedDataProvider &provider)
 {
-    TimeServiceClient::GetInstance()->GetTimeZone();
-    std::string timezoneId = provider.ConsumeRandomLengthString(MAX_LENGTH);
-    TimeServiceClient::GetInstance()->GetTimeZone(timezoneId);
+    int64_t time = provider.ConsumeIntegral<int64_t>();
+    TimeServiceClient::GetInstance()->GetRealTimeMs(time);
     return true;
 }
 
@@ -62,7 +52,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    OHOS::FuzzTimeSetTimezone(provider);
-    OHOS::FuzzTimeGetTimezone(provider);
+    OHOS::FuzzTimeGetNtpTimeMs(provider);
+    OHOS::FuzzTimeGetRealTimeMs(provider);
     return 0;
 }
