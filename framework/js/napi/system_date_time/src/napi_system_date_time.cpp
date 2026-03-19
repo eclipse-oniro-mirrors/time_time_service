@@ -596,11 +596,10 @@ napi_value NapiSystemDateTime::SetAutoTimeStatus(napi_env env, napi_callback_inf
     auto executor = [setAutoTimeContext]() {
         auto innerCode = TimeServiceClient::GetInstance()->SetAutoTime(setAutoTimeContext->autotime);
         if (innerCode != JsErrorCode::ERROR_OK) {
-            if (innerCode != E_TIME_NOT_SYSTEM_APP && innerCode != E_TIME_NO_PERMISSION) {
-                setAutoTimeContext->errCode = E_TIME_NTP_UPDATE_FAILED;
-            } else {
-                setAutoTimeContext->errCode = innerCode;
-            }
+            bool isKnownError = (innerCode == E_TIME_NOT_SYSTEM_APP ||
+                                 innerCode == E_TIME_NO_PERMISSION ||
+                                 innerCode == E_TIME_AUTHORIZATION_FAILED);
+            setAutoTimeContext->errCode = isKnownError ? innerCode : E_TIME_NTP_UPDATE_FAILED;
             setAutoTimeContext->status = napi_generic_failure;
         }
     };
