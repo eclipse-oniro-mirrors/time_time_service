@@ -59,7 +59,7 @@ const std::string TimePermission::setTimeZone = "ohos.permission.SET_TIME_ZONE";
 const std::string TimePermission::setTimePrivilege = "ohos.privilege.modify_system_time";
 const std::vector<std::string> TimePermission::exemptedBundles_ = {
     "telephony", "CollaborationFw", "edm", "acts", "example",
-    "test",      "push_manager_service", "timer"};
+    "test", "push_manager_service", "timer"};
 
 bool TimePermission::CheckCallingPermission(const std::string &permissionName)
 {
