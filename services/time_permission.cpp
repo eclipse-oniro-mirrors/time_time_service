@@ -57,7 +57,8 @@ std::shared_ptr<IAuthorizationClient> TimePermission::GetAuthorizationClient()
 const std::string TimePermission::setTime = "ohos.permission.SET_TIME";
 const std::string TimePermission::setTimeZone = "ohos.permission.SET_TIME_ZONE";
 const std::string TimePermission::setTimePrivilege = "ohos.privilege.modify_system_time";
-const std::vector<std::string> TimePermission::exemptedBundles_ = {"telephony", "CollaborationFwk", "acts", "example",
+const std::vector<std::string> TimePermission::exemptedBundles_ = {
+    "telephony", "CollaborationFw", "edm", "acts", "example",
     "test", "push_manager_service", "timer"};
 
 bool TimePermission::CheckCallingPermission(const std::string &permissionName)
