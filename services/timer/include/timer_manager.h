@@ -15,9 +15,11 @@
 #ifndef TIMER_MANAGER_H
 #define TIMER_MANAGER_H
 
+#include <atomic>
 #include <random>
 #include <thread>
 #include <cinttypes>
+#include <cstdint>
 
 #include "batch.h"
 #include "timer_handler.h"
@@ -29,6 +31,10 @@
 
 #ifdef MULTI_ACCOUNT_ENABLE
 #include <utility>
+#endif
+
+#ifdef RUNNING_LOCK_OPTIMIZE
+#include "timer_lock_optimizer.h"
 #endif
 
 namespace OHOS {
@@ -77,6 +83,9 @@ public:
     #endif
 
 private:
+#ifdef RUNNING_LOCK_OPTIMIZE
+    friend class TimerLockOptimizer;
+#endif
     explicit TimerManager(std::shared_ptr<TimerHandler> impl);
     void TimerLooper();
 
@@ -97,7 +106,9 @@ private:
                              std::chrono::steady_clock::time_point nowElapsed);
     void RescheduleKernelTimerLocked();
     void DeliverTimersLocked(const std::vector<std::shared_ptr<TimerInfo>> &triggerList);
+    void UpdateTimerStateInStorage(const std::shared_ptr<TimerInfo> &timer);
     void NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer);
+    bool NeedNotifyWantAgentRetry(const std::shared_ptr<TimerInfo> &timer, bool notifyResult);
     std::shared_ptr<Batch> FindFirstWakeupBatchLocked();
     void SetLocked(int type, std::chrono::nanoseconds when, std::chrono::steady_clock::time_point bootTime);
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
@@ -116,6 +127,7 @@ private:
     void HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup);
     void AddRunningLock(long long holdLockTime);
     void AddRunningLockRetry(long long holdLockTime);
+    static int64_t GetDefaultRunningLockDuration();
     #endif
 
     void UpdateTimersState(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger);
@@ -166,6 +178,9 @@ private:
     uint32_t adjustDelta_ = 0;
     int64_t timerOutOfRangeTimes_ = 0;
     std::chrono::steady_clock::time_point lastTimerOutOfRangeTime_;
+    #ifdef RUNNING_LOCK_OPTIMIZE
+    std::shared_ptr<TimerLockOptimizer> lockOptimizer_;
+    #endif
     #ifdef SET_AUTO_REBOOT_ENABLE
     std::vector<std::shared_ptr<TimerInfo>> powerOnTriggerTimerList_;
     std::vector<std::string> powerOnApps_;
@@ -173,7 +188,7 @@ private:
     #ifdef POWER_MANAGER_ENABLE
     std::mutex runningLockMutex_;
     std::shared_ptr<PowerMgr::RunningLock> runningLock_;
-    int64_t lockExpiredTime_ = 0;
+    std::atomic<int64_t> lockExpiredTime_{0};
     #endif
 }; // timer_manager
 } // MiscServices

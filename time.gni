@@ -37,4 +37,5 @@ declare_args() {
       !defined(global_parts_info.resourceschedule_device_standby)) {
     device_standby = false
   }
+  time_service_running_lock_optimize = false
 }

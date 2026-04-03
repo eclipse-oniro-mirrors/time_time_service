@@ -96,6 +96,14 @@ ohos_shared_library("time_system_ability") {
     "timer/src/timer_manager.cpp",
     "timer/src/timer_proxy.cpp",
   ]
+
+  if (time_service_running_lock_optimize) {
+    sources += [
+      "timer/src/timer_app_state_observer.cpp",
+      "timer/src/timer_lock_optimizer.cpp",
+    ]
+  }
+
   output_values = get_target_outputs(":timeservice_interface")
   sources += filter_include(output_values, [ "*service_stub.cpp" ])
   sources += filter_include(output_values, [ "*callback_proxy.cpp" ])
@@ -161,6 +169,10 @@ ohos_shared_library("time_system_ability") {
       defined(global_parts_info.powermgr_power_manager)) {
     external_deps += [ "power_manager:powermgr_client" ]
     defines += [ "POWER_MANAGER_ENABLE" ]
+    if (time_service_running_lock_optimize) {
+      defines += [ "RUNNING_LOCK_OPTIMIZE" ]
+      external_deps += [ "ability_runtime:app_manager" ]
+    }
   }
 
   branch_protector_ret = "pac_ret"
@@ -198,6 +210,14 @@ ohos_static_library("time_system_ability_static") {
     "timer/src/timer_manager.cpp",
     "timer/src/timer_proxy.cpp",
   ]
+
+  if (time_service_running_lock_optimize) {
+    sources += [
+      "timer/src/timer_app_state_observer.cpp",
+      "timer/src/timer_lock_optimizer.cpp",
+    ]
+  }
+
   output_values = get_target_outputs(":timeservice_interface")
   print("time_system_ability_static output_values:", output_values)
   sources += filter_include(output_values, [ "*service_stub.cpp" ])
@@ -264,6 +284,10 @@ ohos_static_library("time_system_ability_static") {
       defined(global_parts_info.powermgr_power_manager)) {
     external_deps += [ "power_manager:powermgr_client" ]
     defines += [ "POWER_MANAGER_ENABLE" ]
+    if (time_service_running_lock_optimize) {
+      defines += [ "RUNNING_LOCK_OPTIMIZE" ]
+      external_deps += [ "ability_runtime:app_manager" ]
+    }
   }
 
   branch_protector_ret = "pac_ret"

@@ -148,6 +148,14 @@ ohos_unittest("TimeServiceTimerTest") {
     defines += [ "MULTI_ACCOUNT_ENABLE" ]
     external_deps += [ "os_account:os_account_innerkits" ]
   }
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.powermgr_power_manager)) {
+    defines += [ "POWER_MANAGER_ENABLE" ]
+    if (time_service_running_lock_optimize) {
+      defines += [ "RUNNING_LOCK_OPTIMIZE" ]
+      external_deps += [ "ability_runtime:app_manager" ]
+    }
+  }
 }
 
 ohos_unittest("TimeClientTest") {
@@ -291,6 +299,86 @@ ohos_unittest("TimeProxyTest") {
   ]
 }
 
+ohos_unittest("TimerAppStateObserverTest") {
+  module_out_path = module_output_path
+
+  sources = [
+    "src/timer_app_state_observer_test.cpp",
+    "${time_service_path}/timer/src/timer_app_state_observer.cpp",
+  ]
+
+  configs = [ ":module_private_config" ]
+
+  defines = [
+    "RUNNING_LOCK_OPTIMIZE",
+    "POWER_MANAGER_ENABLE",
+  ]
+
+  deps = [
+    "${api_path}:time_client",
+    "${time_service_path}:time_system_ability_static",
+  ]
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  external_deps = [
+    "ability_base:want",
+    "ability_runtime:app_manager",
+    "ability_runtime:runtime",
+    "ability_runtime:wantagent_innerkits",
+    "c_utils:utils",
+    "googletest:gtest_main",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+}
+
+ohos_unittest("TimerLockOptimizerTest") {
+  module_out_path = module_output_path
+
+  sources = [
+    "src/timer_lock_optimizer_test.cpp",
+    "${time_service_path}/timer/src/timer_lock_optimizer.cpp",
+    "${time_service_path}/timer/src/timer_app_state_observer.cpp",
+  ]
+
+  configs = [ ":module_private_config" ]
+
+  defines = [
+    "RUNNING_LOCK_OPTIMIZE",
+    "POWER_MANAGER_ENABLE",
+  ]
+
+  deps = [
+    "${api_path}:time_client",
+    "${time_service_path}:time_system_ability_static",
+  ]
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  external_deps = [
+    "ability_base:want",
+    "ability_runtime:app_manager",
+    "ability_runtime:runtime",
+    "ability_runtime:wantagent_innerkits",
+    "c_utils:utils",
+    "googletest:gtest_main",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "power_manager:powermgr_client",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+}
+
 group("unittest") {
   testonly = true
 
@@ -301,5 +389,7 @@ group("unittest") {
     ":TimeProxyTest",
     ":TimeServiceTimeTest",
     ":TimeServiceTimerTest",
+    ":TimerAppStateObserverTest",
+    ":TimerLockOptimizerTest",
   ]
 }
