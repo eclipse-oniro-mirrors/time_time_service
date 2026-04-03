@@ -16,8 +16,10 @@
 #include "time_fuzzer.h"
 
 #include "securec.h"
+#include "time_hilog.h"
 #include <algorithm>
 #include <chrono>
+#include <cinttypes>
 #include <climits>
 #include <thread>
 
@@ -47,7 +49,10 @@ TimeFuzzTest::~TimeFuzzTest()
     // 清理所有创建的Timer
     for (auto timerId : createdTimers_) {
         if (client_ != nullptr) {
-            client_->DestroyTimer(timerId);
+            if (!client_->DestroyTimer(timerId)) {
+                TIME_HILOGW(TIME_MODULE_CLIENT, "destroy timer failed in fuzz cleanup, timerId=%{public}" PRIu64,
+                    timerId);
+            }
         }
     }
     createdTimers_.clear();
@@ -773,25 +778,27 @@ void TimeFuzzTest::FuzzConcurrentTest(const uint8_t* data, size_t size)
     uint8_t threadCount = ExtractUint8(data, offset, size);
     threadCount = (threadCount % MAX_THREADS) + 1; // 1-5个线程
 
+    // 并发场景只验证 Time 接口，避免与 createdTimers_ 的单线程维护路径交叉。
+    auto client = client_;
     std::vector<std::thread> threads;
 
     for (uint8_t i = 0; i < threadCount && offset < size; ++i) {
         int64_t time = ExtractInt64(data, offset, size);
         std::string timezone = ExtractString(data, offset, size, MAX_STRING_LEN);
 
-        threads.emplace_back([this, time, timezone]() {
-            if (client_ != nullptr) {
+        threads.emplace_back([client, time, timezone]() {
+            if (client != nullptr) {
                 // 并发调用各种Time接口
-                client_->GetWallTimeMs();
-                client_->GetBootTimeMs();
-                client_->GetMonotonicTimeMs();
+                client->GetWallTimeMs();
+                client->GetBootTimeMs();
+                client->GetMonotonicTimeMs();
 
                 // 并发设置时间和时区（可能失败）
-                client_->SetTime(time);
-                client_->SetTimeZone(timezone);
+                client->SetTime(time);
+                client->SetTimeZone(timezone);
 
                 // 并发获取时区
-                std::string tz = client_->GetTimeZone();
+                std::string tz = client->GetTimeZone();
             }
         });
     }
