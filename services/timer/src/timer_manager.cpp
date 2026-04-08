@@ -13,8 +13,10 @@
  * limitations under the License.
  */
 
+#include <cstdint>
 #include <memory>
 #include <chrono>
+#include <algorithm>
 #include "timer_manager.h"
 
 #include "time_file_utils.h"
@@ -48,6 +50,8 @@ namespace OHOS {
 namespace MiscServices {
 using namespace std::chrono;
 using namespace OHOS::AppExecFwk;
+using namespace AbilityRuntime::WantAgent;
+
 namespace {
 constexpr uint32_t TIME_CHANGED_BITS = 16;
 constexpr uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
@@ -63,10 +67,14 @@ constexpr int MAX_TIMER_ALARM_COUNT = 100;
 constexpr int TIMER_ALRAM_INTERVAL = 60;
 constexpr int TIMER_COUNT_TOP_NUM = 5;
 constexpr const char* AUTO_RESTORE_TIMER_APPS = "persist.time.auto_restore_timer_apps";
+constexpr int MAX_RANDOM_TIMES = 100;
 #ifdef SET_AUTO_REBOOT_ENABLE
-constexpr const char* SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
+constexpr const char* PERSIST_SCHEDULED_POWER_ON_APPS = "persist.time.scheduled_power_on_apps";
+constexpr const char* CONST_SCHEDULED_POWER_ON_APPS = "const.time.scheduled_power_on_apps";
 constexpr int64_t TEN_YEARS_TO_SECOND = 10 * 365 * 24 * 60 * 60;
+#ifdef CALLBACK_AUTOBOOT_ENABLE
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
+#endif
 #endif
 constexpr std::array<const char*, 2> NO_LOG_APP_LIST = { "wifi_manager_service", "telephony" };
 
@@ -88,7 +96,7 @@ constexpr int64_t ONE_HUNDRED_MILLI = 100000000; // 100ms
 constexpr int POWER_RETRY_TIMES = 10;
 constexpr int POWER_RETRY_INTERVAL = 10000;
 constexpr const char* RUNNING_LOCK_DURATION_PARAMETER = "persist.time.running_lock_duration";
-static int64_t RUNNING_LOCK_DURATION = 1 * NANO_TO_SECOND;
+static int64_t DEFAULT_RUNNING_LOCK_DURATION_NS = 1 * NANO_TO_SECOND;
 #endif
 
 #ifdef DEVICE_STANDBY_ENABLE
@@ -102,6 +110,20 @@ TimerManager* TimerManager::instance_ = nullptr;
 
 extern bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &batch);
 
+#ifdef SET_AUTO_REBOOT_ENABLE
+std::vector<std::string> TimerManager::GetPowerOnApps()
+{
+    auto persistPowerOnApps = TimeFileUtils::GetParameterList(PERSIST_SCHEDULED_POWER_ON_APPS);
+    auto constPowerOnApps = TimeFileUtils::GetParameterList(CONST_SCHEDULED_POWER_ON_APPS);
+    std::vector<std::string> powerOnApps(persistPowerOnApps);
+    powerOnApps.insert(powerOnApps.end(), constPowerOnApps.begin(), constPowerOnApps.end());
+    std::sort(powerOnApps.begin(), powerOnApps.end());
+    auto last = std::unique(powerOnApps.begin(), powerOnApps.end());
+    powerOnApps.erase(last, powerOnApps.end());
+    return powerOnApps;
+}
+#endif
+
 TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
     : random_ {static_cast<uint64_t>(time(nullptr))},
       runFlag_ {true},
@@ -112,7 +134,7 @@ TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
 {
     alarmThread_.reset(new std::thread([this] { this->TimerLooper(); }));
     #ifdef SET_AUTO_REBOOT_ENABLE
-    powerOnApps_ = TimeFileUtils::GetParameterList(SCHEDULED_POWER_ON_APPS);
+    powerOnApps_ = GetPowerOnApps();
     #endif
 }
 
@@ -132,8 +154,13 @@ TimerManager* TimerManager::GetInstance()
                 NEED_RECOVER_ON_REBOOT = bundleList;
             }
             #ifdef POWER_MANAGER_ENABLE
-            RUNNING_LOCK_DURATION = TimeFileUtils::GetIntParameter(RUNNING_LOCK_DURATION_PARAMETER,
-                                                                   USE_LOCK_ONE_SEC_IN_NANO);
+            DEFAULT_RUNNING_LOCK_DURATION_NS =
+                TimeFileUtils::GetIntParameter(RUNNING_LOCK_DURATION_PARAMETER,
+                                               USE_LOCK_ONE_SEC_IN_NANO);
+            #endif
+            #ifdef RUNNING_LOCK_OPTIMIZE
+            instance_->lockOptimizer_ = std::make_shared<TimerLockOptimizer>(instance_);
+            // Note: Lazy initialization in BatchAcquireRunningLock when first needed
             #endif
         }
     }
@@ -155,7 +182,7 @@ OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerI
     insertValues.PutInt("uid", timerInfo->uid);
     insertValues.PutString("bundleName", timerInfo->bundleName);
     insertValues.PutString("wantAgent",
-        OHOS::AbilityRuntime::WantAgent::WantAgentHelper::ToString(timerInfo->wantAgent));
+        WantAgentHelper::ToString(timerInfo->wantAgent));
     insertValues.PutInt("state", 0);
     insertValues.PutLong("triggerTime", 0);
     insertValues.PutInt("pid", timerInfo->pid);
@@ -207,7 +234,7 @@ void TimerManager::DeleteTimerName(int uid, std::string name, uint64_t timerId)
 
 int32_t TimerManager::CreateTimer(TimerPara &paras,
                                   std::function<int32_t (const uint64_t)> callback,
-                                  std::shared_ptr<OHOS::AbilityRuntime::WantAgent::WantAgent> wantAgent,
+                                  std::shared_ptr<WantAgent> wantAgent,
                                   int uid,
                                   int pid,
                                   uint64_t &timerId,
@@ -225,15 +252,19 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     std::shared_ptr<TimerEntry> timerInfo;
     {
         std::lock_guard<std::mutex> lock(entryMapMutex_);
-        while (timerId == 0) {
-            // random_() needs to be protected in a lock.
-            timerId = random_();
+        if (timerId == 0) {
+            int retryCount;
+            for (retryCount = 0; retryCount < MAX_RANDOM_TIMES; retryCount++) {
+                // random_() needs to be protected in a lock.
+                timerId = random_();
+                if (timerId != 0 && timerEntryMap_.find(timerId) == timerEntryMap_.end()) {
+                    break;
+                }
+            }
         }
         timerInfo = std::make_shared<TimerEntry>(TimerEntry {timerName, timerId, paras.timerType, paras.windowLength,
             paras.interval, paras.flag, paras.autoRestore, std::move(callback), wantAgent, uid, pid, bundleName});
-        if (timerEntryMap_.find(timerId) == timerEntryMap_.end()) {
-            IncreaseTimerCount(uid);
-        }
+        IncreaseTimerCount(uid);
         timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
         if (timerName != "") {
             AddTimerName(uid, timerName, timerId);
@@ -605,7 +636,11 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm, bool rebat
         if (timerInfo == powerOnTriggerTimerList_.end()) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "alarm needs power on, id=%{public}" PRId64 "", alarm->id);
             powerOnTriggerTimerList_.push_back(alarm);
+            #ifdef CALLBACK_AUTOBOOT_ENABLE
             ReschedulePowerOnTimerLocked(false);
+            #else
+            ReschedulePowerOnTimerLocked();
+            #endif
         }
     }
     #endif
@@ -697,6 +732,9 @@ TimerManager::~TimerManager()
         runFlag_ = false;
         alarmThread_->join();
     }
+    #ifdef RUNNING_LOCK_OPTIMIZE
+    lockOptimizer_.reset();
+    #endif
 }
 
 // needs to acquire the lock `mutex_` before calling this method
@@ -833,11 +871,19 @@ void TimerManager::RescheduleKernelTimerLocked()
 #ifdef SET_AUTO_REBOOT_ENABLE
 bool TimerManager::IsPowerOnTimer(std::shared_ptr<TimerInfo> timerInfo)
 {
+    #ifdef CALLBACK_AUTOBOOT_ENABLE
+    if (timerInfo != nullptr) {
+        return (std::find(powerOnApps_.begin(), powerOnApps_.end(), timerInfo->name) != powerOnApps_.end() ||
+            std::find(powerOnApps_.begin(), powerOnApps_.end(), timerInfo->bundleName) != powerOnApps_.end()) &&
+            (timerInfo->type == RTC || timerInfo->type == RTC_WAKEUP);
+    }
+    #else
     if (timerInfo != nullptr) {
         return (std::find(powerOnApps_.begin(), powerOnApps_.end(), timerInfo->name) != powerOnApps_.end() ||
             std::find(powerOnApps_.begin(), powerOnApps_.end(), timerInfo->bundleName) != powerOnApps_.end()) &&
             CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type, timerInfo->autoRestore);
     }
+    #endif
     return false;
 }
 
@@ -851,10 +897,18 @@ void TimerManager::DeleteTimerFromPowerOnTimerListById(uint64_t timerId)
         return;
     }
     powerOnTriggerTimerList_.erase(deleteTimerInfo);
+    #ifdef CALLBACK_AUTOBOOT_ENABLE
     ReschedulePowerOnTimerLocked(false);
+    #else
+    ReschedulePowerOnTimerLocked();
+    #endif
 }
 
+#ifdef CALLBACK_AUTOBOOT_ENABLE
 void TimerManager::ReschedulePowerOnTimerLocked(bool isShutDown)
+#else
+void TimerManager::ReschedulePowerOnTimerLocked()
+#endif
 {
     auto bootTime = TimeUtils::GetBootTimeNs();
     int64_t currentTime = 0;
@@ -889,22 +943,26 @@ void TimerManager::ReschedulePowerOnTimerLocked(bool isShutDown)
         timerInfo = powerOnTriggerTimerList_[0];
         setTimePoint = timerInfo->when;
     }
+    #ifdef CALLBACK_AUTOBOOT_ENABLE
     if (isShutDown && static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > setTimePoint.count()) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
         auto triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
         setTimePoint = std::chrono::milliseconds(triggerTime);
     }
+    #endif
     if (setTimePoint.count() != lastSetTime_[POWER_ON_ALARM]) {
         SetLocked(POWER_ON_ALARM, setTimePoint, bootTime);
         lastSetTime_[POWER_ON_ALARM] = setTimePoint.count();
     }
 }
 
+#ifdef CALLBACK_AUTOBOOT_ENABLE
 void TimerManager::ShutDownReschedulePowerOnTimer()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     ReschedulePowerOnTimerLocked(true);
 }
+#endif
 #endif
 
 // needs to acquire the lock `mutex_` before calling this method
@@ -1002,6 +1060,11 @@ void TimerManager::NotifyWantAgentRetry(std::shared_ptr<TimerInfo> timer)
     thread.detach();
 }
 
+bool TimerManager::NeedNotifyWantAgentRetry(const std::shared_ptr<TimerInfo> &timer, bool notifyResult)
+{
+    return !notifyResult && CheckNeedRecoverOnReboot(timer->bundleName, timer->type, timer->autoRestore);
+}
+
 #ifdef MULTI_ACCOUNT_ENABLE
 int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &timer)
 {
@@ -1037,11 +1100,16 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
     auto wakeupNums = std::count_if(triggerList.begin(), triggerList.end(), [](auto timer) {return timer->wakeup;});
     if (wakeupNums > 0) {
         TimeServiceNotify::GetInstance().PublishTimerTriggerEvents();
+        #ifdef RUNNING_LOCK_OPTIMIZE
+        // Build TimerLockInfo collection and acquire running lock
+        lockOptimizer_->BatchAcquireRunningLock(triggerList);
+        #endif
     }
+
     for (const auto &timer : triggerList) {
         if (timer->wakeup) {
-            #ifdef POWER_MANAGER_ENABLE
-            AddRunningLock(RUNNING_LOCK_DURATION);
+            #if defined(POWER_MANAGER_ENABLE) && !defined(RUNNING_LOCK_OPTIMIZE)
+            AddRunningLock(DEFAULT_RUNNING_LOCK_DURATION_NS);
             #endif
             TimerBehaviorReport(timer, false);
             StatisticReporter(wakeupNums, timer);
@@ -1054,33 +1122,45 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             }
         }
         if (timer->wantAgent) {
-            if (!NotifyWantAgent(timer) &&
-                CheckNeedRecoverOnReboot(timer->bundleName, timer->type, timer->autoRestore)) {
+            bool notifyResult = NotifyWantAgent(timer);
+            #ifdef RUNNING_LOCK_OPTIMIZE
+            std::string wantBundleName;
+            WantAgentHelper::GetBundleName(timer->wantAgent, wantBundleName);
+            if (lockOptimizer_->IsAppRunning(wantBundleName) || !notifyResult) {
+                lockOptimizer_->RecalcLockForBundle(wantBundleName);
+            }
+            #endif
+            if (NeedNotifyWantAgentRetry(timer, notifyResult)) {
                 NotifyWantAgentRetry(timer);
             }
             if (timer->repeatInterval != milliseconds::zero()) {
                 continue;
             }
-            auto tableName = (CheckNeedRecoverOnReboot(timer->bundleName, timer->type, timer->autoRestore)
-                              ? HOLD_ON_REBOOT
-                              : DROP_ON_REBOOT);
-            #ifdef RDB_ENABLE
-            OHOS::NativeRdb::ValuesBucket values;
-            values.PutInt("state", 0);
-            OHOS::NativeRdb::RdbPredicates rdbPredicates(tableName);
-            rdbPredicates.EqualTo("state", 1)
-                ->And()
-                ->EqualTo("timerId", static_cast<int64_t>(timer->id));
-            TimeDatabase::GetInstance().Update(values, rdbPredicates);
-            #else
-            CjsonHelper::GetInstance().UpdateState(tableName, static_cast<int64_t>(timer->id));
-            #endif
+            UpdateTimerStateInStorage(timer);
         }
         if (((timer->flags & static_cast<uint32_t>(IS_DISPOSABLE)) > 0) &&
             (timer->repeatInterval == milliseconds::zero())) {
             DestroyTimer(timer->id);
         }
     }
+}
+
+void TimerManager::UpdateTimerStateInStorage(const std::shared_ptr<TimerInfo> &timer)
+{
+    auto tableName = (CheckNeedRecoverOnReboot(timer->bundleName, timer->type, timer->autoRestore)
+                      ? HOLD_ON_REBOOT
+                      : DROP_ON_REBOOT);
+    #ifdef RDB_ENABLE
+    OHOS::NativeRdb::ValuesBucket values;
+    values.PutInt("state", 0);
+    OHOS::NativeRdb::RdbPredicates rdbPredicates(tableName);
+    rdbPredicates.EqualTo("state", 1)
+        ->And()
+        ->EqualTo("timerId", static_cast<int64_t>(timer->id));
+    TimeDatabase::GetInstance().Update(values, rdbPredicates);
+    #else
+    CjsonHelper::GetInstance().UpdateState(tableName, static_cast<int64_t>(timer->id));
+    #endif
 }
 
 std::string GetWantString(int64_t timerId)
@@ -1568,6 +1648,20 @@ void TimerManager::HandleRunningLock(const std::shared_ptr<Batch> &firstWakeup)
         TIME_HILOGI(TIME_MODULE_SERVICE, "time:%{public}" PRIu64 ", timerId:%{public}" PRIu64"",
             static_cast<uint64_t>(holdLockTime), firstAlarm->id);
         lockExpiredTime_ = currentTime + holdLockTime;
+        #ifdef RUNNING_LOCK_OPTIMIZE
+        // Compare with TimerLockOptimizer's max expire time
+        // Only update lock if the requested time extends beyond current max
+        if (lockOptimizer_ != nullptr) {
+            int64_t timerLockMaxExpireTime = lockOptimizer_->GetMaxLockExpireTime();
+            int64_t requestedExpireTime = currentTime + holdLockTime;
+            if (requestedExpireTime <= timerLockMaxExpireTime) {
+                TIME_HILOGD(TIME_MODULE_SERVICE,
+                    "Skip lock update: requested=%{public}" PRId64 " <= max=%{public}" PRId64,
+                    requestedExpireTime, timerLockMaxExpireTime);
+                return;
+            }
+        }
+        #endif
         AddRunningLock(holdLockTime);
     }
 }
@@ -1604,6 +1698,12 @@ void TimerManager::AddRunningLock(long long holdLockTime)
         }
     }
 }
+
+int64_t TimerManager::GetDefaultRunningLockDuration()
+{
+    return DEFAULT_RUNNING_LOCK_DURATION_NS;
+}
 #endif
+
 } // MiscServices
 } // OHOS

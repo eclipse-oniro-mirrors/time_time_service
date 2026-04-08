@@ -28,80 +28,106 @@ using namespace OHOS::MiscServices;
 
 namespace OHOS {
 constexpr size_t THRESHOLD = 4;
+constexpr int MAX_NUM = 20;
+constexpr int MAX_LENGTH = 64;
 
-bool FuzzTimerProxyTimer(const uint8_t *data, size_t size)
+std::unordered_set<std::string> convertToUnorderedSetString(FuzzedDataProvider &provider)
+{
+    std::unordered_set<std::string> nameArr;
+    int len = provider.ConsumeIntegralInRange<int>(1, MAX_NUM);
+    for (int i = 0; i < len; i++) {
+        std::string name = provider.ConsumeRandomLengthString(MAX_LENGTH);
+        nameArr.insert(name);
+    }
+    return nameArr;
+}
+
+std::unordered_map<std::string, uint32_t> convertToUnorderedMap(FuzzedDataProvider &provider)
+{
+    std::unordered_map<std::string, uint32_t> policyMap;
+    int len = provider.ConsumeIntegralInRange<int>(1, MAX_NUM);
+    for (int i = 0; i < len; i++) {
+        std::string name = provider.ConsumeRandomLengthString(MAX_LENGTH);
+        int num = provider.ConsumeIntegral<int>();
+        policyMap.insert({name, num});
+    }
+    return policyMap;
+}
+
+bool FuzzTimerProxyTimer(FuzzedDataProvider &provider)
 {
     auto now = std::chrono::steady_clock::now();
     auto callback = [] (std::shared_ptr<TimerInfo> &alarm, bool needRetrigger) {};
-    FuzzedDataProvider fdp(data, size);
-    int uid = fdp.ConsumeIntegral<uint32_t>();
-    int pid = fdp.ConsumeIntegral<int>();
-
+    int uid = provider.ConsumeIntegral<uint32_t>();
+    int pid = provider.ConsumeIntegral<int>();
     TimerProxy::GetInstance().ProxyTimer(uid, pid, true, true, now, callback);
+    uid = provider.ConsumeIntegral<uint32_t>();
+    pid = provider.ConsumeIntegral<int>();
     TimerProxy::GetInstance().ProxyTimer(uid, pid, true, false, now, callback);
+    uid = provider.ConsumeIntegral<uint32_t>();
+    pid = provider.ConsumeIntegral<int>();
     TimerProxy::GetInstance().ProxyTimer(uid, pid, false, true, now, callback);
+    uid = provider.ConsumeIntegral<uint32_t>();
+    pid = provider.ConsumeIntegral<int>();
     TimerProxy::GetInstance().ProxyTimer(uid, pid, false, false, now, callback);
     return true;
 }
 
-bool FuzzTimerAdjustTimer(const uint8_t *data, size_t size)
+bool FuzzTimerAdjustTimer(FuzzedDataProvider &provider)
 {
-    auto interval = static_cast<uint32_t>(*data);
+    uint32_t interval = provider.ConsumeIntegral<uint32_t>();
     auto now = std::chrono::steady_clock::now();
     auto callback = [] (AdjustTimerCallback adjustTimer) {};
     TimerProxy::GetInstance().AdjustTimer(true, interval, now, 0, callback);
+    interval = provider.ConsumeIntegral<uint32_t>();
     TimerProxy::GetInstance().AdjustTimer(false, interval, now, 0, callback);
     return true;
 }
 
-bool FuzzTimerSetTimerExemption(const uint8_t *data, size_t size)
+bool FuzzTimerSetTimerExemption(FuzzedDataProvider &provider)
 {
-    std::string name(reinterpret_cast<const char *>(data), size);
-    std::unordered_set<std::string> nameArr{name};
+    std::unordered_set<std::string> nameArr = convertToUnorderedSetString(provider);
     TimerProxy::GetInstance().SetTimerExemption(nameArr, false);
     TimerProxy::GetInstance().SetTimerExemption(nameArr, true);
     return true;
 }
 
-bool FuzzTimerSetAdjustPolicy(const uint8_t *data, size_t size)
+bool FuzzTimerSetAdjustPolicy(FuzzedDataProvider &provider)
 {
-    std::string name(reinterpret_cast<const char *>(data), size);
-    std::unordered_map<std::string, uint32_t> policyMap{ {name, 1} };
+    std::unordered_map<std::string, uint32_t> policyMap = convertToUnorderedMap(provider);
     TimerProxy::GetInstance().SetAdjustPolicy(policyMap);
     return true;
 }
 
-bool FuzzTimerResetProxy(const uint8_t *data, size_t size)
+bool FuzzTimerResetProxy(FuzzedDataProvider &provider)
 {
-    uint64_t offset = static_cast<uint64_t>(*data);
+    uint64_t offset = provider.ConsumeIntegral<uint64_t>();
     auto now = std::chrono::steady_clock::now() + std::chrono::nanoseconds(offset);
     auto callback = [] (std::shared_ptr<TimerInfo> &alarm, bool needRetrigger) {};
     TimerProxy::GetInstance().ResetAllProxy(now, callback);
     return true;
 }
 
-bool FuzzTimerEraseTimer(const uint8_t *data, size_t size)
+bool FuzzTimerEraseTimer(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(data, size);
-    uint64_t id = fdp.ConsumeIntegral<uint64_t>();
-    uint32_t uid = fdp.ConsumeIntegral<uint32_t>();
-    int pid = fdp.ConsumeIntegral<int>();
+    uint64_t id = provider.ConsumeIntegral<uint64_t>();
+    uint32_t uid = provider.ConsumeIntegral<uint32_t>();
+    int pid = provider.ConsumeIntegral<int>();
     TimerProxy::GetInstance().EraseTimerFromProxyTimerMap(id, uid, pid);
     return true;
 }
 
-bool FuzzTimerRemoveTimerMap(const uint8_t *data, size_t size)
+bool FuzzTimerRemoveTimerMap(FuzzedDataProvider &provider)
 {
-    auto id = static_cast<int64_t>(*data);
+    int64_t id = provider.ConsumeIntegral<int64_t>();
     TimerProxy::GetInstance().RemoveUidTimerMap(id);
     return true;
 }
 
-bool FuzzTimerIsProxy(const uint8_t *data, size_t size)
+bool FuzzTimerIsProxy(FuzzedDataProvider &provider)
 {
-    FuzzedDataProvider fdp(data, size);
-    int uid = fdp.ConsumeIntegral<int>();
-    int pid = fdp.ConsumeIntegral<int>();
+    int uid = provider.ConsumeIntegral<int>();
+    int pid = provider.ConsumeIntegral<int>();
     TimerProxy::GetInstance().IsProxy(uid, pid);
     return true;
 }
@@ -110,18 +136,19 @@ bool FuzzTimerIsProxy(const uint8_t *data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
-    if (size < OHOS::THRESHOLD) {
+    if (data == nullptr || size < OHOS::THRESHOLD) {
         return 0;
     }
 
     /* Run your code on data */
-    OHOS::FuzzTimerProxyTimer(data, size);
-    OHOS::FuzzTimerAdjustTimer(data, size);
-    OHOS::FuzzTimerSetTimerExemption(data, size);
-    OHOS::FuzzTimerResetProxy(data, size);
-    OHOS::FuzzTimerEraseTimer(data, size);
-    OHOS::FuzzTimerRemoveTimerMap(data, size);
-    OHOS::FuzzTimerIsProxy(data, size);
-    OHOS::FuzzTimerSetAdjustPolicy(data, size);
+    FuzzedDataProvider provider(data, size);
+    OHOS::FuzzTimerProxyTimer(provider);
+    OHOS::FuzzTimerAdjustTimer(provider);
+    OHOS::FuzzTimerSetTimerExemption(provider);
+    OHOS::FuzzTimerResetProxy(provider);
+    OHOS::FuzzTimerEraseTimer(provider);
+    OHOS::FuzzTimerRemoveTimerMap(provider);
+    OHOS::FuzzTimerIsProxy(provider);
+    OHOS::FuzzTimerSetAdjustPolicy(provider);
     return 0;
 }

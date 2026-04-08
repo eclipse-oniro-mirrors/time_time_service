@@ -53,7 +53,7 @@ CjsonHelper::CjsonHelper()
     char* jsonString = cJSON_Print(root);
     if (jsonString != nullptr) {
         newFile << jsonString;
-        free(jsonString);
+        cJSON_free(jsonString);
     }
     cJSON_Delete(root);
     newFile.close();
@@ -425,7 +425,7 @@ void CjsonHelper::SaveJson(cJSON* data)
     char* jsonString = cJSON_Print(data);
     if (jsonString != nullptr) {
         outFile << jsonString;
-        free(jsonString);
+        cJSON_free(jsonString);
     }
     outFile.close();
 }

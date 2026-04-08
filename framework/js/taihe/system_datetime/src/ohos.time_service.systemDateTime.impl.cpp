@@ -34,6 +34,7 @@ constexpr int64_t NANO_TO_MILLI = SECONDS_TO_NANO / SECONDS_TO_MILLI;
 constexpr int32_t STARTUP = 0;
 constexpr int32_t ACTIVE = 1;
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
+constexpr const char *AUTOTIME_KEY = "persist.time.auto_time";
 
 int32_t GetDeviceTime(clockid_t clockId, bool isNano, int64_t &time)
 {
@@ -101,9 +102,7 @@ void SetTimeSync(int64_t time)
         int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
         std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
         set_business_error(errorCode, errorMessage);
-        return;
     }
-    return;
 }
 
 void SetTimezoneSync(::taihe::string_view timezone)
@@ -125,11 +124,10 @@ void UpdateNtpTimeSync()
         int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
         std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
         set_business_error(errorCode, errorMessage);
-        return;
     }
 }
 
-int64_t getNtpTime()
+int64_t GetNtpTime()
 {
     int64_t time = 0;
     int32_t innerCode = TimeServiceClient::GetInstance()->GetRealTimeMs(time);
@@ -141,6 +139,23 @@ int64_t getNtpTime()
     }
     return time;
 }
+
+bool GetAutoTimeStatus()
+{
+    auto res = OHOS::system::GetParameter(AUTOTIME_KEY, "ON");
+    bool autoTime = (res == "ON");
+    return autoTime;
+}
+
+void SetAutoTimeStatusSync(bool status)
+{
+    int32_t innerCode = TimeServiceClient::GetInstance()->SetAutoTime(status);
+    if (innerCode != JsErrorCode::ERROR_OK) {
+        int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+        std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+        set_business_error(errorCode, errorMessage);
+    }
+}
 }  // namespace
 
 TH_EXPORT_CPP_API_GetTimezoneSync(GetTimezoneSync);
@@ -149,4 +164,6 @@ TH_EXPORT_CPP_API_GetTime(GetTime);
 TH_EXPORT_CPP_API_SetTimeSync(SetTimeSync);
 TH_EXPORT_CPP_API_SetTimezoneSync(SetTimezoneSync);
 TH_EXPORT_CPP_API_UpdateNtpTimeSync(UpdateNtpTimeSync);
-TH_EXPORT_CPP_API_getNtpTime(getNtpTime);
+TH_EXPORT_CPP_API_GetNtpTime(GetNtpTime);
+TH_EXPORT_CPP_API_GetAutoTimeStatus(GetAutoTimeStatus);
+TH_EXPORT_CPP_API_SetAutoTimeStatusSync(SetAutoTimeStatusSync);

@@ -37,6 +37,7 @@ public:
 private:
     TimerHandler(const TimerFds &fds, int epollfd);
     static int SetRealTimeFd(TimerFds fds);
+    static bool CreateTimerFds(TimerFds &fds);
     const TimerFds fds_;
     const int epollFd_;
 };

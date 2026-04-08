@@ -159,6 +159,7 @@ std::set<std::string> TimeZoneInfo::GetTimeZoneAvailableIDs()
 
 bool TimeZoneInfo::GetTimezone(std::string &timezoneId)
 {
+    std::lock_guard<std::mutex> lock(timezoneMutex_);
     timezoneId = curTimezoneId_;
     return true;
 }

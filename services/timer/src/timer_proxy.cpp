@@ -111,13 +111,16 @@ bool TimerProxy::UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_p
     TIME_HILOGD(TIME_MODULE_SERVICE, "adjust single time id:%{public}" PRId64 ", "
         "uid:%{public}d, bundleName:%{public}s",
         timer->id, timer->uid, timer->bundleName.c_str());
-    adjustTimers_.insert(timer->id);
     uint32_t policy = 0;
     auto it = adjustPolicyList_.find(timer->bundleName);
     if (it != adjustPolicyList_.end()) {
         policy = it->second;
     }
-    return timer->AdjustTimer(now, interval, delta, policy);
+    auto ret = timer->AdjustTimer(now, interval, delta, policy);
+    if (ret) {
+        adjustTimers_.insert(timer->id);
+    }
+    return ret;
 }
 
 bool TimerProxy::RestoreAdjustWhenElapsed(std::shared_ptr<TimerInfo> &timer)

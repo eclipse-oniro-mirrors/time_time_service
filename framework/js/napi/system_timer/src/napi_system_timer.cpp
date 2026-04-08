@@ -46,7 +46,7 @@ void ITimerInfoInstance::Call(napi_env env, void *data)
             delete callback;
         }
     };
-    auto ret = napi_send_event(env, task, napi_eprio_immediate);
+    auto ret = napi_send_event(env, task, napi_eprio_immediate, "time:systemTimer.createTimer");
     if (ret != 0) {
         delete static_cast<CallbackInfo *>(data);
         TIME_HILOGE(TIME_MODULE_JS_NAPI, "napi_send_event failed retCode:%{public}d", ret);
@@ -68,7 +68,7 @@ void ITimerInfoInstance::OnTrigger()
         napi_get_reference_value(callbackInfo.env, callbackInfo.ref, &callback);
         napi_call_function(callbackInfo.env, undefined, callback, ARGC_ZERO, &undefined, &undefined);
     };
-    auto ret = napi_send_event(callbackInfo.env, task, napi_eprio_immediate);
+    auto ret = napi_send_event(callbackInfo.env, task, napi_eprio_immediate, "time:systemTimer.createTimer");
     if (ret != 0) {
         TIME_HILOGE(TIME_MODULE_JS_NAPI, "napi_send_event failed retCode:%{public}d", ret);
     }

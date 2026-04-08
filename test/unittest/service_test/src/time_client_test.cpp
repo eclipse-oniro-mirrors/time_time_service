@@ -1140,6 +1140,45 @@ HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
 }
 
 /**
+* @tc.name: StartTimer008
+* @tc.desc: Test disposable non-repeat timer auto-destruction after trigger
+* @tc.precon: Timer service is available, application has timer permissions
+* @tc.step: 1. Create exact type disposable non-repeat timer
+*           2. Start timer with 500ms delay
+*           3. Wait for timer trigger
+*           4. Attempt to destroy timer (should fail as already auto-destroyed)
+* @tc.expect: Timer triggers successfully, destruction fails indicating timer was auto-destroyed
+* @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level1
+*/
+HWTEST_F(TimeClientTest, StartTimer008, TestSize.Level1)
+{
+    TIME_HILOGI(TIME_MODULE_CLIENT, "StartTimer013 start");
+    g_data1 = 0;
+    g_data2 = 0;
+    uint64_t timerId;
+    auto timerInfo = std::make_shared<TimerInfoTest>();
+    timerInfo->SetType(timerInfo->TIMER_TYPE_EXACT);
+    timerInfo->SetRepeat(false);
+    timerInfo->SetDisposable(true);
+    timerInfo->SetAutoRestore(false);
+    timerInfo->SetCallbackInfo(TimeOutCallback1);
+    EXPECT_EQ(timerInfo.use_count(), 1);
+    auto errCode = TimeServiceClient::GetInstance()->CreateTimerV9(timerInfo, timerId);
+    EXPECT_EQ(timerInfo.use_count(), 3);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    EXPECT_NE(timerId, 0);
+    auto triggerTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    errCode = TimeServiceClient::GetInstance()->StartTimerV9(timerId, triggerTime + FIVE_HUNDRED);
+    EXPECT_EQ(errCode, TimeError::E_TIME_OK);
+    sleep(1);
+    EXPECT_EQ(timerInfo.use_count(), 1);
+    errCode = TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
+    EXPECT_EQ(errCode, TimeError::E_TIME_DEAL_FAILED);
+}
+
+/**
 * @tc.name: RecoverTimer001
 * @tc.desc: Test timer recovery data recording after timer creation
 * @tc.precon: Timer service is available, application has timer permissions

@@ -17,11 +17,17 @@
 @!sts_inject("""
 static { loadLibraryWithPermissionCheck("systemtimer_taihe_native.z", "@ohos.systemTimer") }
 """)
+@!sts_inject_into_module("
+    import {WantAgent} from '@ohos.app.ability.wantAgent';
+")
+
 struct TimerOptions {
     type: i32;
     repeat: bool;
+    autoRestore: Optional<bool>;
     interval: Optional<i64>;
     name: Optional<String>;
+    wantAgent: Optional<@sts_type("WantAgent") Opaque>;
     callback: Optional<() => void>;
 }
 
@@ -29,7 +35,8 @@ struct TimerOptions {
 enum TimerType: i32 {
     TIMER_TYPE_REALTIME = 1,
     TIMER_TYPE_WAKEUP = 2,
-    TIMER_TYPE_EXACT = 4
+    TIMER_TYPE_EXACT = 4,
+    TIMER_TYPE_IDLE = 8
 }
 
 @gen_promise("createTimer")

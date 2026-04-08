@@ -42,4 +42,9 @@ function SetTimezoneSync(timezone: String): void;
 @gen_promise("updateNtpTime")
 function UpdateNtpTimeSync(): void;
 
-function getNtpTime(): i64;
+function GetNtpTime(): i64;
+
+function GetAutoTimeStatus(): bool;
+
+@gen_promise("setAutoTimeStatus")
+function SetAutoTimeStatusSync(status: bool): void;

@@ -78,6 +78,11 @@ timesntp_test = {
   configFuzzer = "timesntp_fuzzer"
   source = "timesntp_fuzzer/timesntp_fuzzer.cpp"
 }
+timesystem_test = {
+  targetName = "TimeSystemFuzzTest"
+  configFuzzer = "timesystem_fuzzer"
+  source = "timesystem_fuzzer/timesystem_fuzzer.cpp"
+}
 
 time_fuzztests = [
   timeboundarycode_test,
@@ -92,6 +97,7 @@ time_fuzztests = [
   timestoptimer_test,
   timerproxy_test,
   timesntp_test,
+  timesystem_test,
 ]
 
 foreach(item, time_fuzztests) {
@@ -180,6 +186,7 @@ group("fuzztest") {
     ":TimeStartTimerFuzzTest",
     ":TimeStopTimerFuzzTest",
     ":TimerProxyFuzzTest",
+    ":TimeSystemFuzzTest",
   ]
 }
 ###############################################################################

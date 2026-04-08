@@ -19,6 +19,13 @@ group("fuzztest") {
   deps = [
     "timeproxytimer_fuzzer:fuzztest",
     "timesettimezone_fuzzer:fuzztest",
+    "timesettime_fuzzer:fuzztest",
+    "timegetwalltime_fuzzer:fuzztest",
+    "timegetboottime_fuzzer:fuzztest",
+    "timegetmonotonictime_fuzzer:fuzztest",
+    "timegetthreadtime_fuzzer:fuzztest",
+    "timentptime_fuzzer:fuzztest",
+    "timetimeutils_fuzzer:fuzztest",
     "timetesttimer_fuzzer:fuzztest",
   ]
 }

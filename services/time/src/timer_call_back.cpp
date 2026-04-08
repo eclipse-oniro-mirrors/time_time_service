@@ -83,6 +83,9 @@ int32_t TimerCallback::NotifyTimer(const uint64_t timerId)
         if (it != timerInfoMap_.end()) {
             TIME_HILOGD(TIME_MODULE_SERVICE, "ontrigger");
             timerInfo = it->second;
+            if (timerInfo->disposable) {
+                timerInfoMap_.erase(it);
+            }
         }
     }
     if (timerInfo != nullptr) {

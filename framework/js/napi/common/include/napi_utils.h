@@ -17,12 +17,16 @@
 #define NAPI_UTILS_H
 
 #include <map>
+#include <functional>
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 namespace OHOS {
 namespace MiscServices {
 namespace Time {
+
+#define RETVAL_NOTHING
+
 #define NAPI_ASSERTS_BASE_RETURN(env, assertion, code, message, retVal) \
     do {                                                         \
         if (!(assertion)) {                                      \
@@ -33,6 +37,21 @@ namespace Time {
 
 #define NAPI_ASSERTP_RETURN(env, assertion, message) \
     NAPI_ASSERTS_BASE_RETURN(env, assertion, ERROR, message, nullptr)
+
+
+#define TIME_SERVICE_NAPI_CALL_BASE(env, theCall, code, message, retVal) \
+    do {                                                         \
+        if ((theCall) != napi_ok) {                                      \
+            NapiUtils::ThrowError(env, message, code);           \
+            return retVal;                                       \
+        }                                                        \
+    } while (0)
+
+#define TIME_SERVICE_NAPI_CALL(env, theCall, code, message) \
+    TIME_SERVICE_NAPI_CALL_BASE(env, theCall, code, message, nullptr)
+
+#define TIME_SERVICE_NAPI_CALL_RETURN_VOID(env, theCall, code, message) \
+    TIME_SERVICE_NAPI_CALL_BASE(env, theCall, code, message, RETVAL_NOTHING)
 
 /* check condition related to argc/argv, return and logging. */
 #define CHECK_ARGS_RETURN_VOID(module, context, condition, message, code)                                   \
@@ -100,6 +119,7 @@ enum JsErrorCode : int32_t {
     ERROR = -1,
     PERMISSION_ERROR = 201,
     SYSTEM_APP_ERROR = 202,
+    AUTHORIZATION_ERROR = 204,
     PARAMETER_ERROR = 401,
     NTP_UPDATE_ERROR = 13000001,
     NTP_NOT_UPDATE_ERROR = 13000002,
@@ -117,6 +137,7 @@ const std::map<int32_t, std::string> CODE_TO_MESSAGE = {
     { JsErrorCode::SYSTEM_APP_ERROR, "Permission verification failed. A non-system application calls a system API" },
     { JsErrorCode::PARAMETER_ERROR, "Parameter error" },
     { JsErrorCode::PERMISSION_ERROR, "Permission denied" },
+    { JsErrorCode::AUTHORIZATION_ERROR, "Authorization failed" },
     { JsErrorCode::ERROR, "Parameter check failed, permission denied, or system error." },
     { JsErrorCode::NTP_UPDATE_ERROR, "Ntp update error" },
     { JsErrorCode::NTP_NOT_UPDATE_ERROR, "Ntp not update error" },

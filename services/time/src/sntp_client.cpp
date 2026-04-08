@@ -76,6 +76,7 @@ bool SNTPClient::RequestTime(const std::string &host)
                     strerror(errno), addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
         return false;
     }
+    fdsan_exchange_owner_tag(sendSocket, 0, BASE_TIME_FDSAN_TAG);
 
     // Set send and recv function timeout
     struct timeval timeout = { TIME_OUT, 0 };
@@ -83,7 +84,7 @@ bool SNTPClient::RequestTime(const std::string &host)
     setsockopt(sendSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
     if (connect(sendSocket, addrs->ai_addr, addrs->ai_addrlen) < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "socket connect failed: %{public}s", strerror(errno));
-        close(sendSocket);
+        fdsan_close_with_tag(sendSocket, BASE_TIME_FDSAN_TAG);
         return false;
     }
 
@@ -93,7 +94,7 @@ bool SNTPClient::RequestTime(const std::string &host)
     if (send(sendSocket, sendBuf, bufLen, 0) < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Send socket message failed: %{public}s, Host: %{public}s",
                     strerror(errno), host.c_str());
-        close(sendSocket);
+        fdsan_close_with_tag(sendSocket, BASE_TIME_FDSAN_TAG);
         return false;
     }
 
@@ -102,10 +103,10 @@ bool SNTPClient::RequestTime(const std::string &host)
     if (recv(sendSocket, bufferRx, NTP_PACKAGE_SIZE, 0) < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Receive socket message failed: %{public}s, Host: %{public}s",
                     strerror(errno), host.c_str());
-        close(sendSocket);
+        fdsan_close_with_tag(sendSocket, BASE_TIME_FDSAN_TAG);
         return false;
     }
-    close(sendSocket);
+    fdsan_close_with_tag(sendSocket, BASE_TIME_FDSAN_TAG);
     if (!ReceivedMessage(bufferRx)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "ReceivedMessage failed: Host: %{public}s", host.c_str());
         return false;

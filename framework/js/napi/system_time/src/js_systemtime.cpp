@@ -46,7 +46,7 @@ void FreeWorkIfFail(napi_status status, napi_env env, AsyncContext *asyncContext
     if (status != napi_ok) {
         napi_delete_async_work(env, asyncContext->work);
         delete asyncContext;
-        NAPI_CALL_RETURN_VOID(env, status);
+        TIME_SERVICE_NAPI_CALL_RETURN_VOID(env, status, ERROR, "free work failed");
     }
 }
 
@@ -58,7 +58,8 @@ void TimePaddingAsyncCallbackInfo(const napi_env &env, AsyncContext *&asynccallb
         asynccallbackinfo->isCallback = true;
     } else {
         napi_deferred deferred = nullptr;
-        NAPI_CALL_RETURN_VOID(env, napi_create_promise(env, &deferred, &promise));
+        TIME_SERVICE_NAPI_CALL_RETURN_VOID(env, napi_create_promise(env, &deferred, &promise), ERROR,
+            "napi_create_promise failed");
         asynccallbackinfo->deferred = deferred;
         asynccallbackinfo->isCallback = false;
     }
@@ -69,7 +70,8 @@ napi_value JSSystemTimeSetTime(napi_env env, napi_callback_info info)
     size_t argc = SET_TIME_MAX_PARA;
     napi_value argv[SET_TIME_MAX_PARA] = { 0 };
     napi_value thisVar = nullptr;
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
+    TIME_SERVICE_NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL), ERROR,
+        "napi_get_cb_info failed");
     int64_t times = INVALID_TIME;
     napi_ref callback = nullptr;
     if (NapiUtils::ParseParametersBySetTime(env, argv, argc, times, callback) == nullptr) {
@@ -120,7 +122,8 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
     size_t argc = SET_TIMEZONE_MAX_PARA;
     napi_value argv[SET_TIMEZONE_MAX_PARA] = { 0 };
     napi_value thisVar = nullptr;
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
+    TIME_SERVICE_NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL), ERROR,
+        "napi_get_cb_info failed");
     std::string timezoneId;
     napi_ref callback = nullptr;
     if (NapiUtils::ParseParametersBySetTimezone(env, argv, argc, timezoneId, callback) == nullptr) {
@@ -171,7 +174,8 @@ napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
     size_t argc = SET_TIMEZONE_MAX_PARA;
     napi_value argv[SET_TIMEZONE_MAX_PARA] = { 0 };
     napi_value thisVar = nullptr;
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
+    TIME_SERVICE_NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL), ERROR,
+        "napi_get_cb_info failed");
     napi_ref callback = nullptr;
     bool isNano = false;
     if (NapiUtils::ParseParametersGetNA(env, argv, argc, callback, &isNano) == nullptr) {
@@ -186,8 +190,7 @@ napi_value JSSystemTimeGetCurrentTime(napi_env env, napi_callback_info info)
     asyncContext->isNano = isNano;
     napi_value resource = nullptr;
     napi_create_string_utf8(env, "JSSystemTimeGetCurrentTime", NAPI_AUTO_LENGTH, &resource);
-    napi_create_async_work(
-        env, nullptr, resource,
+    napi_create_async_work(env, nullptr, resource,
         [](napi_env env, void *data) {
             AsyncContext *asyncContext = (AsyncContext *)data;
             if (asyncContext->isNano) {
@@ -224,7 +227,8 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
     size_t argc = SET_TIMEZONE_MAX_PARA;
     napi_value argv[SET_TIMEZONE_MAX_PARA] = { 0 };
     napi_value thisVar = nullptr;
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
+    TIME_SERVICE_NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL), ERROR,
+        "napi_get_cb_info failed");
     napi_ref callback = nullptr;
     bool isNano = false;
     if (NapiUtils::ParseParametersGetNA(env, argv, argc, callback, &isNano) == nullptr) {
@@ -239,8 +243,7 @@ napi_value JSSystemTimeGetRealActiveTime(napi_env env, napi_callback_info info)
     asyncContext->isNano = isNano;
     napi_value resource = nullptr;
     napi_create_string_utf8(env, "JSSystemTimeGetRealActiveTime", NAPI_AUTO_LENGTH, &resource);
-    napi_create_async_work(
-        env, nullptr, resource,
+    napi_create_async_work(env, nullptr, resource,
         [](napi_env env, void *data) {
             AsyncContext *asyncContext = (AsyncContext *)data;
             if (asyncContext->isNano) {
@@ -277,7 +280,8 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
     size_t argc = SET_TIMEZONE_MAX_PARA;
     napi_value argv[SET_TIMEZONE_MAX_PARA] = { 0 };
     napi_value thisVar = nullptr;
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
+    TIME_SERVICE_NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL), ERROR,
+        "napi_get_cb_info failed");
     napi_ref callback = nullptr;
     bool isNano = false;
     if (NapiUtils::ParseParametersGetNA(env, argv, argc, callback, &isNano) == nullptr) {
@@ -292,8 +296,7 @@ napi_value JSSystemTimeGetRealTime(napi_env env, napi_callback_info info)
     asyncContext->isNano = isNano;
     napi_value resource = nullptr;
     napi_create_string_utf8(env, "JSSystemTimeGetRealTime", NAPI_AUTO_LENGTH, &resource);
-    napi_create_async_work(
-        env, nullptr, resource,
+    napi_create_async_work(env, nullptr, resource,
         [](napi_env env, void *data) {
             AsyncContext *asyncContext = (AsyncContext *)data;
             if (asyncContext->isNano) {
@@ -330,7 +333,8 @@ napi_value JSSystemTimeGetDate(napi_env env, napi_callback_info info)
     size_t argc = SET_TIMEZONE_MAX_PARA;
     napi_value argv[SET_TIMEZONE_MAX_PARA] = { 0 };
     napi_value thisVar = nullptr;
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
+    TIME_SERVICE_NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL), ERROR,
+        "napi_get_cb_info failed");
     napi_ref callback = nullptr;
     if (NapiUtils::ParseParametersGet(env, argv, argc, callback) == nullptr) {
         return NapiUtils::GetUndefinedValue(env);
@@ -377,7 +381,8 @@ napi_value JSSystemTimeGetTimeZone(napi_env env, napi_callback_info info)
     size_t argc = SET_TIMEZONE_MAX_PARA;
     napi_value argv[SET_TIMEZONE_MAX_PARA] = { 0 };
     napi_value thisVar = nullptr;
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL));
+    TIME_SERVICE_NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, NULL), ERROR,
+        "napi_get_cb_info failed");
     napi_ref callback = nullptr;
     if (NapiUtils::ParseParametersGet(env, argv, argc, callback) == nullptr) {
         return NapiUtils::GetUndefinedValue(env);
@@ -432,7 +437,8 @@ napi_value SystemTimeExport(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getDate", JSSystemTimeGetDate),
         DECLARE_NAPI_FUNCTION("getTimezone", JSSystemTimeGetTimeZone),
     };
-    NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
+    TIME_SERVICE_NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc), ERROR,
+        "napi_define_properties failed");
     return exports;
 }
 EXTERN_C_END

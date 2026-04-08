@@ -47,27 +47,11 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
             static_cast<int>(fds.size()), strerror(errno));
         return nullptr;
     }
-    std::string fdStr = "";
-    std::string typStr = "";
-    for (size_t i = 0; i < fds.size(); i++) {
-        if (alarm_to_clock_id[i] != CLOCK_POWEROFF_ALARM) {
-            fds[i] = timerfd_create(alarm_to_clock_id[i], 0);
-        } else {
-            fds[i] = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
-        }
-        if (fds[i] < 0) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create %{public}d  failed:%{public}s",
-                static_cast<int>(i), strerror(errno));
-            close(epollfd);
-            for (size_t j = 0; j < i; j++) {
-                close(fds[j]);
-            }
-            return nullptr;
-        }
-        fdStr += std::to_string(fds[i]) + " ";
-        typStr += std::to_string(i) + " ";
+    fdsan_exchange_owner_tag(epollfd, 0, BASE_TIME_FDSAN_TAG);
+    if (!CreateTimerFds(fds)) {
+        fdsan_close_with_tag(epollfd, BASE_TIME_FDSAN_TAG);
+        return nullptr;
     }
-    TIME_HILOGW(TIME_MODULE_SERVICE, "create fd:[%{public}s], typ:[%{public}s]", fdStr.c_str(), typStr.c_str());
     std::shared_ptr<TimerHandler> handler = std::shared_ptr<TimerHandler>(
         new (std::nothrow)TimerHandler(fds, epollfd));
     #ifdef SET_AUTO_REBOOT_ENABLE
@@ -108,6 +92,31 @@ int TimerHandler::SetRealTimeFd(TimerFds fds)
     return err;
 }
 
+bool TimerHandler::CreateTimerFds(TimerFds &fds) {
+    std::string fdStr = "";
+    std::string typStr = "";
+    for (size_t i = 0; i < fds.size(); i++) {
+        if (alarm_to_clock_id[i] != CLOCK_POWEROFF_ALARM) {
+            fds[i] = timerfd_create(alarm_to_clock_id[i], 0);
+        } else {
+            fds[i] = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
+        }
+        if (fds[i] < 0) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create %{public}d  failed:%{public}s",
+                static_cast<int>(i), strerror(errno));
+            for (size_t j = 0; j < i; j++) {
+                fdsan_close_with_tag(fds[j], BASE_TIME_FDSAN_TAG);
+            }
+            return false;
+        }
+        fdsan_exchange_owner_tag(fds[i], 0, BASE_TIME_FDSAN_TAG);
+        fdStr += std::to_string(fds[i]) + " ";
+        typStr += std::to_string(i) + " ";
+    }
+    TIME_HILOGW(TIME_MODULE_SERVICE, "create fd:[%{public}s], typ:[%{public}s]", fdStr.c_str(), typStr.c_str());
+    return true;
+}
+
 TimerHandler::TimerHandler(const TimerFds &fds, int epollfd)
     : fds_ {fds}, epollFd_ {epollfd}
 {
@@ -117,9 +126,9 @@ TimerHandler::~TimerHandler()
 {
     for (auto fd : fds_) {
         epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, nullptr);
-        close(fd);
+        fdsan_close_with_tag(fd, BASE_TIME_FDSAN_TAG);
     }
-    close(epollFd_);
+    fdsan_close_with_tag(epollFd_, BASE_TIME_FDSAN_TAG);
 }
 
 int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when, std::chrono::steady_clock::time_point bootTime)

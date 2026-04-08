@@ -28,7 +28,7 @@
 
 > **说明：**
 >
-> - 从API Version 9 开始，模块接口[@ohos.systemTime](https://gitcode.com/openharmony/docs/blob/master/zh-cn/application-dev/reference/apis/js-apis-system-time.md)不再维护，推荐使用新模块接口[@ohos.systemDateTime](https://gitee.com/openharmony/docs/blob/master/zh-cn/application-dev/reference/apis/js-apis-system-date-time.md)
+> - 从API Version 9 开始，模块接口[@ohos.systemTime](https://gitcode.com/openharmony/docs/blob/master/zh-cn/application-dev/reference/apis/js-apis-system-time.md)不再维护，推荐使用新模块接口[@ohos.systemDateTime](https://gitcode.com/openharmony/docs/blob/master/zh-cn/application-dev/reference/apis/js-apis-system-date-time.md)
 
 **表 1**  js组件systemDateTime开放的主要方法
 

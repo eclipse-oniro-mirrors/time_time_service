@@ -68,6 +68,15 @@ constexpr const char* AUTOTIME_KEY = "persist.time.auto_time";
 static constexpr int MAX_PID_LIST_SIZE = 1024;
 static constexpr uint32_t MAX_EXEMPTION_SIZE = 1000;
 
+#ifndef CALLBACK_AUTOBOOT_ENABLE
+#ifdef SET_AUTO_REBOOT_ENABLE
+constexpr int64_t MILLISECOND_TO_NANO = 1000000;
+constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
+constexpr int CLOCK_POWEROFF_ALARM = 12;
+constexpr size_t INDEX_TWO = 2;
+#endif
+#endif
+
 #ifdef MULTI_ACCOUNT_ENABLE
 constexpr const char* SUBSCRIBE_REMOVED = "UserRemoved";
 #endif
@@ -590,6 +599,11 @@ int32_t TimeSystemAbility::SetTime(int64_t time, int8_t apiVersion)
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
+    // 添加 CheckAuthorization 校验
+    if (!TimePermission::CheckAuthorization(TimePermission::setTimePrivilege)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "CheckAuthorization failed for SET_TIME");
+        return E_TIME_AUTHORIZATION_FAILED;
+    }
     return SetTimeInner(time, apiVersion);
 }
 
@@ -827,6 +841,11 @@ int32_t TimeSystemAbility::SetAutoTime(bool autoTime)
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
+    // 添加 CheckAuthorization 校验
+    if (!TimePermission::CheckAuthorization(TimePermission::setTimePrivilege)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "CheckAuthorization failed for SetAutoTime");
+        return E_TIME_AUTHORIZATION_FAILED;
+    }
     auto errNo = SetParameter(AUTOTIME_KEY, autoTime ? "ON" : "OFF");
     if (errNo != AUTOTIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "SetAutoTime FAIL,errNo: %{public}d", errNo);
@@ -848,6 +867,11 @@ int32_t TimeSystemAbility::SetTimeZone(const std::string &timeZoneId, int8_t api
     if (!TimePermission::CheckCallingPermission(TimePermission::setTimeZone)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
+    }
+    // 添加 CheckAuthorization 校验
+    if (!TimePermission::CheckAuthorization(TimePermission::setTimePrivilege)) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "CheckAuthorization failed for SetTimeZone");
+        return E_TIME_AUTHORIZATION_FAILED;
     }
     return SetTimeZoneInner(timeZoneId, apiVersion);
 }
@@ -1085,7 +1109,13 @@ void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
 {
     // Clears `drop_on_reboot` table.
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnSyncShutdown");
+
+    #ifdef CALLBACK_AUTOBOOT_ENABLE
     TimerManager::GetInstance()->ShutDownReschedulePowerOnTimer();
+    #else
+    TimeSystemAbility::GetInstance()->SetAutoReboot();
+    #endif
+    
     #ifdef RDB_ENABLE
     TimeDatabase::GetInstance().ClearDropOnReboot();
     TimeDatabase::GetInstance().ClearInvaildDataInHoldOnReboot();
@@ -1345,6 +1375,62 @@ void TimeSystemAbility::RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestor
     }
     timerManager->StartTimerGroup(timerVec, tableName);
 }
+#endif
+
+#ifndef CALLBACK_AUTOBOOT_ENABLE
+#ifdef SET_AUTO_REBOOT_ENABLE
+void TimeSystemAbility::SetAutoReboot()
+{
+    auto database = TimeDatabase::GetInstance();
+    OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
+    holdRdbPredicates.EqualTo("state", 1)->OrderByAsc("triggerTime");
+    auto resultSet = database.Query(holdRdbPredicates, { "bundleName", "triggerTime", "name" });
+    if (resultSet == nullptr) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "no need to set RTC");
+        return;
+    }
+    int64_t currentTime = 0;
+    TimeUtils::GetWallTimeMs(currentTime);
+    auto bundleList = TimerManager::GetInstance()->GetPowerOnApps();
+    do {
+        uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 1));
+        if (triggerTime < static_cast<uint64_t>(currentTime)) {
+            TIME_HILOGI(TIME_MODULE_SERVICE,
+                        "triggerTime:%{public}" PRIu64" currentTime:%{public}" PRId64"", triggerTime, currentTime);
+            continue;
+        }
+        if (std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, 0)) != bundleList.end() ||
+            std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, INDEX_TWO)) != bundleList.end()) {
+            int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
+            if (tmfd < 0) {
+                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error:%{public}s", strerror(errno));
+                resultSet->Close();
+                return;
+            }
+            if (static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > triggerTime) {
+                TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
+                triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
+            }
+            struct itimerspec new_value;
+            std::chrono::nanoseconds nsec(triggerTime * MILLISECOND_TO_NANO);
+            auto second = std::chrono::duration_cast<std::chrono::seconds>(nsec);
+            new_value.it_value.tv_sec = second.count();
+            new_value.it_value.tv_nsec = (nsec - second).count();
+            TIME_HILOGI(TIME_MODULE_SERVICE, "currentTime:%{public}" PRId64 ", second:%{public}" PRId64 ","
+                        "nanosecond:%{public}" PRId64"", currentTime, static_cast<int64_t>(new_value.it_value.tv_sec),
+                        static_cast<int64_t>(new_value.it_value.tv_nsec));
+            int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
+            if (ret < 0) {
+                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error:%{public}s", strerror(errno));
+                close(tmfd);
+            }
+            resultSet->Close();
+            return;
+        }
+    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
+    resultSet->Close();
+}
+#endif
 #endif
 } // namespace MiscServices
 } // namespace OHOS

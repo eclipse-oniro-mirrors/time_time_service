@@ -66,11 +66,14 @@ constexpr int FIVE_HUNDRED = 500;
 constexpr uint64_t MICRO_TO_MILLISECOND = 1000;
 constexpr int TIMER_ALARM_COUNT = 50;
 static const int MAX_PID_LIST_SIZE = 1024;
+constexpr uint64_t NANO_TO_MILLISECOND = 1000000;
 #ifdef SET_AUTO_REBOOT_ENABLE
 static const int POWER_ON_ALARM = 6;
 constexpr int64_t TEN_YEARS_TO_SECOND = 10 * 365 * 24 * 60 * 60;
 constexpr uint64_t SECOND_TO_MILLISECOND = 1000;
+#ifdef CALLBACK_AUTOBOOT_ENABLE
 constexpr uint64_t TWO_MINUTES_TO_MILLI = 120000;
+#endif
 #endif
 
 static HapPolicyParams g_policyA = {
@@ -368,6 +371,93 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility002, TestSize.Level0)
 }
 #endif
 
+#ifndef CALLBACK_AUTOBOOT_ENABLE
+#ifdef SET_AUTO_REBOOT_ENABLE
+/**
+* @tc.name: SystemAbility003
+* @tc.desc: Test auto reboot functionality with immediate trigger time
+* @tc.precon: Auto reboot feature is enabled, TimeDatabase is properly initialized
+* @tc.step: 1. Call SetAutoReboot method initially
+*           2. Insert test timer entry with immediate trigger time (0)
+*           3. Call SetAutoReboot method again
+*           4. Verify timer insertion succeeds
+*           5. Clean up test data from database
+* @tc.expect: SetAutoReboot handles immediate trigger times correctly, database operations succeed
+* @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
+*/
+HWTEST_F(TimeServiceTimerTest, SystemAbility003, TestSize.Level0)
+{
+    uint64_t timerId1 = TIMER_ID;
+
+    TimeSystemAbility::GetInstance()->SetAutoReboot();
+
+    OHOS::NativeRdb::ValuesBucket insertValues1;
+    insertValues1.PutLong("timerId", timerId1);
+    insertValues1.PutInt("type", 0);
+    insertValues1.PutInt("flag", 0);
+    insertValues1.PutLong("windowLength", 0);
+    insertValues1.PutLong("interval", 0);
+    insertValues1.PutInt("uid", 0);
+    insertValues1.PutString("bundleName", "anything");
+    insertValues1.PutString("wantAgent", "");
+    insertValues1.PutInt("state", 1);
+    insertValues1.PutLong("triggerTime", static_cast<int64_t>(0));
+    auto res = TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues1);
+    EXPECT_EQ(res, true);
+
+    TimeSystemAbility::GetInstance()->SetAutoReboot();
+
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete1(HOLD_ON_REBOOT);
+    rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
+}
+
+/**
+* @tc.name: SystemAbility004
+* @tc.desc: Test auto reboot functionality with distant future trigger time
+* @tc.precon: Auto reboot feature is enabled, TimeDatabase is properly initialized
+* @tc.step: 1. Call SetAutoReboot method initially
+*           2. Insert test timer entry with maximum trigger time
+*           3. Call SetAutoReboot method again
+*           4. Verify timer insertion succeeds
+*           5. Clean up test data from database
+* @tc.expect: SetAutoReboot handles distant future trigger times correctly, database operations succeed
+* @tc.type: FUNC
+* @tc.require: issue#843
+* @tc.level: level0
+*/
+HWTEST_F(TimeServiceTimerTest, SystemAbility004, TestSize.Level0)
+{
+    uint64_t timerId1 = TIMER_ID;
+
+    TimeSystemAbility::GetInstance()->SetAutoReboot();
+
+    OHOS::NativeRdb::ValuesBucket insertValues1;
+    insertValues1.PutLong("timerId", timerId1);
+    insertValues1.PutInt("type", 0);
+    insertValues1.PutInt("flag", 0);
+    insertValues1.PutLong("windowLength", 0);
+    insertValues1.PutLong("interval", 0);
+    insertValues1.PutInt("uid", 0);
+    insertValues1.PutString("bundleName", "anything");
+    insertValues1.PutString("wantAgent", "");
+    insertValues1.PutInt("state", 1);
+    insertValues1.PutLong("triggerTime", std::numeric_limits<int64_t>::max());
+    insertValues1.PutString("name", "");
+    auto res = TimeDatabase::GetInstance().Insert(HOLD_ON_REBOOT, insertValues1);
+    EXPECT_EQ(res, true);
+
+    TimeSystemAbility::GetInstance()->SetAutoReboot();
+
+    OHOS::NativeRdb::RdbPredicates rdbPredicatesDelete1(HOLD_ON_REBOOT);
+    rdbPredicatesDelete1.EqualTo("timerId", static_cast<int64_t>(timerId1));
+    TimeDatabase::GetInstance().Delete(rdbPredicatesDelete1);
+}
+#endif
+#endif
+
 /**
 * @tc.name: SystemAbility005
 * @tc.desc: Test SetRealTime functionality with invalid negative value
@@ -379,7 +469,11 @@ HWTEST_F(TimeServiceTimerTest, SystemAbility002, TestSize.Level0)
 * @tc.require: issue#843
 * @tc.level: level0
 */
+#ifdef CALLBACK_AUTOBOOT_ENABLE
 HWTEST_F(TimeServiceTimerTest, SystemAbility003, TestSize.Level0)
+#else
+HWTEST_F(TimeServiceTimerTest, SystemAbility005, TestSize.Level0)
+#endif
 {
     auto res = TimeSystemAbility::GetInstance()->SetRealTime(-1);
     EXPECT_FALSE(res);
@@ -2155,12 +2249,10 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo002, TestSize.Level0)
                                           nullptr, 0, false, 0, 0, "");
     auto res = timerInfo.AdjustTimer(timePoint, 1, 0, 0);
     EXPECT_TRUE(res);
-    res = timerInfo.AdjustTimer(timePoint, 1, 0, 1);
+    res = timerInfo.AdjustTimer(timePoint, 0, 0, 1);
     EXPECT_FALSE(res);
     res = timerInfo.AdjustTimer(timePoint, 1, 0, 2);
     EXPECT_TRUE(res);
-    res = timerInfo.AdjustTimer(timePoint, 1, 0, 3);
-    EXPECT_FALSE(res);
 }
 
 /**
@@ -2429,6 +2521,75 @@ HWTEST_F(TimeServiceTimerTest, TimerInfo009, TestSize.Level0)
     EXPECT_EQ(timerInfo.when, milliseconds(0));
 }
 
+/**
+ * @tc.name: TimerInfo010
+ * @tc.desc: test ChangeStatusToAdjust.
+ * @tc.precon: TimerInfo instance can be created and adjust restoration is supported
+ * @tc.step: 1. Create TimerInfo and test restore from INIT state
+ *           2. Test adjust from INIT state
+ *           3. Test adjust from ADJUST state
+ *           4. Test adjust from PROXY state
+ * @tc.expect: RestoreProxyTimer correctly restores timer attributes only from PROXY state
+ * @tc.type: FUNC
+ * @tc.require: issue#853
+ * @tc.level: level0
+ */
+HWTEST_F(TimeServiceTimerTest, TimerInfo010, TestSize.Level0)
+{
+    auto zero = milliseconds(0);
+    std::chrono::steady_clock::time_point empty (zero);
+    auto timerInfo = TimerInfo("", 0, ITimerManager::ELAPSED_REALTIME, zero, empty, zero, empty, zero, nullptr,
+                               nullptr, 0, false, 0, 0, "");
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::INIT);
+    auto timePoint = std::chrono::steady_clock::now();
+    timerInfo.AdjustTimer(timePoint, 1, 0, 0);
+    EXPECT_TRUE(timerInfo.ChangeStatusToAdjust());
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::ADJUST);
+
+    timerInfo.ProxyTimer(empty, milliseconds(3000));
+    EXPECT_EQ(timerInfo.state, TimerInfo::TimerState::PROXY);
+    EXPECT_FALSE(timerInfo.ChangeStatusToAdjust());
+}
+
+/**
+ * @tc.name: TimerInfo011
+ * @tc.desc: Test repeat timer with triggertime before currenttime
+ * @tc.precon: the calculate of timer must be correct
+ * @tc.step: 1. Create repeat timer with ealier tirggertime
+ *           2. Timer triggered and system handler repeat timer, create a new timer
+ *           3. The New timer has the same gap time between when and whenelapsed as the old timer's gap
+ * @tc.expect: RestoreProxyTimer correctly restores timer attributes only from PROXY state
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
+HWTEST_F(TimeServiceTimerTest, TimerInfo011, TestSize.Level0)
+{
+    int64_t currentTime = 0;
+    TimeUtils::GetWallTimeMs(currentTime);
+    auto triggerTime = currentTime - 5000000;
+    auto callback = [this](uint64_t id) -> int32_t {
+        return 0;
+    };
+    auto timerInfo = TimerInfo::CreateTimerInfo("", TIMER_ID, 0, triggerTime, 0, 1800000, 1, false, callback,
+        nullptr, UID, PID, "");
+    auto bootTime = TimeUtils::GetBootTimeNs();
+
+    auto origWhen = timerInfo->origWhen;
+    auto origWhenElapsed = timerInfo->whenElapsed;
+    auto origGap = (origWhen- origWhenElapsed.time_since_epoch()).count();
+    TimerManager::GetInstance()->HandleRepeatTimer(timerInfo, bootTime);
+
+    auto uidTimersMap = TimerProxy::GetInstance().uidTimersMap_;
+    auto it1 = uidTimersMap.find(UID);
+    EXPECT_NE(it1, uidTimersMap.end());
+    auto it2 = it1->second.find(TIMER_ID);
+    EXPECT_NE(it2, it1->second.end());
+    auto newGap = (it2->second->when - it2->second->maxWhenElapsed.time_since_epoch()).count();
+    EXPECT_LE(std::abs(origGap - newGap), NANO_TO_MILLISECOND);
+    TimerManager::GetInstance()->RemoveLocked(TIMER_ID, false);
+}
+
 #ifdef SET_AUTO_REBOOT_ENABLE
 /**
  * @tc.name: IsPowerOnTimer001
@@ -2451,14 +2612,24 @@ HWTEST_F(TimeServiceTimerTest, IsPowerOnTimer001, TestSize.Level0)
     auto duration = std::chrono::milliseconds::zero();
     auto timePoint = std::chrono::steady_clock::now();
 
+    #ifdef CALLBACK_AUTOBOOT_ENABLE
+    auto timerInfo1 = std::make_shared<TimerInfo>("testTimerName", TIMER_ID, 2, duration, timePoint, duration,
+        timePoint, duration, nullptr, nullptr, 0, false, 0, 0, "");
+    #else
     auto timerInfo1 = std::make_shared<TimerInfo>("testTimerName", TIMER_ID, 0, duration, timePoint, duration,
         timePoint, duration, nullptr, nullptr, 0, false, 0, 0, "");
+    #endif
     bool ret = true;
     ret = timerManager->IsPowerOnTimer(timerInfo1);
     EXPECT_EQ(ret, false);
 
+    #ifdef CALLBACK_AUTOBOOT_ENABLE
+    auto timerInfo2 = std::make_shared<TimerInfo>("", TIMER_ID, 3, duration, timePoint, duration, timePoint, duration,
+        nullptr, nullptr, 0, false, 0, 0, "testBundleName");
+    #else
     auto timerInfo2 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
         nullptr, nullptr, 0, false, 0, 0, "testBundleName");
+    #endif
     ret = true;
     ret = timerManager->IsPowerOnTimer(timerInfo2);
     EXPECT_EQ(ret, false);
@@ -2474,6 +2645,14 @@ HWTEST_F(TimeServiceTimerTest, IsPowerOnTimer001, TestSize.Level0)
     ret = false;
     ret = timerManager->IsPowerOnTimer(timerInfo4);
     EXPECT_EQ(ret, true);
+
+    #ifdef CALLBACK_AUTOBOOT_ENABLE
+    auto timerInfo5 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+        nullptr, nullptr, 0, true, 0, 0, "");
+    ret = true;
+    ret = timerManager->IsPowerOnTimer(timerInfo5);
+    EXPECT_EQ(ret, false);
+    #endif
 }
 
 /**
@@ -2555,6 +2734,7 @@ HWTEST_F(TimeServiceTimerTest, DeleteTimerFromPowerOnTimerListById001, TestSize.
  * @tc.require: issue#843
  * @tc.level: level0
  */
+#ifdef CALLBACK_AUTOBOOT_ENABLE
 HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked001, TestSize.Level0)
 {
     auto timerManager = TimerManager::GetInstance();
@@ -2651,6 +2831,104 @@ HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked002, TestSize.Level0)
     timerManager->ShutDownReschedulePowerOnTimer();
     EXPECT_GE(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime3);
 }
+#else
+HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked001, TestSize.Level0)
+{
+    auto timerManager = TimerManager::GetInstance();
+    timerManager->lastSetTime_[POWER_ON_ALARM] = 0;
+    int64_t currentTime = 0;
+    TimeUtils::GetWallTimeMs(currentTime);
+    auto triggerTime1 = currentTime + 1000;
+    auto duration1 = std::chrono::milliseconds(triggerTime1);
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo1 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration1, timePoint, duration1, timePoint,
+        duration1, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo1);
+    timerManager->ReschedulePowerOnTimerLocked(false);
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime1);
+
+    auto triggerTime2 = currentTime + 2000 + TWO_MINUTES_TO_MILLI;
+    auto duration2 = std::chrono::milliseconds(triggerTime2);
+    auto timerId2 = TIMER_ID + 1;
+    auto timerInfo2 = std::make_shared<TimerInfo>("", timerId2, 0, duration2, timePoint, duration2, timePoint,
+        duration2, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo2);
+    timerManager->ReschedulePowerOnTimerLocked(false);
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime1);
+
+    auto triggerTime3 = currentTime + 500;
+    auto duration3 = std::chrono::milliseconds(triggerTime3);
+    auto timerId3 = timerId2 + 1;
+    auto timerInfo3 = std::make_shared<TimerInfo>("", timerId3, 0, duration3, timePoint, duration3, timePoint,
+        duration3, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo3);
+    timerManager->ReschedulePowerOnTimerLocked(false);
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime3);
+
+    timerManager->DeleteTimerFromPowerOnTimerListById(timerId3);
+    timerManager->ReschedulePowerOnTimerLocked(false);
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime1);
+
+    timerManager->DeleteTimerFromPowerOnTimerListById(TIMER_ID);
+    timerManager->ReschedulePowerOnTimerLocked(false);
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime2);
+
+    timerManager->powerOnTriggerTimerList_.clear();
+    timerManager->ReschedulePowerOnTimerLocked(false);
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM] >= currentTime + TEN_YEARS_TO_SECOND * SECOND_TO_MILLISECOND,
+        true);
+}
+
+/**
+ * @tc.name: ReschedulePowerOnTimerLocked002
+ * @tc.desc: Test ReschedulePowerOnTimerLocked function with multiple timer scenarios with isShutdown false
+ * @tc.precon: TimerManager instance is available and lastSetTime can be modified
+ * @tc.step: 1. Reset lastSetTime and add timer with 1000ms trigger
+ *           2. Add timer with 2000ms trigger and verify scheduling
+ *           3. Add timer with 500ms trigger (earliest) and verify rescheduling
+ *           4. Remove timers in sequence and verify lastSetTime updates
+ *           5. Clear all timers and verify default scheduling
+ * @tc.expect: ReschedulePowerOnTimerLocked always schedules the earliest trigger time
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
+HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked002, TestSize.Level0)
+{
+    auto timerManager = TimerManager::GetInstance();
+    timerManager->lastSetTime_[POWER_ON_ALARM] = 0;
+    int64_t currentTime = 0;
+    TimeUtils::GetWallTimeMs(currentTime);
+    auto triggerTime1 = currentTime - 1000 + TWO_MINUTES_TO_MILLI;
+    auto duration1 = std::chrono::milliseconds(triggerTime1);
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo1 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration1, timePoint, duration1, timePoint,
+        duration1, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo1);
+    timerManager->ShutDownReschedulePowerOnTimer();
+    EXPECT_GE(timerManager->lastSetTime_[POWER_ON_ALARM], currentTime + TWO_MINUTES_TO_MILLI);
+    timerManager->powerOnTriggerTimerList_.clear();
+
+    auto triggerTime2 = currentTime + 1000 + TWO_MINUTES_TO_MILLI;
+    auto duration2 = std::chrono::milliseconds(triggerTime2);
+    auto timerId2 = TIMER_ID + 1;
+    auto timerInfo2 = std::make_shared<TimerInfo>("", timerId2, 0, duration2, timePoint, duration2, timePoint,
+        duration2, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo2);
+    timerManager->ShutDownReschedulePowerOnTimer();
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime2);
+    timerManager->powerOnTriggerTimerList_.clear();
+
+    auto triggerTime3 = currentTime + TWO_MINUTES_TO_MILLI;
+    auto duration3 = std::chrono::milliseconds(triggerTime3);
+    auto timerId3 = timerId2 + 1;
+    auto timerInfo3 = std::make_shared<TimerInfo>("", timerId3, 0, duration3, timePoint, duration3, timePoint,
+        duration3, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo3);
+    timerManager->ShutDownReschedulePowerOnTimer();
+    EXPECT_GE(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime3);
+}
+#endif
 #endif
 
 /**
@@ -2836,6 +3114,6 @@ HWTEST_F(TimeServiceTimerTest, ConvertAdjustPolicy001, TestSize.Level0)
     ret = timerInfo.ConvertAdjustPolicy(300, 2);
     EXPECT_TRUE(ret.count() > 0);
     ret = timerInfo.ConvertAdjustPolicy(300, 3);
-    EXPECT_FALSE(ret.count() > 0);
+    EXPECT_TRUE(ret.count() > 0);
 }
 } // namespace

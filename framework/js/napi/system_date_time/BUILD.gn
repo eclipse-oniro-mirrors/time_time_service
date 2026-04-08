@@ -17,6 +17,7 @@ ohos_shared_library("systemdatetime") {
   include_dirs = [
     "../common/include",
     "../../../interfaces/inner_api/include",
+    "../../../../services/dfx/include",
     "include",
   ]
 
@@ -36,6 +37,7 @@ ohos_shared_library("systemdatetime") {
   sources = [
     "../common/src/napi_utils.cpp",
     "../common/src/napi_work.cpp",
+    "../../../../services/dfx/src/time_sysevent.cpp",
     "src/date_time_init.cpp",
     "src/napi_system_date_time.cpp",
   ]
@@ -44,9 +46,11 @@ ohos_shared_library("systemdatetime") {
 
   external_deps = [
     "ability_runtime:abilitykit_native",
+    "ability_runtime:app_context",
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_single",
     "napi:ace_napi",

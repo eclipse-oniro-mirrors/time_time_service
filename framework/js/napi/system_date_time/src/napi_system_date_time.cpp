@@ -15,11 +15,15 @@
 
 #include "napi_system_date_time.h"
 
+#include <new>
 #include "parameters.h"
 #include "napi_work.h"
 #include "napi_utils.h"
 #include "time_common.h"
 #include "time_service_client.h"
+#ifndef CROSSPLATFORM
+#include "application_context.h"
+#endif
 
 using namespace OHOS::MiscServices;
 
@@ -34,18 +38,50 @@ constexpr int32_t STARTUP = 0;
 constexpr int32_t ACTIVE = 1;
 constexpr const char *TIMEZONE_KEY = "persist.time.timezone";
 constexpr const char *AUTOTIME_KEY = "persist.time.auto_time";
+#ifndef CROSSPLATFORM
+std::atomic<bool> NapiSystemDateTime::hasSendGetTimeNano{false};
+std::atomic<bool> NapiSystemDateTime::hasSendGetUptimeNano{false};
+
+static std::string GetCallerBundleName()
+{
+    auto context = OHOS::AbilityRuntime::ApplicationContext::GetInstance();
+    if (context != nullptr) {
+        return context->GetBundleName();
+    }
+    return "";
+}
+
+void NapiSystemDateTime::SendHiSysevent(bool isNano, ReportEventCode eventCode, int64_t time, std::string bundleName)
+{
+    if (!isNano) {
+        return;
+    }
+    std::atomic<bool>* flagPtr = nullptr;
+    if (eventCode == GETTIME_NANO) {
+        flagPtr = &hasSendGetTimeNano;
+    } else if (eventCode == GETUPTIME_NANO) {
+        flagPtr = &hasSendGetUptimeNano;
+    } else {
+        return;
+    }
+    if (!flagPtr->exchange(true, std::memory_order_relaxed)) {
+        TimeBehaviorReport(eventCode, std::to_string(time), "", 0, bundleName);
+    }
+}
+#endif
 
 napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value exports)
 {
     napi_value timeType = nullptr;
     napi_value startup = nullptr;
     napi_value active = nullptr;
-    NAPI_CALL(env, napi_create_int32(env, STARTUP, &startup));
-    NAPI_CALL(env, napi_create_int32(env, ACTIVE, &active));
-    NAPI_CALL(env, napi_create_object(env, &timeType));
-    NAPI_CALL(env, napi_set_named_property(env, timeType, "STARTUP", startup));
-    NAPI_CALL(env, napi_set_named_property(env, timeType, "ACTIVE", active));
-
+    TIME_SERVICE_NAPI_CALL(env, napi_create_int32(env, STARTUP, &startup), ERROR, "napi_create_int32 failed");
+    TIME_SERVICE_NAPI_CALL(env, napi_create_int32(env, ACTIVE, &active), ERROR, "napi_create_int32 failed");
+    TIME_SERVICE_NAPI_CALL(env, napi_create_object(env, &timeType), ERROR, "napi_create_object failed");
+    TIME_SERVICE_NAPI_CALL(env, napi_set_named_property(env, timeType, "STARTUP", startup), ERROR,
+        "napi_set_named_property failed");
+    TIME_SERVICE_NAPI_CALL(env, napi_set_named_property(env, timeType, "ACTIVE", active), ERROR,
+        "napi_set_named_property failed");
     napi_property_descriptor descriptors[] = {
         DECLARE_NAPI_STATIC_FUNCTION("setTime", SetTime),
         DECLARE_NAPI_STATIC_FUNCTION("getCurrentTime", GetCurrentTime),
@@ -64,7 +100,6 @@ napi_value NapiSystemDateTime::SystemDateTimeInit(napi_env env, napi_value expor
         DECLARE_NAPI_STATIC_FUNCTION("setAutoTimeStatus", SetAutoTimeStatus),
         DECLARE_NAPI_STATIC_PROPERTY("TimeType", timeType),
     };
-
     napi_status status =
         napi_define_properties(env, exports, sizeof(descriptors) / sizeof(napi_property_descriptor), descriptors);
     if (status != napi_ok) {
@@ -79,7 +114,11 @@ napi_value NapiSystemDateTime::SetTime(napi_env env, napi_callback_info info)
     struct SetTimeContext : public ContextBase {
         int64_t time = 0;
     };
-    auto *setTimeContext = new SetTimeContext();
+    auto *setTimeContext = new (std::nothrow) SetTimeContext();
+    if (setTimeContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new SetTimeContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, setTimeContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimeContext, argc >= ARGC_ONE,
             "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
@@ -105,7 +144,11 @@ napi_value NapiSystemDateTime::SetDate(napi_env env, napi_callback_info info)
     struct SetDateContext : public ContextBase {
         int64_t time = 0;
     };
-    auto *setDateContext = new SetDateContext();
+    auto *setDateContext = new (std::nothrow) SetDateContext();
+    if (setDateContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new SetDateContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, setDateContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, argc >= ARGC_ONE,
             "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
@@ -152,7 +195,11 @@ napi_value NapiSystemDateTime::GetRealActiveTime(napi_env env, napi_callback_inf
         int64_t time = 0;
         bool isNano = false;
     };
-    auto *getRealActiveTimeContext = new GetRealActiveTimeContext();
+    auto *getRealActiveTimeContext = new (std::nothrow) GetRealActiveTimeContext();
+    if (getRealActiveTimeContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetRealActiveTimeContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, getRealActiveTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
             napi_valuetype valueType = napi_undefined;
@@ -193,7 +240,11 @@ napi_value NapiSystemDateTime::GetCurrentTime(napi_env env, napi_callback_info i
         int64_t time = 0;
         bool isNano = false;
     };
-    auto *getCurrentTimeContext = new GetCurrentTimeContext();
+    auto *getCurrentTimeContext = new (std::nothrow) GetCurrentTimeContext();
+    if (getCurrentTimeContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetCurrentTimeContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, getCurrentTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
             napi_valuetype valueType = napi_undefined;
@@ -233,8 +284,15 @@ napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
     struct GetTimeContext : public ContextBase {
         int64_t time = 0;
         bool isNano = false;
+    #ifndef CROSSPLATFORM
+        std::string bundleName = GetCallerBundleName();
+    #endif
     };
-    auto *getTimeContext = new GetTimeContext();
+    auto *getTimeContext = new (std::nothrow) GetTimeContext();
+    if (getTimeContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetTimeContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, getTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
             napi_valuetype valueType = napi_undefined;
@@ -250,6 +308,10 @@ napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
     getTimeContext->GetCbInfo(env, info, inputParser, true);
     auto executor = [getTimeContext]() {
         int32_t innerCode = GetDeviceTime(CLOCK_REALTIME, getTimeContext->isNano, getTimeContext->time);
+    #ifndef CROSSPLATFORM
+        SendHiSysevent(getTimeContext->isNano, GETTIME_NANO, getTimeContext->time,
+            getTimeContext->bundleName);
+    #endif
         if (innerCode != JsErrorCode::ERROR_OK) {
             getTimeContext->errCode = innerCode;
             getTimeContext->status = napi_generic_failure;
@@ -269,7 +331,11 @@ napi_value NapiSystemDateTime::GetRealTime(napi_env env, napi_callback_info info
         int64_t time = 0;
         bool isNano = false;
     };
-    auto *getRealTimeContext = new GetRealTimeContext();
+    auto *getRealTimeContext = new (std::nothrow) GetRealTimeContext();
+    if (getRealTimeContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetRealTimeContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, getRealTimeContext](size_t argc, napi_value *argv) {
         if (argc >= ARGC_ONE) {
             napi_valuetype valueType = napi_undefined;
@@ -308,9 +374,16 @@ napi_value NapiSystemDateTime::GetUptime(napi_env env, napi_callback_info info)
     struct GetUpTimeContext : public ContextBase {
         int64_t time = 0;
         int32_t timeType = STARTUP;
-        bool isNanoseconds = false;
+        bool isNano = false;
+        #ifndef CROSSPLATFORM
+        std::string bundleName = GetCallerBundleName();
+        #endif
     };
-    auto *getUpTimeContext = new GetUpTimeContext();
+    auto *getUpTimeContext = new (std::nothrow) GetUpTimeContext();
+    if (getUpTimeContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetUpTimeContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, getUpTimeContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext, argc >= ARGC_ONE,
             "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
@@ -325,18 +398,20 @@ napi_value NapiSystemDateTime::GetUptime(napi_env env, napi_callback_info info)
             napi_typeof(env, argv[ARGV_SECOND], &valueType);
             if (valueType == napi_boolean) {
                 getUpTimeContext->status =
-                    napi_get_value_bool(env, argv[ARGV_SECOND], &getUpTimeContext->isNanoseconds);
+                    napi_get_value_bool(env, argv[ARGV_SECOND], &getUpTimeContext->isNano);
                 CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, getUpTimeContext, getUpTimeContext->status == napi_ok,
-                    "get isNanoseconds failed", JsErrorCode::PARAMETER_ERROR);
+                    "get isNano failed", JsErrorCode::PARAMETER_ERROR);
             }
         }
         getUpTimeContext->status = napi_ok;
     };
     getUpTimeContext->GetCbInfo(env, info, inputParser, true);
     auto executor = [getUpTimeContext]() {
-        int32_t innerCode;
-        innerCode = GetDeviceTime(getUpTimeContext->isNanoseconds, getUpTimeContext->timeType,
+        int32_t innerCode = GetDeviceTime(getUpTimeContext->isNano, getUpTimeContext->timeType,
             getUpTimeContext->time);
+        #ifndef CROSSPLATFORM
+        SendHiSysevent(getUpTimeContext->isNano, GETUPTIME_NANO, getUpTimeContext->time, getUpTimeContext->bundleName);
+        #endif
         if (innerCode != JsErrorCode::ERROR_OK) {
             getUpTimeContext->errCode = innerCode;
             getUpTimeContext->status = napi_generic_failure;
@@ -355,7 +430,11 @@ napi_value NapiSystemDateTime::GetDate(napi_env env, napi_callback_info info)
     struct GetDateContext : public ContextBase {
         int64_t time = 0;
     };
-    auto *getDateContext = new GetDateContext();
+    auto *getDateContext = new (std::nothrow) GetDateContext();
+    if (getDateContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetDateContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [getDateContext](size_t argc, napi_value *argv) { getDateContext->status = napi_ok; };
     getDateContext->GetCbInfo(env, info, inputParser);
     auto executor = [getDateContext]() {
@@ -379,7 +458,11 @@ napi_value NapiSystemDateTime::SetTimezone(napi_env env, napi_callback_info info
     struct SetTimezoneContext : public ContextBase {
         std::string timezone;
     };
-    auto *setTimezoneContext = new SetTimezoneContext();
+    auto *setTimezoneContext = new (std::nothrow) SetTimezoneContext();
+    if (setTimezoneContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new SetTimezoneContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, setTimezoneContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setTimezoneContext, argc >= ARGC_ONE,
             "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
@@ -405,7 +488,11 @@ napi_value NapiSystemDateTime::GetTimezone(napi_env env, napi_callback_info info
     struct GetTimezoneContext : public ContextBase {
         std::string timezone;
     };
-    auto *getTimezoneContext = new GetTimezoneContext();
+    auto *getTimezoneContext = new (std::nothrow) GetTimezoneContext();
+    if (getTimezoneContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetTimezoneContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [getTimezoneContext](size_t argc, napi_value *argv) {
         getTimezoneContext->status = napi_ok;
     };
@@ -433,7 +520,11 @@ napi_value NapiSystemDateTime::GetTimezoneSync(napi_env env, napi_callback_info 
     struct GetTimezoneContext : public ContextBase {
         std::string timezone;
     };
-    auto *getTimezoneContext = new GetTimezoneContext();
+    auto *getTimezoneContext = new (std::nothrow) GetTimezoneContext();
+    if (getTimezoneContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetTimezoneContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [getTimezoneContext](size_t argc, napi_value *argv) { getTimezoneContext->status = napi_ok; };
     getTimezoneContext->GetCbInfo(env, info, inputParser, true);
 
@@ -458,7 +549,11 @@ napi_value NapiSystemDateTime::GetAutoTimeStatus(napi_env env, napi_callback_inf
     struct GetAutoTimeContext : public ContextBase {
         bool autotime;
     };
-    auto *getAutoTimeContext = new GetAutoTimeContext();
+    auto *getAutoTimeContext = new (std::nothrow) GetAutoTimeContext();
+    if (getAutoTimeContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetAutoTimeContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, getAutoTimeContext](size_t argc, napi_value *argv) {
         getAutoTimeContext->status = napi_ok;
     };
@@ -484,7 +579,11 @@ napi_value NapiSystemDateTime::SetAutoTimeStatus(napi_env env, napi_callback_inf
     struct SetAutoTimeContext : public ContextBase {
         bool autotime;
     };
-    auto *setAutoTimeContext = new SetAutoTimeContext();
+    auto *setAutoTimeContext = new (std::nothrow) SetAutoTimeContext();
+    if (setAutoTimeContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new SetAutoTimeContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, setAutoTimeContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setAutoTimeContext, argc >= ARGC_ONE,
             "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
@@ -497,11 +596,10 @@ napi_value NapiSystemDateTime::SetAutoTimeStatus(napi_env env, napi_callback_inf
     auto executor = [setAutoTimeContext]() {
         auto innerCode = TimeServiceClient::GetInstance()->SetAutoTime(setAutoTimeContext->autotime);
         if (innerCode != JsErrorCode::ERROR_OK) {
-            if (innerCode != E_TIME_NOT_SYSTEM_APP && innerCode != E_TIME_NO_PERMISSION) {
-                setAutoTimeContext->errCode = E_TIME_NTP_UPDATE_FAILED;
-            } else {
-                setAutoTimeContext->errCode = innerCode;
-            }
+            bool isKnownError = (innerCode == E_TIME_NOT_SYSTEM_APP ||
+                                 innerCode == E_TIME_NO_PERMISSION ||
+                                 innerCode == E_TIME_AUTHORIZATION_FAILED);
+            setAutoTimeContext->errCode = isKnownError ? innerCode : E_TIME_NTP_UPDATE_FAILED;
             setAutoTimeContext->status = napi_generic_failure;
         }
     };
@@ -514,7 +612,11 @@ napi_value NapiSystemDateTime::UpdateNtpTime(napi_env env, napi_callback_info in
     struct UpdateNtpTime : public ContextBase {
         int64_t time = 0;
     };
-    auto *updateNtpTimeContext = new UpdateNtpTime();
+    auto *updateNtpTimeContext = new (std::nothrow) UpdateNtpTime();
+    if (updateNtpTimeContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new UpdateNtpTime failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, updateNtpTimeContext](size_t argc, napi_value *argv) {
         updateNtpTimeContext->status = napi_ok;
     };
@@ -538,7 +640,11 @@ napi_value NapiSystemDateTime::GetNtpTime(napi_env env, napi_callback_info info)
     struct GetNtpTimeContext : public ContextBase {
         int64_t time = 0;
     };
-    auto *getNtpTimeContext = new GetNtpTimeContext();
+    auto *getNtpTimeContext = new (std::nothrow) GetNtpTimeContext();
+    if (getNtpTimeContext == nullptr) {
+        TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetNtpTimeContext failed");
+        return NapiUtils::GetUndefinedValue(env);
+    }
     auto inputParser = [env, getNtpTimeContext](size_t argc, napi_value *argv) {
         getNtpTimeContext->status = napi_ok;
     };

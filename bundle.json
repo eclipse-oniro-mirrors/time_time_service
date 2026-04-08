@@ -20,7 +20,9 @@
       "time_service_hidumper_able",
       "time_service_rdb_enable",
       "time_service_set_auto_reboot",
-      "time_service_multi_account"
+      "time_service_multi_account",
+      "time_service_callback_autoboot_enable",
+      "time_service_running_lock_optimize"
     ],
     "hisysevent_config": [
       "//base/time/time_service/hisysevent.yaml"
@@ -73,7 +75,7 @@
           "//base/time/time_service/services/etc:time.para.dac"
         ]
       },
-      "inner_api": [
+      "inner_kits": [
         {
           "name": "//base/time/time_service/interfaces/inner_api:time_client",
           "header": {
@@ -103,7 +105,7 @@
         "//base/time/time_service/test/unittest/service_test:unittest",
         "//base/time/time_service/test/unittest/js_test:unittest",
         "//base/time/time_service/test/unittest/native_test:unittest",
-        "//base/time/time_service/test/fuzztest/setname_fuzzer:fuzztest"
+        "//base/time/time_service/test/fuzztest/time_fuzzer:fuzztest"
       ]
     }
   }
