@@ -1122,10 +1122,13 @@ void TimerManager::DeliverTimersLocked(const std::vector<std::shared_ptr<TimerIn
             }
         }
         if (timer->wantAgent) {
-            bool notifyResult = NotifyWantAgent(timer);
             #ifdef RUNNING_LOCK_OPTIMIZE
+            // Pre-fetch bundleName before NotifyWantAgent to avoid potential clearing
             std::string wantBundleName;
             WantAgentHelper::GetBundleName(timer->wantAgent, wantBundleName);
+            #endif
+            bool notifyResult = NotifyWantAgent(timer);
+            #ifdef RUNNING_LOCK_OPTIMIZE
             if (lockOptimizer_->IsAppRunning(wantBundleName) || !notifyResult) {
                 lockOptimizer_->RecalcLockForBundle(wantBundleName);
             }
