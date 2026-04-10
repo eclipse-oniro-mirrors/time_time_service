@@ -2187,7 +2187,7 @@ HWTEST_F(TimeServiceTimerTest, TimerManager016, TestSize.Level0)
  */
 HWTEST_F(TimeServiceTimerTest, TimerManager017, TestSize.Level0)
 {
-    auto DataBase = TimeDatabase::GetInstance();
+    auto &DataBase = TimeDatabase::GetInstance();
     DataBase.ClearDropOnReboot();
     DataBase.ClearInvaildDataInHoldOnReboot();
     auto storeptr = DataBase.store_;

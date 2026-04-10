@@ -1163,7 +1163,7 @@ bool TimeSystemAbility::RecoverTimer()
     RecoverTimerCjson(DROP_ON_REBOOT);
 
     #ifdef RDB_ENABLE
-    auto database = TimeDatabase::GetInstance();
+    auto &database = TimeDatabase::GetInstance();
     OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
     auto holdResultSet = database.Query(holdRdbPredicates, ALL_DATA);
     if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
@@ -1381,7 +1381,7 @@ void TimeSystemAbility::RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestor
 #ifdef SET_AUTO_REBOOT_ENABLE
 void TimeSystemAbility::SetAutoReboot()
 {
-    auto database = TimeDatabase::GetInstance();
+    auto &database = TimeDatabase::GetInstance();
     OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
     holdRdbPredicates.EqualTo("state", 1)->OrderByAsc("triggerTime");
     auto resultSet = database.Query(holdRdbPredicates, { "bundleName", "triggerTime", "name" });

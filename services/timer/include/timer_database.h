@@ -16,6 +16,7 @@
 #ifndef TIMER_DATABASE_H
 #define TIMER_DATABASE_H
 
+#include <mutex>
 #include "rdb_helper.h"
 #include "rdb_predicates.h"
 
@@ -39,6 +40,8 @@ public:
     void ClearInvaildDataInHoldOnReboot();
 
 private:
+    std::shared_ptr<OHOS::NativeRdb::RdbStore> GetStore();
+    std::mutex storeMutex_;
     bool RecoverDataBase();
     std::shared_ptr<OHOS::NativeRdb::RdbStore> store_;
 };

@@ -83,6 +83,7 @@ TimeDatabase &TimeDatabase::GetInstance()
 
 bool TimeDatabase::RecoverDataBase()
 {
+    std::lock_guard<std::mutex> lock(storeMutex_);
     OHOS::NativeRdb::RdbStoreConfig config(DB_NAME);
     config.SetSecurityLevel(NativeRdb::SecurityLevel::S1);
     config.SetEncryptStatus(false);
@@ -99,6 +100,12 @@ bool TimeDatabase::RecoverDataBase()
         return false;
     }
     return true;
+}
+
+std::shared_ptr<OHOS::NativeRdb::RdbStore> TimeDatabase::GetStore()
+{
+    std::lock_guard<std::mutex> lock(storeMutex_);
+    return store_;
 }
 
 int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
@@ -124,7 +131,7 @@ std::string GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int
 
 bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::ValuesBucket &insertValues)
 {
-    auto store = store_;
+    auto store = GetStore();
     if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return false;
@@ -140,7 +147,7 @@ bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::Value
         if (!RecoverDataBase()) {
             return false;
         }
-        store = store_;
+        store = GetStore();
         if (store == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
             return false;
@@ -156,7 +163,7 @@ bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::Value
 bool TimeDatabase::Update(
     const OHOS::NativeRdb::ValuesBucket values, const OHOS::NativeRdb::AbsRdbPredicates &predicates)
 {
-    auto store = store_;
+    auto store = GetStore();
     if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return false;
@@ -172,7 +179,7 @@ bool TimeDatabase::Update(
         if (!RecoverDataBase()) {
             return false;
         }
-        store = store_;
+        store = GetStore();
         if (store == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
             return false;
@@ -188,7 +195,7 @@ bool TimeDatabase::Update(
 std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
     const OHOS::NativeRdb::AbsRdbPredicates &predicates, const std::vector<std::string> &columns)
 {
-    auto store = store_;
+    auto store = GetStore();
     if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return nullptr;
@@ -209,7 +216,7 @@ std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
 
 bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
 {
-    auto store = store_;
+    auto store = GetStore();
     if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return false;
@@ -225,7 +232,7 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
         if (!RecoverDataBase()) {
             return false;
         }
-        store = store_;
+        store = GetStore();
         if (store == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
             return false;
@@ -241,7 +248,7 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
 void TimeDatabase::ClearDropOnReboot()
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Clears drop_on_reboot table");
-    auto store = store_;
+    auto store = GetStore();
     if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return;
@@ -255,7 +262,7 @@ void TimeDatabase::ClearDropOnReboot()
         if (!RecoverDataBase()) {
             return;
         }
-        store = store_;
+        store = GetStore();
         if (store == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
             return;
@@ -270,7 +277,7 @@ void TimeDatabase::ClearDropOnReboot()
 void TimeDatabase::ClearInvaildDataInHoldOnReboot()
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Clears hold_on_reboot table");
-    auto store = store_;
+    auto store = GetStore();
     if (store == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return;
@@ -284,7 +291,7 @@ void TimeDatabase::ClearInvaildDataInHoldOnReboot()
         if (!RecoverDataBase()) {
             return;
         }
-        store = store_;
+        store = GetStore();
         if (store == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
             return;
