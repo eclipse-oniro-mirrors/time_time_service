@@ -1697,8 +1697,8 @@ HWTEST_F(TimeServiceTimerTest, TimerManager004, TestSize.Level0)
     auto key2 = GetProxyKey(UID, PID);
     {
         std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
-        std::vector<uint64_t> timerList;
-        TimerProxy::GetInstance().proxyTimers_.insert(std::make_pair(key1, timerList));
+        std::unordered_set<uint64_t> timerSet;
+        TimerProxy::GetInstance().proxyTimers_.insert(std::make_pair(key1, timerSet));
     }
     auto res = TimerManager::GetInstance()->StartTimer(TIMER_ID, 0);
     EXPECT_EQ(res, E_TIME_OK);
@@ -1714,8 +1714,8 @@ HWTEST_F(TimeServiceTimerTest, TimerManager004, TestSize.Level0)
     {
         std::lock_guard<std::mutex> lock(TimerProxy::GetInstance().proxyMutex_);
         auto map = TimerProxy::GetInstance().proxyTimers_;
-        std::vector<uint64_t> timerList;
-        TimerProxy::GetInstance().proxyTimers_.insert(std::make_pair(key2, timerList));
+        std::unordered_set<uint64_t> timerSet;
+        TimerProxy::GetInstance().proxyTimers_.insert(std::make_pair(key2, timerSet));
     }
     res = TimerManager::GetInstance()->StartTimer(TIMER_ID, 0);
     EXPECT_EQ(res, E_TIME_OK);
