@@ -181,8 +181,7 @@ void TimerProxy::EraseTimerFromProxyTimerMap(const uint64_t id, const int uid, c
     uint64_t key = GetProxyKey(uid, pid);
     auto it = proxyTimers_.find(key);
     if (it != proxyTimers_.end()) {
-        it->second.erase(std::remove_if(it->second.begin(), it->second.end(),
-            [id](uint64_t timerId) { return timerId == id; }), it->second.end());
+        it->second.erase(id);
     }
 }
 
@@ -278,9 +277,9 @@ void TimerProxy::RecordProxyTimerMap(const std::shared_ptr<TimerInfo> &alarm, bo
     }
     auto it = proxyTimers_.find(key);
     if (it != proxyTimers_.end()) {
-        proxyTimers_[key].push_back(alarm->id);
+        proxyTimers_[key].insert(alarm->id);
     } else {
-        proxyTimers_.insert(std::make_pair(key, std::vector<uint64_t>{alarm->id}));
+        proxyTimers_.insert(std::make_pair(key, std::unordered_set<uint64_t>{alarm->id}));
     }
 }
 
@@ -336,11 +335,11 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
         return;
     }
     std::lock_guard<std::mutex> lockUidTimers(uidTimersMutex_);
-    std::vector<uint64_t> timerList;
+    std::unordered_set<uint64_t> timerSet;
     auto itUidTimersMap = uidTimersMap_.find(uid);
     if (itUidTimersMap == uidTimersMap_.end()) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d in map not found", uid);
-        proxyTimers_[key] = timerList;
+        proxyTimers_[key] = timerSet;
         return;
     }
 
@@ -358,10 +357,10 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
                 itTimerInfo->second->whenElapsed.time_since_epoch().count(),
                 now.time_since_epoch().count());
             insertAlarmCallback(itTimerInfo->second, true);
-            timerList.push_back(itTimerInfo->first);
+            timerSet.insert(itTimerInfo->first);
         }
     }
-    proxyTimers_[key] = timerList;
+    proxyTimers_[key] = timerSet;
 }
 
 bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,

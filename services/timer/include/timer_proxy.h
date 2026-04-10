@@ -78,8 +78,8 @@ private:
     /* <uid, <id, alarm ptr>> */
     std::unordered_map<int32_t, std::unordered_map<uint64_t, std::shared_ptr<TimerInfo>>> uidTimersMap_ {};
     std::mutex proxyMutex_;
-    /* <(uid << 32) | pid, [timerid]> */
-    std::unordered_map<uint64_t, std::vector<uint64_t>> proxyTimers_ {};
+    /* <(uid << 32) | pid, {timerid}> */
+    std::unordered_map<uint64_t, std::unordered_set<uint64_t>> proxyTimers_ {};
     std::mutex adjustMutex_;
     std::unordered_set<std::string> adjustExemptionList_ { "time_service" };
     std::unordered_set<uint64_t> adjustTimers_ {};
