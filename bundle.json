@@ -68,7 +68,7 @@
           "//base/time/time_service/interfaces/kits/c:time_service_ndk",
           "//base/time/time_service/framework/js/taihe/system_datetime:systemdatetime_taihe",
           "//base/time/time_service/framework/js/taihe/system_timer:systemtimer_taihe",
-          "//base/time/time_service/tools/ohos-query-time-cli:ohos-query-time"
+          "//base/time/time_service/tools/ohos-query-time-cli:ohos-queryTime"
         ],
         "service_group": [
           "//base/time/time_service/services/etc/init:timeservice.cfg",

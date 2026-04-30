@@ -13,12 +13,29 @@
  * limitations under the License.
  */
 
-#include <iostream>
-
 #include "commands.h"
 #include "utils.h"
 
+#include <cstring>
+#include <iostream>
+
+namespace OHOS {
+namespace QueryTime {
+
+// Global program name
+const char* G_PROGRAM_NAME = "";
+
+} // namespace QueryTime
+} // namespace OHOS
+
 using namespace OHOS::QueryTime;
+
+// Constants for argument count checks
+constexpr int ARG_COUNT_HELP_ONLY = 2;         // argc == 2: program + --help
+constexpr int ARG_COUNT_SUBCOMMAND_HELP = 3;   // argc == 3: program + cmd + --help
+constexpr int MIN_REQUIRED_ARGS = 2;           // argc < 2: missing command
+constexpr int CMD_NAME_SKIP_COUNT = 2;         // skip program name + command name
+constexpr int SUBCMD_ARGV_INDEX = 2;           // argv[2]: subcommand for <cli> <cmd> --help
 
 static void PrintUsage(const char* prog)
 {
@@ -26,28 +43,41 @@ static void PrintUsage(const char* prog)
     CLI_ERROR(std::string("Run '") + prog + " --help' for more information");
 }
 
-constexpr int MIN_ARGC = 2;
-constexpr int COMMAND_ARG_INDEX = 1;
-
 int main(int argc, char* argv[])
 {
-    if (argc < MIN_ARGC) {
+    G_PROGRAM_NAME = argv[0];
+
+    // Check for missing command
+    if (argc < MIN_REQUIRED_ARGS) {
         PrintUsage(argv[0]);
         return OutputError("E_NO_COMMAND", "No command specified",
             "Specify a command or use --help for usage");
     }
 
-    InitCommands();
+    // Initialize command table (only once)
+    // Commands are statically initialized, no runtime initialization needed
 
-    std::string cmdName = argv[COMMAND_ARG_INDEX];
-    auto it = g_commands.find(cmdName);
-    if (it == g_commands.end()) {
+    // Handle <cli-name> --help
+    if (argc == ARG_COUNT_HELP_ONLY && std::strcmp(argv[1], "--help") == 0) {
+        return CmdHelp(argc, argv);
+    }
+
+    std::string cmdName = argv[1];
+
+    // Handle <cli-name> <subcommand> --help
+    if (argc == ARG_COUNT_SUBCOMMAND_HELP && std::strcmp(argv[SUBCMD_ARGV_INDEX], "--help") == 0) {
+        return CmdHelp(argc, argv);
+    }
+
+    const auto& commands = GetCommands();
+    auto it = commands.find(cmdName);
+    if (it == commands.end()) {
         std::cout << "{\"success\":false,\"error\":{\"code\":\"E_UNKNOWN_COMMAND\", " <<
             "\"message\":\"Unknown command: " << cmdName << "\"}, " <<
             "\"suggestion\":\"Use --help to see available commands\"}" << std::endl;
         return 1;
     }
 
-    // Directly invoke command handler without parameters
-    return it->second.handler();
+    // Invoke command handler with remaining parameters
+    return it->second.handler(argc - CMD_NAME_SKIP_COUNT, argv + CMD_NAME_SKIP_COUNT);
 }

@@ -1,8 +1,8 @@
-# ohos-query-time 使用文档
+# ohos-queryTime 使用文档
 
 ## 简介
 
-`ohos-query-time` 是 OpenHarmony 系统的时间查询 CLI 工具，提供系统时间相关信息的查询功能。
+`ohos-queryTime` 是 OpenHarmony 系统的时间查询 CLI 工具，提供系统时间相关信息的查询功能。
 
 ## 功能特性
 
@@ -18,7 +18,7 @@
 获取 UTC 时间（Wall Time）。
 
 ```bash
-ohos-query-time get-wall-time
+ohos-queryTime get-wall-time
 ```
 
 **输出示例**:
@@ -35,7 +35,7 @@ ohos-query-time get-wall-time
 获取系统开机时间（包含休眠时间）。
 
 ```bash
-ohos-query-time get-boot-time
+ohos-queryTime get-boot-time
 ```
 
 **输出示例**:
@@ -52,7 +52,7 @@ ohos-query-time get-boot-time
 获取单调时间（不包含休眠时间）。
 
 ```bash
-ohos-query-time get-monotonic-time
+ohos-queryTime get-monotonic-time
 ```
 
 **输出示例**:
@@ -69,7 +69,7 @@ ohos-query-time get-monotonic-time
 获取当前时区 ID。
 
 ```bash
-ohos-query-time get-time-zone
+ohos-queryTime get-time-zone
 ```
 
 **输出示例**:
@@ -86,7 +86,7 @@ Asia/Shanghai
 显示帮助信息。
 
 ```bash
-ohos-query-time --help
+ohos-queryTime --help
 ```
 
 ---
@@ -96,12 +96,12 @@ ohos-query-time --help
 显示版本信息。
 
 ```bash
-ohos-query-time --version
+ohos-queryTime --version
 ```
 
 **输出示例**:
 ```
-ohos-query-time version 1.0.0
+ohos-queryTime version 1.0.0
 ```
 
 ## 使用示例
@@ -109,38 +109,38 @@ ohos-query-time version 1.0.0
 ### 示例 1: 获取当前 UTC 时间
 
 ```bash
-$ ohos-query-time get-wall-time
+$ ohos-queryTime get-wall-time
 1714305600000
 ```
 
 ### 示例 2: 获取系统开机时间
 
 ```bash
-$ ohos-query-time get-boot-time
+$ ohos-queryTime get-boot-time
 3600000
 ```
 
 ### 示例 3: 获取单调时间（用于计时）
 
 ```bash
-$ ohos-query-time get-monotonic-time
+$ ohos-queryTime get-monotonic-time
 3500000
 ```
 
 ### 示例 4: 获取当前时区
 
 ```bash
-$ ohos-query-time get-time-zone
+$ ohos-queryTime get-time-zone
 Asia/Shanghai
 ```
 
 ### 示例 5: 显示帮助信息
 
 ```bash
-$ ohos-query-time --help
-ohos-query-time - Query system time information
+$ ohos-queryTime --help
+ohos-queryTime - Query system time information
 
-Usage: ohos-query-time <command>
+Usage: ohos-queryTime <command>
 
 Commands:
   get-wall-time          Get wall time (UTC time in milliseconds)

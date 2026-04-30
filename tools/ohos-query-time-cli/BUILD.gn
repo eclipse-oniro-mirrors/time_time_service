@@ -12,8 +12,10 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("//build/ohos/cli/ohos_cli_executable.gni")
 
-ohos_executable("ohos-query-time") {
+ohos_cli_executable("ohos-queryTime") {
+  cli_config_file = "ohos-queryTime.json"
   sources = [
     "src/main.cpp",
     "src/commands.cpp",

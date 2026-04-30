@@ -1,8 +1,8 @@
-# ohos-query-time 测试文档
+# ohos-queryTime 测试文档
 
 ## 测试概述
 
-本文档描述 `ohos-query-time` CLI 工具的测试方法和测试用例。
+本文档描述 `ohos-queryTime` CLI 工具的测试方法和测试用例。
 
 ## 测试环境
 
@@ -16,17 +16,17 @@
 
 ```bash
 # 在 OpenHarmony 源码根目录执行
-hb build //base/time/time_service/tools/ohos-query-time-cli:ohos-query-time
+hb build //base/time/time_service/tools/ohos-queryTime-cli:ohos-queryTime
 ```
 
 ### 2. 安装到设备
 
 ```bash
 # 推送到设备
-hdc file send out/xxx/base/time/time_service/tools/ohos-query-time-cli/ohos-query-time /system/bin/cli_tool/executable
+hdc file send out/xxx/base/time/time_service/tools/ohos-queryTime-cli/ohos-queryTime /system/bin/cli_tool/executable
 
 # 设置权限
-hdc shell chmod 755 /system/bin/cli_tool/executable/ohos-query-time
+hdc shell chmod 755 /system/bin/cli_tool/executable/ohos-queryTime
 ```
 
 ## 测试用例
@@ -37,14 +37,14 @@ hdc shell chmod 755 /system/bin/cli_tool/executable/ohos-query-time
 
 **步骤**:
 ```bash
-ohos-query-time --help
+ohos-queryTime --help
 ```
 
 **预期输出**:
 ```
-ohos-query-time - Query system time information
+ohos-queryTime - Query system time information
 
-Usage: ohos-query-time <command>
+Usage: ohos-queryTime <command>
 
 Commands:
   get-wall-time          Get wall time (UTC time in milliseconds)
@@ -67,12 +67,12 @@ Options:
 
 **步骤**:
 ```bash
-ohos-query-time --version
+ohos-queryTime --version
 ```
 
 **预期输出**:
 ```
-ohos-query-time version 1.0.0
+ohos-queryTime version 1.0.0
 ```
 
 **结果**: [ ] 通过 [ ] 失败
@@ -85,7 +85,7 @@ ohos-query-time version 1.0.0
 
 **步骤**:
 ```bash
-ohos-query-time get-wall-time
+ohos-queryTime get-wall-time
 ```
 
 **预期结果**:
@@ -102,7 +102,7 @@ ohos-query-time get-wall-time
 
 **步骤**:
 ```bash
-ohos-query-time get-boot-time
+ohos-queryTime get-boot-time
 ```
 
 **预期结果**:
@@ -120,7 +120,7 @@ ohos-query-time get-boot-time
 
 **步骤**:
 ```bash
-ohos-query-time get-monotonic-time
+ohos-queryTime get-monotonic-time
 ```
 
 **预期结果**:
@@ -138,7 +138,7 @@ ohos-query-time get-monotonic-time
 
 **步骤**:
 ```bash
-ohos-query-time get-time-zone
+ohos-queryTime get-time-zone
 ```
 
 **预期结果**:
@@ -155,7 +155,7 @@ ohos-query-time get-time-zone
 
 **步骤**:
 ```bash
-ohos-query-time unknown-command
+ohos-queryTime unknown-command
 ```
 
 **预期输出**:
@@ -176,7 +176,7 @@ Use '--help' for usage information.
 
 **步骤**:
 ```bash
-ohos-query-time
+ohos-queryTime
 ```
 
 **预期输出**: 显示帮助信息（同 --help）
@@ -193,7 +193,7 @@ ohos-query-time
 
 **步骤**:
 ```bash
-time ohos-query-time get-wall-time
+time ohos-queryTime get-wall-time
 ```
 
 **预期结果**:
@@ -210,7 +210,7 @@ time ohos-query-time get-wall-time
 **步骤**:
 ```bash
 for i in {1..100}; do
-    ohos-query-time get-wall-time &
+    ohos-queryTime get-wall-time &
 done
 wait
 ```

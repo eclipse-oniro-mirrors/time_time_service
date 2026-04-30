@@ -1,4 +1,4 @@
-# ohos-query-time
+# ohos-queryTime
 
 OpenHarmony 时间查询 CLI 工具，用于查询系统时间信息。
 
@@ -12,7 +12,7 @@ OpenHarmony 时间查询 CLI 工具，用于查询系统时间信息。
 ## 用法
 
 ```bash
-ohos-query-time <command>
+ohos-queryTime <command>
 ```
 
 ## 命令
@@ -30,26 +30,26 @@ ohos-query-time <command>
 
 ```bash
 # 获取 UTC 时间
-ohos-query-time get-wall-time
+ohos-queryTime get-wall-time
 # 输出: 1714305600000
 
 # 获取开机时间
-ohos-query-time get-boot-time
+ohos-queryTime get-boot-time
 # 输出: 3600000
 
 # 获取单调时间
-ohos-query-time get-monotonic-time
+ohos-queryTime get-monotonic-time
 # 输出: 3500000
 
 # 获取时区
-ohos-query-time get-time-zone
+ohos-queryTime get-time-zone
 # 输出: Asia/Shanghai
 
 # 显示帮助
-ohos-query-time --help
+ohos-queryTime --help
 
 # 显示版本
-ohos-query-time --version
+ohos-queryTime --version
 ```
 
 ## 权限
@@ -60,14 +60,14 @@ ohos-query-time --version
 
 ```bash
 # 在 OpenHarmony 源码根目录执行
-hb build //base/time/time_service/tools/ohos-query-time-cli:ohos-query-time
+hb build //base/time/time_service/tools/ohos-queryTime-cli:ohos-queryTime
 ```
 
 ## 安装
 
-编译完成后，可执行文件位于：`out/xxx/base/time/time_service/tools/ohos-query-time-cli/ohos-query-time`
+编译完成后，可执行文件位于：`out/xxx/base/time/time_service/tools/ohos-queryTime-cli/ohos-queryTime`
 
 随镜像安装后可直接使用：
 ```bash
-ohos-query-time get-wall-time
+ohos-queryTime get-wall-time
 ```
