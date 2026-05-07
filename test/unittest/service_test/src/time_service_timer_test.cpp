@@ -2845,16 +2845,16 @@ HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked001, TestSize.Level0)
     auto timerInfo1 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration1, timePoint, duration1, timePoint,
         duration1, nullptr, nullptr, 0, false, 0, 0, "");
     timerManager->powerOnTriggerTimerList_.push_back(timerInfo1);
-    timerManager->ReschedulePowerOnTimerLocked();
+    timerManager->ReschedulePowerOnTimerLocked(false);
     EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime1);
 
-    auto triggerTime2 = currentTime + 2000;
+    auto triggerTime2 = currentTime + 2000 + TWO_MINUTES_TO_MILLI;
     auto duration2 = std::chrono::milliseconds(triggerTime2);
     auto timerId2 = TIMER_ID + 1;
     auto timerInfo2 = std::make_shared<TimerInfo>("", timerId2, 0, duration2, timePoint, duration2, timePoint,
         duration2, nullptr, nullptr, 0, false, 0, 0, "");
     timerManager->powerOnTriggerTimerList_.push_back(timerInfo2);
-    timerManager->ReschedulePowerOnTimerLocked();
+    timerManager->ReschedulePowerOnTimerLocked(false);
     EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime1);
 
     auto triggerTime3 = currentTime + 500;
@@ -2863,21 +2863,71 @@ HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked001, TestSize.Level0)
     auto timerInfo3 = std::make_shared<TimerInfo>("", timerId3, 0, duration3, timePoint, duration3, timePoint,
         duration3, nullptr, nullptr, 0, false, 0, 0, "");
     timerManager->powerOnTriggerTimerList_.push_back(timerInfo3);
-    timerManager->ReschedulePowerOnTimerLocked();
+    timerManager->ReschedulePowerOnTimerLocked(false);
     EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime3);
 
     timerManager->DeleteTimerFromPowerOnTimerListById(timerId3);
-    timerManager->ReschedulePowerOnTimerLocked();
+    timerManager->ReschedulePowerOnTimerLocked(false);
     EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime1);
 
     timerManager->DeleteTimerFromPowerOnTimerListById(TIMER_ID);
-    timerManager->ReschedulePowerOnTimerLocked();
+    timerManager->ReschedulePowerOnTimerLocked(false);
     EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime2);
 
     timerManager->powerOnTriggerTimerList_.clear();
-    timerManager->ReschedulePowerOnTimerLocked();
+    timerManager->ReschedulePowerOnTimerLocked(false);
     EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM] >= currentTime + TEN_YEARS_TO_SECOND * SECOND_TO_MILLISECOND,
         true);
+}
+
+/**
+ * @tc.name: ReschedulePowerOnTimerLocked002
+ * @tc.desc: Test ReschedulePowerOnTimerLocked function with multiple timer scenarios with isShutdown false
+ * @tc.precon: TimerManager instance is available and lastSetTime can be modified
+ * @tc.step: 1. Reset lastSetTime and add timer with 1000ms trigger
+ *           2. Add timer with 2000ms trigger and verify scheduling
+ *           3. Add timer with 500ms trigger (earliest) and verify rescheduling
+ *           4. Remove timers in sequence and verify lastSetTime updates
+ *           5. Clear all timers and verify default scheduling
+ * @tc.expect: ReschedulePowerOnTimerLocked always schedules the earliest trigger time
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
+HWTEST_F(TimeServiceTimerTest, ReschedulePowerOnTimerLocked002, TestSize.Level0)
+{
+    auto timerManager = TimerManager::GetInstance();
+    timerManager->lastSetTime_[POWER_ON_ALARM] = 0;
+    int64_t currentTime = 0;
+    TimeUtils::GetWallTimeMs(currentTime);
+    auto triggerTime1 = currentTime - 1000 + TWO_MINUTES_TO_MILLI;
+    auto duration1 = std::chrono::milliseconds(triggerTime1);
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo1 = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration1, timePoint, duration1, timePoint,
+        duration1, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo1);
+    timerManager->ShutDownReschedulePowerOnTimer();
+    EXPECT_GE(timerManager->lastSetTime_[POWER_ON_ALARM], currentTime + TWO_MINUTES_TO_MILLI);
+    timerManager->powerOnTriggerTimerList_.clear();
+
+    auto triggerTime2 = currentTime + 1000 + TWO_MINUTES_TO_MILLI;
+    auto duration2 = std::chrono::milliseconds(triggerTime2);
+    auto timerId2 = TIMER_ID + 1;
+    auto timerInfo2 = std::make_shared<TimerInfo>("", timerId2, 0, duration2, timePoint, duration2, timePoint,
+        duration2, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo2);
+    timerManager->ShutDownReschedulePowerOnTimer();
+    EXPECT_EQ(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime2);
+    timerManager->powerOnTriggerTimerList_.clear();
+
+    auto triggerTime3 = currentTime + TWO_MINUTES_TO_MILLI;
+    auto duration3 = std::chrono::milliseconds(triggerTime3);
+    auto timerId3 = timerId2 + 1;
+    auto timerInfo3 = std::make_shared<TimerInfo>("", timerId3, 0, duration3, timePoint, duration3, timePoint,
+        duration3, nullptr, nullptr, 0, false, 0, 0, "");
+    timerManager->powerOnTriggerTimerList_.push_back(timerInfo3);
+    timerManager->ShutDownReschedulePowerOnTimer();
+    EXPECT_GE(timerManager->lastSetTime_[POWER_ON_ALARM], triggerTime3);
 }
 #endif
 
