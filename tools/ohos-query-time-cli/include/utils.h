@@ -25,19 +25,18 @@ namespace QueryTime {
 
 using json = nlohmann::json;
 
-// Version information
-extern const char* VERSION;
+// Tool name
 extern const char* TOOL_NAME;
 
-// Log output to stderr
+// Log output to stdout (unified output channel)
 inline void CLI_LOG(const std::string& msg)
 {
-    std::cerr << msg << std::endl;
+    std::cout << msg << std::endl;
 }
 
 inline void CLI_ERROR(const std::string& msg)
 {
-    std::cerr << "[ERROR] " << msg << std::endl;
+    std::cout << "[ERROR] " << msg << std::endl;
 }
 
 // Success response - output JSON with type=result, status=success

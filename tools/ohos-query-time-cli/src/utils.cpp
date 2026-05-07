@@ -20,7 +20,6 @@
 namespace OHOS {
 namespace QueryTime {
 
-const char* VERSION = "1.0.0";
 const char* TOOL_NAME = "ohos-queryTime";
 
 // Success response - output JSON with type=result, status=success
