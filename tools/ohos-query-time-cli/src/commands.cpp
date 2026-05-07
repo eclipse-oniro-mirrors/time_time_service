@@ -17,6 +17,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <vector>
 
 #include "time_service_client.h"
 #include "utils.h"
@@ -26,8 +27,25 @@ using namespace OHOS::MiscServices;
 namespace OHOS {
 namespace QueryTime {
 
-// Command table definition
-std::unordered_map<std::string, Command> g_commands;
+// Forward declarations for command handlers
+int CmdGetWallTime(int argc, char** argv);
+int CmdGetBootTime(int argc, char** argv);
+int CmdGetMonotonicTime(int argc, char** argv);
+int CmdGetTimeZone(int argc, char** argv);
+int CmdHelp(int argc, char** argv);
+
+// Get static command table (lazy initialization)
+const std::unordered_map<std::string, Command>& GetCommands()
+{
+    static const std::unordered_map<std::string, Command> kCommands = {
+        {"get-wall-time", {"Get wall time (UTC time in milliseconds)", CmdGetWallTime}},
+        {"get-boot-time", {"Get boot time (including sleep time)", CmdGetBootTime}},
+        {"get-monotonic-time", {"Get monotonic time (excluding sleep time)", CmdGetMonotonicTime}},
+        {"get-time-zone", {"Get current time zone", CmdGetTimeZone}},
+        {"--help", {"Show help message", CmdHelp}},
+    };
+    return kCommands;
+}
 
 // Get TimeServiceClient instance
 static sptr<TimeServiceClient> GetTimeClient()
@@ -146,48 +164,89 @@ int CmdGetTimeZone(int argc, char** argv)
     return OutputSuccess(data);
 }
 
-// help command
-int CmdHelp(int argc, char** argv)
+// Parse target command from arguments
+static std::string ParseTargetCommand(int argc, char** argv)
 {
-    (void)argc;
-    (void)argv;
-
-    std::cerr << TOOL_NAME << " - Query system time information\n\n";
-    std::cerr << "Usage: " << TOOL_NAME << " <command>\n\n";
-    std::cerr << "Commands:\n";
-    for (const auto& pair : g_commands) {
-        if (std::strcmp(pair.first.c_str(), "--help") != 0 &&
-            std::strcmp(pair.first.c_str(), "--version") != 0) {
-            std::cerr << "  " << pair.first << " - " << pair.second.description << std::endl;
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] != '-') {
+            return argv[i];
         }
     }
-    std::cerr << "\nOptions:\n";
-    std::cerr << "  --help     Show help message\n";
-    std::cerr << "  --version  Show version information\n";
+    return "";
+}
+
+// Output help error response (text format)
+static void OutputHelpError(const std::string& targetCmd)
+{
+    std::cout << "ERROR: Unknown command: " << targetCmd << std::endl;
+    std::cout << "Suggestion: Use --help to see available commands" << std::endl;
+}
+
+// Print full help with all commands
+static void PrintFullHelp()
+{
+    const auto& commands = GetCommands();
+
+    std::cout << "Description: Query system time information" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Usage: " << G_PROGRAM_NAME << " <command> [options]" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Available commands:" << std::endl;
+
+    // Calculate max command name length for alignment
+    constexpr size_t descriptionPadding = 2;
+    size_t maxLen = 0;
+    for (const auto& pair : commands) {
+        if (pair.first != "--help" && pair.first.length() > maxLen) {
+            maxLen = pair.first.length();
+        }
+    }
+
+    for (const auto& pair : commands) {
+        if (pair.first == "--help") {
+            continue;
+        }
+        std::cout << "  " << pair.first;
+        // Pad to align descriptions
+        for (size_t i = pair.first.length(); i < maxLen + descriptionPadding; i++) {
+            std::cout << " ";
+        }
+        std::cout << pair.second.description << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "Run '" << G_PROGRAM_NAME << " <command> --help' for more information on a command." << std::endl;
+}
+
+// Print help for a single command
+static int PrintCommandHelp(const std::string& targetCmd)
+{
+    const auto& commands = GetCommands();
+    auto it = commands.find(targetCmd);
+    if (it == commands.end()) {
+        OutputHelpError(targetCmd);
+        return 1;
+    }
+
+    std::cout << "Description: " << it->second.description << std::endl;
+    std::cout << std::endl;
+    std::cout << "Usage: " << G_PROGRAM_NAME << " " << targetCmd << " [options]" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Examples:" << std::endl;
+    std::cout << "  " << G_PROGRAM_NAME << " " << targetCmd << std::endl;
+
     return 0;
 }
 
-// version command
-int CmdVersion(int argc, char** argv)
+// help command - Output in text format to stdout
+int CmdHelp(int argc, char** argv)
 {
-    (void)argc;
-    (void)argv;
-
-    json data;
-    data["version"] = VERSION;
-    data["tool"] = TOOL_NAME;
-    return OutputSuccess(data);
-}
-
-// Initialize command table
-void InitCommands()
-{
-    RegisterCmd("get-wall-time", "Get wall time (UTC time in milliseconds)", CmdGetWallTime);
-    RegisterCmd("get-boot-time", "Get boot time (including sleep time)", CmdGetBootTime);
-    RegisterCmd("get-monotonic-time", "Get monotonic time (excluding sleep time)", CmdGetMonotonicTime);
-    RegisterCmd("get-time-zone", "Get current time zone", CmdGetTimeZone);
-    RegisterCmd("--help", "Show help message", CmdHelp);
-    RegisterCmd("--version", "Show version information", CmdVersion);
+    std::string targetCmd = ParseTargetCommand(argc, argv);
+    if (targetCmd.empty()) {
+        PrintFullHelp();
+        return 0;
+    }
+    return PrintCommandHelp(targetCmd);
 }
 
 } // namespace QueryTime
