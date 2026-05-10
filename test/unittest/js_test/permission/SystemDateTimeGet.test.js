@@ -840,6 +840,115 @@ describe('SystemDateTimeGetTest', function () {
     })
 
     /**
+     * @tc.number: TestGetTime004
+     * @tc.name: TestGetTime004
+     * @tc.desc: 验证 getTime 毫秒精确性 — 纳秒返回值除以 1000000 与同一时刻的毫秒返回值一致（容许跨毫秒边界 1ms）
+     * @tc.precon: SystemDateTime service is available
+     * @tc.step: 1. 连续调用 getTime(true) 与 getTime(false)
+     *           2. 验证 ms - floor(ns / 1000000) ∈ [0, 1]
+     * @tc.expect: 毫秒精度精确，纳秒位不会污染毫秒位
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level1
+     * @tc.require: issue#844
+     */
+    it('testGetTime004', 0, function (done) {
+        console.log("testGetTime004 start");
+        const ns = systemDateTime.getTime(true);
+        const ms = systemDateTime.getTime(false);
+        const diff = ms - Math.floor(ns / 1000000);
+        console.log(`ns=${ns}, ms=${ms}, diff=${diff}`);
+        expect(diff >= 0 && diff <= 1).assertTrue();
+        console.log('testGetTime004 end');
+        done();
+    })
+
+    /**
+     * @tc.number: TestGetTime005
+     * @tc.name: TestGetTime005
+     * @tc.desc: 验证 getTime 同毫秒连续调用的严格递增性
+     * @tc.precon: SystemDateTime service is available
+     * @tc.step: 1. 紧密循环 1000 次 getTime(true)
+     *           2. 验证所有相邻返回值严格递增
+     * @tc.expect: 所有连续返回值严格递增（含同毫秒内）
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level1
+     * @tc.require: issue#844
+     */
+    it('testGetTime005', 0, function (done) {
+        console.log("testGetTime005 start");
+        const samples = [];
+        for (let i = 0; i < 1000; i++) {
+            samples.push(systemDateTime.getTime(true));
+        }
+        let strictlyMonotone = true;
+        for (let i = 1; i < samples.length; i++) {
+            if (samples[i] <= samples[i - 1]) {
+                console.log(`monotone broken at i=${i}: prev=${samples[i - 1]}, cur=${samples[i]}`);
+                strictlyMonotone = false;
+                break;
+            }
+        }
+        expect(strictlyMonotone).assertTrue();
+        console.log('testGetTime005 end');
+        done();
+    })
+
+    /**
+     * @tc.number: TestGetTime006
+     * @tc.name: TestGetTime006
+     * @tc.desc: 验证 getTime 纳秒部分随机化（避免固定模式或全 0）
+     * @tc.precon: SystemDateTime service is available
+     * @tc.step: 1. 跨毫秒调用 getTime(true) 多次（每次间隔 5ms 以确保毫秒切换）
+     *           2. 收集纳秒部分（mod 1000000），统计去重数量
+     * @tc.expect: 至少出现 3 个不同的纳秒部分值
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level1
+     * @tc.require: issue#844
+     */
+    it('testGetTime006', 0, async function (done) {
+        console.log("testGetTime006 start");
+        const fractions = new Set();
+        for (let i = 0; i < 10; i++) {
+            fractions.add(systemDateTime.getTime(true) % 1000000);
+            await new Promise(resolve => setTimeout(resolve, 5));
+        }
+        console.log(`unique fractions count: ${fractions.size}`);
+        expect(fractions.size >= 3).assertTrue();
+        console.log('testGetTime006 end');
+        done();
+    })
+
+    /**
+     * @tc.number: TestGetTime007
+     * @tc.name: TestGetTime007
+     * @tc.desc: 验证系统时间回退后 getTime 反映新值（毫秒位回退即接受，无需保持递增）
+     * @tc.precon: SystemDateTime service is available with date set permission
+     * @tc.step: 1. 调用 getTime(false) 记录 msBefore
+     *           2. 通过 setDate 将系统时间回退到 2022-2-1
+     *           3. 再次调用 getTime(false) 记录 msAfter
+     *           4. 验证 msAfter < msBefore（回退被反映）
+     * @tc.expect: 时间回退后 getTime 返回更小的毫秒值
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level1
+     * @tc.require: issue#844
+     */
+    it('testGetTime007', 0, async function (done) {
+        console.log("testGetTime007 start");
+        const msBefore = systemDateTime.getTime(false);
+        const pastDate = new Date(2022, 1, 1);
+        await systemDateTime.setDate(pastDate);
+        const msAfter = systemDateTime.getTime(false);
+        console.log(`msBefore=${msBefore}, msAfter=${msAfter}`);
+        expect(msAfter < msBefore).assertTrue();
+        console.log('testGetTime007 end');
+        done();
+    })
+
+    /**
      * @tc.number: TestGetUptime001
      * @tc.name: TestGetUptime001
      * @tc.desc: Test getUptime API returns system startup time in milliseconds with explicit isNano=false

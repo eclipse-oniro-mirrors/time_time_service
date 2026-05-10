@@ -16,7 +16,11 @@ import("//build/ohos.gni")
 import("../../../time.gni")
 
 ohos_shared_library("systemdatetime_ani") {
-  sources = [ "src/system_date_time_ani.cpp" ]
+  include_dirs = [ "../common/include" ]
+  sources = [
+    "../common/src/time_gettime_utils.cpp",
+    "src/system_date_time_ani.cpp",
+  ]
   deps = [ "${api_path}:time_client" ]
 
   external_deps = [

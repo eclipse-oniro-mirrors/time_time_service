@@ -20,6 +20,7 @@
 #include "napi_work.h"
 #include "napi_utils.h"
 #include "time_common.h"
+#include "time_gettime_utils.h"
 #include "time_service_client.h"
 #ifndef CROSSPLATFORM
 #include "application_context.h"
@@ -307,15 +308,17 @@ napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
     };
     getTimeContext->GetCbInfo(env, info, inputParser, true);
     auto executor = [getTimeContext]() {
-        int32_t innerCode = GetDeviceTime(CLOCK_REALTIME, getTimeContext->isNano, getTimeContext->time);
+        int64_t ns = GetMonotoneWallTimeNs();
+        if (ns < 0) {
+            getTimeContext->errCode = JsErrorCode::ERROR;
+            getTimeContext->status = napi_generic_failure;
+            return;
+        }
+        getTimeContext->time = getTimeContext->isNano ? ns : ns / NANO_TO_MILLI;
     #ifndef CROSSPLATFORM
         SendHiSysevent(getTimeContext->isNano, GETTIME_NANO, getTimeContext->time,
             getTimeContext->bundleName);
     #endif
-        if (innerCode != JsErrorCode::ERROR_OK) {
-            getTimeContext->errCode = innerCode;
-            getTimeContext->status = napi_generic_failure;
-        }
     };
     auto complete = [getTimeContext](napi_value &output) {
         getTimeContext->status = napi_create_int64(getTimeContext->env, getTimeContext->time, &output);

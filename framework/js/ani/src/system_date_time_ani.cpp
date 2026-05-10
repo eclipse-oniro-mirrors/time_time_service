@@ -17,6 +17,7 @@
 #include <array>
 #include <iostream>
 #include <ctime>
+#include "time_gettime_utils.h"
 #include "time_hilog.h"
 #include "time_service_client.h"
 
@@ -28,18 +29,17 @@ constexpr ani_long NANO_TO_MILLI = 1000000;
 
 static ani_long GetRealTime(ani_boolean isNano)
 {
-    struct timespec ts;
-
-    if (clock_gettime(CLOCK_REALTIME, &ts) < 0) {
+    int64_t ns = OHOS::MiscServices::Time::GetMonotoneWallTimeNs();
+    if (ns < 0) {
         TIME_HILOGE(TIME_MODULE_JS_ANI, "failed clock_gettime, errno: %{public}s", strerror(errno));
         return 0;
     }
 
     if (isNano) {
-        return ts.tv_sec * SECS_TO_NANO + ts.tv_nsec;
+        return ns;
     }
 
-    return ts.tv_sec * SECS_TO_MILLI + ts.tv_nsec / NANO_TO_MILLI;
+    return ns / NANO_TO_MILLI;
 }
 
 static ani_double GetTime([[maybe_unused]] ani_env *env, ani_object booleanObject)
