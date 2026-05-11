@@ -41,6 +41,7 @@ taihe_shared_library("systemdatetime_taihe_native") {
   sources = get_target_outputs(":run_taihe")
   include_dirs = [
     "../common/include",
+    "../../common/include",
     "../../../interfaces/inner_api/include",
     "${time_utils_path}/native/include",
   ]
@@ -48,6 +49,7 @@ taihe_shared_library("systemdatetime_taihe_native") {
     "src/ani_constructor.cpp",
     "src/ohos.time_service.systemDateTime.impl.cpp",
     "../common/src/ani_utils.cpp",
+    "../../common/src/time_gettime_utils.cpp",
   ]
   deps = [
     ":run_taihe",

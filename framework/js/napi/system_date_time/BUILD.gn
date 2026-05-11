@@ -16,6 +16,7 @@ import("../../../../time.gni")
 ohos_shared_library("systemdatetime") {
   include_dirs = [
     "../common/include",
+    "../../common/include",
     "../../../interfaces/inner_api/include",
     "../../../../services/dfx/include",
     "include",
@@ -37,6 +38,7 @@ ohos_shared_library("systemdatetime") {
   sources = [
     "../common/src/napi_utils.cpp",
     "../common/src/napi_work.cpp",
+    "../../common/src/time_gettime_utils.cpp",
     "../../../../services/dfx/src/time_sysevent.cpp",
     "src/date_time_init.cpp",
     "src/napi_system_date_time.cpp",
