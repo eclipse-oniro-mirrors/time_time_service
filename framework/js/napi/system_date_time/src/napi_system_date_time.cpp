@@ -20,7 +20,9 @@
 #include "napi_work.h"
 #include "napi_utils.h"
 #include "time_common.h"
+#ifdef TIME_GETTIME_RANDOM
 #include "time_gettime_utils.h"
+#endif
 #include "time_service_client.h"
 #ifndef CROSSPLATFORM
 #include "application_context.h"
@@ -280,15 +282,16 @@ napi_value NapiSystemDateTime::GetCurrentTime(napi_env env, napi_callback_info i
     return NapiWork::AsyncEnqueue(env, getCurrentTimeContext, "GetCurrentTime", executor, complete);
 }
 
+struct GetTimeContext : public ContextBase {
+    int64_t time = 0;
+    bool isNano = false;
+#ifndef CROSSPLATFORM
+    std::string bundleName = GetCallerBundleName();
+#endif
+};
+
 napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
 {
-    struct GetTimeContext : public ContextBase {
-        int64_t time = 0;
-        bool isNano = false;
-    #ifndef CROSSPLATFORM
-        std::string bundleName = GetCallerBundleName();
-    #endif
-    };
     auto *getTimeContext = new (std::nothrow) GetTimeContext();
     if (getTimeContext == nullptr) {
         TIME_HILOGE(TIME_MODULE_JS_NAPI, "new GetTimeContext failed");
@@ -308,6 +311,7 @@ napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
     };
     getTimeContext->GetCbInfo(env, info, inputParser, true);
     auto executor = [getTimeContext]() {
+#ifdef TIME_GETTIME_RANDOM
         int64_t ns = GetMonotoneWallTimeNs();
         if (ns < 0) {
             getTimeContext->errCode = JsErrorCode::ERROR;
@@ -315,10 +319,16 @@ napi_value NapiSystemDateTime::GetTime(napi_env env, napi_callback_info info)
             return;
         }
         getTimeContext->time = getTimeContext->isNano ? ns : ns / NANO_TO_MILLI;
-    #ifndef CROSSPLATFORM
-        SendHiSysevent(getTimeContext->isNano, GETTIME_NANO, getTimeContext->time,
-            getTimeContext->bundleName);
-    #endif
+#else
+        int32_t innerCode = GetDeviceTime(CLOCK_REALTIME, getTimeContext->isNano, getTimeContext->time);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            getTimeContext->errCode = innerCode;
+            getTimeContext->status = napi_generic_failure;
+        }
+#endif
+#ifndef CROSSPLATFORM
+        SendHiSysevent(getTimeContext->isNano, GETTIME_NANO, getTimeContext->time, getTimeContext->bundleName);
+#endif
     };
     auto complete = [getTimeContext](napi_value &output) {
         getTimeContext->status = napi_create_int64(getTimeContext->env, getTimeContext->time, &output);

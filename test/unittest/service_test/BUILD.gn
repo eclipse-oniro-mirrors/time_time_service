@@ -379,12 +379,40 @@ ohos_unittest("TimerLockOptimizerTest") {
   ]
 }
 
+ohos_unittest("TimeGettimeUtilsTest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "${time_root_path}/framework/js/common/include",
+  ]
+
+  sources = [
+    "src/time_gettime_utils_test.cpp",
+    "${time_root_path}/framework/js/common/src/time_gettime_utils.cpp",
+  ]
+
+  defines = [ "TIME_GETTIME_RANDOM" ]
+
+  deps = []
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  external_deps = [
+    "googletest:gtest_main",
+    "hilog:libhilog",
+  ]
+}
+
 group("unittest") {
   testonly = true
 
   deps = [
     ":TimeClientTest",
     ":TimeDfxTest",
+    ":TimeGettimeUtilsTest",
     ":TimePermissionTest",
     ":TimeProxyTest",
     ":TimeServiceTimeTest",

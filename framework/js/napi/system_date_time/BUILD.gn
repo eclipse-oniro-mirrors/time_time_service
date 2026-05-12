@@ -45,6 +45,12 @@ ohos_shared_library("systemdatetime") {
   ]
 
   deps = [ "${api_path}:time_client" ]
+  
+  defines = []
+
+  if (time_service_time_rand_enable) {
+    defines += [ "TIME_GETTIME_RANDOM" ]
+  }
 
   external_deps = [
     "ability_runtime:abilitykit_native",

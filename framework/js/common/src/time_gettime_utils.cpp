@@ -15,6 +15,8 @@
 
 #include "time_gettime_utils.h"
 
+#ifdef TIME_GETTIME_RANDOM
+
 #include <ctime>
 #include <mutex>
 #include <random>
@@ -27,7 +29,7 @@ namespace {
 constexpr int64_t SECONDS_TO_MILLI = 1000;
 constexpr int64_t NANO_PER_MILLI = 1000000;
 constexpr int64_t FIRST_RANDOM_MAX = 900000;
-constexpr int64_t INCREMENT_MIN = 100;
+constexpr int64_t INCREMENT_MIN = 300;
 constexpr int64_t INCREMENT_MAX = 500;
 constexpr int64_t NO_INCREMENT_THRESHOLD = 990000;
 
@@ -77,3 +79,5 @@ int64_t GetMonotoneWallTimeNs()
 } // namespace Time
 } // namespace MiscServices
 } // namespace OHOS
+
+#endif // TIME_GETTIME_RANDOM

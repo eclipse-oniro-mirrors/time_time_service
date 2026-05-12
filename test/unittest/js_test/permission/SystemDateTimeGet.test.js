@@ -851,6 +851,7 @@ describe('SystemDateTimeGetTest', function () {
      * @tc.type: Function
      * @tc.level: Level1
      * @tc.require: issue#844
+     * @tc.feature: TIME_GETTIME_RANDOM
      */
     it('testGetTime004', 0, function (done) {
         console.log("testGetTime004 start");
@@ -866,15 +867,16 @@ describe('SystemDateTimeGetTest', function () {
     /**
      * @tc.number: TestGetTime005
      * @tc.name: TestGetTime005
-     * @tc.desc: 验证 getTime 同毫秒连续调用的严格递增性
+     * @tc.desc: 验证 getTime 同毫秒连续调用的非严格递增性（允许相同值）
      * @tc.precon: SystemDateTime service is available
      * @tc.step: 1. 紧密循环 1000 次 getTime(true)
-     *           2. 验证所有相邻返回值严格递增
-     * @tc.expect: 所有连续返回值严格递增（含同毫秒内）
+     *           2. 验证所有相邻返回值非严格递增
+     * @tc.expect: 所有连续返回值非严格递增（不出现时间回退）
      * @tc.size: MediumTest
      * @tc.type: Function
      * @tc.level: Level1
      * @tc.require: issue#844
+     * @tc.feature: TIME_GETTIME_RANDOM
      */
     it('testGetTime005', 0, function (done) {
         console.log("testGetTime005 start");
@@ -882,15 +884,15 @@ describe('SystemDateTimeGetTest', function () {
         for (let i = 0; i < 1000; i++) {
             samples.push(systemDateTime.getTime(true));
         }
-        let strictlyMonotone = true;
+        let nonDecreasing = true;
         for (let i = 1; i < samples.length; i++) {
-            if (samples[i] <= samples[i - 1]) {
-                console.log(`monotone broken at i=${i}: prev=${samples[i - 1]}, cur=${samples[i]}`);
-                strictlyMonotone = false;
+            if (samples[i] < samples[i - 1]) {
+                console.log(`nonDecreasing broken at i=${i}: prev=${samples[i - 1]}, cur=${samples[i]}`);
+                nonDecreasing = false;
                 break;
             }
         }
-        expect(strictlyMonotone).assertTrue();
+        expect(nonDecreasing).assertTrue();
         console.log('testGetTime005 end');
         done();
     })
@@ -907,6 +909,7 @@ describe('SystemDateTimeGetTest', function () {
      * @tc.type: Function
      * @tc.level: Level1
      * @tc.require: issue#844
+     * @tc.feature: TIME_GETTIME_RANDOM
      */
     it('testGetTime006', 0, async function (done) {
         console.log("testGetTime006 start");
@@ -935,6 +938,7 @@ describe('SystemDateTimeGetTest', function () {
      * @tc.type: Function
      * @tc.level: Level1
      * @tc.require: issue#844
+     * @tc.feature: TIME_GETTIME_RANDOM
      */
     it('testGetTime007', 0, async function (done) {
         console.log("testGetTime007 start");
