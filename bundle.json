@@ -54,7 +54,9 @@
         "power_manager",
         "runtime_core",
         "json",
-        "resource_management"
+        "resource_management",
+        "ets_frontend",
+        "bundle_framework"
       ]
     },
     "build": {
