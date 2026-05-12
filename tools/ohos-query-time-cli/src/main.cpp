@@ -37,21 +37,13 @@ constexpr int MIN_REQUIRED_ARGS = 2;           // argc < 2: missing command
 constexpr int CMD_NAME_SKIP_COUNT = 2;         // skip program name + command name
 constexpr int SUBCMD_ARGV_INDEX = 2;           // argv[2]: subcommand for <cli> <cmd> --help
 
-static void PrintUsage(const char* prog)
-{
-    CLI_ERROR(std::string("Usage: ") + prog + " <command>");
-    CLI_ERROR(std::string("Run '") + prog + " --help' for more information");
-}
-
 int main(int argc, char* argv[])
 {
     G_PROGRAM_NAME = argv[0];
 
     // Check for missing command
     if (argc < MIN_REQUIRED_ARGS) {
-        PrintUsage(argv[0]);
-        return OutputError("E_NO_COMMAND", "No command specified",
-            "Specify a command or use --help for usage");
+        return CmdHelp(argc, argv);
     }
 
     // Initialize command table (only once)
@@ -72,10 +64,9 @@ int main(int argc, char* argv[])
     const auto& commands = GetCommands();
     auto it = commands.find(cmdName);
     if (it == commands.end()) {
-        std::cout << "{\"success\":false,\"error\":{\"code\":\"E_UNKNOWN_COMMAND\", " <<
-            "\"message\":\"Unknown command: " << cmdName << "\"}, " <<
-            "\"suggestion\":\"Use --help to see available commands\"}" << std::endl;
-        return 1;
+        return OutputError("ERR_UNKNOWN_COMMAND",
+            "Unknown command: " + cmdName,
+            "Use --help to see available commands");
     }
 
     // Invoke command handler with remaining parameters

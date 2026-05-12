@@ -21,9 +21,14 @@
 ohos-queryTime get-wall-time
 ```
 
-**输出示例**:
+**成功输出示例**:
+```json
+{"type":"result","status":"success","data":{"time":1714305600000,"unit":"ms"}}
 ```
-1714305600000
+
+**失败输出示例**:
+```json
+{"type":"result","status":"failed","errCode":"ERR_GET_WALL_TIME","errMsg":"Failed to get wall time","suggestion":"Check system time service status and permissions"}
 ```
 
 **说明**: 返回从 1970-01-01 00:00:00 UTC 开始的毫秒数。
@@ -38,9 +43,14 @@ ohos-queryTime get-wall-time
 ohos-queryTime get-boot-time
 ```
 
-**输出示例**:
+**成功输出示例**:
+```json
+{"type":"result","status":"success","data":{"time":3600000,"unit":"ms"}}
 ```
-3600000
+
+**失败输出示例**:
+```json
+{"type":"result","status":"failed","errCode":"ERR_GET_BOOT_TIME","errMsg":"Failed to get boot time","suggestion":"Check system time service status"}
 ```
 
 **说明**: 返回系统开机以来的毫秒数，包含系统休眠的时间。
@@ -55,9 +65,14 @@ ohos-queryTime get-boot-time
 ohos-queryTime get-monotonic-time
 ```
 
-**输出示例**:
+**成功输出示例**:
+```json
+{"type":"result","status":"success","data":{"time":3500000,"unit":"ms"}}
 ```
-3500000
+
+**失败输出示例**:
+```json
+{"type":"result","status":"failed","errCode":"ERR_GET_MONOTONIC_TIME","errMsg":"Failed to get monotonic time","suggestion":"Check system time service status"}
 ```
 
 **说明**: 返回系统开机以来的毫秒数，不包含系统休眠的时间。适用于需要精确计时的场景。
@@ -72,9 +87,14 @@ ohos-queryTime get-monotonic-time
 ohos-queryTime get-time-zone
 ```
 
-**输出示例**:
+**成功输出示例**:
+```json
+{"type":"result","status":"success","data":{"timezone":"Asia/Shanghai"}}
 ```
-Asia/Shanghai
+
+**失败输出示例**:
+```json
+{"type":"result","status":"failed","errCode":"ERR_GET_TIME_ZONE","errMsg":"Failed to get time zone","suggestion":"Check system time service status"}
 ```
 
 **说明**: 返回当前系统的时区 ID，如 "Asia/Shanghai"、"America/New_York" 等。
@@ -89,69 +109,41 @@ Asia/Shanghai
 ohos-queryTime --help
 ```
 
----
-
-### --version
-
-显示版本信息。
-
-```bash
-ohos-queryTime --version
-```
-
 **输出示例**:
 ```
-ohos-queryTime version 1.0.0
-```
-
-## 使用示例
-
-### 示例 1: 获取当前 UTC 时间
-
-```bash
-$ ohos-queryTime get-wall-time
-1714305600000
-```
-
-### 示例 2: 获取系统开机时间
-
-```bash
-$ ohos-queryTime get-boot-time
-3600000
-```
-
-### 示例 3: 获取单调时间（用于计时）
-
-```bash
-$ ohos-queryTime get-monotonic-time
-3500000
-```
-
-### 示例 4: 获取当前时区
-
-```bash
-$ ohos-queryTime get-time-zone
-Asia/Shanghai
-```
-
-### 示例 5: 显示帮助信息
-
-```bash
-$ ohos-queryTime --help
 ohos-queryTime - Query system time information
 
-Usage: ohos-queryTime <command>
+Usage:
+  ohos-queryTime <command> [options]
 
-Commands:
-  get-wall-time          Get wall time (UTC time in milliseconds)
-  get-boot-time          Get boot time (including sleep time)
-  get-monotonic-time     Get monotonic time (excluding sleep time)
-  get-time-zone          Get current time zone
+Parameters:
+  --help             Display this help message
 
-Options:
-  --help                 Show this help message
-  --version              Show version information
+SubCommands:
+  get-wall-time      Get wall time (UTC time in milliseconds)
+  get-boot-time      Get boot time (including sleep time)
+  get-monotonic-time Get monotonic time (excluding sleep time)
+  get-time-zone      Get current time zone
+
+Examples:
+  ohos-queryTime --help
+  ohos-queryTime get-wall-time
+  ohos-queryTime get-wall-time --help
 ```
+
+---
+
+## 通用错误码
+
+| 错误码 | 说明 | 常见原因 |
+|--------|------|----------|
+| `E_NO_COMMAND` | 未指定命令 | 调用时缺少子命令参数 |
+| `E_UNKNOWN_COMMAND` | 未知命令 | 使用了不存在的子命令 |
+| `ERR_CLIENT_INIT` | 客户端初始化失败 | time_service 系统能力未启动 |
+| `ERR_GET_WALL_TIME` | 获取 UTC 时间失败 | 系统时间服务异常 |
+| `ERR_GET_BOOT_TIME` | 获取开机时间失败 | 系统时间服务异常 |
+| `ERR_GET_MONOTONIC_TIME` | 获取单调时间失败 | 系统时间服务异常 |
+| `ERR_GET_TIME_ZONE` | 获取时区失败 | 系统时间服务异常 |
 
 ## 注意事项
 
@@ -165,39 +157,35 @@ Options:
 
 5. **开机时间**: 开机时间（boot time）包含系统休眠的时间，反映实际的物理时间流逝。
 
+6. **JSON 输出格式**: 所有命令返回统一的 JSON 格式，包含 `type`、`status`、`data`（成功时）或 `errCode`、`errMsg`、`suggestion`（失败时）字段。
+
 ## 故障排除
 
 ### 问题 1: 命令返回错误码
 
 **现象**:
-```
-Error: Failed to get wall time, ret=-1
+```json
+{"type":"result","status":"failed","errCode":"ERR_GET_WALL_TIME","errMsg":"Failed to get wall time","suggestion":"Check system time service status and permissions"}
 ```
 
 **解决方法**:
 - 确保系统服务正常运行
 - 检查系统日志获取详细信息
+- 确认 time_service 系统能力已启动
 
 ### 问题 2: 无法连接到 TimeService
 
 **现象**:
-```
-Error: Failed to get TimeServiceClient instance
+```json
+{"type":"result","status":"failed","errCode":"ERR_CLIENT_INIT","errMsg":"Failed to initialize TimeServiceClient","suggestion":"Check if time_service system ability is running"}
 ```
 
 **解决方法**:
 - 确保 `time_service` 系统能力已启动
 - 检查系统服务状态
+- 重启 time_service 服务
 
 ## 相关资源
 
 - [OpenHarmony 时间服务文档](https://gitee.com/openharmony/docs)
 - [IANA 时区数据库](https://www.iana.org/time-zones)
-
-## 版本历史
-
-### v1.0.0 (2025-04-28)
-
-- 初始版本
-- 支持 4 个查询命令：get-wall-time、get-boot-time、get-monotonic-time、get-time-zone
-- 支持 --help 和 --version 选项

@@ -175,23 +175,28 @@ static std::string ParseTargetCommand(int argc, char** argv)
     return "";
 }
 
-// Output help error response (text format)
-static void OutputHelpError(const std::string& targetCmd)
+// Output help error response (JSON format)
+static int OutputHelpError(const std::string& targetCmd)
 {
-    std::cout << "ERROR: Unknown command: " << targetCmd << std::endl;
-    std::cout << "Suggestion: Use --help to see available commands" << std::endl;
+    return OutputError("ERR_UNKNOWN_COMMAND",
+        "Unknown command: " + targetCmd,
+        "Use --help to see available commands");
 }
 
-// Print full help with all commands
+// Print full help with all commands (output to stderr)
 static void PrintFullHelp()
 {
     const auto& commands = GetCommands();
 
-    std::cout << "Description: Query system time information" << std::endl;
-    std::cout << std::endl;
-    std::cout << "Usage: " << G_PROGRAM_NAME << " <command> [options]" << std::endl;
-    std::cout << std::endl;
-    std::cout << "Available commands:" << std::endl;
+    CLI_LOG(std::string("ohos-queryTime - Query system time information"));
+    CLI_LOG("");
+    CLI_LOG("Usage:");
+    CLI_LOG(std::string("  ") + G_PROGRAM_NAME + " <command> [options]");
+    CLI_LOG("");
+    CLI_LOG("Parameters:");
+    CLI_LOG("  --help             Display this help message");
+    CLI_LOG("");
+    CLI_LOG("SubCommands:");
 
     // Calculate max command name length for alignment
     constexpr size_t descriptionPadding = 2;
@@ -206,19 +211,23 @@ static void PrintFullHelp()
         if (pair.first == "--help") {
             continue;
         }
-        std::cout << "  " << pair.first;
+        std::string line = "  " + pair.first;
         // Pad to align descriptions
         for (size_t i = pair.first.length(); i < maxLen + descriptionPadding; i++) {
-            std::cout << " ";
+            line += " ";
         }
-        std::cout << pair.second.description << std::endl;
+        line += pair.second.description;
+        CLI_LOG(line);
     }
 
-    std::cout << std::endl;
-    std::cout << "Run '" << G_PROGRAM_NAME << " <command> --help' for more information on a command." << std::endl;
+    CLI_LOG("");
+    CLI_LOG("Examples:");
+    CLI_LOG(std::string("  ") + G_PROGRAM_NAME + " --help");
+    CLI_LOG(std::string("  ") + G_PROGRAM_NAME + " get-wall-time");
+    CLI_LOG(std::string("  ") + G_PROGRAM_NAME + " get-wall-time --help");
 }
 
-// Print help for a single command
+// Print help for a single command (output to stderr)
 static int PrintCommandHelp(const std::string& targetCmd)
 {
     const auto& commands = GetCommands();
@@ -228,12 +237,16 @@ static int PrintCommandHelp(const std::string& targetCmd)
         return 1;
     }
 
-    std::cout << "Description: " << it->second.description << std::endl;
-    std::cout << std::endl;
-    std::cout << "Usage: " << G_PROGRAM_NAME << " " << targetCmd << " [options]" << std::endl;
-    std::cout << std::endl;
-    std::cout << "Examples:" << std::endl;
-    std::cout << "  " << G_PROGRAM_NAME << " " << targetCmd << std::endl;
+    CLI_LOG(std::string("ohos-queryTime ") + targetCmd + " - " + it->second.description);
+    CLI_LOG("");
+    CLI_LOG("Usage:");
+    CLI_LOG(std::string("  ") + G_PROGRAM_NAME + " " + targetCmd + " [options]");
+    CLI_LOG("");
+    CLI_LOG("Parameters:");
+    CLI_LOG("  --help             Display this help message");
+    CLI_LOG("");
+    CLI_LOG("Examples:");
+    CLI_LOG(std::string("  ") + G_PROGRAM_NAME + " " + targetCmd);
 
     return 0;
 }
