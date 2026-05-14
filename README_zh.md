@@ -12,13 +12,13 @@
 
 ```
 /base/time/time_service
-├── etc                      # 组件包含的进程的配置文件
 ├── figures                  # 构架图
-├── framework/js/napi        # js接口解析成napi接口
+├── framework/js             # js接口实现（napi/ani/taihe）
 ├── interfaces/inner_api     # 组件对外提供的接口代码
 ├── services                 # 时间服务实现
 │   └── sa_profile           # 组件包含的系统服务的配置文件和进程的配置文件
 ├── test                     # 接口的单元测试
+├── tools                    # 组件命令行工具
 └── utils                    # 组件包含日志打印和有序公共事件定义的常量
 ```
 

@@ -12,13 +12,13 @@ The timing and time module provides APIs for managing the system time.
 
 ```
 /base/time/time_service
-├── etc                      # Process configuration files
 ├── figures                  # Architecture diagram
-├── framework/js/napi        # the js interface resolves to the napi interface
+├── framework/js             # js interface implementation (napi/ani/taihe)
 ├── interfaces/inner_api     # external interface code provided by the component
 ├── services                 # time service realization
 │   └── sa_profile           # module contains the config files of system services and processes
 ├── test                     # unit test of interface
+├── tools                    # CLI tools
 └── utils                    # module contains log printing and constants for ordered commonEvent
 ```
 
