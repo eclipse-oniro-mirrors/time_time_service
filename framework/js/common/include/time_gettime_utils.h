@@ -22,8 +22,10 @@ namespace OHOS {
 namespace MiscServices {
 namespace Time {
 
+#ifdef TIME_GETTIME_RANDOM
 // 获取单调递增的 CLOCK_REALTIME 纳秒时间戳。
 int64_t GetMonotoneWallTimeNs();
+#endif
 
 } // namespace Time
 } // namespace MiscServices

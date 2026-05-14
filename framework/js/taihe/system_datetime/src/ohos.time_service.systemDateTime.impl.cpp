@@ -19,7 +19,9 @@
 #include "stdexcept"
 #include "time_service_client.h"
 #include "ani_utils.h"
+#ifdef TIME_GETTIME_RANDOM
 #include "time_gettime_utils.h"
+#endif
 #include "parameters.h"
 
 using namespace taihe;
@@ -87,12 +89,22 @@ int64_t GetUptime(TimeType timeType, optional_view<bool> isNanoseconds)
 int64_t GetTime(optional_view<bool> isNanoseconds)
 {
     bool isNanosecondsValue = isNanoseconds.value_or(false);
+#ifdef TIME_GETTIME_RANDOM
     int64_t ns = GetMonotoneWallTimeNs();
     if (ns < 0) {
         set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
         return 0;
     }
     return isNanosecondsValue ? ns : ns / NANO_TO_MILLI;
+#else
+    int64_t time = 0;
+    int32_t innerCode = GetDeviceTime(CLOCK_REALTIME, isNanosecondsValue, time);
+    if (innerCode != JsErrorCode::ERROR_OK) {
+        set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
+        return 0;
+    }
+    return time;
+#endif
 }
 
 void SetTimeSync(int64_t time)
