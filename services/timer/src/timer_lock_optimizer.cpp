@@ -209,7 +209,7 @@ void TimerLockOptimizer::RecalcLockForBundle(const std::string &bundleName)
     }
     int64_t currentBootTime = TimeUtils::GetBootTimeNs().time_since_epoch().count();
     int64_t newMaxExpireTime = 0;
-    bool lastRemovedBundleEmpty = false;
+    bool hasNonEmptyBundleName = false;
     {
         std::lock_guard<std::mutex> lock(lockInfosMutex_);
         // If lockInfos_ is empty, no need to recalculate
@@ -219,24 +219,29 @@ void TimerLockOptimizer::RecalcLockForBundle(const std::string &bundleName)
 
         // Remove entries for the specified bundle and expired entries
         auto it = std::remove_if(lockInfos_.begin(), lockInfos_.end(),
-            [&bundleName, currentBootTime](const TimerLockInfo &info) {
-                return info.wantBundleName == bundleName || info.lockExpireTime < currentBootTime;
+            [&bundleName, currentBootTime, &hasNonEmptyBundleName](const TimerLockInfo &info) {
+                if (info.wantBundleName == bundleName || info.lockExpireTime < currentBootTime) {
+                    if (!info.wantBundleName.empty()) {
+                        hasNonEmptyBundleName = true;
+                    }
+                    return true;
+                }
+                return false;
             });
         // If nothing was removed, no need to recalculate
         if (it == lockInfos_.end()) {
             return;
         }
-        // Check if the last removed entry has empty bundleName
-        lastRemovedBundleEmpty = std::prev(lockInfos_.end())->wantBundleName.empty();
         lockInfos_.erase(it, lockInfos_.end());
 
         if (!lockInfos_.empty()) {
             newMaxExpireTime = lockInfos_.front().lockExpireTime;
         }
-    }
-    // If lockInfos_ becomes empty and last removed entry has empty bundleName, skip adding lock
-    if (newMaxExpireTime == 0 && !lastRemovedBundleEmpty) {
-        newMaxExpireTime = currentBootTime + TimerManager::GetDefaultRunningLockDuration();
+        if (hasNonEmptyBundleName) {
+            // If start ability type lock info was removed, add extra 1s lock duration
+            int64_t additionalExpireTime = currentBootTime + TimerManager::GetDefaultRunningLockDuration();
+            newMaxExpireTime = std::max(newMaxExpireTime, additionalExpireTime);
+        }
     }
     AcquireRunningLockInternal(newMaxExpireTime, currentBootTime);
 }
@@ -255,6 +260,7 @@ void TimerLockOptimizer::AcquireRunningLockInternal(int64_t expireTime, int64_t 
         TIME_HILOGD(TIME_MODULE_SERVICE,
                     "AcquireRunningLockInternal: expireTime=%{public}" PRId64 " <= lockExpiredTime=%{public}" PRId64,
                     expireTime, manager_->lockExpiredTime_.load());
+        manager_->AddRunningLock(manager_->lockExpiredTime_.load() - bootTime);
         return;
     }
     timerLockExpireTime_.store(expireTime);
