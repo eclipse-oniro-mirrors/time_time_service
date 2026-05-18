@@ -47,6 +47,7 @@ ohos_cli_executable("ohos-queryTime") {
     "c_utils:utils",
     "ipc:ipc_single",
     "samgr:samgr_proxy",
+    "ability_base:configuration",
   ]
 
   install_enable = true

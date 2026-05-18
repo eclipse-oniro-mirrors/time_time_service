@@ -69,6 +69,7 @@ ohos_source_set("timeservice_proxy") {
     "json:nlohmann_json_static",
     "resource_management:global_resmgr",
     "samgr:samgr_proxy",
+    "bundle_framework:appexecfwk_core",
   ]
   branch_protector_ret = "pac_ret"
   subsystem_name = "time"
@@ -128,6 +129,7 @@ ohos_shared_library("time_system_ability") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "os_account:authorization_innerkits",
+    "bundle_framework:appexecfwk_core",
   ]
   defines = []
   if (time_service_debug_able) {
@@ -243,6 +245,7 @@ ohos_static_library("time_system_ability_static") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "os_account:authorization_innerkits",
+    "bundle_framework:appexecfwk_core",
   ]
   defines = []
   if (time_service_debug_able) {
