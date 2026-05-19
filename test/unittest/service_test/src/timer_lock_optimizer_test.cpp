@@ -475,9 +475,12 @@ HWTEST_F(TimerLockOptimizerTest, RecalcLockForBundle_006, TestSize.Level1)
 
     usleep(100000); // Sleep 0.1s
 
-    // Remove 10s lock by bundle match, 1s lock remains
+    // Remove 10s lock by bundle match (start ability type), 1s lock remains
+    // Since removed entry has non-empty bundleName, extra 1s lock duration is added
     lockOptimizer_->RecalcLockForBundle("com.test.app1");
-    EXPECT_EQ(lockOptimizer_->timerLockExpireTime_.load(), smallLockExpireTime);
+    int64_t currentBootTime = TimeUtils::GetBootTimeNs().time_since_epoch().count();
+    EXPECT_GT(lockOptimizer_->timerLockExpireTime_.load(), smallLockExpireTime);
+    EXPECT_LE(lockOptimizer_->timerLockExpireTime_.load(), currentBootTime + defaultDuration);
 }
 
 /**
@@ -512,8 +515,8 @@ HWTEST_F(TimerLockOptimizerTest, RecalcLockForBundle_007, TestSize.Level1)
 
     sleep(2); // Sleep 2s, 1s lock expired
 
-    // Remove 10s lock by bundle match, 1s lock also expired -> lockInfos_ empty
-    // lastRemovedBundleEmpty = false, add new 1s lock
+    // Remove 10s lock by bundle match (start ability type), 1s lock also expired -> lockInfos_ empty
+    // Since removed entry has non-empty bundleName, extra 1s lock duration is added
     lockOptimizer_->RecalcLockForBundle("com.test.app1");
     EXPECT_EQ(lockOptimizer_->lockInfos_.size(), 0u);
 
