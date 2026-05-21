@@ -527,6 +527,32 @@ HWTEST_F(TimerLockOptimizerTest, RecalcLockForBundle_007, TestSize.Level1)
     EXPECT_LE(lockOptimizer_->timerLockExpireTime_.load(), currentBootTime + defaultDuration); // <= 1s
 }
 
+/**
+ * @tc.name: RecalcLockForBundle_008
+ * @tc.desc: Test RecalcLockForBundle when lockTime < 0
+ * @tc.type: FUNC
+ * @tc.level: Level1
+ */
+HWTEST_F(TimerLockOptimizerTest, RecalcLockForBundle_008, TestSize.Level1)
+{
+    int64_t bootTime = TimeUtils::GetBootTimeNs().time_since_epoch().count();
+    int64_t presetExpireTime = bootTime - TimerManager::GetDefaultRunningLockDuration(); // 1s
+
+    lockOptimizer_->lockInfos_.clear();
+    TimerLockOptimizer::TimerLockInfo info;
+    info.timerId = 1;
+    info.wantBundleName = "";
+    info.lockExpireTime = presetExpireTime;
+
+    lockOptimizer_->lockInfos_.push_back(info);
+    lockOptimizer_->timerLockExpireTime_.store(presetExpireTime);
+    timerManager_->lockExpiredTime_.store(0);
+
+    // Remove non-matching bundleName, nothing removed
+    lockOptimizer_->RecalcLockForBundle("com.test.app2");
+    EXPECT_EQ(lockOptimizer_->timerLockExpireTime_.load(), presetExpireTime);
+}
+
 // =============================================================================
 // QueryAllRunningApps Tests
 // =============================================================================
