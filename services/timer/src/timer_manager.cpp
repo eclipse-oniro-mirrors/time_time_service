@@ -1694,6 +1694,9 @@ void TimerManager::AddRunningLockRetry(long long holdLockTime)
 
 void TimerManager::AddRunningLock(long long holdLockTime)
 {
+    if (holdLockTime < 0) {
+        return;
+    }
     if (runningLock_ == nullptr) {
         std::lock_guard<std::mutex> lock(runningLockMutex_);
         if (runningLock_ == nullptr) {

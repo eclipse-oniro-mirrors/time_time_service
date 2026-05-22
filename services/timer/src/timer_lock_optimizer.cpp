@@ -256,15 +256,19 @@ void TimerLockOptimizer::AcquireRunningLockInternal(int64_t expireTime, int64_t 
         TIME_HILOGD(TIME_MODULE_SERVICE, "AcquireRunningLockInternal: manager_ is nullptr");
         return;
     }
+    int64_t lockTime = 0;
     if (expireTime <= manager_->lockExpiredTime_.load()) {
         TIME_HILOGD(TIME_MODULE_SERVICE,
                     "AcquireRunningLockInternal: expireTime=%{public}" PRId64 " <= lockExpiredTime=%{public}" PRId64,
                     expireTime, manager_->lockExpiredTime_.load());
-        manager_->AddRunningLock(manager_->lockExpiredTime_.load() - bootTime);
-        return;
+        lockTime = manager_->lockExpiredTime_.load() - bootTime;
+    } else {
+        timerLockExpireTime_.store(expireTime);
+        lockTime = expireTime - bootTime;
     }
-    timerLockExpireTime_.store(expireTime);
-    manager_->AddRunningLock(expireTime - bootTime);
+    if (lockTime > 0) {
+        manager_->AddRunningLock(lockTime);
+    }
 }
 
 bool TimerLockOptimizer::IsAbilityStartingOperation(WantAgentConstant::OperationType operType)
