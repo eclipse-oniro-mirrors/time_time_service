@@ -28,6 +28,8 @@ constexpr int UID_PROXY_OFFSET = 32;
 
 IMPLEMENT_SINGLE_INSTANCE(TimerProxy)
 
+static const std::string ANCO_EXEMPTION_TAG = "@anco_exemption";
+
 uint64_t GetProxyKey(int uid, int pid)
 {
     uint64_t key = (static_cast<uint64_t>(uid) << UID_PROXY_OFFSET) | static_cast<uint64_t>(pid);
@@ -145,12 +147,20 @@ bool TimerProxy::SetTimerExemption(const std::unordered_set<std::string> &nameAr
     return isChanged;
 }
 
+bool TimerProxy::IsAppInAncoBlackList(std::string appName)
+{
+    if (appName.find(ANCO_EXEMPTION_TAG) != std::string::npos) {
+        return true;
+    }
+    return false;
+}
+
 bool TimerProxy::IsTimerExemption(std::shared_ptr<TimerInfo> timer)
 {
     auto key = timer->bundleName + "|" + timer->name;
     TIME_HILOGD(TIME_MODULE_SERVICE, "key is:%{public}s", key.c_str());
     if ((adjustExemptionList_.find(timer->bundleName) != adjustExemptionList_.end()
-        || adjustExemptionList_.find(key) != adjustExemptionList_.end())
+        || adjustExemptionList_.find(key) != adjustExemptionList_.end() || IsAppInAncoBlackList(timer->name))
         && timer->windowLength == milliseconds::zero()) {
         return true;
     }

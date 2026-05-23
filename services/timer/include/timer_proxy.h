@@ -73,6 +73,7 @@ private:
         bool needRetrigger);
     void ResetAllProxyWhenElapsed(const std::chrono::steady_clock::time_point &now,
         std::function<void(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)> insertAlarmCallback);
+    bool IsAppInAncoBlackList(std::string appName);
 
     std::mutex uidTimersMutex_;
     /* <uid, <id, alarm ptr>> */
