@@ -18,6 +18,7 @@
 #include <vector>
 #include <algorithm>
 #include <atomic>
+#include <unistd.h>
 
 #include "time_gettime_utils.h"
 
@@ -92,10 +93,12 @@ HWTEST_F(TimeGettimeUtilsTest, GetMonotoneWallTimeNs003, TestSize.Level0)
 HWTEST_F(TimeGettimeUtilsTest, GetMonotoneWallTimeNs004, TestSize.Level0)
 {
     constexpr int kSamples = 200;
+    constexpr int kDelayUs = 50;
     std::vector<int64_t> samples;
     samples.reserve(kSamples);
     for (int i = 0; i < kSamples; i++) {
         samples.push_back(GetMonotoneWallTimeNs());
+        usleep(kDelayUs);
     }
 
     // 收集同毫秒内的递增增量
