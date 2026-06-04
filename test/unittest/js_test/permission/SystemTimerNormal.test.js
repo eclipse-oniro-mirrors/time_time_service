@@ -818,13 +818,15 @@ describe('SystemTimerNormalTest', function () {
         }
         let timerId = await systemTimer.createTimer(options)
         await systemTimer.startTimer(timerId, new Date().getTime() + 1000)
-        systemTimer.destroyTimer(timerId).then((data) => {
+        await new Promise(resolve => setTimeout(resolve, 100))
+        try {
+            let data = await systemTimer.destroyTimer(timerId)
             expect(typeof (data) === 'undefined').assertTrue();
             done();
-        }).catch((err) => {
+        } catch (err) {
             expect(false).assertTrue();
             done();
-        })
+        }
         console.log('testDestroyTimer001 end');
     });
 
