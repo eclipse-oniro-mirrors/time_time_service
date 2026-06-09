@@ -57,7 +57,8 @@
         "json",
         "resource_management",
         "ets_frontend",
-        "bundle_framework"
+        "bundle_framework",
+        "taihe_ffi_gen"
       ]
     },
     "build": {
