@@ -15,6 +15,7 @@
 #include "time_tick_notify.h"
 
 #include "time_system_ability.h"
+#include <cstdint>
 
 using namespace std::chrono;
 
@@ -84,7 +85,12 @@ std::pair<uint64_t, bool> TimeTickNotify::RefreshNextTriggerTime()
 void TimeTickNotify::Stop()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
-    TimeSystemAbility::GetInstance()->DestroyTimer(timerId_);
+    uint64_t timerId;
+    {
+        std::lock_guard<std::mutex> lock(timeridMutex_);
+        timerId = timerId_;
+    }
+    TimeSystemAbility::GetInstance()->DestroyTimer(timerId);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
 }
 
