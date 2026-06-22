@@ -32,6 +32,7 @@
 #include "parameters.h"
 #include "event_manager.h"
 #include "simple_timer_info.h"
+#include "timer_database_monitor.h"
 
 #ifdef MULTI_ACCOUNT_ENABLE
 #include "os_account.h"
@@ -218,6 +219,7 @@ void TimeSystemAbility::OnStart()
     #ifdef HIDUMPER_ENABLE
     InitDumpCmd();
     #endif
+    TimerDatabaseMonitor::GetInstance().Start();
     if (Init() != ERR_OK) {
         auto callback = [this]() {
             sleep(INIT_INTERVAL);
@@ -339,6 +341,7 @@ void TimeSystemAbility::OnStop()
         TIME_HILOGI(TIME_MODULE_SERVICE, "state is running");
         return;
     }
+    TimerDatabaseMonitor::GetInstance().Stop();
     TimeTickNotify::GetInstance().Stop();
     state_ = ServiceRunningState::STATE_NOT_START;
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnStop End");

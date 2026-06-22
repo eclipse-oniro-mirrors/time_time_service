@@ -16,6 +16,8 @@
 #include "timer_database.h"
 #include "time_common.h"
 
+#include <sys/stat.h>
+
 namespace OHOS {
 namespace MiscServices {
 constexpr const char *CREATE_TIME_TIMER_HOLD_ON_REBOOT = "CREATE TABLE IF NOT EXISTS hold_on_reboot "
@@ -53,6 +55,10 @@ constexpr const char *DROP_ON_REBOOT_ADD_NAME_COLUMN = "ALTER TABLE drop_on_rebo
 constexpr const char *DB_NAME = "/data/service/el1/public/database/time/time.db";
 constexpr int DATABASE_OPEN_VERSION_2 = 2;
 constexpr int DATABASE_OPEN_VERSION_3 = 3;
+constexpr int COLUMN_INDEX_BUNDLE_NAME = 0;
+constexpr int COLUMN_INDEX_TIMER_NAME = 1;
+constexpr int COLUMN_INDEX_COUNT = 2;
+
 TimeDatabase::TimeDatabase()
 {
     int errCode = OHOS::NativeRdb::E_OK;
@@ -205,7 +211,7 @@ std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
         TIME_HILOGE(TIME_MODULE_SERVICE, "result is nullptr");
         return nullptr;
     }
-    int count;
+    int32_t count = 0;
     if (result->GetRowCount(count) == OHOS::NativeRdb::E_SQLITE_CORRUPT) {
         RecoverDataBase();
         result->Close();
@@ -243,6 +249,27 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
         }
     }
     return true;
+}
+
+std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::QuerySql(const std::string &sql)
+{
+    auto store = GetStore();
+    if (store == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
+        return nullptr;
+    }
+    auto result = store->QuerySql(sql, std::vector<OHOS::NativeRdb::ValueObject>());
+    if (result == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "result is nullptr");
+        return nullptr;
+    }
+    int32_t count = 0;
+    if (result->GetRowCount(count) == OHOS::NativeRdb::E_SQLITE_CORRUPT) {
+        RecoverDataBase();
+        result->Close();
+        return nullptr;
+    }
+    return result;
 }
 
 void TimeDatabase::ClearDropOnReboot()
@@ -301,6 +328,71 @@ void TimeDatabase::ClearInvaildDataInHoldOnReboot()
             TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret:%{public}d", ret);
         }
     }
+}
+
+TimerDbSizeInfo TimeDatabase::GetDatabaseSizeDetail()
+{
+    TimerDbSizeInfo sizeInfo;
+    struct stat st;
+    if (stat(DB_NAME, &st) == 0) {
+        sizeInfo.dbSize = st.st_size;
+    }
+    if (stat((std::string(DB_NAME) + "-shm").c_str(), &st) == 0) {
+        sizeInfo.shmSize = st.st_size;
+    }
+    if (stat((std::string(DB_NAME) + "-wal").c_str(), &st) == 0) {
+        sizeInfo.walSize = st.st_size;
+    }
+    return sizeInfo;
+}
+
+int32_t TimeDatabase::GetTotalRecordCount()
+{
+    int32_t totalCount = 0;
+    auto result = QuerySql(
+        "SELECT SUM(cnt) FROM ("
+        "  SELECT COUNT(*) AS cnt FROM hold_on_reboot"
+        "  UNION ALL"
+        "  SELECT COUNT(*) AS cnt FROM drop_on_reboot"
+        ")");
+    if (result != nullptr && result->GoToFirstRow() == OHOS::NativeRdb::E_OK) {
+        int32_t ret = result->GetInt(0, totalCount);
+        if (ret != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "GetTotalRecordCount failed, ret:%{public}d", ret);
+            totalCount = 0;
+        }
+        result->Close();
+    }
+    return totalCount;
+}
+
+std::vector<TimerDbTopAppInfo> TimeDatabase::GetTopApps(int topN)
+{
+    std::vector<TimerDbTopAppInfo> result;
+    if (topN <= 0) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "GetTopApps invalid topN:%{public}d", topN);
+        return result;
+    }
+    std::string sql =
+        "SELECT bundleName, name, SUM(cnt) as total FROM ("
+        "  SELECT bundleName, name, COUNT(*) as cnt FROM hold_on_reboot GROUP BY bundleName, name"
+        "  UNION ALL"
+        "  SELECT bundleName, name, COUNT(*) as cnt FROM drop_on_reboot GROUP BY bundleName, name"
+        ") GROUP BY bundleName, name ORDER BY total DESC LIMIT " + std::to_string(topN);
+    auto queryResult = QuerySql(sql);
+    if (queryResult != nullptr) {
+        if (queryResult->GoToFirstRow() == OHOS::NativeRdb::E_OK) {
+            do {
+                TimerDbTopAppInfo info;
+                info.bundleName = GetString(queryResult, COLUMN_INDEX_BUNDLE_NAME);
+                info.timerName = GetString(queryResult, COLUMN_INDEX_TIMER_NAME);
+                info.count = GetInt(queryResult, COLUMN_INDEX_COUNT);
+                result.push_back(info);
+            } while (queryResult->GoToNextRow() == OHOS::NativeRdb::E_OK);
+        }
+        queryResult->Close();
+    }
+    return result;
 }
 
 int TimeDBCreateTables(OHOS::NativeRdb::RdbStore &store)

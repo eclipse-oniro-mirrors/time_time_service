@@ -17,6 +17,7 @@
 #define TIME_SYSEVENT_H
 
 #include "timer_info.h"
+#include "timer_db_info.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -45,6 +46,7 @@ enum ReportEventCode : int32_t {
     REALTIME_WAKEUP_NONEXACT_TIMER_TRIGGER,
     REALTIME_NONWAKEUP_NONEXACT_TIMER_TRIGGER,
     TIMER_WANTAGENT_FAULT_REPORT = TIMER_FAULT_OFFSET,
+    TIMER_DATABASE_OVER_BASELINE_REPORT,
     SET_TIME = MODIFY_TIME_OFFSET,
     NTP_REFRESH,
     SET_TIMEZONE,
@@ -65,6 +67,8 @@ void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime
 void TimerBehaviorReport(std::shared_ptr<TimerInfo> timer, bool isStart);
 void TimerCountStaticReporter(int count, int (&uidArr)[COUNT_REPORT_ARRAY_LENGTH],
     int (&createTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH], int (&startTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH]);
+void TimerDatabaseOverBaselineReporter(const TimerDbSizeInfo &sizeInfo, int32_t recordCount,
+    const std::string &topAppInfo);
 void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, int uid, const std::string &bundleOrProcessName,
     const std::string &extraInfo);
 } // namespace MiscServices

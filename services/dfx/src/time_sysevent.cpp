@@ -178,5 +178,18 @@ void TimeServiceFaultReporter(ReportEventCode eventCode, int errCode, int uid, c
             "callname:%{public}s", eventCode, errCode, bundleOrProcessName.c_str());
     }
 }
+
+void TimerDatabaseOverBaselineReporter(const TimerDbSizeInfo &sizeInfo, int32_t recordCount,
+    const std::string &topAppInfo)
+{
+    std::string extraInfo = "dbSize=" + std::to_string(sizeInfo.dbSize) +
+                            ",shmSize=" + std::to_string(sizeInfo.shmSize) +
+                            ",walSize=" + std::to_string(sizeInfo.walSize) +
+                            ",totalSize=" + std::to_string(sizeInfo.GetTotalSize()) +
+                            ",recordCount=" + std::to_string(recordCount) +
+                            ",topAppInfo=" + topAppInfo;
+    TimeServiceFaultReporter(TIMER_DATABASE_OVER_BASELINE_REPORT, 0, 0,
+        "timer_database_monitor", extraInfo);
+}
 } // namespace MiscServices
 } // namespace OHOS
