@@ -40,6 +40,8 @@ ohos_shared_library("systemdatetime_ani") {
     "ipc:ipc_single",
   ]
 
+  branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
   sanitize = {
     boundary_sanitize = true
     ubsan = true
