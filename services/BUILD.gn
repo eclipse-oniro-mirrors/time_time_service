@@ -72,6 +72,7 @@ ohos_source_set("timeservice_proxy") {
     "bundle_framework:appexecfwk_core",
   ]
   branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
   subsystem_name = "time"
   part_name = "time_service"
 }
@@ -180,6 +181,7 @@ ohos_shared_library("time_system_ability") {
   }
 
   branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
   sanitize = {
     ubsan = true
     boundary_sanitize = true
@@ -296,6 +298,7 @@ ohos_static_library("time_system_ability_static") {
   }
 
   branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
   sanitize = {
     ubsan = true
     boundary_sanitize = true
