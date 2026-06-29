@@ -136,6 +136,10 @@ std::tuple<int32_t, int64_t> SystemDateTimeImpl::getUpTime(int32_t timeType, boo
 
 int SystemDateTimeImpl::SetTimeZone(char* timezone)
 {
+    if (timezone == nullptr) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "input timezone string error");
+        return ERROR;
+    }
     auto innerCode = TimeServiceClient::GetInstance()->SetTimeZoneV9(timezone);
     if (innerCode != CjErrorCode::ERROR_OK) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "failed innerCode is %{public}d", innerCode);
