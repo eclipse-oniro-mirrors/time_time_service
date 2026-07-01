@@ -379,6 +379,54 @@ ohos_unittest("TimerLockOptimizerTest") {
   ]
 }
 
+ohos_unittest("TimerDatabaseMonitorTest") {
+  module_out_path = module_output_path
+
+  sources = [
+    "src/timer_database_monitor_test.cpp",
+    "${time_service_path}/timer/src/timer_database_monitor.cpp",
+  ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "${api_path}:time_client",
+    "${time_service_path}:time_system_ability_static",
+  ]
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  defines = []
+  external_deps = [
+    "ability_base:configuration",
+    "ability_base:want",
+    "ability_runtime:runtime",
+    "ability_runtime:wantagent_innerkits",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libtoken_setproc",
+    "cJSON:cjson",
+    "c_utils:utils",
+    "googletest:gtest_main",
+    "hilog:libhilog",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "power_manager:powermgr_client",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+  if (time_service_rdb_enable) {
+    defines += [ "RDB_ENABLE" ]
+    external_deps += [
+      "relational_store:native_dataability",
+      "relational_store:native_rdb",
+    ]
+  }
+}
+
 ohos_unittest("TimeGettimeUtilsTest") {
   module_out_path = module_output_path
 
@@ -418,6 +466,7 @@ group("unittest") {
     ":TimeServiceTimeTest",
     ":TimeServiceTimerTest",
     ":TimerAppStateObserverTest",
+    ":TimerDatabaseMonitorTest",
     ":TimerLockOptimizerTest",
   ]
 }

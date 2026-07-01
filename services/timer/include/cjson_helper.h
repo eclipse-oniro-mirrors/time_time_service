@@ -17,9 +17,13 @@
 #define TIMER_CJSON_HELPER_H
 
 #include <fstream>
+#include <vector>
+#include <string>
+#include <map>
 
 #include <cJSON.h>
 #include "timer_manager_interface.h"
+#include "timer_db_info.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -45,9 +49,15 @@ public:
     static CjsonHelper &GetInstance();
     bool LoadAndParseJsonFile(const std::string& tableName, cJSON* &db, cJSON* &table);
 
+    TimerDbSizeInfo GetDatabaseSizeDetail();
+    int32_t GetTotalRecordCount();
+    std::vector<TimerDbTopAppInfo> GetTopApps(int topN);
+
 private:
     CjsonHelper();
     void SaveJson(cJSON* data);
+    void CountTimersFromTable(const std::string &tableName,
+                              std::map<std::pair<std::string, std::string>, int32_t> &countMap);
     static std::mutex mutex_;
 };
 } // namespace MiscServices

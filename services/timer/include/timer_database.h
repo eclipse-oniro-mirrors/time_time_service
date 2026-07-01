@@ -17,6 +17,9 @@
 #define TIMER_DATABASE_H
 
 #include <mutex>
+#include <vector>
+#include <string>
+#include "timer_db_info.h"
 #include "rdb_helper.h"
 #include "rdb_predicates.h"
 
@@ -36,8 +39,13 @@ public:
     std::shared_ptr<OHOS::NativeRdb::ResultSet> Query(
         const OHOS::NativeRdb::AbsRdbPredicates &predicates, const std::vector<std::string> &columns);
     bool Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates);
+    std::shared_ptr<OHOS::NativeRdb::ResultSet> QuerySql(const std::string &sql);
     void ClearDropOnReboot();
     void ClearInvaildDataInHoldOnReboot();
+
+    TimerDbSizeInfo GetDatabaseSizeDetail();
+    int32_t GetTotalRecordCount();
+    std::vector<TimerDbTopAppInfo> GetTopApps(int topN);
 
 private:
     std::shared_ptr<OHOS::NativeRdb::RdbStore> GetStore();

@@ -14,6 +14,7 @@
  */
 
 #include <charconv>
+#include <sys/stat.h>
 
 #include "cjson_helper.h"
 #include "timer_manager_interface.h"
@@ -428,6 +429,89 @@ void CjsonHelper::SaveJson(cJSON* data)
         cJSON_free(jsonString);
     }
     outFile.close();
+}
+
+TimerDbSizeInfo CjsonHelper::GetDatabaseSizeDetail()
+{
+    TimerDbSizeInfo sizeInfo;
+    struct stat st;
+    if (stat(DB_PATH, &st) == 0) {
+        sizeInfo.dbSize = st.st_size;
+    }
+    return sizeInfo;
+}
+
+int32_t CjsonHelper::GetTotalRecordCount()
+{
+    int32_t totalCount = 0;
+    cJSON* db = nullptr;
+    cJSON* holdData = QueryTable(HOLD_ON_REBOOT, &db);
+    if (holdData != nullptr) {
+        totalCount += cJSON_GetArraySize(holdData);
+    }
+    cJSON_Delete(db);
+
+    db = nullptr;
+    cJSON* dropData = QueryTable(DROP_ON_REBOOT, &db);
+    if (dropData != nullptr) {
+        totalCount += cJSON_GetArraySize(dropData);
+    }
+    cJSON_Delete(db);
+    return totalCount;
+}
+
+void CjsonHelper::CountTimersFromTable(const std::string &tableName,
+    std::map<std::pair<std::string, std::string>, int32_t> &countMap)
+{
+    cJSON* db = nullptr;
+    cJSON* tableData = QueryTable(tableName, &db);
+    if (tableData == nullptr) {
+        cJSON_Delete(db);
+        return;
+    }
+    int32_t size = cJSON_GetArraySize(tableData);
+    for (int32_t i = 0; i < size; ++i) {
+        cJSON* obj = cJSON_GetArrayItem(tableData, i);
+        cJSON* bundleItem = cJSON_GetObjectItem(obj, "bundleName");
+        cJSON* nameItem = cJSON_GetObjectItem(obj, "name");
+        if (bundleItem == nullptr || nameItem == nullptr) {
+            continue;
+        }
+        std::string bundleName = cJSON_IsString(bundleItem) ?
+            (bundleItem->valuestring ? bundleItem->valuestring : "") : "";
+        std::string timerName = cJSON_IsString(nameItem) ?
+            (nameItem->valuestring ? nameItem->valuestring : "") : "";
+        countMap[{bundleName, timerName}]++;
+    }
+    cJSON_Delete(db);
+}
+
+std::vector<TimerDbTopAppInfo> CjsonHelper::GetTopApps(int topN)
+{
+    std::vector<TimerDbTopAppInfo> result;
+    if (topN <= 0) {
+        TIME_HILOGW(TIME_MODULE_SERVICE, "GetTopApps invalid topN:%{public}d", topN);
+        return result;
+    }
+    std::map<std::pair<std::string, std::string>, int32_t> countMap;
+
+    CountTimersFromTable(HOLD_ON_REBOOT, countMap);
+    CountTimersFromTable(DROP_ON_REBOOT, countMap);
+
+    for (const auto &entry : countMap) {
+        TimerDbTopAppInfo info;
+        info.bundleName = entry.first.first;
+        info.timerName = entry.first.second;
+        info.count = entry.second;
+        result.push_back(info);
+    }
+
+    std::sort(result.begin(), result.end(),
+        [](const TimerDbTopAppInfo &a, const TimerDbTopAppInfo &b) { return a.count > b.count; });
+    if (result.size() > static_cast<size_t>(topN)) {
+        result.resize(topN);
+    }
+    return result;
 }
 
 bool CjsonHelper::IsNumber(cJSON* item)
