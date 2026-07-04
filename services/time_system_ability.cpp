@@ -1125,7 +1125,11 @@ void TimeSystemAbility::TimePowerStateListener::OnSyncShutdown()
     TIME_HILOGI(TIME_MODULE_SERVICE, "OnSyncShutdown");
 
     #ifdef CALLBACK_AUTOBOOT_ENABLE
-    TimerManager::GetInstance()->ShutDownReschedulePowerOnTimer();
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return;
+    }
+    timerManager->ShutDownReschedulePowerOnTimer();
     #else
     TimeSystemAbility::GetInstance()->SetAutoReboot();
     #endif

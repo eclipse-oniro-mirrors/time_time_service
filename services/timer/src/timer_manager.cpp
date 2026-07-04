@@ -953,9 +953,9 @@ void TimerManager::ReschedulePowerOnTimerLocked()
         setTimePoint = timerInfo->when;
     }
     #ifdef CALLBACK_AUTOBOOT_ENABLE
-    if (isShutDown && static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > setTimePoint.count()) {
+    if (isShutDown && currentTime + static_cast<int64_t>(TWO_MINUTES_TO_MILLI) > setTimePoint.count()) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
-        auto triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
+        auto triggerTime = currentTime + static_cast<int64_t>(TWO_MINUTES_TO_MILLI);
         setTimePoint = std::chrono::milliseconds(triggerTime);
     }
     #endif
