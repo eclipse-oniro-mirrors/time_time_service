@@ -113,7 +113,15 @@ void DestroyTimerSync(int64_t timer)
 }
 }  // namespace
 
+TH_EXPORT_CPP_API_CreateTimerAsync(CreateTimerSync);
+TH_EXPORT_CPP_API_CreateTimerPromise(CreateTimerSync);
 TH_EXPORT_CPP_API_CreateTimerSync(CreateTimerSync);
+TH_EXPORT_CPP_API_StartTimerAsync(StartTimerSync);
+TH_EXPORT_CPP_API_StartTimerPromise(StartTimerSync);
 TH_EXPORT_CPP_API_StartTimerSync(StartTimerSync);
+TH_EXPORT_CPP_API_StopTimerAsync(StopTimerSync);
+TH_EXPORT_CPP_API_StopTimerPromise(StopTimerSync);
 TH_EXPORT_CPP_API_StopTimerSync(StopTimerSync);
+TH_EXPORT_CPP_API_DestroyTimerAsync(DestroyTimerSync);
+TH_EXPORT_CPP_API_DestroyTimerPromise(DestroyTimerSync);
 TH_EXPORT_CPP_API_DestroyTimerSync(DestroyTimerSync);

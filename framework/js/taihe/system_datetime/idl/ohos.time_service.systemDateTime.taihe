@@ -23,28 +23,44 @@ enum TimeType: i32 {
     ACTIVE
 }
 
-@gen_promise("getTimezone")
-@gen_async("getTimezone")
+@rename("getTimezone")
+@async
+function GetTimezoneAsync(): String;
+@rename("getTimezone")
+@promise
+function GetTimezonePromise(): String;
 function GetTimezoneSync(): String;
 
 function GetUptime(timeType: TimeType, isNanoseconds: Optional<bool>): i64;
 
 function GetTime(isNanoseconds: Optional<bool>): i64;
 
-@gen_promise("setTime")
-@gen_async("setTime")
+@rename("setTime")
+@async
+function SetTimeAsync(time: i64): void;
+@rename("setTime")
+@promise
+function SetTimePromise(time: i64): void;
 function SetTimeSync(time: i64): void;
 
-@gen_promise("setTimezone")
-@gen_async("setTimezone")
+@rename("setTimezone")
+@async
+function SetTimezoneAsync(timezone: String): void;
+@rename("setTimezone")
+@promise
+function SetTimezonePromise(timezone: String): void;
 function SetTimezoneSync(timezone: String): void;
 
-@gen_promise("updateNtpTime")
+@rename("updateNtpTime")
+@promise
+function UpdateNtpTimePromise(): void;
 function UpdateNtpTimeSync(): void;
 
 function GetNtpTime(): i64;
 
 function GetAutoTimeStatus(): bool;
 
-@gen_promise("setAutoTimeStatus")
+@rename("setAutoTimeStatus")
+@promise
+function SetAutoTimeStatusPromise(status: bool): void;
 function SetAutoTimeStatusSync(status: bool): void;
