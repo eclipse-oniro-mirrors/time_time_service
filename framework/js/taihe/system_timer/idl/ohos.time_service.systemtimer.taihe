@@ -39,18 +39,34 @@ enum TimerType: i32 {
     TIMER_TYPE_IDLE = 8
 }
 
-@gen_promise("createTimer")
-@gen_async("createTimer")
+@rename("createTimer")
+@async
+function CreateTimerAsync(options: TimerOptions): i64;
+@rename("createTimer")
+@promise
+function CreateTimerPromise(options: TimerOptions): i64;
 function CreateTimerSync(options: TimerOptions): i64;
 
-@gen_promise("startTimer")
-@gen_async("startTimer")
+@rename("startTimer")
+@async
+function StartTimerAsync(timer: i64, triggerTime: i64);
+@rename("startTimer")
+@promise
+function StartTimerPromise(timer: i64, triggerTime: i64);
 function StartTimerSync(timer: i64, triggerTime: i64);
 
-@gen_promise("stopTimer")
-@gen_async("stopTimer")
+@rename("stopTimer")
+@async
+function StopTimerAsync(timer: i64);
+@rename("stopTimer")
+@promise
+function StopTimerPromise(timer: i64);
 function StopTimerSync(timer: i64);
 
-@gen_promise("destroyTimer")
-@gen_async("destroyTimer")
+@rename("destroyTimer")
+@async
+function DestroyTimerAsync(timer: i64);
+@rename("destroyTimer")
+@promise
+function DestroyTimerPromise(timer: i64);
 function DestroyTimerSync(timer: i64);

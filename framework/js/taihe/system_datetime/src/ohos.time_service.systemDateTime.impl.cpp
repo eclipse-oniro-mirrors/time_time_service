@@ -170,12 +170,20 @@ void SetAutoTimeStatusSync(bool status)
 }
 }  // namespace
 
+TH_EXPORT_CPP_API_GetTimezoneAsync(GetTimezoneSync);
+TH_EXPORT_CPP_API_GetTimezonePromise(GetTimezoneSync);
 TH_EXPORT_CPP_API_GetTimezoneSync(GetTimezoneSync);
 TH_EXPORT_CPP_API_GetUptime(GetUptime);
 TH_EXPORT_CPP_API_GetTime(GetTime);
+TH_EXPORT_CPP_API_SetTimeAsync(SetTimeSync);
+TH_EXPORT_CPP_API_SetTimePromise(SetTimeSync);
 TH_EXPORT_CPP_API_SetTimeSync(SetTimeSync);
+TH_EXPORT_CPP_API_SetTimezoneAsync(SetTimezoneSync);
+TH_EXPORT_CPP_API_SetTimezonePromise(SetTimezoneSync);
 TH_EXPORT_CPP_API_SetTimezoneSync(SetTimezoneSync);
+TH_EXPORT_CPP_API_UpdateNtpTimePromise(UpdateNtpTimeSync);
 TH_EXPORT_CPP_API_UpdateNtpTimeSync(UpdateNtpTimeSync);
 TH_EXPORT_CPP_API_GetNtpTime(GetNtpTime);
 TH_EXPORT_CPP_API_GetAutoTimeStatus(GetAutoTimeStatus);
+TH_EXPORT_CPP_API_SetAutoTimeStatusPromise(SetAutoTimeStatusSync);
 TH_EXPORT_CPP_API_SetAutoTimeStatusSync(SetAutoTimeStatusSync);
