@@ -64,7 +64,7 @@ private:
     static void ChangeNtpServerCallback(const char *key, const char *value, void *context);
     static std::vector<std::string> SplitNtpAddrs(const std::string &ntpStr);
     static void RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess, bool isSwitchOpen);
-    bool CheckStatus();
+    static bool CheckStatus();
     void RegisterSystemParameterListener();
     static void ChangeAutoTimeCallback(const char *key, const char *value, void *context);
 
@@ -75,6 +75,7 @@ private:
     static std::mutex requestMutex_;
     int64_t lastNITZUpdateTime_;
     static std::mutex ntpRetryMutex_;
+    static std::mutex autoTimeInfoMutex_;
 };
 } // namespace MiscServices
 } // namespace OHOS

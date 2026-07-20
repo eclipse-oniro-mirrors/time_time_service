@@ -436,12 +436,12 @@ bool TimerProxy::ShowProxyTimerInfo(int fd, const int64_t now)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lockPidProxy(proxyMutex_);
-    dprintf(fd, "current time %lld\n", now);
+    dprintf(fd, "current time %" PRId64 "\n", now);
     for (auto itProxyPids = proxyTimers_.begin(); itProxyPids != proxyTimers_.end(); ++itProxyPids) {
         auto resPair = ParseProxyKey(itProxyPids->first);
-        dprintf(fd, " - proxy uid = %lu pid = %lu\n", resPair.first, resPair.second);
+        dprintf(fd, " - proxy uid = %d pid = %d\n", resPair.first, resPair.second);
         for (auto elem : itProxyPids->second) {
-            dprintf(fd, "   * save timer id          = %llu\n", elem);
+            dprintf(fd, "   * save timer id          = %" PRIu64 "\n", elem);
         }
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
@@ -452,13 +452,14 @@ bool TimerProxy::ShowUidTimerMapInfo(int fd, const int64_t now)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
     std::lock_guard<std::mutex> lockProxy(uidTimersMutex_);
-    dprintf(fd, "current time %lld\n", now);
+    dprintf(fd, "current time %" PRId64 "\n", now);
     for (auto itTimerInfoMap = uidTimersMap_.begin(); itTimerInfoMap != uidTimersMap_.end(); ++itTimerInfoMap) {
-            dprintf(fd, " - uid = %lu\n", itTimerInfoMap->first);
-        for (auto itTimerInfo = itTimerInfoMap->second.begin(); itTimerInfo != itTimerInfoMap->second.end();
-            ++itTimerInfo) {
-            dprintf(fd, "   * timer id          = %llu\n", itTimerInfo->second->id);
-            dprintf(fd, "   * timer whenElapsed = %lld\n", itTimerInfo->second->whenElapsed.time_since_epoch().count());
+            dprintf(fd, " - uid = %d\n", itTimerInfoMap->first);
+        for (auto itTimerInfo = itTimerInfoMap->second.begin();
+            itTimerInfo != itTimerInfoMap->second.end(); ++itTimerInfo) {
+            dprintf(fd, "   * timer id          = %" PRIu64 "\n", itTimerInfo->second->id);
+            dprintf(fd, "   * timer whenElapsed = %" PRId64 "\n",
+                itTimerInfo->second->whenElapsed.time_since_epoch().count());
         }
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
@@ -470,14 +471,14 @@ void TimerProxy::ShowAdjustTimerInfo(int fd)
     std::lock_guard<std::mutex> lockProxy(adjustMutex_);
     dprintf(fd, "show adjust timer");
     for (auto timerId : adjustTimers_) {
-        dprintf(fd, " * timer id            = %lu\n", timerId);
+        dprintf(fd, " * timer id            = %" PRIu64 "\n", timerId);
     }
 }
 
 bool TimerProxy::ShowProxyDelayTime(int fd)
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "start");
-    dprintf(fd, "proxy delay time:%lld ms\n", proxyDelayTime_);
+    dprintf(fd, "proxy delay time:%" PRId64 " ms\n", proxyDelayTime_);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return true;
 }

@@ -141,7 +141,7 @@ private:
     void DecreaseTimerCount(int uid);
     void CheckTimerCount();
     void ShowTimerCountByUid(int count);
-    void AddTimerName(int uid, std::string name, uint64_t timerId);
+    uint64_t AddTimerName(int uid, std::string name, uint64_t timerId, bool &needRecover);
     void DeleteTimerName(int uid, std::string name, uint64_t timerId);
     #ifdef SET_AUTO_REBOOT_ENABLE
     bool IsPowerOnTimer(std::shared_ptr<TimerInfo> timerInfo);
@@ -169,7 +169,7 @@ private:
     std::chrono::system_clock::time_point lastTimeChangeClockTime_;
     std::chrono::steady_clock::time_point lastTimeChangeRealtime_;
     static std::mutex instanceLock_;
-    static TimerManager* instance_;
+    static std::atomic<TimerManager*> instance_;
 
     std::vector<std::shared_ptr<TimerInfo>> pendingDelayTimers_;
     // map<timerId, original trigger time> for delayed timers

@@ -49,32 +49,53 @@ void TimeTickNotify::Init()
         return E_TIME_OK;
     };
     std::lock_guard<std::mutex> lock(timeridMutex_);
-    TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId_);
+    auto createRet = TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId_);
+    if (createRet != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Create tick timer failed, ret:%{public}d", createRet);
+        return;
+    }
     auto trigger = RefreshNextTriggerTime();
-    TimeSystemAbility::GetInstance()->StartTimer(timerId_, trigger.first);
+    auto startRet = TimeSystemAbility::GetInstance()->StartTimer(timerId_, trigger.first);
+    if (startRet != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Start tick timer failed, ret:%{public}d, timerId:%{public}" PRIu64 "",
+            startRet, timerId_);
+        return;
+    }
     TIME_HILOGI(TIME_MODULE_SERVICE, "Tick timer timerId:%{public}" PRIu64 "", timerId_);
 }
 
 void TimeTickNotify::Callback()
 {
-    std::lock_guard<std::mutex> lock(timeridMutex_);
     auto trigger = RefreshNextTriggerTime();
-    if (trigger.second) {
-        auto currentTime = steady_clock::now().time_since_epoch().count();
-        if (std::abs(currentTime - lastTriggerTime_) > SECOND_TO_NANO) {
-            TimeServiceNotify::GetInstance().PublishTimeTickEvents(currentTime);
-            lastTriggerTime_ = currentTime;
+    uint64_t timerId = 0;
+    bool shouldPublish = false;
+    int64_t currentTime = 0;
+    {
+        std::lock_guard<std::mutex> lock(timeridMutex_);
+        if (trigger.second) {
+            currentTime = steady_clock::now().time_since_epoch().count();
+            if (std::abs(currentTime - lastTriggerTime_) > SECOND_TO_NANO) {
+                shouldPublish = true;
+                lastTriggerTime_ = currentTime;
+            }
         }
+        timerId = timerId_;
     }
-    TimeSystemAbility::GetInstance()->StartTimer(timerId_, trigger.first);
+    if (shouldPublish) {
+        TimeServiceNotify::GetInstance().PublishTimeTickEvents(currentTime);
+    }
+    TimeSystemAbility::GetInstance()->StartTimer(timerId, trigger.first);
     TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "tick id:%{public}" PRIu64 " time:%{public}" PRIu64 "",
-        timerId_, trigger.first / SECOND_TO_MILLISECOND);
+        timerId, trigger.first / SECOND_TO_MILLISECOND);
 }
 
 std::pair<uint64_t, bool> TimeTickNotify::RefreshNextTriggerTime()
 {
     int64_t time = 0;
-    TimeUtils::GetWallTimeMs(time);
+    if (TimeUtils::GetWallTimeMs(time) != E_TIME_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get wall time failed");
+        return std::make_pair(UINT64_MAX, false);
+    }
     uint64_t currTime = static_cast<uint64_t>(time);
     uint64_t timeMilliseconds = currTime % MINUTE_TO_MILLISECOND;
     bool isFirstSecond = timeMilliseconds < SECOND_TO_MILLISECOND;

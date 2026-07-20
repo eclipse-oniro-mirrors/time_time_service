@@ -34,9 +34,9 @@ public:
     void CancelTimeXCollie();
 
 private:
-    int32_t id_;
+    int32_t id_ = -1;
     std::string name_;
-    bool isCanceled_;
+    bool isCanceled_ = false;
 };
 }
 }

@@ -257,11 +257,12 @@ void TimerLockOptimizer::AcquireRunningLockInternal(int64_t expireTime, int64_t 
         return;
     }
     int64_t lockTime = 0;
-    if (expireTime <= manager_->lockExpiredTime_.load()) {
+    int64_t curLockExpiredTime = manager_->lockExpiredTime_.load();
+    if (expireTime <= curLockExpiredTime) {
         TIME_HILOGD(TIME_MODULE_SERVICE,
                     "AcquireRunningLockInternal: expireTime=%{public}" PRId64 " <= lockExpiredTime=%{public}" PRId64,
-                    expireTime, manager_->lockExpiredTime_.load());
-        lockTime = manager_->lockExpiredTime_.load() - bootTime;
+                    expireTime, curLockExpiredTime);
+        lockTime = curLockExpiredTime - bootTime;
     } else {
         timerLockExpireTime_.store(expireTime);
         lockTime = expireTime - bootTime;
