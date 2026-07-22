@@ -36,7 +36,7 @@ config("time_service_config") {
     "-fvisibility=hidden",
     "-ffunction-sections",
     "-fdata-sections",
-    "-Os",
+    "-Oz",
   ]
 }
 
@@ -133,6 +133,8 @@ ohos_shared_library("time_system_ability") {
     "os_account:authorization_innerkits",
     "bundle_framework:appexecfwk_core",
   ]
+  ldflags = [ "-Wl,--gc-sections" ]
+
   defines = []
   if (time_service_debug_able) {
     defines += [ "DEBUG_ENABLE" ]
