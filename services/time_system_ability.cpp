@@ -51,6 +51,7 @@ static constexpr int MILLI_TO_BASE = 1000LL;
 static constexpr int MICR_TO_BASE = 1000000LL;
 static constexpr int NANO_TO_BASE = 1000000000LL;
 static constexpr std::int32_t INIT_INTERVAL = 10L;
+static constexpr int32_t MAX_SUBSCRIBE_RETRY_TIMES = 6;
 static constexpr uint32_t TIMER_TYPE_REALTIME_MASK = 1 << 0;
 static constexpr uint32_t TIMER_TYPE_REALTIME_WAKEUP_MASK = 1 << 1;
 static constexpr uint32_t TIMER_TYPE_EXACT_MASK = 1 << 2;
@@ -290,6 +291,30 @@ void TimeSystemAbility::RegisterSubscriber()
     std::shared_ptr<EventManager> subscriberPtr = std::make_shared<EventManager>(subscriberInfo);
     bool subscribeResult = CommonEventManager::SubscribeCommonEvent(subscriberPtr);
     TIME_HILOGI(TIME_MODULE_SERVICE, "Register com event res:%{public}d", subscribeResult);
+    if (subscribeResult) {
+        return;
+    }
+    // Retry on failure: without a successful subscription the service cannot receive
+    // COMMON_EVENT_PACKAGE_REMOVED and similar broadcasts, so timers of uninstalled apps would
+    // never be cleaned up and keep accumulating. Mirrors the retry pattern used by
+    // RegisterCommonEventSubscriber for RepublishEvents.
+    std::weak_ptr<EventManager> weakSubscriber = subscriberPtr;
+    auto callback = [weakSubscriber]() {
+        for (int32_t i = 0; i < MAX_SUBSCRIBE_RETRY_TIMES; ++i) {
+            sleep(INIT_INTERVAL);
+            auto subscriber = weakSubscriber.lock();
+            if (subscriber == nullptr) {
+                return;
+            }
+            if (CommonEventManager::SubscribeCommonEvent(subscriber)) {
+                TIME_HILOGI(TIME_MODULE_SERVICE, "Register com event retry succeeded");
+                return;
+            }
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Register com event retry failed, times:%{public}d", i + 1);
+        }
+    };
+    std::thread thread(callback);
+    thread.detach();
 }
 
 void TimeSystemAbility::RegisterCommonEventSubscriber()
@@ -431,6 +456,10 @@ int32_t TimeSystemAbility::CreateTimerWithoutWA(const std::string &name, int typ
 int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerOptions, const sptr<IRemoteObject> &obj,
     uint64_t &timerId)
 {
+    if (timerOptions == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "timerOptions nullptr");
+        return E_TIME_NULLPTR;
+    }
     if (obj == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Input nullptr");
         return E_TIME_NULLPTR;
@@ -747,9 +776,34 @@ void TimeSystemAbility::DumpAdjustTime(int fd, const std::vector<std::string> &i
 }
 #endif
 
-int TimeSystemAbility::SetRtcTime(time_t sec)
+int TimeSystemAbility::WriteRtcTime(FILE *fd, const struct tm &tm)
 {
     struct rtc_time rtc {};
+    rtc.tm_sec = tm.tm_sec;
+    rtc.tm_min = tm.tm_min;
+    rtc.tm_hour = tm.tm_hour;
+    rtc.tm_mday = tm.tm_mday;
+    rtc.tm_mon = tm.tm_mon;
+    rtc.tm_year = tm.tm_year;
+    rtc.tm_wday = tm.tm_wday;
+    rtc.tm_yday = tm.tm_yday;
+    rtc.tm_isdst = tm.tm_isdst;
+    int fd_int = fileno(fd);
+    if (fd_int < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "fileno failed:%{public}s", strerror(errno));
+        return E_TIME_SET_RTC_FAILED;
+    }
+    int res = ioctl(fd_int, RTC_SET_TIME, &rtc);
+    if (res < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "ioctl RTC_SET_TIME failed,errno:%{public}s, res:%{public}d",
+            strerror(errno), res);
+        return E_TIME_SET_RTC_FAILED;
+    }
+    return res;
+}
+
+int TimeSystemAbility::SetRtcTime(time_t sec)
+{
     struct tm tm {};
     struct tm *gmtime_res = nullptr;
     FILE* fd = nullptr;
@@ -770,21 +824,7 @@ int TimeSystemAbility::SetRtcTime(time_t sec)
     }
     gmtime_res = gmtime_r(&sec, &tm);
     if (gmtime_res) {
-        rtc.tm_sec = tm.tm_sec;
-        rtc.tm_min = tm.tm_min;
-        rtc.tm_hour = tm.tm_hour;
-        rtc.tm_mday = tm.tm_mday;
-        rtc.tm_mon = tm.tm_mon;
-        rtc.tm_year = tm.tm_year;
-        rtc.tm_wday = tm.tm_wday;
-        rtc.tm_yday = tm.tm_yday;
-        rtc.tm_isdst = tm.tm_isdst;
-        int fd_int = fileno(fd);
-        res = ioctl(fd_int, RTC_SET_TIME, &rtc);
-        if (res < 0) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "ioctl RTC_SET_TIME failed,errno:%{public}s, res:%{public}d",
-                strerror(errno), res);
-        }
+        res = WriteRtcTime(fd, tm);
     } else {
         TIME_HILOGE(TIME_MODULE_SERVICE, "convert rtc time failed:%{public}s", strerror(errno));
         res = E_TIME_SET_RTC_FAILED;
@@ -986,9 +1026,19 @@ int32_t TimeSystemAbility::ProxyTimer(int32_t uid, const std::vector<int>& pidLi
         TIME_HILOGE(TIME_MODULE_SERVICE, "ProxyTimer permission check failed");
         return E_TIME_NO_PERMISSION;
     }
-    if (pidList.size() < 0 || pidList.size() > MAX_PID_LIST_SIZE) {
+    if (pidList.size() > MAX_PID_LIST_SIZE) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Error pid list size");
         return E_TIME_PARAMETERS_INVALID;
+    }
+    if (uid < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error uid:%{public}d", uid);
+        return E_TIME_PARAMETERS_INVALID;
+    }
+    for (auto pid : pidList) {
+        if (pid < 0) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "Error pid:%{public}d", pid);
+            return E_TIME_PARAMETERS_INVALID;
+        }
     }
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
@@ -1184,37 +1234,36 @@ bool TimeSystemAbility::RecoverTimer()
     RecoverTimerCjson(DROP_ON_REBOOT);
 
     #ifdef RDB_ENABLE
-    auto &database = TimeDatabase::GetInstance();
-    OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
-    auto holdResultSet = database.Query(holdRdbPredicates, ALL_DATA);
-    if (holdResultSet == nullptr || holdResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result set is nullptr or go to first row failed");
-    } else {
-        int count;
-        holdResultSet->GetRowCount(count);
-        TIME_HILOGI(TIME_MODULE_SERVICE, "hold result rows count:%{public}d", count);
-        RecoverTimerInner(holdResultSet, true);
-    }
-    if (holdResultSet != nullptr) {
-        holdResultSet->Close();
-    }
-
-    OHOS::NativeRdb::RdbPredicates dropRdbPredicates(DROP_ON_REBOOT);
-    auto dropResultSet = database.Query(dropRdbPredicates, ALL_DATA);
-    if (dropResultSet == nullptr || dropResultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result set is nullptr or go to first row failed");
-    } else {
-        int count;
-        dropResultSet->GetRowCount(count);
-        TIME_HILOGI(TIME_MODULE_SERVICE, "drop result rows count:%{public}d", count);
-        RecoverTimerInner(dropResultSet, false);
-    }
-    if (dropResultSet != nullptr) {
-        dropResultSet->Close();
-    }
+    RecoverTimerFromDb(HOLD_ON_REBOOT, true);
+    RecoverTimerFromDb(DROP_ON_REBOOT, false);
     #endif
     return true;
 }
+
+#ifdef RDB_ENABLE
+void TimeSystemAbility::RecoverTimerFromDb(const std::string &tableName, bool autoRestore)
+{
+    auto &database = TimeDatabase::GetInstance();
+    OHOS::NativeRdb::RdbPredicates predicates(tableName);
+    auto resultSet = database.Query(predicates, ALL_DATA);
+    if (resultSet == nullptr || resultSet->GoToFirstRow() != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}s result set is nullptr or go to first row failed",
+            tableName.c_str());
+    } else {
+        int count = 0;
+        if (resultSet->GetRowCount(count) != OHOS::NativeRdb::E_OK) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get row count failed", tableName.c_str());
+        } else {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}s result rows count:%{public}d",
+                tableName.c_str(), count);
+            RecoverTimerInner(resultSet, autoRestore);
+        }
+    }
+    if (resultSet != nullptr) {
+        resultSet->Close();
+    }
+}
+#endif
 
 std::shared_ptr<TimerEntry> TimeSystemAbility::GetEntry(cJSON* obj, bool autoRestore)
 {

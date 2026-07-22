@@ -44,6 +44,7 @@ constexpr int32_t INCREASE_TIMES = 4;
 AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
 std::mutex NtpUpdateTime::requestMutex_;
 std::mutex NtpUpdateTime::ntpRetryMutex_;
+std::mutex NtpUpdateTime::autoTimeInfoMutex_;
 uint64_t NtpUpdateTime::timerId_ = 0;
 int64_t NtpUpdateTime::ntpRetryInterval_ = MAX_NTP_RETRY_INTERVAL;
 
@@ -66,9 +67,12 @@ void NtpUpdateTime::Init()
         return;
     }
     RegisterSystemParameterListener();
-    autoTimeInfo_.ntpServer = ntpServer;
-    autoTimeInfo_.ntpServerSpec = ntpServerSpec;
-    autoTimeInfo_.status = autoTime;
+    {
+        std::lock_guard<std::mutex> lock(autoTimeInfoMutex_);
+        autoTimeInfo_.ntpServer = ntpServer;
+        autoTimeInfo_.ntpServerSpec = ntpServerSpec;
+        autoTimeInfo_.status = autoTime;
+    }
     auto callback = [this](uint64_t id) -> int32_t {
         this->RefreshNetworkTimeByTimer(id);
         return E_TIME_OK;
@@ -156,8 +160,15 @@ NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
         return NO_NEED_REFRESH;
     }
 
-    std::vector<std::string> ntpSpecList = SplitNtpAddrs(autoTimeInfo_.ntpServerSpec);
-    std::vector<std::string> ntpList = SplitNtpAddrs(autoTimeInfo_.ntpServer);
+    std::string ntpServerSpec;
+    std::string ntpServer;
+    {
+        std::lock_guard<std::mutex> lock(autoTimeInfoMutex_);
+        ntpServerSpec = autoTimeInfo_.ntpServerSpec;
+        ntpServer = autoTimeInfo_.ntpServer;
+    }
+    std::vector<std::string> ntpSpecList = SplitNtpAddrs(ntpServerSpec);
+    std::vector<std::string> ntpList = SplitNtpAddrs(ntpServer);
     
     for (int i = 0; i < RETRY_TIMES; i++) {
         for (size_t j = 0; j < ntpSpecList.size(); j++) {
@@ -228,7 +239,7 @@ bool NtpUpdateTime::GetNtpTime(int64_t &time)
         return false;
     }
 
-    if (autoTimeInfo_.status == AUTO_TIME_STATUS_ON && CheckNeedSetTime(ret, time)) {
+    if (CheckStatus() && CheckNeedSetTime(ret, time)) {
         TimeSystemAbility::GetInstance()->SetTimeInner(time);
     }
     return true;
@@ -315,6 +326,7 @@ void NtpUpdateTime::RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess,
 
 bool NtpUpdateTime::CheckStatus()
 {
+    std::lock_guard<std::mutex> lock(autoTimeInfoMutex_);
     return autoTimeInfo_.status == AUTO_TIME_STATUS_ON;
 }
 
@@ -364,8 +376,11 @@ void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, 
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter");
         return;
     }
-    autoTimeInfo_.ntpServer = ntpServer;
-    autoTimeInfo_.ntpServerSpec = ntpServerSpec;
+    {
+        std::lock_guard<std::mutex> lock(autoTimeInfoMutex_);
+        autoTimeInfo_.ntpServer = ntpServer;
+        autoTimeInfo_.ntpServerSpec = ntpServerSpec;
+    }
     NtpUpdateTime::GetInstance().SetSystemTime(NtpUpdateSource::NTP_SERVER_CHANGE);
 }
 
@@ -385,7 +400,10 @@ void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, v
         TIME_HILOGE(TIME_MODULE_SERVICE, "incorrect value:%{public}s", value);
         return;
     }
-    autoTimeInfo_.status = std::string(value);
+    {
+        std::lock_guard<std::mutex> lock(autoTimeInfoMutex_);
+        autoTimeInfo_.status = std::string(value);
+    }
     NtpUpdateTime::GetInstance().SetSystemTime(NtpUpdateSource::AUTO_TIME_CHANGE);
 }
 

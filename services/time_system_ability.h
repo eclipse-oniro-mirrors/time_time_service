@@ -120,6 +120,7 @@ private:
     int32_t CheckTimerPara(const DatabaseType type, const TimerPara &paras);
     bool GetTimeByClockId(clockid_t clockId, struct timespec &tv);
     int SetRtcTime(time_t sec);
+    int WriteRtcTime(FILE *fd, const struct tm &tm);
     bool CheckRtc(const std::string &rtcPath, uint64_t rtcId);
     int GetWallClockRtcId();
     void RegisterRSSDeathCallback();
@@ -132,6 +133,7 @@ private:
     #ifdef RDB_ENABLE
     void CjsonIntoDatabase(cJSON* resultSet, bool autoRestore, const std::string &table);
     void RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, bool autoRestore);
+    void RecoverTimerFromDb(const std::string &tableName, bool autoRestore);
     #else
     void RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestore, std::string tableName);
     #endif

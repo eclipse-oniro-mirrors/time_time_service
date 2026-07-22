@@ -32,7 +32,7 @@ public:
 
 private:
     std::pair<uint64_t, bool> RefreshNextTriggerTime();
-    uint64_t timerId_;
+    uint64_t timerId_ = 0;
     std::mutex timeridMutex_;
     int64_t lastTriggerTime_ = 0;
 };

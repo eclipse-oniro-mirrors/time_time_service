@@ -106,7 +106,7 @@ constexpr int REASON_APP_API = 1;
 }
 
 std::mutex TimerManager::instanceLock_;
-TimerManager* TimerManager::instance_ = nullptr;
+std::atomic<TimerManager*> TimerManager::instance_ {nullptr};
 
 extern bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared_ptr<Batch> &batch);
 
@@ -140,15 +140,20 @@ TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
 
 TimerManager* TimerManager::GetInstance()
 {
-    if (instance_ == nullptr) {
+    TimerManager* inst = instance_.load(std::memory_order_acquire);
+    if (inst == nullptr) {
         std::lock_guard<std::mutex> autoLock(instanceLock_);
-        if (instance_ == nullptr) {
+        inst = instance_.load(std::memory_order_relaxed);
+        if (inst == nullptr) {
             auto impl = TimerHandler::Create();
             if (impl == nullptr) {
                 TIME_HILOGE(TIME_MODULE_SERVICE, "Create Timer handle failed");
                 return nullptr;
             }
-            instance_ = new TimerManager(impl);
+            // Construct and fully initialize into a local pointer first; only publish to instance_
+            // after lockOptimizer_ (and other members) are set, so concurrent callers taking the
+            // lock-free fast path never observe a partially initialized singleton.
+            inst = new TimerManager(impl);
             std::vector<std::string> bundleList = TimeFileUtils::GetParameterList(AUTO_RESTORE_TIMER_APPS);
             if (!bundleList.empty()) {
                 NEED_RECOVER_ON_REBOOT = bundleList;
@@ -158,15 +163,16 @@ TimerManager* TimerManager::GetInstance()
                 TimeFileUtils::GetIntParameter(RUNNING_LOCK_DURATION_PARAMETER,
                                                USE_LOCK_ONE_SEC_IN_NANO);
             #ifdef RUNNING_LOCK_OPTIMIZE
-            instance_->lockOptimizer_ = std::make_shared<TimerLockOptimizer>(instance_);
+            inst->lockOptimizer_ = std::make_shared<TimerLockOptimizer>(inst);
             #endif
             #endif
+            instance_.store(inst, std::memory_order_release);
         }
     }
-    if (instance_ == nullptr) {
+    if (inst == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Create Timer manager failed");
     }
-    return instance_;
+    return inst;
 }
 
 #ifdef RDB_ENABLE
@@ -191,23 +197,27 @@ OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerI
 #endif
 
 // needs to acquire the lock `entryMapMutex_` before calling this method
-void TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId)
+// Returns the old timerId that was replaced by the new one (0 if no replacement happened).
+// When a replacement happens, needRecover is set to the replaced timer's recover-on-reboot flag so
+// the caller can call UpdateOrDeleteDatabase for the returned id outside the lock, avoiding holding
+// entryMapMutex_ during SQLite/JSON file I/O.
+uint64_t TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId, bool &needRecover)
 {
+    needRecover = false;
     if (timerNameMap_.find(uid) == timerNameMap_.end() || timerNameMap_[uid].find(name) == timerNameMap_[uid].end()) {
         timerNameMap_[uid][name] = timerId;
         TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "%{public}s:%{public}" PRId64 "", name.c_str(), timerId);
-        return;
+        return 0;
     }
     auto oldTimerId = timerNameMap_[uid][name];
     if (timerId != oldTimerId) {
-        bool needRecover =  false;
         StopTimerInnerLocked(true, oldTimerId, needRecover);
-        UpdateOrDeleteDatabase(true, oldTimerId, needRecover);
         timerNameMap_[uid][name] = timerId;
         TIME_HILOGW(TIME_MODULE_SERVICE, "create:%{public}" PRId64 " name:%{public}s in %{public}d already exist "
             "destory:%{public}" PRId64 "", timerId, name.c_str(), uid, oldTimerId);
+        return oldTimerId;
     }
-    return;
+    return 0;
 }
 
 // needs to acquire the lock `entryMapMutex_` before calling this method
@@ -249,6 +259,8 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     }
     auto timerName = paras.name;
     std::shared_ptr<TimerEntry> timerInfo;
+    uint64_t replacedTimerId = 0;
+    bool replacedNeedRecover = false;
     {
         std::lock_guard<std::mutex> lock(entryMapMutex_);
         if (timerId == 0) {
@@ -266,8 +278,11 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
         IncreaseTimerCount(uid);
         timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
         if (timerName != "") {
-            AddTimerName(uid, timerName, timerId);
+            replacedTimerId = AddTimerName(uid, timerName, timerId, replacedNeedRecover);
         }
+    }
+    if (replacedTimerId != 0) {
+        UpdateOrDeleteDatabase(true, replacedTimerId, replacedNeedRecover);
     }
     if (type == NOT_STORE) {
         return E_TIME_OK;
@@ -285,12 +300,19 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
 
 void TimerManager::ReCreateTimer(uint64_t timerId, std::shared_ptr<TimerEntry> timerInfo)
 {
-    std::lock_guard<std::mutex> lock(entryMapMutex_);
-    timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
-    if (timerInfo->name != "") {
-        AddTimerName(timerInfo->uid, timerInfo->name, timerId);
+    uint64_t replacedTimerId = 0;
+    bool replacedNeedRecover = false;
+    {
+        std::lock_guard<std::mutex> lock(entryMapMutex_);
+        timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
+        if (timerInfo->name != "") {
+            replacedTimerId = AddTimerName(timerInfo->uid, timerInfo->name, timerId, replacedNeedRecover);
+        }
+        IncreaseTimerCount(timerInfo->uid);
     }
-    IncreaseTimerCount(timerInfo->uid);
+    if (replacedTimerId != 0) {
+        UpdateOrDeleteDatabase(true, replacedTimerId, replacedNeedRecover);
+    }
 }
 
 int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
@@ -424,9 +446,9 @@ void TimerManager::ShowTimerCountByUid(int count)
 {
     std::string uidStr = "";
     std::string countStr = "";
-    int uidArr[TIMER_COUNT_TOP_NUM];
-    int createTimerCountArr[TIMER_COUNT_TOP_NUM];
-    int startTimerCountArr[TIMER_COUNT_TOP_NUM];
+    int uidArr[TIMER_COUNT_TOP_NUM] = {0};
+    int createTimerCountArr[TIMER_COUNT_TOP_NUM] = {0};
+    int startTimerCountArr[TIMER_COUNT_TOP_NUM] = {0};
     auto size = static_cast<int>(timerCount_.size());
     std::sort(timerCount_.begin(), timerCount_.end(),
         [](const std::pair<int32_t, int32_t>& a, const std::pair<int32_t, int32_t>& b) {
@@ -578,7 +600,11 @@ void TimerManager::RemoveLocked(uint64_t id, bool needReschedule)
         mPendingIdleUntil_ = nullptr;
         bool isAdjust = AdjustTimersBasedOnDeviceIdle();
         delayedTimers_.clear();
-        for (const auto &pendingTimer : pendingDelayTimers_) {
+        // Iterate over a snapshot: SetHandlerLocked below may push_back into pendingDelayTimers_
+        // (when an IDLE_UNTIL timer it sets re-enables mPendingIdleUntil_, and a later pending
+        // timer is not allowed while idle), which would invalidate the range-for iterators.
+        auto pendingSnapshot = pendingDelayTimers_;
+        for (const auto &pendingTimer : pendingSnapshot) {
             TIME_HILOGI(TIME_MODULE_SERVICE, "Set timer from delay list, id=%{public}" PRId64 "", pendingTimer->id);
             auto bootTimePoint = TimeUtils::GetBootTimeNs();
             if (pendingTimer->whenElapsed <= bootTimePoint) {
@@ -791,6 +817,9 @@ bool TimerManager::ProcTriggerTimer(std::shared_ptr<TimerInfo> &alarm,
 
 bool IsNoLog(std::shared_ptr<TimerInfo> alarm)
 {
+    if (alarm == nullptr) {
+        return true;
+    }
     return (std::find(NO_LOG_APP_LIST.begin(), NO_LOG_APP_LIST.end(), alarm->bundleName) != NO_LOG_APP_LIST.end())
         && (alarm->repeatInterval != std::chrono::milliseconds(0))
         && (!alarm->wakeup);
@@ -1341,6 +1370,10 @@ void TimerManager::SetAdjustPolicy(const std::unordered_map<std::string, uint32_
 
 bool TimerManager::AdjustSingleTimer(std::shared_ptr<TimerInfo> timer)
 {
+    if (timer == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "AdjustSingleTimer timer is nullptr");
+        return false;
+    }
     if (!adjustPolicy_ || TimerProxy::GetInstance().IsProxy(timer->uid, 0)
         || TimerProxy::GetInstance().IsProxy(timer->uid, timer->pid)) {
         return false;
@@ -1352,6 +1385,10 @@ bool TimerManager::AdjustSingleTimer(std::shared_ptr<TimerInfo> timer)
 // needs to acquire the lock `proxyMutex_` before calling this method
 bool TimerManager::AdjustSingleTimerLocked(std::shared_ptr<TimerInfo> timer)
 {
+    if (timer == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "AdjustSingleTimerLocked timer is nullptr");
+        return false;
+    }
     if (!adjustPolicy_|| TimerProxy::GetInstance().IsProxyLocked(timer->uid, 0)
         || TimerProxy::GetInstance().IsProxyLocked(timer->uid, timer->pid)) {
         return false;
@@ -1468,8 +1505,9 @@ bool AddBatchLocked(std::vector<std::shared_ptr<Batch>> &list, const std::shared
                                [](const std::shared_ptr<Batch> &first, const std::shared_ptr<Batch> &second) {
                                    return first->GetStart() < second->GetStart();
                                });
+    bool atBegin = (it == list.begin());
     list.insert(it, newBatch);
-    return it == list.begin();
+    return atBegin;
 }
 
 #ifdef HIDUMPER_ENABLE
@@ -1479,13 +1517,13 @@ bool TimerManager::ShowTimerEntryMap(int fd)
     std::lock_guard<std::mutex> lock(entryMapMutex_);
     auto iter = timerEntryMap_.begin();
     for (; iter != timerEntryMap_.end(); iter++) {
-        dprintf(fd, " - dump timer number   = %lu\n", iter->first);
+        dprintf(fd, " - dump timer number   = %" PRIu64 "\n", iter->first);
         dprintf(fd, " * timer name          = %s\n", iter->second->name.c_str());
-        dprintf(fd, " * timer id            = %lu\n", iter->second->id);
+        dprintf(fd, " * timer id            = %" PRIu64 "\n", iter->second->id);
         dprintf(fd, " * timer type          = %d\n", iter->second->type);
         dprintf(fd, " * timer flag          = %u\n", iter->second->flag);
-        dprintf(fd, " * timer window Length = %lld\n", iter->second->windowLength);
-        dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
+        dprintf(fd, " * timer window Length = %" PRId64 "\n", iter->second->windowLength);
+        dprintf(fd, " * timer interval      = %" PRIu64 "\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
@@ -1501,11 +1539,11 @@ bool TimerManager::ShowTimerEntryById(int fd, uint64_t timerId)
         TIME_HILOGD(TIME_MODULE_SERVICE, "end");
         return false;
     } else {
-        dprintf(fd, " - dump timer number   = %lu\n", iter->first);
-        dprintf(fd, " * timer id            = %lu\n", iter->second->id);
+        dprintf(fd, " - dump timer number   = %" PRIu64 "\n", iter->first);
+        dprintf(fd, " * timer id            = %" PRIu64 "\n", iter->second->id);
         dprintf(fd, " * timer type          = %d\n", iter->second->type);
-        dprintf(fd, " * timer window Length = %lld\n", iter->second->windowLength);
-        dprintf(fd, " * timer interval      = %lu\n", iter->second->interval);
+        dprintf(fd, " * timer window Length = %" PRId64 "\n", iter->second->windowLength);
+        dprintf(fd, " * timer interval      = %" PRIu64 "\n", iter->second->interval);
         dprintf(fd, " * timer uid           = %d\n\n", iter->second->uid);
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
@@ -1519,8 +1557,9 @@ bool TimerManager::ShowTimerTriggerById(int fd, uint64_t timerId)
     for (size_t i = 0; i < alarmBatches_.size(); i++) {
         for (size_t j = 0; j < alarmBatches_[i]->Size(); j++) {
             if (alarmBatches_[i]->Get(j)->id == timerId) {
-                dprintf(fd, " - dump timer id   = %lu\n", alarmBatches_[i]->Get(j)->id);
-                dprintf(fd, " * timer trigger   = %lld\n", alarmBatches_[i]->Get(j)->origWhen);
+                dprintf(fd, " - dump timer id   = %" PRIu64 "\n", alarmBatches_[i]->Get(j)->id);
+                dprintf(fd, " * timer trigger   = %" PRId64 "\n",
+                    static_cast<int64_t>(alarmBatches_[i]->Get(j)->origWhen.count()));
             }
         }
     }
@@ -1569,7 +1608,12 @@ void TimerManager::OnUserRemoved(int userId)
         std::lock_guard<std::mutex> lock(entryMapMutex_);
         for (auto it = timerEntryMap_.begin(); it != timerEntryMap_.end(); ++it) {
             int userIdOfTimer = -1;
-            AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(it->second->uid, userIdOfTimer);
+            int getLocalIdErr = AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(
+                it->second->uid, userIdOfTimer);
+            if (getLocalIdErr != ERR_OK) {
+                TIME_HILOGE(TIME_MODULE_SERVICE, "Get account id from uid failed, errcode:%{public}d", getLocalIdErr);
+                continue;
+            }
             if (userId == userIdOfTimer) {
                 removeList.push_back(it->second);
             }

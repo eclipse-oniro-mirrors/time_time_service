@@ -161,6 +161,7 @@ bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::Value
         ret = store->Insert(outRowId, table, insertValues);
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Insert values after RecoverDataBase failed, ret:%{public}d", ret);
+            return false;
         }
     }
     return true;
@@ -193,6 +194,7 @@ bool TimeDatabase::Update(
         ret = store->Update(changedRows, values, predicates);
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Update values after RecoverDataBase failed, ret:%{public}d", ret);
+            return false;
         }
     }
     return true;
@@ -246,6 +248,7 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
         ret = store->Delete(deletedRows, predicates);
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Delete values after RecoverDataBase failed, ret:%{public}d", ret);
+            return false;
         }
     }
     return true;
@@ -355,11 +358,13 @@ int32_t TimeDatabase::GetTotalRecordCount()
         "  UNION ALL"
         "  SELECT COUNT(*) AS cnt FROM drop_on_reboot"
         ")");
-    if (result != nullptr && result->GoToFirstRow() == OHOS::NativeRdb::E_OK) {
-        int32_t ret = result->GetInt(0, totalCount);
-        if (ret != OHOS::NativeRdb::E_OK) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "GetTotalRecordCount failed, ret:%{public}d", ret);
-            totalCount = 0;
+    if (result != nullptr) {
+        if (result->GoToFirstRow() == OHOS::NativeRdb::E_OK) {
+            int32_t ret = result->GetInt(0, totalCount);
+            if (ret != OHOS::NativeRdb::E_OK) {
+                TIME_HILOGE(TIME_MODULE_SERVICE, "GetTotalRecordCount failed, ret:%{public}d", ret);
+                totalCount = 0;
+            }
         }
         result->Close();
     }

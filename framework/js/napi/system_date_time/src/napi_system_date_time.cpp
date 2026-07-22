@@ -142,6 +142,39 @@ napi_value NapiSystemDateTime::SetTime(napi_env env, napi_callback_info info)
     return NapiWork::AsyncEnqueue(env, setTimeContext, "SetTime", executor, complete);
 }
 
+void ParseDateValue(napi_env env, napi_value value, ContextBase *ctx, int64_t &time)
+{
+    napi_valuetype valueType = napi_undefined;
+    ctx->status = napi_typeof(env, value, &valueType);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, ctx, ctx->status == napi_ok,
+        "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
+    if (valueType == napi_number) {
+        ctx->status = napi_get_value_int64(env, value, &time);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, ctx, ctx->status == napi_ok,
+            "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, ctx, time >= 0,
+            "date number must >= 0", JsErrorCode::PARAMETER_ERROR);
+        return;
+    }
+    bool hasProperty = false;
+    napi_valuetype resValueType = napi_undefined;
+    napi_has_named_property(env, value, "getTime", &hasProperty);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, ctx, hasProperty,
+        "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
+    napi_value getTimeFunc = nullptr;
+    napi_get_named_property(env, value, "getTime", &getTimeFunc);
+    napi_value getTimeResult = nullptr;
+    ctx->status = napi_call_function(env, value, getTimeFunc, 0, nullptr, &getTimeResult);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, ctx, ctx->status == napi_ok,
+        "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
+    ctx->status = napi_typeof(env, getTimeResult, &resValueType);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, ctx, ctx->status == napi_ok,
+        "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, ctx, resValueType == napi_number,
+        "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
+    ctx->status = napi_get_value_int64(env, getTimeResult, &time);
+}
+
 napi_value NapiSystemDateTime::SetDate(napi_env env, napi_callback_info info)
 {
     struct SetDateContext : public ContextBase {
@@ -155,27 +188,7 @@ napi_value NapiSystemDateTime::SetDate(napi_env env, napi_callback_info info)
     auto inputParser = [env, setDateContext](size_t argc, napi_value *argv) {
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, argc >= ARGC_ONE,
             "Mandatory parameters are left unspecified", JsErrorCode::PARAMETER_ERROR);
-        napi_valuetype valueType = napi_undefined;
-        napi_typeof(env, argv[ARGV_FIRST], &valueType);
-        if (valueType == napi_number) {
-            napi_get_value_int64(env, argv[ARGV_FIRST], &setDateContext->time);
-            CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, setDateContext->time >= 0,
-                "date number must >= 0", JsErrorCode::PARAMETER_ERROR);
-        } else {
-            bool hasProperty = false;
-            napi_valuetype resValueType = napi_undefined;
-            napi_has_named_property(env, argv[ARGV_FIRST], "getTime", &hasProperty);
-            CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, hasProperty,
-                "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
-            napi_value getTimeFunc = nullptr;
-            napi_get_named_property(env, argv[0], "getTime", &getTimeFunc);
-            napi_value getTimeResult = nullptr;
-            napi_call_function(env, argv[0], getTimeFunc, 0, nullptr, &getTimeResult);
-            napi_typeof(env, getTimeResult, &resValueType);
-            CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, resValueType == napi_number,
-                "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
-            setDateContext->status = napi_get_value_int64(env, getTimeResult, &setDateContext->time);
-        }
+        ParseDateValue(env, argv[ARGV_FIRST], setDateContext, setDateContext->time);
         CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, setDateContext, setDateContext->status == napi_ok,
             "The type of 'date' must be Date", JsErrorCode::PARAMETER_ERROR);
         setDateContext->status = napi_ok;
