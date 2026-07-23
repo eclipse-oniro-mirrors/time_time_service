@@ -58,7 +58,8 @@
         "resource_management",
         "ets_frontend",
         "bundle_framework",
-        "taihe_ffi_gen"
+        "taihe_ffi_gen",
+        "node"
       ]
     },
     "build": {

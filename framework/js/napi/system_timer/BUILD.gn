@@ -63,6 +63,7 @@ ohos_shared_library("systemtimer") {
     "ipc:ipc_single",
     "napi:ace_napi",
     "samgr:samgr_proxy",
+    "node:node_header_notice",
   ]
   branch_protector_ret = "pac_ret"
   stack_protector_ret = true
