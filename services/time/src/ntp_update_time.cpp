@@ -103,10 +103,12 @@ void NtpUpdateTime::UpdateNITZSetTime()
 {
     auto bootTimeNano = steady_clock::now().time_since_epoch().count();
     auto bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
-    if (TimeUtils::GetBootTimeMs(lastNITZUpdateTime_) != ERR_OK) {
+    int64_t lastNITZUpdateTime = 0;
+    if (TimeUtils::GetBootTimeMs(lastNITZUpdateTime) != ERR_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "get boottime fail");
     }
-    nitzUpdateTimeMilli_ = static_cast<uint64_t>(bootTimeMilli);
+    lastNITZUpdateTime_.store(lastNITZUpdateTime, std::memory_order_relaxed);
+    nitzUpdateTimeMilli_.store(static_cast<uint64_t>(bootTimeMilli), std::memory_order_relaxed);
 }
 
 std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
@@ -332,14 +334,15 @@ bool NtpUpdateTime::CheckStatus()
 
 bool NtpUpdateTime::IsValidNITZTime()
 {
-    if (nitzUpdateTimeMilli_ == 0) {
+    auto nitzUpdateTimeMilli = nitzUpdateTimeMilli_.load(std::memory_order_relaxed);
+    if (nitzUpdateTimeMilli == 0) {
         return false;
     }
     int64_t bootTimeNano = static_cast<int64_t>(steady_clock::now().time_since_epoch().count());
     int64_t bootTimeMilli = bootTimeNano / NANO_TO_MILLISECOND;
     TIME_HILOGI(TIME_MODULE_SERVICE, "nitz update time:%{public}" PRIu64 " currentTime:%{public}" PRId64 "",
-        nitzUpdateTimeMilli_, bootTimeMilli);
-    return (bootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMilli_)) < HALF_DAY_TO_MILLISECOND;
+        nitzUpdateTimeMilli, bootTimeMilli);
+    return (bootTimeMilli - static_cast<int64_t>(nitzUpdateTimeMilli)) < HALF_DAY_TO_MILLISECOND;
 }
 
 void NtpUpdateTime::Stop()
@@ -409,7 +412,7 @@ void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, v
 
 uint64_t NtpUpdateTime::GetNITZUpdateTime()
 {
-    return static_cast<uint64_t>(lastNITZUpdateTime_);
+    return static_cast<uint64_t>(lastNITZUpdateTime_.load(std::memory_order_relaxed));
 }
 } // namespace MiscServices
 } // namespace OHOS

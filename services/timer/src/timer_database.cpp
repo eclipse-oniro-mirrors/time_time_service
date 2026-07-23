@@ -335,7 +335,7 @@ void TimeDatabase::ClearInvaildDataInHoldOnReboot()
 
 TimerDbSizeInfo TimeDatabase::GetDatabaseSizeDetail()
 {
-    TimerDbSizeInfo sizeInfo;
+    TimerDbSizeInfo sizeInfo{};
     struct stat st;
     if (stat(DB_NAME, &st) == 0) {
         sizeInfo.dbSize = st.st_size;

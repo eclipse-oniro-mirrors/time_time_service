@@ -455,11 +455,11 @@ bool TimerProxy::ShowUidTimerMapInfo(int fd, const int64_t now)
     dprintf(fd, "current time %" PRId64 "\n", now);
     for (auto itTimerInfoMap = uidTimersMap_.begin(); itTimerInfoMap != uidTimersMap_.end(); ++itTimerInfoMap) {
             dprintf(fd, " - uid = %d\n", itTimerInfoMap->first);
-        for (auto itTimerInfo = itTimerInfoMap->second.begin();
-            itTimerInfo != itTimerInfoMap->second.end(); ++itTimerInfo) {
+        for (auto itTimerInfo = itTimerInfoMap->second.begin(); itTimerInfo != itTimerInfoMap->second.end();
+            ++itTimerInfo) {
             dprintf(fd, "   * timer id          = %" PRIu64 "\n", itTimerInfo->second->id);
             dprintf(fd, "   * timer whenElapsed = %" PRId64 "\n",
-                itTimerInfo->second->whenElapsed.time_since_epoch().count());
+                static_cast<int64_t>(itTimerInfo->second->whenElapsed.time_since_epoch().count()));
         }
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
