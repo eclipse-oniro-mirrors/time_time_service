@@ -39,7 +39,10 @@ constexpr int SUBCMD_ARGV_INDEX = 2;           // argv[2]: subcommand for <cli> 
 
 int main(int argc, char* argv[])
 {
-    G_PROGRAM_NAME = argv[0];
+    // Guard against abnormal startup where argc=0 or argv[0]=NULL, which would
+    // leave G_PROGRAM_NAME as a null pointer and later trigger undefined behavior
+    // when passed to std::string::operator+(const char*) during concatenation.
+    G_PROGRAM_NAME = (argc > 0 && argv != nullptr && argv[0] != nullptr) ? argv[0] : "";
 
     // Check for missing command
     if (argc < MIN_REQUIRED_ARGS) {

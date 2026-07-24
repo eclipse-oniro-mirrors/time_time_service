@@ -433,7 +433,7 @@ void CjsonHelper::SaveJson(cJSON* data)
 
 TimerDbSizeInfo CjsonHelper::GetDatabaseSizeDetail()
 {
-    TimerDbSizeInfo sizeInfo;
+    TimerDbSizeInfo sizeInfo{};
     struct stat st;
     if (stat(DB_PATH, &st) == 0) {
         sizeInfo.dbSize = st.st_size;

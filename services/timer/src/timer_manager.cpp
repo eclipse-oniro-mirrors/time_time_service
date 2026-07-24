@@ -304,7 +304,16 @@ void TimerManager::ReCreateTimer(uint64_t timerId, std::shared_ptr<TimerEntry> t
     bool replacedNeedRecover = false;
     {
         std::lock_guard<std::mutex> lock(entryMapMutex_);
-        timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
+        // Check the insert return value: if timerId already exists, insert silently
+        // fails (the original entry is not overwritten). Continuing to call
+        // AddTimerName/IncreaseTimerCount in that case would inflate the timer count
+        // and could mistakenly destroy an existing timer with the same name via the
+        // name map, leaving it inconsistent with timerEntryMap_.
+        auto result = timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
+        if (!result.second) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "ReCreateTimer id:%{public}" PRId64 " already exist", timerId);
+            return;
+        }
         if (timerInfo->name != "") {
             replacedTimerId = AddTimerName(timerInfo->uid, timerInfo->name, timerId, replacedNeedRecover);
         }
@@ -331,17 +340,17 @@ int32_t TimerManager::StartTimer(uint64_t timerId, uint64_t triggerTime)
                 "int:%{public}" PRId64 " trig:%{public}s pid:%{public}d", timerId, timerInfo->type, timerInfo->interval,
                 std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingPid());
         }
-        {
-            // To prevent the same ID from being started repeatedly,
-            // the later start overwrites the earlier start.
-            std::lock_guard<std::mutex> lock(mutex_);
-            RemoveLocked(timerId, false);
-        }
         auto alarm = TimerInfo::CreateTimerInfo(timerInfo->name, timerInfo->id, timerInfo->type, triggerTime,
             timerInfo->windowLength, timerInfo->interval, timerInfo->flag, timerInfo->autoRestore, timerInfo->callback,
             timerInfo->wantAgent, timerInfo->uid, timerInfo->pid, timerInfo->bundleName);
-        std::lock_guard<std::mutex> lockGuard(mutex_);
-        SetHandlerLocked(alarm);
+        {
+            // Remove-then-insert must be atomic within the same lock to prevent concurrent
+            // threads (e.g. TimerLooper) from inserting a timer with the same timerId during
+            // the unlocked window, which would cause duplicate entries in alarmBatches_.
+            std::lock_guard<std::mutex> lockGuard(mutex_);
+            RemoveLocked(timerId, false);
+            SetHandlerLocked(alarm);
+        }
     }
     if (timerInfo->wantAgent) {
         auto tableName = (CheckNeedRecoverOnReboot(timerInfo->bundleName, timerInfo->type, timerInfo->autoRestore)
@@ -379,17 +388,17 @@ int32_t TimerManager::StartTimerGroup(std::vector<std::pair<uint64_t, uint64_t>>
         TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "start:%{public}" PRIu64 " typ:%{public}d "
             "int:%{public}" PRId64 " trig:%{public}s pid:%{public}d", timerId, timerInfo->type, timerInfo->interval,
             std::to_string(triggerTime).c_str(), IPCSkeleton::GetCallingPid());
-        {
-            // To prevent the same ID from being started repeatedly,
-            // the later start overwrites the earlier start
-            std::lock_guard<std::mutex> lock(mutex_);
-            RemoveLocked(timerId, false);
-        }
         auto alarm = TimerInfo::CreateTimerInfo(timerInfo->name, timerInfo->id, timerInfo->type, triggerTime,
             timerInfo->windowLength, timerInfo->interval, timerInfo->flag, timerInfo->autoRestore, timerInfo->callback,
             timerInfo->wantAgent, timerInfo->uid, timerInfo->pid, timerInfo->bundleName);
-        std::lock_guard<std::mutex> lockGuard(mutex_);
-        SetHandlerLocked(alarm);
+        {
+            // Remove-then-insert must be atomic within the same lock to prevent concurrent
+            // threads from inserting a timer with the same timerId during the unlocked
+            // window, which would cause duplicate entries in alarmBatches_.
+            std::lock_guard<std::mutex> lockGuard(mutex_);
+            RemoveLocked(timerId, false);
+            SetHandlerLocked(alarm);
+        }
     }
     CjsonHelper::GetInstance().UpdateTriggerGroup(tableName, timerVec);
     return E_TIME_OK;
@@ -1576,23 +1585,24 @@ bool TimerManager::ShowIdleTimerInfo(int fd)
         dprintf(fd, " - dump idle timer id  = %lu\n", mPendingIdleUntil_->id);
         dprintf(fd, " * timer type          = %d\n", mPendingIdleUntil_->type);
         dprintf(fd, " * timer flag          = %u\n", mPendingIdleUntil_->flags);
-        dprintf(fd, " * timer window Length = %lu\n", mPendingIdleUntil_->windowLength);
-        dprintf(fd, " * timer interval      = %lu\n", mPendingIdleUntil_->repeatInterval);
-        dprintf(fd, " * timer whenElapsed   = %lu\n", mPendingIdleUntil_->whenElapsed);
+        dprintf(fd, " * timer window Length = %" PRId64 "\n", mPendingIdleUntil_->windowLength.count());
+        dprintf(fd, " * timer interval      = %" PRId64 "\n", mPendingIdleUntil_->repeatInterval.count());
+        dprintf(fd, " * timer whenElapsed   = %" PRId64 "\n",
+            mPendingIdleUntil_->whenElapsed.time_since_epoch().count());
         dprintf(fd, " * timer uid           = %d\n\n", mPendingIdleUntil_->uid);
     }
     for (const auto &pendingTimer : pendingDelayTimers_) {
         dprintf(fd, " - dump pending delay timer id  = %lu\n", pendingTimer->id);
         dprintf(fd, " * timer type          = %d\n", pendingTimer->type);
         dprintf(fd, " * timer flag          = %u\n", pendingTimer->flags);
-        dprintf(fd, " * timer window Length = %lu\n", pendingTimer->windowLength);
-        dprintf(fd, " * timer interval      = %lu\n", pendingTimer->repeatInterval);
-        dprintf(fd, " * timer whenElapsed   = %lu\n", pendingTimer->whenElapsed);
+        dprintf(fd, " * timer window Length = %" PRId64 "\n", pendingTimer->windowLength.count());
+        dprintf(fd, " * timer interval      = %" PRId64 "\n", pendingTimer->repeatInterval.count());
+        dprintf(fd, " * timer whenElapsed   = %" PRId64 "\n", pendingTimer->whenElapsed.time_since_epoch().count());
         dprintf(fd, " * timer uid           = %d\n\n", pendingTimer->uid);
     }
     for (const auto &delayedTimer : delayedTimers_) {
         dprintf(fd, " - dump delayed timer id = %lu\n", delayedTimer.first);
-        dprintf(fd, " * timer whenElapsed     = %lu\n", delayedTimer.second);
+        dprintf(fd, " * timer whenElapsed     = %" PRId64 "\n", delayedTimer.second.time_since_epoch().count());
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return true;

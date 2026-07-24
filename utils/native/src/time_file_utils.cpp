@@ -104,7 +104,7 @@ int64_t TimeFileUtils::GetIntParameter(const std::string& parameterName, int64_t
         return def;
     }
     for (auto ch : value) {
-        if (!std::isdigit(ch)) {
+        if (!std::isdigit(static_cast<unsigned char>(ch))) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Wrong para in %{public}s", parameterName.c_str());
             return def;
         }

@@ -193,13 +193,14 @@ void TimerLockOptimizer::UpdateRunningApps(const std::string &bundleName, bool i
         {
             std::lock_guard<std::mutex> lock(appListMutex_);
             runningApps_.insert(bundleName);
+            TIME_HILOGD(TIME_MODULE_SERVICE, "runningApps_ size=%{public}zu", runningApps_.size());
         }
         RecalcLockForBundle(bundleName);
     } else {
         std::lock_guard<std::mutex> lock(appListMutex_);
         runningApps_.erase(bundleName);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "runningApps_ size=%{public}zu", runningApps_.size());
     }
-    TIME_HILOGD(TIME_MODULE_SERVICE, "runningApps_ size=%{public}zu", runningApps_.size());
 }
 
 void TimerLockOptimizer::RecalcLockForBundle(const std::string &bundleName)

@@ -16,6 +16,7 @@
 #ifndef NTP_UPDATE_TIME_H
 #define NTP_UPDATE_TIME_H
 
+#include <atomic>
 #include <mutex>
 
 namespace OHOS {
@@ -70,10 +71,13 @@ private:
 
     static AutoTimeInfo autoTimeInfo_;
     static uint64_t timerId_;
-    uint64_t nitzUpdateTimeMilli_;
+    // Atomic: read by IsValidNITZTime(), written by UpdateNITZSetTime() on the
+    // NITZ broadcast thread. relaxed ordering is sufficient (independent timestamp).
+    std::atomic<uint64_t> nitzUpdateTimeMilli_;
     static int64_t ntpRetryInterval_;
     static std::mutex requestMutex_;
-    int64_t lastNITZUpdateTime_;
+    // Atomic: read by GetNITZUpdateTime(), written by UpdateNITZSetTime().
+    std::atomic<int64_t> lastNITZUpdateTime_;
     static std::mutex ntpRetryMutex_;
     static std::mutex autoTimeInfoMutex_;
 };

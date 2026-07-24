@@ -16,6 +16,8 @@
 
 #include <dirent.h>
 #include <linux/rtc.h>
+#include <algorithm>
+#include <cctype>
 #include <sstream>
 #include <sys/ioctl.h>
 #include <sys/timerfd.h>
@@ -327,6 +329,7 @@ void TimeSystemAbility::RegisterCommonEventSubscriber()
             sleep(INIT_INTERVAL);
             TimeServiceNotify::GetInstance().RepublishEvents();
         };
+        // Catch thread creation failure to avoid SA crash from std::system_error
         std::thread thread(callback);
         thread.detach();
     }
@@ -866,13 +869,22 @@ int TimeSystemAbility::GetWallClockRtcId()
     while (errno = 0, dirent = readdir(dir.get())) {
         std::string name(dirent->d_name);
         unsigned long rtcId = 0;
+        // Only match entries starting with "rtc" (e.g. rtc0, rtc1) to avoid false
+        // positives like "rtcdevice" or "myrtc".
         auto index = name.find(s);
-        if (index == std::string::npos) {
+        if (index != 0) {
             continue;
-        } else {
-            auto rtcIdStr = name.substr(index + s.length());
-            rtcId = std::stoul(rtcIdStr);
         }
+        auto rtcIdStr = name.substr(s.length());
+        // The suffix must be non-empty and all digits; otherwise skip it to prevent
+        // std::stoul from throwing and crashing the process.
+        if (rtcIdStr.empty() ||
+            std::find_if(rtcIdStr.begin(), rtcIdStr.end(),
+                         [](unsigned char c) { return !std::isdigit(c); }) != rtcIdStr.end()) {
+            TIME_HILOGW(TIME_MODULE_SERVICE, "invalid rtc name %{public}s, skip", name.c_str());
+            continue;
+        }
+        rtcId = std::stoul(rtcIdStr);
         if (CheckRtc(rtcPath, rtcId)) {
             TIME_HILOGD(TIME_MODULE_SERVICE, "found wall clock rtc %{public}ld", rtcId);
             return rtcId;
@@ -1161,6 +1173,13 @@ void TimeSystemAbility::RegisterRSSDeathCallback()
         return;
     }
 
+    // OnAddSystemAbility is delivered by SAMgr via IPC and may be triggered
+    // concurrently on different threads. The DEVICE_STANDBY_SERVICE branch does
+    // not call RemoveSystemAbilityListener, so the callback can re-enter.
+    // Lock here to protect the check-then-set on deathRecipient_, preventing
+    // repeated allocation, memory leaks, and refcount corruption caused by
+    // concurrent non-atomic sptr assignment.
+    std::lock_guard<std::mutex> autoLock(rssDeathLock_);
     if (deathRecipient_ == nullptr) {
         deathRecipient_ = new (std::nothrow) RSSSaDeathRecipient();
         if (deathRecipient_ == nullptr) {
@@ -1461,7 +1480,13 @@ void TimeSystemAbility::SetAutoReboot()
     }
     int64_t currentTime = 0;
     TimeUtils::GetWallTimeMs(currentTime);
-    auto bundleList = TimerManager::GetInstance()->GetPowerOnApps();
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "timerManager is nullptr");
+        resultSet->Close();
+        return;
+    }
+    auto bundleList = timerManager->GetPowerOnApps();
     do {
         uint64_t triggerTime = static_cast<uint64_t>(GetLong(resultSet, 1));
         if (triggerTime < static_cast<uint64_t>(currentTime)) {
@@ -1471,34 +1496,40 @@ void TimeSystemAbility::SetAutoReboot()
         }
         if (std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, 0)) != bundleList.end() ||
             std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, INDEX_TWO)) != bundleList.end()) {
-            int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
-            if (tmfd < 0) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error:%{public}s", strerror(errno));
-                resultSet->Close();
-                return;
-            }
-            if (static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > triggerTime) {
-                TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
-                triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
-            }
-            struct itimerspec new_value;
-            std::chrono::nanoseconds nsec(triggerTime * MILLISECOND_TO_NANO);
-            auto second = std::chrono::duration_cast<std::chrono::seconds>(nsec);
-            new_value.it_value.tv_sec = second.count();
-            new_value.it_value.tv_nsec = (nsec - second).count();
-            TIME_HILOGI(TIME_MODULE_SERVICE, "currentTime:%{public}" PRId64 ", second:%{public}" PRId64 ","
-                        "nanosecond:%{public}" PRId64"", currentTime, static_cast<int64_t>(new_value.it_value.tv_sec),
-                        static_cast<int64_t>(new_value.it_value.tv_nsec));
-            int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
-            if (ret < 0) {
-                TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error:%{public}s", strerror(errno));
-                close(tmfd);
-            }
+            ArmPowerOffTimer(triggerTime, currentTime);
             resultSet->Close();
             return;
         }
     } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
     resultSet->Close();
+}
+
+void TimeSystemAbility::ArmPowerOffTimer(uint64_t triggerTime, int64_t currentTime)
+{
+    int tmfd = timerfd_create(CLOCK_POWEROFF_ALARM, TFD_NONBLOCK);
+    if (tmfd < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error:%{public}s", strerror(errno));
+        return;
+    }
+    if (static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > triggerTime) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
+        triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
+    }
+    // Value-initialize so it_interval (repeat interval) is zero, not stack garbage;
+    // a non-zero it_interval would make timerfd_settime arm a repeating power-off alarm.
+    struct itimerspec new_value {};
+    std::chrono::nanoseconds nsec(triggerTime * MILLISECOND_TO_NANO);
+    auto second = std::chrono::duration_cast<std::chrono::seconds>(nsec);
+    new_value.it_value.tv_sec = second.count();
+    new_value.it_value.tv_nsec = (nsec - second).count();
+    TIME_HILOGI(TIME_MODULE_SERVICE, "currentTime:%{public}" PRId64 ", second:%{public}" PRId64 ","
+                "nanosecond:%{public}" PRId64"", currentTime, static_cast<int64_t>(new_value.it_value.tv_sec),
+                static_cast<int64_t>(new_value.it_value.tv_nsec));
+    int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
+    if (ret < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error:%{public}s", strerror(errno));
+        close(tmfd);
+    }
 }
 #endif
 #endif

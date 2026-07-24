@@ -30,9 +30,9 @@ struct TimerDbTopAppInfo {
 };
 
 struct TimerDbSizeInfo {
-    int64_t dbSize;
-    int64_t shmSize;
-    int64_t walSize;
+    int64_t dbSize = 0;
+    int64_t shmSize = 0;
+    int64_t walSize = 0;
     int64_t GetTotalSize() const
     {
         return dbSize + shmSize + walSize;

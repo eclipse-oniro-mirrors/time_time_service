@@ -141,6 +141,7 @@ private:
     void RegisterPowerStateListener();
     #ifndef CALLBACK_AUTOBOOT_ENABLE
     void SetAutoReboot();
+    void ArmPowerOffTimer(uint64_t triggerTime, int64_t currentTime);
     #endif
     #endif
 
@@ -149,6 +150,7 @@ private:
     static sptr<TimeSystemAbility> instance_;
     const int rtcId;
     sptr<RSSSaDeathRecipient> deathRecipient_ {};
+    std::mutex rssDeathLock_;
 };
 } // namespace MiscServices
 } // namespace OHOS
