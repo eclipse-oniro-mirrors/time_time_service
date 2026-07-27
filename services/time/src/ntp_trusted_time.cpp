@@ -99,13 +99,14 @@ bool NtpTrustedTime::IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult)
     return true;
 }
 
-int32_t NtpTrustedTime::GetSameTimeResultCount(std::shared_ptr<TimeResult> candidateTimeResult)
+int32_t NtpTrustedTime::GetSameTimeResultCount(std::shared_ptr<TimeResult> candidateTimeResult,
+    const std::vector<std::shared_ptr<TimeResult>> &candidates)
 {
     auto candidateBootTime = candidateTimeResult->GetElapsedRealtimeMillis();
     auto candidateRealTime = candidateTimeResult->GetTimeMillis();
     int count = 0;
-    for (size_t i = 0; i < TimeResultCandidates_.size(); i++) {
-        auto compareTime = TimeResultCandidates_[i]->CurrentTimeMillis(candidateBootTime);
+    for (size_t i = 0; i < candidates.size(); i++) {
+        auto compareTime = candidates[i]->CurrentTimeMillis(candidateBootTime);
         if (std::abs(compareTime - candidateRealTime) < MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS) {
             count += 1;
         }
@@ -115,17 +116,27 @@ int32_t NtpTrustedTime::GetSameTimeResultCount(std::shared_ptr<TimeResult> candi
 
 bool NtpTrustedTime::FindBestTimeResult()
 {
-    if (TimeResultCandidates_.size() < TRUSTED_CANDIDATE_MINI_COUNT) {
-        TIME_HILOGW(TIME_MODULE_SERVICE, "candidate < 2");
-        return false;
+    // Snapshot candidates and mTimeResult under lock, then do the time-consuming
+    // work (GetBootTimeMs / TimeBehaviorReport) outside the lock to avoid blocking
+    // high-frequency time queries (CurrentTimeMillis etc.) which may trigger watchdog.
+    std::vector<std::shared_ptr<TimeResult>> candidates;
+    std::shared_ptr<TimeResult> curResult;
+    {
+        std::lock_guard<std::mutex> lock(mTimeResultMutex_);
+        if (TimeResultCandidates_.size() < TRUSTED_CANDIDATE_MINI_COUNT) {
+            TIME_HILOGW(TIME_MODULE_SERVICE, "candidate < 2");
+            return false;
+        }
+        candidates = TimeResultCandidates_;
+        curResult = mTimeResult;
     }
 
     int32_t mostVotedTimeResultCount = 0;
     std::shared_ptr<TimeResult> mostVotedTimeResult;
-    for (size_t i = 0; i < TimeResultCandidates_.size(); i++) {
-        auto timeResult = TimeResultCandidates_[i];
-        int32_t count = GetSameTimeResultCount(TimeResultCandidates_[i]);
-        if (count > static_cast<int32_t>(TimeResultCandidates_.size() / HALF)) {
+    for (size_t i = 0; i < candidates.size(); i++) {
+        auto timeResult = candidates[i];
+        int32_t count = GetSameTimeResultCount(candidates[i], candidates);
+        if (count > static_cast<int32_t>(candidates.size() / HALF)) {
             if (count > mostVotedTimeResultCount) {
                 mostVotedTimeResultCount = count;
                 mostVotedTimeResult = timeResult;
@@ -136,29 +147,25 @@ bool NtpTrustedTime::FindBestTimeResult()
             if (res != E_TIME_OK) {
                 continue;
             }
-            int64_t oldNtpTime;
-            {
-                std::lock_guard<std::mutex> lock(mTimeResultMutex_);
-                oldNtpTime = mTimeResult ? mTimeResult->CurrentTimeMillis(bootTime) : 0;
-            }
+            int64_t oldNtpTime = curResult ? curResult->CurrentTimeMillis(bootTime) : 0;
             TimeBehaviorReport(ReportEventCode::NTP_COMPARE_UNTRUSTED, timeResult->GetNtpServer(),
                 std::to_string(timeResult->GetTimeMillis()), oldNtpTime);
         }
     }
 
+    std::lock_guard<std::mutex> lock(mTimeResultMutex_);
     TimeResultCandidates_.clear();
     if (mostVotedTimeResultCount == 0) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "no best candidate");
         return false;
-    } else {
-        std::lock_guard<std::mutex> lock(mTimeResultMutex_);
-        mTimeResult = mostVotedTimeResult;
-        return true;
     }
+    mTimeResult = mostVotedTimeResult;
+    return true;
 }
 
 void NtpTrustedTime::ClearTimeResultCandidates()
 {
+    std::lock_guard<std::mutex> lock(mTimeResultMutex_);
     TimeResultCandidates_.clear();
 }
 

@@ -49,19 +49,21 @@ void TimeTickNotify::Init()
         return E_TIME_OK;
     };
     std::lock_guard<std::mutex> lock(timeridMutex_);
-    auto createRet = TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId_);
+    uint64_t id = 0;
+    auto createRet = TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, id);
     if (createRet != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Create tick timer failed, ret:%{public}d", createRet);
         return;
     }
+    timerId_.store(id);
     auto trigger = RefreshNextTriggerTime();
-    auto startRet = TimeSystemAbility::GetInstance()->StartTimer(timerId_, trigger.first);
+    auto startRet = TimeSystemAbility::GetInstance()->StartTimer(timerId_.load(), trigger.first);
     if (startRet != E_TIME_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Start tick timer failed, ret:%{public}d, timerId:%{public}" PRIu64 "",
-            startRet, timerId_);
+            startRet, timerId_.load());
         return;
     }
-    TIME_HILOGI(TIME_MODULE_SERVICE, "Tick timer timerId:%{public}" PRIu64 "", timerId_);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "Tick timer timerId:%{public}" PRIu64 "", timerId_.load());
 }
 
 void TimeTickNotify::Callback()
@@ -109,7 +111,7 @@ void TimeTickNotify::Stop()
     uint64_t timerId;
     {
         std::lock_guard<std::mutex> lock(timeridMutex_);
-        timerId = timerId_;
+        timerId = timerId_.load();
     }
     TimeSystemAbility::GetInstance()->DestroyTimer(timerId);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
@@ -117,7 +119,7 @@ void TimeTickNotify::Stop()
 
 uint64_t TimeTickNotify::GetTickTimerId()
 {
-    return timerId_;
+    return timerId_.load();
 }
 } // namespace MiscServices
 } // namespace OHOS

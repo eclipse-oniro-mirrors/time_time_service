@@ -72,6 +72,14 @@ void TimerLockOptimizer::Init()
 
 void TimerLockOptimizer::QueryAllRunningApps()
 {
+    // GetAllRunningProcesses is an IPC and runs outside appListMutex_ to avoid holding the lock
+    // during IPC. This creates a TOCTOU window: an UpdateRunningApps callback (registered in Init)
+    // may insert/erase runningApps_ between the IPC return and the clear+rebuild here, and its
+    // incremental update is then wiped by the clear. This is acceptable because: (1) this method
+    // is called only once at Init for bulk load; (2) runningApps_ is otherwise maintained by
+    // UpdateRunningApps event-driven increments, so any stale entry from the old snapshot is
+    // corrected by subsequent app-state-change events (eventual consistency). Do not move the IPC
+    // inside the lock (would block UpdateRunningApps / risk deadlock).
     auto appMgrClient = DelayedSingleton<AppMgrClient>::GetInstance();
     if (appMgrClient == nullptr) {
         return;
@@ -101,6 +109,9 @@ void TimerLockOptimizer::QueryAllRunningApps()
 
 std::string TimerLockOptimizer::ExtractBundleNameFromWantAgent(const std::shared_ptr<WantAgent>& wantAgent)
 {
+    if (wantAgent == nullptr) {
+        return "";
+    }
     auto want = WantAgentHelper::GetWant(wantAgent);
     if (want == nullptr) {
         return "";
@@ -253,6 +264,18 @@ void TimerLockOptimizer::RecalcLockForBundle(const std::string &bundleName)
 
 void TimerLockOptimizer::AcquireRunningLockInternal(int64_t expireTime, int64_t bootTime)
 {
+    // Concurrency notes (acceptable trade-offs under RUNNING_LOCK_OPTIMIZE):
+    // 1. TOCTOU: callers compute newMaxExpireTime under lockInfosMutex_ then call this outside the
+    //    lock (AddRunningLock must not run under lockInfosMutex_). Another thread may modify
+    //    lockInfos_ in between, so expireTime may be stale. The lockExpiredTime_ comparison below
+    //    partially mitigates this; effect is imprecise lock duration, not a crash.
+    // 2. Non-atomic compare-then-store: the read of lockExpiredTime_ (L271) and the store to
+    //    timerLockExpireTime_ (L277) are not atomic across concurrent callers. A later, smaller
+    //    expireTime could overwrite a larger one (lost update), shortening the running lock.
+    //    Fully closing this needs a CAS-based lock-acquisition state machine across
+    //    AcquireRunningLockInternal + HandleRunningLock; tracked as a follow-up, not done here
+    //    because the impact is imprecise (not premature release of an active lock in a way that
+    //    crashes) and RUNNING_LOCK_OPTIMIZE is an opt-in optimization path.
     if (manager_ == nullptr) {
         TIME_HILOGD(TIME_MODULE_SERVICE, "AcquireRunningLockInternal: manager_ is nullptr");
         return;
@@ -301,6 +324,10 @@ void TimerLockOptimizer::MergeNewTimers(
             if (!wantBundleName.empty()) {
                 newInfo.wantBundleName = wantBundleName;
                 lockDuration = APP_START_RUNNING_LOCK_DURATION_NS;
+                // Single-thread access (TimerLooper thread, see targetBundleNameCache_ decl):
+                // write here, read in GetBundleNameFromCache, clear in ClearBundleNameCache are
+                // all serialized within TriggerTimerList. No lock needed, consistent with Phase 1
+                // being lock-free (IPC calls happen here).
                 targetBundleNameCache_[timer->id] = wantBundleName;
             }
         }

@@ -16,6 +16,7 @@
 #include "napi_system_date_time.h"
 
 #include <new>
+#include <cstdint>
 #include "parameters.h"
 #include "napi_work.h"
 #include "napi_utils.h"
@@ -534,7 +535,7 @@ napi_value NapiSystemDateTime::GetTimezone(napi_env env, napi_callback_info info
     auto complete = [env, getTimezoneContext](napi_value &output) {
         getTimezoneContext->status = napi_create_string_utf8(env, getTimezoneContext->timezone.c_str(),
             getTimezoneContext->timezone.size(), &output);
-        TIME_HILOGI(TIME_MODULE_JS_NAPI, "%{public}s, ", getTimezoneContext->timezone.c_str());
+        TIME_HILOGD(TIME_MODULE_JS_NAPI, "%{public}s, ", getTimezoneContext->timezone.c_str());
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, getTimezoneContext,
             "convert native object to javascript object failed", JsErrorCode::ERROR);
     };
@@ -573,7 +574,7 @@ napi_value NapiSystemDateTime::GetTimezoneSync(napi_env env, napi_callback_info 
 napi_value NapiSystemDateTime::GetAutoTimeStatus(napi_env env, napi_callback_info info)
 {
     struct GetAutoTimeContext : public ContextBase {
-        bool autotime;
+        bool autotime = false;
     };
     auto *getAutoTimeContext = new (std::nothrow) GetAutoTimeContext();
     if (getAutoTimeContext == nullptr) {
@@ -603,7 +604,7 @@ napi_value NapiSystemDateTime::GetAutoTimeStatus(napi_env env, napi_callback_inf
 napi_value NapiSystemDateTime::SetAutoTimeStatus(napi_env env, napi_callback_info info)
 {
     struct SetAutoTimeContext : public ContextBase {
-        bool autotime;
+        bool autotime = false;
     };
     auto *setAutoTimeContext = new (std::nothrow) SetAutoTimeContext();
     if (setAutoTimeContext == nullptr) {
@@ -699,10 +700,18 @@ int32_t NapiSystemDateTime::GetDeviceTime(clockid_t clockId, bool isNano, int64_
         return ERROR;
     }
 
+    auto sec = static_cast<int64_t>(tv.tv_sec);
     if (isNano) {
-        time = tv.tv_sec * SECONDS_TO_NANO + tv.tv_nsec;
+        // Guard against signed int64_t overflow: tv_sec * 1e9 overflows when tv_sec exceeds
+        // ~9.22e9 (year 2262) or is negative (abnormal system time). Reject such inputs.
+        constexpr int64_t NANO_OVERFLOW_THRESHOLD = INT64_MAX / SECONDS_TO_NANO;
+        if (sec < 0 || sec > NANO_OVERFLOW_THRESHOLD) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "tv_sec overflow:%{public}lld", static_cast<long long>(sec));
+            return ERROR;
+        }
+        time = sec * SECONDS_TO_NANO + tv.tv_nsec;
     } else {
-        time = tv.tv_sec * SECONDS_TO_MILLI + tv.tv_nsec / NANO_TO_MILLI;
+        time = sec * SECONDS_TO_MILLI + tv.tv_nsec / NANO_TO_MILLI;
     }
     return ERROR_OK;
 }

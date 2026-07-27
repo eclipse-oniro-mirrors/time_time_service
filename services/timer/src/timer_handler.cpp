@@ -54,6 +54,15 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
     }
     std::shared_ptr<TimerHandler> handler = std::shared_ptr<TimerHandler>(
         new (std::nothrow)TimerHandler(fds, epollfd));
+    if (handler == nullptr) {
+        // new failed: object not constructed, destructor will not run. Close fds/epollfd explicitly.
+        TIME_HILOGE(TIME_MODULE_SERVICE, "new TimerHandler failed");
+        for (auto fd : fds) {
+            fdsan_close_with_tag(fd, BASE_TIME_FDSAN_TAG);
+        }
+        fdsan_close_with_tag(epollfd, BASE_TIME_FDSAN_TAG);
+        return nullptr;
+    }
     #ifdef SET_AUTO_REBOOT_ENABLE
     for (size_t i = 0; i < fds.size() - 1; i++) {
     #else
@@ -64,10 +73,12 @@ std::shared_ptr<TimerHandler> TimerHandler::Create()
         event.data.u32 = i;
         if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fds[i], &event) < 0) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "epoll_ctl(EPOLL_CTL_ADD) failed:%{public}s", strerror(errno));
+            handler.reset(); // trigger ~TimerHandler to close fds + epollfd
             return nullptr;
         }
     }
     if (SetRealTimeFd(fds) < 0 && errno != ECANCELED) {
+        handler.reset();
         return nullptr;
     }
     return handler;
@@ -169,6 +180,10 @@ uint32_t TimerHandler::WaitForAlarm()
     uint32_t result = 0;
     for (int i = 0; i < nevents; i++) {
         uint32_t alarm_idx = events[i].data.u32;
+        if (alarm_idx > ALARM_TYPE_COUNT) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "invalid alarm_idx:%{public}u", alarm_idx);
+            continue;
+        }
         uint64_t unused;
         ssize_t err = read(fds_[alarm_idx], &unused, sizeof(unused));
         if (err < 0) {

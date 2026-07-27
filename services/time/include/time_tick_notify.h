@@ -16,6 +16,7 @@
 #ifndef TIME_TICK_NOTIFY_H
 #define TIME_TICK_NOTIFY_H
 
+#include <atomic>
 #include <mutex>
 
 namespace OHOS {
@@ -32,7 +33,10 @@ public:
 
 private:
     std::pair<uint64_t, bool> RefreshNextTriggerTime();
-    uint64_t timerId_ = 0;
+    // Atomic so GetTickTimerId() can read lock-free (acquiring timeridMutex_ here would
+    // deadlock against TimerManager::StartTimer which holds entryMapMutex_ then calls
+    // GetTickTimerId, while Callback holds timeridMutex_ then calls StartTimer).
+    std::atomic<uint64_t> timerId_ {0};
     std::mutex timeridMutex_;
     int64_t lastTriggerTime_ = 0;
 };

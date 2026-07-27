@@ -55,9 +55,9 @@ constexpr const char *DROP_ON_REBOOT_ADD_NAME_COLUMN = "ALTER TABLE drop_on_rebo
 constexpr const char *DB_NAME = "/data/service/el1/public/database/time/time.db";
 constexpr int DATABASE_OPEN_VERSION_2 = 2;
 constexpr int DATABASE_OPEN_VERSION_3 = 3;
-constexpr int COLUMN_INDEX_BUNDLE_NAME = 0;
-constexpr int COLUMN_INDEX_TIMER_NAME = 1;
-constexpr int COLUMN_INDEX_COUNT = 2;
+constexpr int TOP_COLUMN_INDEX_BUNDLE_NAME = 0;
+constexpr int TOP_COLUMN_INDEX_TIMER_NAME = 1;
+constexpr int TOP_COLUMN_INDEX_COUNT = 2;
 
 TimeDatabase::TimeDatabase()
 {
@@ -100,7 +100,7 @@ bool TimeDatabase::RecoverDataBase()
         return false;
     }
     TimeDBOpenCallback timeDbOpenCallback;
-    int errCode;
+    int errCode = OHOS::NativeRdb::E_OK;
     store_ = OHOS::NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_OPEN_VERSION_3, timeDbOpenCallback, errCode);
     if (store_ == nullptr) {
         return false;
@@ -117,21 +117,30 @@ std::shared_ptr<OHOS::NativeRdb::RdbStore> TimeDatabase::GetStore()
 int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
 {
     int value = 0;
-    resultSet->GetInt(line, value);
+    int ret = resultSet->GetInt(line, value);
+    if (ret != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "GetInt failed, line:%{public}d, ret:%{public}d", line, ret);
+    }
     return value;
 }
 
 int64_t GetLong(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
 {
     int64_t value = 0;
-    resultSet->GetLong(line, value);
+    int ret = resultSet->GetLong(line, value);
+    if (ret != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "GetLong failed, line:%{public}d, ret:%{public}d", line, ret);
+    }
     return value;
 }
 
 std::string GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
 {
     std::string value = "";
-    resultSet->GetString(line, value);
+    int ret = resultSet->GetString(line, value);
+    if (ret != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "GetString failed, line:%{public}d, ret:%{public}d", line, ret);
+    }
     return value;
 }
 
@@ -215,8 +224,11 @@ std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
     }
     int32_t count = 0;
     if (result->GetRowCount(count) == OHOS::NativeRdb::E_SQLITE_CORRUPT) {
-        RecoverDataBase();
+        // Close result BEFORE RecoverDataBase: RecoverDataBase deletes the db and closes the
+        // underlying sqlite3 connection, so closing result afterwards would touch freed resources
+        // (use-after-free).
         result->Close();
+        RecoverDataBase();
         return nullptr;
     }
     return result;
@@ -268,8 +280,11 @@ std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::QuerySql(const std::st
     }
     int32_t count = 0;
     if (result->GetRowCount(count) == OHOS::NativeRdb::E_SQLITE_CORRUPT) {
-        RecoverDataBase();
+        // Close result BEFORE RecoverDataBase: RecoverDataBase deletes the db and closes the
+        // underlying sqlite3 connection, so closing result afterwards would touch freed resources
+        // (use-after-free).
         result->Close();
+        RecoverDataBase();
         return nullptr;
     }
     return result;
@@ -389,9 +404,9 @@ std::vector<TimerDbTopAppInfo> TimeDatabase::GetTopApps(int topN)
         if (queryResult->GoToFirstRow() == OHOS::NativeRdb::E_OK) {
             do {
                 TimerDbTopAppInfo info;
-                info.bundleName = GetString(queryResult, COLUMN_INDEX_BUNDLE_NAME);
-                info.timerName = GetString(queryResult, COLUMN_INDEX_TIMER_NAME);
-                info.count = GetInt(queryResult, COLUMN_INDEX_COUNT);
+                info.bundleName = GetString(queryResult, TOP_COLUMN_INDEX_BUNDLE_NAME);
+                info.timerName = GetString(queryResult, TOP_COLUMN_INDEX_TIMER_NAME);
+                info.count = GetInt(queryResult, TOP_COLUMN_INDEX_COUNT);
                 result.push_back(info);
             } while (queryResult->GoToNextRow() == OHOS::NativeRdb::E_OK);
         }

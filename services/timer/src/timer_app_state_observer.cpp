@@ -24,7 +24,7 @@ namespace OHOS {
 namespace MiscServices {
 
 // =============================================================================
-// Section 1: Singleton Access
+// Singleton Access
 // =============================================================================
 
 sptr<TimerAppStateObserver> TimerAppStateObserver::GetInstance()
@@ -35,22 +35,22 @@ sptr<TimerAppStateObserver> TimerAppStateObserver::GetInstance()
 }
 
 // =============================================================================
-// Section 2: Constructor / Destructor
-// =============================================================================
-
-TimerAppStateObserver::~TimerAppStateObserver()
-{
-    Unregister();
-}
-
-// =============================================================================
-// Section 3: Registration Management
+// Registration Management
 // =============================================================================
 
 bool TimerAppStateObserver::Register(const std::vector<std::string>& bundleNames,
     const AppStateCallback& callback)
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Register app state observer start.");
+    // Three-phase lock pattern: state check/set (Phase1) and commit (Phase3) are under mutex_,
+    // but the AppMgr IPC (Phase2) runs outside the lock to avoid deadlock with
+    // HandleAppStateChange (which takes mutex_). This relies on the caller NOT invoking Register
+    // concurrently: concurrent Register calls could both pass the isRegistered_==false check in
+    // Phase1 and double-register at AppMgr, and a failed Phase2 ResetState() would unconditionally
+    // clear another thread's committed state. The sole caller (TimerLockOptimizer::Init) is
+    // single-threaded init, so the race does not trigger today. If Register ever becomes
+    // concurrent, introduce a Registering intermediate state (CAS-guarded Phase2 entry,
+    // conditional ResetState) instead of this pattern.
     // Phase 1: Check and set state under lock (critical section - no IPC)
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -95,16 +95,26 @@ void TimerAppStateObserver::Unregister()
     }
 
     // Phase 2: IPC call outside lock (prevents deadlock)
+    // TOCTOU note: between Phase1 check and Phase2 ResetState, a concurrent Register could pass
+    // its isRegistered_==true fast check and then be cleared by ResetState here (silent register
+    // loss). Same root cause as Register's three-phase race (see Register comment); relies on the
+    // caller not invoking Register/Unregister concurrently. If they become concurrent, introduce
+    // a Registering/Unregistering intermediate state.
     sptr<AppExecFwk::IAppMgr> appMgr = GetAppMgrInterface();
-    if (appMgr) {
-        appMgr->UnregisterApplicationStateObserver(this);
+    if (!appMgr) {
+        // AppMgr unavailable: cannot unregister at the framework side. Keep isRegistered_=true so
+        // the next Unregister retries; calling ResetState here would mark us unregistered locally
+        // while still registered at AppMgr, causing duplicate registration on next Register.
+        TIME_HILOGE(TIME_MODULE_SERVICE, "appMgr is nullptr, skip unregister, keep registered state");
+        return;
     }
+    appMgr->UnregisterApplicationStateObserver(this);
     ResetState();
     TIME_HILOGI(TIME_MODULE_SERVICE, "Unregister done");
 }
 
 // =============================================================================
-// Section 4: App Lifecycle Callbacks (Override)
+// App Lifecycle Callbacks (Override)
 // =============================================================================
 
 void TimerAppStateObserver::OnAppStarted(const AppExecFwk::AppStateData &appStateData)
@@ -122,7 +132,7 @@ void TimerAppStateObserver::OnAppStopped(const AppExecFwk::AppStateData &appStat
 }
 
 // =============================================================================
-// Section 5: Private Helper Methods
+// Private Helper Methods
 // =============================================================================
 
 sptr<AppExecFwk::IAppMgr> TimerAppStateObserver::GetAppMgrInterface()

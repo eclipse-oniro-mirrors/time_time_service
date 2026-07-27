@@ -75,6 +75,8 @@ private:
         std::function<void(std::shared_ptr<TimerInfo> &alarm, bool needRetrigger)> insertAlarmCallback);
     bool IsAppInAncoBlackList(std::string appName);
 
+    // Lock ordering: proxyMutex_ -> uidTimersMutex_. Never acquire in reverse order.
+    // adjustMutex_ is independent and is never held together with the above two.
     std::mutex uidTimersMutex_;
     /* <uid, <id, alarm ptr>> */
     std::unordered_map<int32_t, std::unordered_map<uint64_t, std::shared_ptr<TimerInfo>>> uidTimersMap_ {};

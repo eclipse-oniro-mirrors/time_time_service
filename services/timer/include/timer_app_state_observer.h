@@ -47,7 +47,6 @@ public:
 
 private:
     TimerAppStateObserver() = default;
-    ~TimerAppStateObserver() override;
 
     sptr<AppExecFwk::IAppMgr> GetAppMgrInterface();
 

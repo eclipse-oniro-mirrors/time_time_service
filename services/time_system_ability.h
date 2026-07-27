@@ -146,8 +146,6 @@ private:
     #endif
 
     ServiceRunningState state_;
-    static std::mutex instanceLock_;
-    static sptr<TimeSystemAbility> instance_;
     const int rtcId;
     sptr<RSSSaDeathRecipient> deathRecipient_ {};
     std::mutex rssDeathLock_;

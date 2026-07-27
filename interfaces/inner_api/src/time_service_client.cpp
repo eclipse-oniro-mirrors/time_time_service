@@ -168,11 +168,21 @@ bool TimeServiceClient::ConnectService()
         return false;
     }
     IPCObjectProxy *ipcProxy = reinterpret_cast<IPCObjectProxy*>(systemAbility.GetRefPtr());
+    if (ipcProxy == nullptr) {
+        TIME_HILOGE(TIME_MODULE_CLIENT, "ipcProxy is nullptr");
+        return false;
+    }
     if (ipcProxy->IsObjectDead()) {
         TIME_HILOGE(TIME_MODULE_CLIENT, "Time service is dead");
         return false;
     }
     std::lock_guard<std::mutex> autoLock(deathLock_);
+    // Double-check under lock: another thread may have connected between the unlocked
+    // GetProxy() fast check (L156) and here. Without this, concurrent callers would each
+    // run AddDeathRecipient/SubscribeSA/SetProxy, causing duplicate subscriptions.
+    if (GetProxy() != nullptr) {
+        return true;
+    }
     if (deathRecipient_ == nullptr) {
         deathRecipient_ = new (std::nothrow) TimeSaDeathRecipient();
         if (deathRecipient_ == nullptr) {

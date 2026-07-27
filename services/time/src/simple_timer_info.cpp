@@ -101,6 +101,10 @@ SimpleTimerInfo *SimpleTimerInfo::Unmarshalling(Parcel& parcel)
 {
     auto name = parcel.ReadString();
     auto type = parcel.ReadInt32();
+    if (type < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid type:%{public}d", type);
+        return nullptr;
+    }
     auto repeat = parcel.ReadBool();
     auto disposable = parcel.ReadBool();
     auto autoRestore = parcel.ReadBool();

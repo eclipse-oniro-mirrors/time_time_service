@@ -70,6 +70,11 @@ void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer)
 void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime, const std::string &newTime,
     int64_t ntpTime)
 {
+    // Security/behavior audit event (BEHAVIOR_TIME). ORIGINAL_TIME/SET_TIME/NTP_TIME/CALLER_UID
+    // are intentional audit fields: time changes are security-relevant (can break TLS/token
+    // validity, see S-08) and must be attributable with before/after values. HiSysEvent has
+    // its own access control (READ_HILOG_EVENT / hiview authorization), stricter than HiLog,
+    // so this is not a plaintext log leak. Do not privatize or drop these fields.
     std::string bundleOrProcessName = GetBundleOrProcessName();
     struct HiSysEventParam params[] = {
         {"EVENT_CODE",    HISYSEVENT_INT32,  {.i32 = eventCode},                                    0},
@@ -91,6 +96,8 @@ void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime
 void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime, const std::string &newTime,
     int64_t ntpTime, const std::string &bundleName)
 {
+    // Security/behavior audit event (BEHAVIOR_TIME). See the other TimeBehaviorReport overload
+    // above: ORIGINAL_TIME/SET_TIME are intentional audit fields under HiSysEvent access control.
     struct HiSysEventParam params[] = {
         {"EVENT_CODE",    HISYSEVENT_INT32,  {.i32 = eventCode},                           0},
         {"CALLER_UID",    HISYSEVENT_INT32,  {.i32 = 0},                                   0},

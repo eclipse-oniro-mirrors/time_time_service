@@ -127,6 +127,9 @@ cJSON* CjsonHelper::QueryTable(std::string tableName, cJSON** db)
     *db = cJSON_Parse(fileContent.c_str());
     cJSON* table = cJSON_GetObjectItem(*db, tableName.c_str());
     if (table == NULL) {
+        // Ownership of *db is transferred to the caller: when table==NULL, *db may still be
+        // non-null (cJSON_Parse succeeded). The caller MUST cJSON_Delete(*db) on all return
+        // paths (all current callers do). Do not free here or callers would double-free.
         TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get fail!", tableName.c_str());
         return data;
     }
@@ -222,6 +225,11 @@ bool CjsonHelper::Insert(std::string tableName, std::shared_ptr<TimerEntry> time
     }
     std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     cJSON* db = cJSON_Parse(fileContent.c_str());
+    if (db == NULL) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "cJSON_Parse fail, invalid json content");
+        cJSON_Delete(newLine);
+        return false;
+    }
     cJSON* table = cJSON_GetObjectItem(db, tableName.c_str());
     if (table == NULL) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "%{public}s get fail!", tableName.c_str());

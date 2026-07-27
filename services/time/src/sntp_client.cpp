@@ -16,6 +16,8 @@
 #include "sntp_client.h"
 #include "ntp_trusted_time.h"
 
+#include <cctype>
+#include <cstring>
 #include <netdb.h>
 #include <securec.h>
 #include <sstream>
@@ -26,6 +28,15 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
+// Thread-safe wrapper for strerror (strerror uses a process-wide static buffer and is not
+// thread-safe; strerror_r writes into the caller-provided buffer).
+std::string SafeStrError(int errnum)
+{
+    char buf[256] = {0};
+    strerror_r(errnum, buf, sizeof(buf));
+    return std::string(buf);
+}
+
 constexpr uint64_t SECONDS_SINCE_FIRST_EPOCH = 2208988800; // Seconds from 1/1/1900 00.00 to 1/1/1970 00.00;
 constexpr uint64_t MILLISECOND_TO_SECOND = 1000;
 constexpr uint64_t FRACTION_TO_SECOND = 0x100000000;
@@ -42,6 +53,7 @@ constexpr unsigned char MODE_THREE = 3;
 constexpr unsigned char VERSION_THREE = 3;
 constexpr double TEN_TO_MINUS_SIX_POWER = 1.0e-6;
 constexpr const char* NTP_PORT = "123";
+constexpr size_t NTP_HOST_MAX_LEN = 255;
 constexpr int32_t NTP_MSG_OFFSET_ROOT_DELAY = 4;
 constexpr int32_t NTP_MSG_OFFSET_ROOT_DISPERSION = 8;
 constexpr int32_t NTP_MSG_OFFSET_REFERENCE_IDENTIFIER = 12;
@@ -56,35 +68,19 @@ constexpr int32_t SNTP_MSG_OFFSET_THREE = 3;
 
 bool SNTPClient::RequestTime(const std::string &host)
 {
+    if (host.empty() || host.size() > NTP_HOST_MAX_LEN) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid host length:%{public}zu", host.size());
+        return false;
+    }
+    for (char c : host) {
+        if (iscntrl(static_cast<unsigned char>(c)) || c == ' ') {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "invalid host char");
+            return false;
+        }
+    }
     int bufLen = NTP_PACKAGE_SIZE;
-    struct addrinfo hints = { 0 };
-    struct addrinfo *addrs;
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = IPPROTO_UDP;
-    int error = getaddrinfo(host.c_str(), NTP_PORT, &hints, &addrs);
-    if (error != 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "getaddrinfo failed error %{public}d", error);
-        return false;
-    }
-
-    // Create a socket for sending data
-    int sendSocket = socket(addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
+    int sendSocket = CreateConnectedSocket(host);
     if (sendSocket < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE,
-                    "create socket failed: %{public}s family: %{public}d socktype: %{public}d protocol: %{public}d",
-                    strerror(errno), addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
-        return false;
-    }
-    fdsan_exchange_owner_tag(sendSocket, 0, BASE_TIME_FDSAN_TAG);
-
-    // Set send and recv function timeout
-    struct timeval timeout = { TIME_OUT, 0 };
-    setsockopt(sendSocket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(struct timeval));
-    setsockopt(sendSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
-    if (connect(sendSocket, addrs->ai_addr, addrs->ai_addrlen) < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "socket connect failed: %{public}s", strerror(errno));
-        fdsan_close_with_tag(sendSocket, BASE_TIME_FDSAN_TAG);
         return false;
     }
 
@@ -93,16 +89,18 @@ bool SNTPClient::RequestTime(const std::string &host)
     CreateMessage(sendBuf);
     if (send(sendSocket, sendBuf, bufLen, 0) < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Send socket message failed: %{public}s, Host: %{public}s",
-                    strerror(errno), host.c_str());
+                    SafeStrError(errno).c_str(), host.c_str());
         fdsan_close_with_tag(sendSocket, BASE_TIME_FDSAN_TAG);
         return false;
     }
 
     char bufferRx[NTP_PACKAGE_SIZE] = { 0 };
     // Receive until the peer closes the connection
-    if (recv(sendSocket, bufferRx, NTP_PACKAGE_SIZE, 0) < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Receive socket message failed: %{public}s, Host: %{public}s",
-                    strerror(errno), host.c_str());
+    int recvLen = recv(sendSocket, bufferRx, NTP_PACKAGE_SIZE, 0);
+    if (recvLen != NTP_PACKAGE_SIZE) {
+        TIME_HILOGE(TIME_MODULE_SERVICE,
+                    "Receive socket message failed: %{public}s, Host: %{public}s, recvLen: %{public}d",
+                    SafeStrError(errno).c_str(), host.c_str(), recvLen);
         fdsan_close_with_tag(sendSocket, BASE_TIME_FDSAN_TAG);
         return false;
     }
@@ -114,14 +112,64 @@ bool SNTPClient::RequestTime(const std::string &host)
     return true;
 }
 
+int32_t SNTPClient::CreateConnectedSocket(const std::string &host)
+{
+    struct addrinfo hints = { 0 };
+    struct addrinfo *addrs = nullptr;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+    int error = getaddrinfo(host.c_str(), NTP_PORT, &hints, &addrs);
+    if (error != 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "getaddrinfo failed error %{public}d", error);
+        return -1;
+    }
+    // RAII: ensure addrs is freed on every return path to avoid memory leak
+    struct AddrInfoDeleter {
+        addrinfo *&ref;
+        ~AddrInfoDeleter()
+        {
+            if (ref != nullptr) {
+                freeaddrinfo(ref);
+                ref = nullptr;
+            }
+        }
+    } addrGuard{ addrs };
+
+    // Create a socket for sending data
+    int sendSocket = socket(addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
+    if (sendSocket < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE,
+                    "create socket failed: %{public}s family: %{public}d socktype: %{public}d protocol: %{public}d",
+                    SafeStrError(errno).c_str(), addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
+        return -1;
+    }
+    fdsan_exchange_owner_tag(sendSocket, 0, BASE_TIME_FDSAN_TAG);
+
+    // Set send and recv function timeout
+    struct timeval timeout = { TIME_OUT, 0 };
+    setsockopt(sendSocket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(struct timeval));
+    setsockopt(sendSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
+    if (connect(sendSocket, addrs->ai_addr, addrs->ai_addrlen) < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "socket connect failed: %{public}s", SafeStrError(errno).c_str());
+        fdsan_close_with_tag(sendSocket, BASE_TIME_FDSAN_TAG);
+        return -1;
+    }
+    return sendSocket;
+}
+
 void SNTPClient::SetClockOffset(int clockOffset)
 {
     m_clockOffset = clockOffset;
 }
 
-uint64_t SNTPClient::GetNtpTimestamp64(int offset, const char *buffer)
+uint64_t SNTPClient::GetNtpTimestamp64(int offset, const char *buffer, size_t bufferLen)
 {
     const int _len = sizeof(uint64_t);
+    if (offset < 0 || static_cast<size_t>(offset) + _len > bufferLen) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid offset:%{public}d bufferLen:%{public}zu", offset, bufferLen);
+        return 0;
+    }
     char valueRx[_len];
     errno_t ret = memset_s(valueRx, sizeof(uint64_t), 0, sizeof(uint64_t));
     if (ret != EOK) {
@@ -146,7 +194,16 @@ uint64_t SNTPClient::GetNtpTimestamp64(int offset, const char *buffer)
 void SNTPClient::ConvertUnixToNtp(struct ntp_timestamp *ntpTs, struct timeval *unixTs)
 {
     // 0x83AA7E80; the seconds from Jan 1, 1900 to Jan 1, 1970
-    ntpTs->second = unixTs->tv_sec + SECONDS_SINCE_FIRST_EPOCH; // 0x83AA7E80;
+    // Guard against abnormal system time: a negative tv_sec (pre-1970) would wrap to a huge
+    // value when mixed-signed added to the uint64_t constant. Reject it explicitly, and use
+    // an explicit cast to avoid signed/unsigned implicit conversion ambiguity.
+    if (unixTs->tv_sec < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid tv_sec:%{public}lld", static_cast<long long>(unixTs->tv_sec));
+        ntpTs->second = 0;
+        ntpTs->fraction = 0;
+        return;
+    }
+    ntpTs->second = static_cast<uint64_t>(unixTs->tv_sec) + SECONDS_SINCE_FIRST_EPOCH; // 0x83AA7E80;
     ntpTs->fraction =
         static_cast<uint64_t>((unixTs->tv_usec + 1) * (1LL << RECEIVE_TIMESTAMP_OFFSET) * TEN_TO_MINUS_SIX_POWER);
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
@@ -233,18 +290,18 @@ bool SNTPClient::ReceivedMessage(char *buffer)
     _sntpMsg._stratum = buffer[INDEX_ONE];
     _sntpMsg._pollInterval = buffer[INDEX_TWO];
     _sntpMsg._precision = buffer[INDEX_THREE];
-    _sntpMsg._rootDelay = GetNtpField32(NTP_MSG_OFFSET_ROOT_DELAY, buffer);
-    _sntpMsg._rootDispersion = GetNtpField32(NTP_MSG_OFFSET_ROOT_DISPERSION, buffer);
+    _sntpMsg._rootDelay = GetNtpField32(NTP_MSG_OFFSET_ROOT_DELAY, buffer, NTP_PACKAGE_SIZE);
+    _sntpMsg._rootDispersion = GetNtpField32(NTP_MSG_OFFSET_ROOT_DISPERSION, buffer, NTP_PACKAGE_SIZE);
     int _refId[INDEX_FOUR];
-    GetReferenceId(NTP_MSG_OFFSET_REFERENCE_IDENTIFIER, buffer, _refId);
+    GetReferenceId(NTP_MSG_OFFSET_REFERENCE_IDENTIFIER, buffer, NTP_PACKAGE_SIZE, _refId);
     _sntpMsg._referenceIdentifier[INDEX_ZERO] = _refId[INDEX_ZERO];
     _sntpMsg._referenceIdentifier[INDEX_ONE] = _refId[INDEX_ONE];
     _sntpMsg._referenceIdentifier[INDEX_TWO] = _refId[INDEX_TWO];
     _sntpMsg._referenceIdentifier[INDEX_THREE] = _refId[INDEX_THREE];
-    _sntpMsg._referenceTimestamp = GetNtpTimestamp64(REFERENCE_TIMESTAMP_OFFSET, buffer);
-    _sntpMsg._originateTimestamp = GetNtpTimestamp64(ORIGINATE_TIMESTAMP_OFFSET, buffer);
-    _sntpMsg._receiveTimestamp = GetNtpTimestamp64(RECEIVE_TIMESTAMP_OFFSET, buffer);
-    _sntpMsg._transmitTimestamp = GetNtpTimestamp64(TRANSMIT_TIMESTAMP_OFFSET, buffer);
+    _sntpMsg._referenceTimestamp = GetNtpTimestamp64(REFERENCE_TIMESTAMP_OFFSET, buffer, NTP_PACKAGE_SIZE);
+    _sntpMsg._originateTimestamp = GetNtpTimestamp64(ORIGINATE_TIMESTAMP_OFFSET, buffer, NTP_PACKAGE_SIZE);
+    _sntpMsg._receiveTimestamp = GetNtpTimestamp64(RECEIVE_TIMESTAMP_OFFSET, buffer, NTP_PACKAGE_SIZE);
+    _sntpMsg._transmitTimestamp = GetNtpTimestamp64(TRANSMIT_TIMESTAMP_OFFSET, buffer, NTP_PACKAGE_SIZE);
     int64_t _originClient = m_originateTimestamp;
     int64_t _receiveServer = ConvertNtpToStamp(_sntpMsg._receiveTimestamp);
     int64_t _transmitServer = ConvertNtpToStamp(_sntpMsg._transmitTimestamp);
@@ -258,7 +315,7 @@ bool SNTPClient::ReceivedMessage(char *buffer)
     mNtpTime = receiveBootTime + _clockOffset;
     TimeUtils::GetBootTimeMs(mNtpTimeReference);
     SetClockOffset(_clockOffset);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "_originClient:%{public}s, _receiveServer:%{public}s, _transmitServer:%{public}s,"
+    TIME_HILOGD(TIME_MODULE_SERVICE, "_originClient:%{public}s, _receiveServer:%{public}s, _transmitServer:%{public}s,"
                 "_receiveClient:%{public}s", std::to_string(_originClient).c_str(),
                 std::to_string(_receiveServer).c_str(), std::to_string(_transmitServer).c_str(),
                 std::to_string(_receiveClient).c_str());
@@ -268,14 +325,18 @@ bool SNTPClient::ReceivedMessage(char *buffer)
     return true;
 }
 
-unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer)
+unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer, size_t bufferLen)
 {
     const int _len = sizeof(int);
+    if (offset < 0 || static_cast<size_t>(offset) + _len > bufferLen) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid offset:%{public}d bufferLen:%{public}zu", offset, bufferLen);
+        return 0;
+    }
     char valueRx[_len];
     errno_t ret = memset_s(valueRx, _len, 0, _len);
     if (ret != EOK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);
-        return false;
+        return 0;
     }
     int numOfBit = sizeof(int) - 1;
     for (int loop = offset; loop < offset + _len; loop++) {
@@ -287,15 +348,19 @@ unsigned int SNTPClient::GetNtpField32(int offset, const char *buffer)
     errno_t retValue = memcpy_s(&milliseconds, sizeof(int), valueRx, sizeof(int));
     if (retValue != EOK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", retValue);
-        return false;
+        return 0;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "end");
     return milliseconds;
 }
 
-void SNTPClient::GetReferenceId(int offset, char *buffer, int *_outArray)
+void SNTPClient::GetReferenceId(int offset, const char *buffer, size_t bufferLen, int *_outArray)
 {
     const int _len = sizeof(int);
+    if (offset < 0 || static_cast<size_t>(offset) + _len > bufferLen) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid offset:%{public}d bufferLen:%{public}zu", offset, bufferLen);
+        return;
+    }
     int num = 0;
     for (int loop = offset; loop < offset + _len; loop++) {
         _outArray[num] = buffer[loop];
