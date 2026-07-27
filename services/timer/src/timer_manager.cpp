@@ -862,7 +862,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             auto alarm = batch->Get(i);
             triggerList.push_back(alarm);
             if (!IsNoLog(alarm) && alarm->id != TimeTickNotify::GetInstance().GetTickTimerId()) {
-                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "uid:%{public}d id:%{public}" PRId64 " wk:%{public}u",
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "tg:%{public}d %{public}" PRId64 " %{public}u",
                     alarm->uid, alarm->id, alarm->wakeup);
             }
             if (alarm->wakeup) {
