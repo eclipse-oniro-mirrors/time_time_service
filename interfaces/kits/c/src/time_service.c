@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include <stddef.h>
+
 #include "time_service.h"
 #include "parameter.h"
 #include "sysparam_errno.h"
@@ -21,6 +23,9 @@ const char * const TIMEZONE_KEY = "persist.time.timezone";
 
 TimeService_ErrCode OH_TimeService_GetTimeZone(char *timeZone, uint32_t len)
 {
+    if (timeZone == NULL || len == 0) {
+        return TIMESERVICE_ERR_INVALID_PARAMETER;
+    }
     int ret = GetParameter(TIMEZONE_KEY, "", timeZone, len);
     if (ret == EC_INVALID) {
         return TIMESERVICE_ERR_INVALID_PARAMETER;

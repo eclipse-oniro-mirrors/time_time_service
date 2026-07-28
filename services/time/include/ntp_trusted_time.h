@@ -19,6 +19,7 @@
 
 #include "time_common.h"
 #include <mutex>
+#include <vector>
 
 namespace OHOS {
 namespace MiscServices {
@@ -55,7 +56,8 @@ public:
         std::string mNtpServer;
     };
     bool IsTimeResultTrusted(std::shared_ptr<TimeResult> timeResult);
-    int32_t GetSameTimeResultCount(std::shared_ptr<TimeResult> candidateTimeResult);
+    int32_t GetSameTimeResultCount(std::shared_ptr<TimeResult> candidateTimeResult,
+        const std::vector<std::shared_ptr<TimeResult>> &candidates);
 
 private:
     std::shared_ptr<TimeResult> mTimeResult {};

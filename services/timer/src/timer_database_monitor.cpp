@@ -119,7 +119,7 @@ void TimerDatabaseMonitor::CheckDatabaseAndReport()
         topAppInfo += info.bundleName + ":" + info.timerName + ":" + std::to_string(info.count);
     }
     TimerDatabaseOverBaselineReporter(sizeInfo, recordCount, topAppInfo);
-    TIME_HILOGW(TIME_MODULE_SERVICE,
+    TIME_HILOGD(TIME_MODULE_SERVICE,
         "TimerDB over baseline! size=%{public}lld, count=%{public}d, topApps=%{public}s",
         static_cast<long long>(dbSize), recordCount, topAppInfo.c_str());
 }

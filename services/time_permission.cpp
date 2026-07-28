@@ -80,8 +80,12 @@ bool TimePermission::CheckProxyCallingPermission()
 {
     auto callerToken = IPCSkeleton::GetCallingTokenID();
     auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
-    return (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE ||
-            tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL);
+    // TOKEN_NATIVE (system services) and TOKEN_SHELL (debug) are trusted callers that bypass
+    // application-layer permission checks. TOKEN_SHELL is only issued on non-user (eng/debug)
+    // builds by the framework, so it is gated at the framework level, not here. System service
+    // inter-calls (TOKEN_NATIVE) must not be blocked by app permissions or system functions break.
+    return tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE ||
+           tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL;
 }
 
 bool TimePermission::CheckSystemUidCallingPermission(uint64_t tokenId)
@@ -113,6 +117,10 @@ bool TimePermission::IsAppNeedsAuthCheck()
 bool TimePermission::CheckAuthorization(const std::string &privilege)
 {
     // 仅检查列表中的应用需要进行权限校验
+    // Only the apps that users can operate directly (checkedBundles_ whitelist) need this
+    // authorization check. Other system apps are allowed to modify the system time by default
+    // and return true here. The whitelist prevents non-admin users from modifying the system
+    // time directly.
     if (!IsAppNeedsAuthCheck()) {
         return true;
     }

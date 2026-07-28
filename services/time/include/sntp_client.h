@@ -16,6 +16,7 @@
 #ifndef SNTP_CLIENT_SNTP_CLIENT_H
 #define SNTP_CLIENT_SNTP_CLIENT_H
 
+#include <cstddef>
 #include <string>
 #include <sys/types.h>
 
@@ -62,17 +63,18 @@ private:
         void clear();
     };
 
-    unsigned int GetNtpField32(int offset, const char *buffer);
+    unsigned int GetNtpField32(int offset, const char *buffer, size_t bufferLen);
     /**
      * This function returns an array based on the Reference ID
      * (converted from NTP message), given the offset provided.
      *
      * @param offset the offset of the field in the NTP message
      * @param buffer the received message
+     * @param bufferLen the length of the received message buffer
      *
      * Returns the array of Reference ID
      */
-    void GetReferenceId(int offset, char *buffer, int *_outArray);
+    void GetReferenceId(int offset, const char *buffer, size_t bufferLen, int *_outArray);
     /**
      * This function sets the clock offset in ms.
      * Negative value means the local clock is ahead,
@@ -107,15 +109,26 @@ private:
     bool ReceivedMessage(char *buffer);
 
     /**
+     * This function resolves the host address and creates a connected UDP
+     * socket with send/recv timeout configured.
+     *
+     * @param host the NTP server host
+     *
+     * Returns the socket fd on success, -1 on failure.
+     */
+    int32_t CreateConnectedSocket(const std::string &host);
+
+    /**
      * This function returns the timestamp (64-bit) from the received
      * buffer, given the offset provided.
      *
      * @param offset the offset of the timestamp in the NTP message
      * @param buffer the received message
+     * @param bufferLen the length of the received message buffer
      *
      * Returns the ntp timestamp
      */
-    uint64_t GetNtpTimestamp64(int offset, const char *buffer);
+    uint64_t GetNtpTimestamp64(int offset, const char *buffer, size_t bufferLen);
 
     /**
      * This function converts the NTP time to timestamp

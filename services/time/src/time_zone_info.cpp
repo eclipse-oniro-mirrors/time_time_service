@@ -29,8 +29,9 @@ constexpr const char *TIMEZONE_LIST_CONFIG_PATH = "/system/etc/zoneinfo/timezone
 constexpr const char *DISTRO_TIMEZONE_LIST_CONFIG = "/system/etc/tzdata_distro/timezone_list.cfg";
 constexpr const char *CONVERT_TIMEZONE_LIST_PATH = "/system/etc/zoneinfo/timezone_convert.txt";
 constexpr int TIMEZONE_OK = 0;
-constexpr int CONFIG_LEN = 35;
+constexpr int CONFIG_LEN = 64;
 constexpr int HOUR_TO_MIN = 60;
+constexpr int SECONDS_PER_DAY = 86400;
 } // namespace
 
 TimeZoneInfo &TimeZoneInfo::GetInstance()
@@ -42,7 +43,11 @@ TimeZoneInfo &TimeZoneInfo::GetInstance()
 void TimeZoneInfo::Init()
 {
     TIME_HILOGD(TIME_MODULE_SERVICE, "Start");
-    char value[CONFIG_LEN] = "Asia/Shanghai";
+    // No hardcoded default timezone in source (regional info privacy). The default timezone is
+    // provided by the system parameter persist.time.timezone, whose default value is defined in
+    // the config file services/etc/time.para. Empty fallback is only used when the parameter
+    // framework fails; SetTimezone handles empty as "no change" in that case.
+    char value[CONFIG_LEN] = "";
     if (GetParameter(TIMEZONE_KEY, "", value, CONFIG_LEN) < TIMEZONE_OK) {
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found timezone from system parameter");
     }
@@ -171,6 +176,12 @@ bool TimeZoneInfo::SetTimezoneToKernel()
     struct timezone tz {};
     if (localTime == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "localtime is nullptr errornum:%{public}s", strerror(errno));
+        return false;
+    }
+    // tm_gmtoff is UTC offset in seconds; valid timezone offsets are within +/-24h (+/-86400s).
+    // Reject abnormal values to avoid -LONG_MIN UB and writing an invalid timezone to the kernel.
+    if (localTime->tm_gmtoff < -SECONDS_PER_DAY || localTime->tm_gmtoff > SECONDS_PER_DAY) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid tm_gmtoff:%{public}ld", localTime->tm_gmtoff);
         return false;
     }
     tz.tz_minuteswest = -localTime->tm_gmtoff / HOUR_TO_MIN;

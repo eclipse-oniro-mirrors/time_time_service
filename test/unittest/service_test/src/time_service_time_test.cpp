@@ -634,7 +634,7 @@ HWTEST_F(TimeServiceTimeTest, SntpClient001, TestSize.Level0)
 {
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
     auto buffer = std::string("31234114451");
-    auto millisecond = ntpClient->GetNtpTimestamp64(0, buffer.c_str());
+    auto millisecond = ntpClient->GetNtpTimestamp64(0, buffer.c_str(), buffer.size());
     EXPECT_GT(millisecond, 0);
 }
 
@@ -654,7 +654,7 @@ HWTEST_F(TimeServiceTimeTest, SntpClient002, TestSize.Level0)
 {
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
     auto buffer = std::string("31234114451");
-    auto millisecond = ntpClient->GetNtpField32(0, buffer.c_str());
+    auto millisecond = ntpClient->GetNtpField32(0, buffer.c_str(), buffer.size());
     EXPECT_GT(millisecond, 0);
 }
 
@@ -856,7 +856,7 @@ HWTEST_F(TimeServiceTimeTest, SntpClient011, TestSize.Level0)
     char buf[5] = {'1', '2', '3', '4', '5'};
     int array[5] = {0};
     std::shared_ptr<SNTPClient> ntpClient = std::make_shared<SNTPClient>();
-    ntpClient -> GetReferenceId(0, buf, array);
+    ntpClient -> GetReferenceId(0, buf, sizeof(buf), array);
     EXPECT_EQ(array[0], '1');
 }
 

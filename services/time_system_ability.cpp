@@ -88,9 +88,6 @@ constexpr const char* SUBSCRIBE_REMOVED = "UserRemoved";
 
 REGISTER_SYSTEM_ABILITY_BY_ID(TimeSystemAbility, TIME_SERVICE_ID, true);
 
-std::mutex TimeSystemAbility::instanceLock_;
-sptr<TimeSystemAbility> TimeSystemAbility::instance_;
-
 #ifdef MULTI_ACCOUNT_ENABLE
 class UserRemovedSubscriber : public AccountSA::OsAccountSubscriber {
 public:
@@ -126,13 +123,11 @@ TimeSystemAbility::~TimeSystemAbility(){};
 
 sptr<TimeSystemAbility> TimeSystemAbility::GetInstance()
 {
-    if (instance_ == nullptr) {
-        std::lock_guard<std::mutex> autoLock(instanceLock_);
-        if (instance_ == nullptr) {
-            instance_ = new TimeSystemAbility;
-        }
-    }
-    return instance_;
+    // Use C++11 function-local static (magic statics) for thread-safe initialization.
+    // The previous double-checked locking pattern read the non-atomic `instance_` without a
+    // lock, which could observe a partially-constructed object on some platforms.
+    static sptr<TimeSystemAbility> instance = new TimeSystemAbility;
+    return instance;
 }
 
 #ifdef HIDUMPER_ENABLE
@@ -224,6 +219,11 @@ void TimeSystemAbility::OnStart()
     #endif
     TimerDatabaseMonitor::GetInstance().Start();
     if (Init() != ERR_OK) {
+        // Retry Init() once after INIT_INTERVAL. This is safe because TimeSystemAbility is a
+        // process-level singleton (magic statics, see GetInstance) that is never destroyed, so
+        // the captured `this` stays valid across the sleep. Only one retry thread is ever
+        // created (Init() itself does not spawn another). For a fully join-able lifecycle a
+        // worker/pool refactor (long-term item) would be needed.
         auto callback = [this]() {
             sleep(INIT_INTERVAL);
             Init();
@@ -594,6 +594,10 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     TimeUtils::GetWallTimeMs(beforeTime);
     int64_t bootTime = 0;
     TimeUtils::GetBootTimeMs(bootTime);
+    // Security audit log: setting system time is a sensitive operation (can break TLS/token
+    // validity, see S-08). WARN level with plaintext uid/pid is intentional so that time
+    // tampering is attributable to the caller in production logs. Do not downgrade to DEBUG
+    // (would lose audit) or privatize uid/pid (would defeat attribution).
     TIME_HILOGW(TIME_MODULE_SERVICE,
         "Before Current Time:%{public}s"
         " Set time:%{public}s"
@@ -638,6 +642,8 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
 int32_t TimeSystemAbility::SetTime(int64_t time, int8_t apiVersion)
 {
     TimeXCollie timeXCollie("TimeService::SetTime");
+    // Only API_VERSION_9 is restricted to system applications; older API versions skip this
+    // check. System applications are allowed to modify the system time by default.
     if (apiVersion == APIVersion::API_VERSION_9) {
         if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
@@ -648,7 +654,9 @@ int32_t TimeSystemAbility::SetTime(int64_t time, int8_t apiVersion)
         TIME_HILOGE(TIME_MODULE_SERVICE, "permission check setTime failed");
         return E_TIME_NO_PERMISSION;
     }
-    // 添加 CheckAuthorization 校验
+    // CheckAuthorization only applies to the apps that users can operate directly (checkedBundles_
+    // whitelist). Other system apps are allowed to modify the system time by default and skip this
+    // check. The whitelist is to prevent non-admin users from modifying the system time directly.
     if (!TimePermission::CheckAuthorization(TimePermission::setTimePrivilege)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "CheckAuthorization failed for SET_TIME");
         return E_TIME_AUTHORIZATION_FAILED;
@@ -721,9 +729,13 @@ void TimeSystemAbility::DumpTimerInfo(int fd, const std::vector<std::string> &in
 void TimeSystemAbility::DumpTimerInfoById(int fd, const std::vector<std::string> &input)
 {
     dprintf(fd, "\n - dump the timer info with timer id:\n");
-    int paramNumPos = 2;
+    size_t paramNumPos = 2;
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
+        return;
+    }
+    if (input.size() <= paramNumPos) {
+        dprintf(fd, " invalid param, need timer id\n");
         return;
     }
     timerManager->ShowTimerEntryById(fd, std::atoi(input.at(paramNumPos).c_str()));
@@ -732,9 +744,13 @@ void TimeSystemAbility::DumpTimerInfoById(int fd, const std::vector<std::string>
 void TimeSystemAbility::DumpTimerTriggerById(int fd, const std::vector<std::string> &input)
 {
     dprintf(fd, "\n - dump timer trigger statics with timer id:\n");
-    int paramNumPos = 2;
+    size_t paramNumPos = 2;
     auto timerManager = TimerManager::GetInstance();
     if (timerManager == nullptr) {
+        return;
+    }
+    if (input.size() <= paramNumPos) {
+        dprintf(fd, " invalid param, need timer id\n");
         return;
     }
     timerManager->ShowTimerTriggerById(fd, std::atoi(input.at(paramNumPos).c_str()));
@@ -1378,32 +1394,23 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
         return;
     }
     do {
-        auto timerId = static_cast<uint64_t>(GetLong(resultSet, 0));
+        auto timerId = static_cast<uint64_t>(GetLong(resultSet, COLUMN_INDEX_TIMER_ID));
         auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
-            // line 11 is 'name'
-            GetString(resultSet, 11),
-            // Line 0 is 'timerId'
+            GetString(resultSet, COLUMN_INDEX_NAME),
             timerId,
-            // Line 1 is 'type'
-            GetInt(resultSet, 1),
-            // Line 3 is 'windowLength'
-            static_cast<uint64_t>(GetLong(resultSet, 3)),
-            // Line 4 is 'interval'
-            static_cast<uint64_t>(GetLong(resultSet, 4)),
-            // Line 2 is 'flag'
-            GetInt(resultSet, 2),
+            GetInt(resultSet, COLUMN_INDEX_TYPE),
+            static_cast<uint64_t>(GetLong(resultSet, COLUMN_INDEX_WINDOW_LENGTH)),
+            static_cast<uint64_t>(GetLong(resultSet, COLUMN_INDEX_INTERVAL)),
+            GetInt(resultSet, COLUMN_INDEX_FLAG),
             // autoRestore depends on the table type
             autoRestore,
             // Callback can't recover.
             nullptr,
-            // Line 7 is 'wantAgent'
-            OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(GetString(resultSet, 7)),
-            // Line 5 is 'uid'
-            GetInt(resultSet, 5),
-            // Line 10 is 'pid'
-            GetInt(resultSet, 10),
-            // Line 6 is 'bundleName'
-            GetString(resultSet, 6)
+            OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(
+                GetString(resultSet, COLUMN_INDEX_WANT_AGENT)),
+            GetInt(resultSet, COLUMN_INDEX_UID),
+            GetInt(resultSet, COLUMN_INDEX_PID),
+            GetString(resultSet, COLUMN_INDEX_BUNDLE_NAME)
         });
         if (timerInfo->wantAgent == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "wantAgent is nullptr, uid=%{public}d, id=%{public}" PRId64 "",
@@ -1411,11 +1418,9 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             continue;
         }
         timerManager->ReCreateTimer(timerId, timerInfo);
-        // Line 8 is 'state'
-        auto state = static_cast<uint8_t>(GetInt(resultSet, 8));
+        auto state = static_cast<uint8_t>(GetInt(resultSet, COLUMN_INDEX_STATE));
         if (state == 1) {
-            // Line 9 is 'triggerTime'
-            auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, 9));
+            auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, COLUMN_INDEX_TRIGGER_TIME));
             timerManager->StartTimer(timerId, triggerTime);
         }
     } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
@@ -1528,8 +1533,8 @@ void TimeSystemAbility::ArmPowerOffTimer(uint64_t triggerTime, int64_t currentTi
     int ret = timerfd_settime(tmfd, TFD_TIMER_ABSTIME, &new_value, nullptr);
     if (ret < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error:%{public}s", strerror(errno));
-        close(tmfd);
     }
+    close(tmfd);
 }
 #endif
 #endif

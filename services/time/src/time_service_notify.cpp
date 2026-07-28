@@ -25,6 +25,10 @@ namespace OHOS {
 namespace MiscServices {
 namespace {
     const std::string COMMON_EVENT_TIMER_TRIGGER = "common.event.TIMER_TRIGGER";
+    // UID of the Resource Schedule Service (RSS). TIMER_TRIGGER events are directed to this
+    // subscriber only so RSS can react (e.g. device-standby / power scheduling). This is a
+    // platform-assigned system UID (1096); no exported framework constant exists, so it is
+    // kept as a named local constant here. Update if the platform UID allocation changes.
     const int UID_RSS = 1096;
 }
 TimeServiceNotify &TimeServiceNotify::GetInstance()

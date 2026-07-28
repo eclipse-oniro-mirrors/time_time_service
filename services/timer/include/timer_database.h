@@ -26,6 +26,21 @@
 namespace OHOS {
 namespace MiscServices {
 
+// Column indices in the timer table (see CREATE_TIME_TIMER_* in timer_database.cpp).
+// Keep in sync with the schema.
+constexpr int COLUMN_INDEX_TIMER_ID = 0;
+constexpr int COLUMN_INDEX_TYPE = 1;
+constexpr int COLUMN_INDEX_FLAG = 2;
+constexpr int COLUMN_INDEX_WINDOW_LENGTH = 3;
+constexpr int COLUMN_INDEX_INTERVAL = 4;
+constexpr int COLUMN_INDEX_UID = 5;
+constexpr int COLUMN_INDEX_BUNDLE_NAME = 6;
+constexpr int COLUMN_INDEX_WANT_AGENT = 7;
+constexpr int COLUMN_INDEX_STATE = 8;
+constexpr int COLUMN_INDEX_TRIGGER_TIME = 9;
+constexpr int COLUMN_INDEX_PID = 10;
+constexpr int COLUMN_INDEX_NAME = 11;
+
 int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
 int64_t GetLong(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);
 std::string GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line);

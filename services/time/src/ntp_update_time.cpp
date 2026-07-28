@@ -34,7 +34,7 @@ constexpr const char* AUTO_TIME_SYSTEM_PARAMETER = "persist.time.auto_time";
 constexpr const char* AUTO_TIME_STATUS_ON = "ON";
 constexpr const char* AUTO_TIME_STATUS_OFF = "OFF";
 constexpr int64_t ONE_HOUR = 3600000;
-constexpr const char* DEFAULT_NTP_SERVER = "1.cn.pool.ntp.org";
+constexpr const char* DEFAULT_NTP_SERVER = "";
 constexpr int32_t RETRY_TIMES = 2;
 constexpr int64_t MIN_NTP_RETRY_INTERVAL = 10000;
 constexpr int64_t MAX_NTP_RETRY_INTERVAL = HALF_DAY_TO_MILLISECOND;
@@ -94,7 +94,7 @@ void NtpUpdateTime::RefreshNetworkTimeByTimer(uint64_t timerId)
         return;
     }
 
-    auto setSystemTime = [this]() { this->SetSystemTime(RETRY_BY_TIMER); };
+    auto setSystemTime = []() { NtpUpdateTime::SetSystemTime(RETRY_BY_TIMER); };
     std::thread thread(setSystemTime);
     thread.detach();
 }
@@ -108,7 +108,15 @@ void NtpUpdateTime::UpdateNITZSetTime()
         TIME_HILOGE(TIME_MODULE_SERVICE, "get boottime fail");
     }
     lastNITZUpdateTime_.store(lastNITZUpdateTime, std::memory_order_relaxed);
-    nitzUpdateTimeMilli_.store(static_cast<uint64_t>(bootTimeMilli), std::memory_order_relaxed);
+    // Guard int64_t -> uint64_t conversion: a negative bootTimeMilli (abnormal steady_clock
+    // epoch) would wrap to a huge value, breaking the NITZ time check downstream. Keep 0
+    // (= NITZ not set) on negative input.
+    if (bootTimeMilli < 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "invalid bootTimeMilli:%{public}lld", static_cast<long long>(bootTimeMilli));
+        nitzUpdateTimeMilli_.store(0, std::memory_order_relaxed);
+    } else {
+        nitzUpdateTimeMilli_.store(static_cast<uint64_t>(bootTimeMilli), std::memory_order_relaxed);
+    }
 }
 
 std::vector<std::string> NtpUpdateTime::SplitNtpAddrs(const std::string &ntpStr)
@@ -174,7 +182,7 @@ NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
     
     for (int i = 0; i < RETRY_TIMES; i++) {
         for (size_t j = 0; j < ntpSpecList.size(); j++) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpSpecServer is:%{public}s", ntpSpecList[j].c_str());
+            TIME_HILOGD(TIME_MODULE_SERVICE, "ntpSpecServer is:%{public}s", ntpSpecList[j].c_str());
             if (NtpTrustedTime::GetInstance().ForceRefreshTrusted(ntpSpecList[j])) {
                 // if refresh time success, need to clear candidates list
                 NtpTrustedTime::GetInstance().ClearTimeResultCandidates();
@@ -182,7 +190,7 @@ NtpRefreshCode NtpUpdateTime::GetNtpTimeInner()
             }
         }
         for (size_t j = 0; j < ntpList.size(); j++) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "ntpServer is:%{public}s", ntpList[j].c_str());
+            TIME_HILOGD(TIME_MODULE_SERVICE, "ntpServer is:%{public}s", ntpList[j].c_str());
             if (NtpTrustedTime::GetInstance().ForceRefresh(ntpList[j])) {
                 return REFRESH_SUCCESS;
             }

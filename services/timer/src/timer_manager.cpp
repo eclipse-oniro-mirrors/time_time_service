@@ -125,7 +125,7 @@ std::vector<std::string> TimerManager::GetPowerOnApps()
 #endif
 
 TimerManager::TimerManager(std::shared_ptr<TimerHandler> impl)
-    : random_ {static_cast<uint64_t>(time(nullptr))},
+    : random_ {std::random_device{}()},
       runFlag_ {true},
       handler_ {std::move(impl)},
       lastTimeChangeClockTime_ {system_clock::time_point::min()},
@@ -1226,8 +1226,7 @@ std::string TimerManager::GetWantString(int64_t timerId)
         }
         return "";
     }
-    // Line 7 is 'wantAgent'
-    auto wantStr = GetString(holdResultSet, 7);
+    auto wantStr = GetString(holdResultSet, COLUMN_INDEX_WANT_AGENT);
     holdResultSet->Close();
     #else
     auto wantStr = CjsonHelper::GetInstance().QueryWant(HOLD_ON_REBOOT, timerId);

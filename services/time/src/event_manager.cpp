@@ -73,7 +73,7 @@ void EventManager::NetConnStateConnected(const CommonEventData &data)
     if (NtpUpdateTime::IsInUpdateInterval()) {
         NtpUpdateTime::SetSystemTime(NtpUpdateSource::NET_CONNECTED);
     } else {
-        auto setSystemTime = [this]() { NtpUpdateTime::SetSystemTime(NtpUpdateSource::NET_CONNECTED); };
+        auto setSystemTime = []() { NtpUpdateTime::SetSystemTime(NtpUpdateSource::NET_CONNECTED); };
         std::thread thread(setSystemTime);
         thread.detach();
     }
