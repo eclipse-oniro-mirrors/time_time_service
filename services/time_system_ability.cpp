@@ -543,7 +543,7 @@ int32_t TimeSystemAbility::StopTimer(uint64_t timerId)
     }
     auto ret = timerManager->StopTimer(timerId);
     if (ret != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to stop timer");
+        TIME_SIMPLIFY_HILOGE(TIME_MODULE_SERVICE, "Failed to stop timer");
         return E_TIME_DEAL_FAILED;
     }
     return ret;
@@ -562,7 +562,7 @@ int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId)
     }
     auto ret = timerManager->DestroyTimer(timerId);
     if (ret != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to destory timer");
+        TIME_SIMPLIFY_HILOGE(TIME_MODULE_SERVICE, "Failed to destory timer");
         return E_TIME_DEAL_FAILED;
     }
     return ret;
