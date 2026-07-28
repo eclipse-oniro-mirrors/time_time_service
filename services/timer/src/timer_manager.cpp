@@ -103,6 +103,18 @@ static int64_t DEFAULT_RUNNING_LOCK_DURATION_NS = 1 * NANO_TO_SECOND;
 constexpr int REASON_NATIVE_API = 0;
 constexpr int REASON_APP_API = 1;
 #endif
+
+// Truncate timer id to at most 5 digits (keep the most significant 5 digits) to reduce log length.
+// e.g. 12345678 -> 12345, 123 -> 123
+constexpr int64_t TIMER_ID_TRUNCATE_THRESHOLD = 100000;
+constexpr int64_t TIMER_ID_TRUNCATE_DIVISOR = 10;
+inline int64_t TruncateTimerId(int64_t id)
+{
+    while (id >= TIMER_ID_TRUNCATE_THRESHOLD) {
+        id /= TIMER_ID_TRUNCATE_DIVISOR;
+    }
+    return id;
+}
 }
 
 std::mutex TimerManager::instanceLock_;
@@ -863,7 +875,7 @@ bool TimerManager::TriggerTimersLocked(std::vector<std::shared_ptr<TimerInfo>> &
             triggerList.push_back(alarm);
             if (!IsNoLog(alarm) && alarm->id != TimeTickNotify::GetInstance().GetTickTimerId()) {
                 TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "tg:%{public}d %{public}" PRId64 " %{public}u",
-                    alarm->uid, alarm->id, alarm->wakeup);
+                    alarm->uid, TruncateTimerId(alarm->id), alarm->wakeup);
             }
             if (alarm->wakeup) {
                 hasWakeup = true;
@@ -1050,19 +1062,20 @@ void TimerManager::InsertAndBatchTimerLocked(std::shared_ptr<TimerInfo> alarm)
             alarm->maxWhenElapsed.time_since_epoch()).count();
         if (whenElapsedMs != maxWhenElapsedMs) {
             if (whichBatch == -1) {
-                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "id:%{public}" PRIu64 " we:%{public}lld mwe:%{public}lld",
-                    alarm->id, whenElapsedMs, maxWhenElapsedMs);
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "we:%{public}" PRIu64 " %{public}lld %{public}lld",
+                    TruncateTimerId(alarm->id), whenElapsedMs, maxWhenElapsedMs);
             } else {
-                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat:%{public}" PRId64 " id:%{public}" PRIu64 " "
-                    "we:%{public}lld mwe:%{public}lld", whichBatch, alarm->id, whenElapsedMs, maxWhenElapsedMs);
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat:%{public}" PRId64 " %{public}" PRIu64 " "
+                    "%{public}lld %{public}lld",
+                    whichBatch, TruncateTimerId(alarm->id), whenElapsedMs, maxWhenElapsedMs);
             }
         } else {
             if (whichBatch == -1) {
-                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "id:%{public}" PRIu64 " we:%{public}lld",
-                    alarm->id, whenElapsedMs);
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "we:%{public}" PRIu64 " %{public}lld",
+                    TruncateTimerId(alarm->id), whenElapsedMs);
             } else {
-                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat:%{public}" PRId64 " id:%{public}" PRIu64 " "
-                    "we:%{public}lld", whichBatch, alarm->id, whenElapsedMs);
+                TIME_SIMPLIFY_HILOGW(TIME_MODULE_SERVICE, "bat:%{public}" PRId64 " %{public}" PRIu64 " "
+                    "%{public}lld", whichBatch, TruncateTimerId(alarm->id), whenElapsedMs);
             }
         }
     }
