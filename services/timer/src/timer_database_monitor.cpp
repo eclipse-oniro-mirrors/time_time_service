@@ -30,7 +30,7 @@ namespace MiscServices {
 using namespace std::chrono;
 
 namespace {
-constexpr int64_t DB_SIZE_BASELINE = 10 * 1024 * 1024; // 10MB
+constexpr int64_t DB_SIZE_BASELINE = 5 * 1024 * 1024; // 5MB
 constexpr int CHECK_INTERVAL_SECONDS = 43200; // 12 hours
 constexpr int TOP_N = 10;
 }
