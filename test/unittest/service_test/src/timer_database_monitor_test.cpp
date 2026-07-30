@@ -840,6 +840,29 @@ HWTEST_F(TimerDatabaseMonitorTest, TimeDatabaseQuerySqlTest002, TestSize.Level1)
     auto result = db.QuerySql("SELECT * FROM nonexistent_table");
     EXPECT_TRUE(result);
 }
+
+/**
+ * @tc.name: TimeDatabaseCheckpointWalTest001
+ * @tc.desc: Test CheckpointWal truncates the -wal file to 0 bytes
+ * @tc.type: FUNC
+ */
+HWTEST_F(TimerDatabaseMonitorTest, TimeDatabaseCheckpointWalTest001, TestSize.Level1)
+{
+    constexpr const char* WAL_PATH = "/data/service/el1/public/database/time/time.db-wal";
+    auto walSize = [](const char* path) -> long {
+        struct stat st;
+        return stat(path, &st) == 0 ? static_cast<long>(st.st_size) : -1;
+    };
+
+    // A write makes the WAL non-empty, then CheckpointWal (TRUNCATE) must reset it to 0.
+    InsertRdbTimer(HOLD_ON_REBOOT, TEST_TIMER_ID_BASE + 500, "com.test.wal", "walTimer");
+    EXPECT_GT(walSize(WAL_PATH), 0);
+
+    TimeDatabase::GetInstance().CheckpointWal();
+    EXPECT_EQ(walSize(WAL_PATH), 0);
+
+    DeleteRdbTimers(HOLD_ON_REBOOT, {static_cast<int64_t>(TEST_TIMER_ID_BASE + 500)});
+}
 #endif // RDB_ENABLE
 
 // ==================== TimerDatabaseOverBaselineReporter tests ====================

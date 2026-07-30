@@ -348,6 +348,21 @@ void TimeDatabase::ClearInvaildDataInHoldOnReboot()
     }
 }
 
+void TimeDatabase::CheckpointWal()
+{
+    // TRUNCATE merges the WAL into the main DB and physically truncates -wal to 0 bytes;
+    // degrades to a plain checkpoint (no truncation) if a reader is in flight.
+    auto store = GetStore();
+    if (store == nullptr) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
+        return;
+    }
+    auto ret = store->ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    if (ret != OHOS::NativeRdb::E_OK) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "checkpoint WAL failed, ret:%{public}d", ret);
+    }
+}
+
 TimerDbSizeInfo TimeDatabase::GetDatabaseSizeDetail()
 {
     TimerDbSizeInfo sizeInfo{};
