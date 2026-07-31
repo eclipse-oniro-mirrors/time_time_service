@@ -97,6 +97,10 @@ void TimerDatabaseMonitor::CheckDatabaseAndReport()
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
+    // Checkpoint the WAL back into the main DB first so the size measured below reflects
+    // the real on-disk footprint instead of an inflated WAL, and the WAL is reset every
+    // check cycle instead of growing unbounded between reboots.
+    db.CheckpointWal();
 #else
     auto &db = CjsonHelper::GetInstance();
 #endif

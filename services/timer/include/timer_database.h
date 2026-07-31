@@ -57,6 +57,7 @@ public:
     std::shared_ptr<OHOS::NativeRdb::ResultSet> QuerySql(const std::string &sql);
     void ClearDropOnReboot();
     void ClearInvaildDataInHoldOnReboot();
+    void CheckpointWal();
 
     TimerDbSizeInfo GetDatabaseSizeDetail();
     int32_t GetTotalRecordCount();
