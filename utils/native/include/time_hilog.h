@@ -51,14 +51,14 @@ enum TimeDomainId : int32_t {
 };
 
 static constexpr OHOS::HiviewDFX::HiLogLabel TIME_MODULE_LABEL[TIME_MODULE_BUTT] = {
-    { LOG_CORE, TIME_INNERKIT_DOMAIN, "TimeInnerKit" },
-    { LOG_CORE, TIME_CLIENT_DOMAIN, "TimeClient" },
-    { LOG_CORE, TIME_SERVICE_DOMAIN, "TimeService" },
-    { LOG_CORE, TIME_JAVAKIT_DOMAIN, "TimeJavaKit" },
-    { LOG_CORE, TIME_JNI_DOMAIN, "TimeJni" },
-    { LOG_CORE, TIME_COMMON_DOMAIN, "TimeCommon" },
-    { LOG_CORE, TIME_JS_NAPI, "TimeJSNAPI" },
-    { LOG_CORE, TIME_JS_ANI, "TimeJSANI" },
+    { LOG_CORE, TIME_INNERKIT_DOMAIN, "IN" },
+    { LOG_CORE, TIME_CLIENT_DOMAIN, "CL" },
+    { LOG_CORE, TIME_SERVICE_DOMAIN, "SA" },
+    { LOG_CORE, TIME_JAVAKIT_DOMAIN, "JAVA" },
+    { LOG_CORE, TIME_JNI_DOMAIN, "JNI" },
+    { LOG_CORE, TIME_COMMON_DOMAIN, "CM" },
+    { LOG_CORE, TIME_JS_NAPI, "JSNAPI" },
+    { LOG_CORE, TIME_JS_ANI, "JSANI" },
 };
 
 #define R_FORMATED(fmt, ...) "%{public}s# " fmt, __FUNCTION__, ##__VA_ARGS__

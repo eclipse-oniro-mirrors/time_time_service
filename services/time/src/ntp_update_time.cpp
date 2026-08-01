@@ -315,7 +315,6 @@ void NtpUpdateTime::RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess,
 
 bool NtpUpdateTime::CheckStatus()
 {
-    std::lock_guard<std::mutex> lock(requestMutex_);
     return autoTimeInfo_.status == AUTO_TIME_STATUS_ON;
 }
 
@@ -365,11 +364,8 @@ void NtpUpdateTime::ChangeNtpServerCallback(const char *key, const char *value, 
         TIME_HILOGW(TIME_MODULE_SERVICE, "No found ntp server from system parameter");
         return;
     }
-    {
-        std::lock_guard<std::mutex> lock(requestMutex_);
-        autoTimeInfo_.ntpServer = ntpServer;
-        autoTimeInfo_.ntpServerSpec = ntpServerSpec;
-    }
+    autoTimeInfo_.ntpServer = ntpServer;
+    autoTimeInfo_.ntpServerSpec = ntpServerSpec;
     NtpUpdateTime::GetInstance().SetSystemTime(NtpUpdateSource::NTP_SERVER_CHANGE);
 }
 
@@ -389,10 +385,7 @@ void NtpUpdateTime::ChangeAutoTimeCallback(const char *key, const char *value, v
         TIME_HILOGE(TIME_MODULE_SERVICE, "incorrect value:%{public}s", value);
         return;
     }
-    {
-        std::lock_guard<std::mutex> lock(requestMutex_);
-        autoTimeInfo_.status = std::string(value);
-    }
+    autoTimeInfo_.status = std::string(value);
     NtpUpdateTime::GetInstance().SetSystemTime(NtpUpdateSource::AUTO_TIME_CHANGE);
 }
 
