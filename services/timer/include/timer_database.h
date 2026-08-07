@@ -16,6 +16,7 @@
 #ifndef TIMER_DATABASE_H
 #define TIMER_DATABASE_H
 
+#include <condition_variable>
 #include <mutex>
 #include <vector>
 #include <string>
@@ -64,8 +65,20 @@ public:
     std::vector<TimerDbTopAppInfo> GetTopApps(int topN);
 
 private:
-    std::shared_ptr<OHOS::NativeRdb::RdbStore> GetStore();
+    // RAII bracket for an in-flight store operation. Defined in the .cpp; nested
+    // so it can reach AcquireStore/ReleaseStore without a friend declaration.
+    class StoreGuard;
+    // Brackets an in-flight operation: AcquireStore increments inFlight_ under
+    // storeMutex_ before handing out store_; ReleaseStore decrements and
+    // notifies. RecoverDataBase waits on inFlightCv_ until inFlight_ == 0
+    // before DeleteRdbStore, so no thread is left using a destroyed connection.
+    std::shared_ptr<OHOS::NativeRdb::RdbStore> AcquireStore();
+    void ReleaseStore();
+    std::shared_ptr<OHOS::NativeRdb::ResultSet> WrapResult(
+        std::shared_ptr<OHOS::NativeRdb::ResultSet> result);
     std::mutex storeMutex_;
+    size_t inFlight_ = 0;
+    std::condition_variable inFlightCv_;
     bool RecoverDataBase();
     std::shared_ptr<OHOS::NativeRdb::RdbStore> store_;
 };

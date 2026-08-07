@@ -379,11 +379,12 @@ ohos_unittest("TimerLockOptimizerTest") {
   ]
 }
 
-ohos_unittest("TimerDatabaseMonitorTest") {
+ohos_unittest("TimerDatabaseTest") {
   module_out_path = module_output_path
 
   sources = [
-    "src/timer_database_monitor_test.cpp",
+    "src/timer_database_test.cpp",
+    "${time_service_path}/timer/src/timer_database.cpp",
     "${time_service_path}/timer/src/timer_database_monitor.cpp",
   ]
 
@@ -466,7 +467,7 @@ group("unittest") {
     ":TimeServiceTimeTest",
     ":TimeServiceTimerTest",
     ":TimerAppStateObserverTest",
-    ":TimerDatabaseMonitorTest",
+    ":TimerDatabaseTest",
     ":TimerLockOptimizerTest",
   ]
 }
