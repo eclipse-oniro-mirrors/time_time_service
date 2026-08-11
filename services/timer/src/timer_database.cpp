@@ -87,9 +87,69 @@ TimeDatabase &TimeDatabase::GetInstance()
     return timeDatabase;
 }
 
+// RAII bracket for an in-flight store operation. AcquireStore bumps inFlight_
+// under storeMutex_; ~StoreGuard calls ReleaseStore. Assigning nullptr to the
+// guard releases early (used before RecoverDataBase, which drains inFlight_).
+// Nested in TimeDatabase (declared in the header) so it can reach the private
+// AcquireStore/ReleaseStore without a friend declaration.
+class TimeDatabase::StoreGuard {
+public:
+    explicit StoreGuard(TimeDatabase &db) : store_(db.AcquireStore()), db_(&db) {}
+    ~StoreGuard()
+    {
+        if (store_ != nullptr && db_ != nullptr) {
+            db_->ReleaseStore();
+        }
+    }
+    StoreGuard(const StoreGuard &) = delete;
+    StoreGuard &operator=(const StoreGuard &) = delete;
+    StoreGuard(StoreGuard &&other) noexcept : store_(std::move(other.store_)), db_(other.db_) { other.db_ = nullptr; }
+    StoreGuard &operator=(StoreGuard &&other) noexcept
+    {
+        if (this != &other) {
+            if (store_ != nullptr && db_ != nullptr) {
+                db_->ReleaseStore();
+            }
+            store_ = std::move(other.store_);
+            db_ = other.db_;
+            other.db_ = nullptr;
+        }
+        return *this;
+    }
+    // nullptr assignment releases the in-flight ref immediately.
+    StoreGuard &operator=(std::nullptr_t)
+    {
+        if (store_ != nullptr && db_ != nullptr) {
+            db_->ReleaseStore();
+        }
+        store_ = nullptr;
+        return *this;
+    }
+    // Hand off the in-flight ref to an external owner (e.g. WrapResult's deleter)
+    // without decrementing it. The receiver becomes responsible for ReleaseStore.
+    void Detach()
+    {
+        store_ = nullptr;
+        db_ = nullptr;
+    }
+    const std::shared_ptr<OHOS::NativeRdb::RdbStore> &Get() const { return store_; }
+    explicit operator bool() const { return store_ != nullptr; }
+
+private:
+    std::shared_ptr<OHOS::NativeRdb::RdbStore> store_;
+    TimeDatabase *db_;
+};
+
 bool TimeDatabase::RecoverDataBase()
 {
-    std::lock_guard<std::mutex> lock(storeMutex_);
+    std::unique_lock<std::mutex> lock(storeMutex_);
+    // Drain all in-flight operations before destroying the store. A thread may
+    // be holding a copy of store_ (Insert/Update/Delete) or iterating a
+    // ResultSet whose connection belongs to this store's pool; DeleteRdbStore
+    // tears down the pool and closes the underlying sqlite3 handles, so we must
+    // wait until none are in flight. New operations block on storeMutex_ until
+    // the swap completes, then observe the new store_.
+    inFlightCv_.wait(lock, [this] { return inFlight_ == 0; });
     OHOS::NativeRdb::RdbStoreConfig config(DB_NAME);
     config.SetSecurityLevel(NativeRdb::SecurityLevel::S1);
     config.SetEncryptStatus(false);
@@ -108,10 +168,41 @@ bool TimeDatabase::RecoverDataBase()
     return true;
 }
 
-std::shared_ptr<OHOS::NativeRdb::RdbStore> TimeDatabase::GetStore()
+std::shared_ptr<OHOS::NativeRdb::RdbStore> TimeDatabase::AcquireStore()
 {
     std::lock_guard<std::mutex> lock(storeMutex_);
+    if (store_ == nullptr) {
+        return nullptr;
+    }
+    ++inFlight_;
     return store_;
+}
+
+void TimeDatabase::ReleaseStore()
+{
+    std::lock_guard<std::mutex> lock(storeMutex_);
+    if (inFlight_ > 0) {
+        --inFlight_;
+    }
+    inFlightCv_.notify_one();
+}
+
+// Transfers the in-flight ref (already bumped by AcquireStore) to the ResultSet's
+// lifetime. The deleter closes the result (idempotent) and releases the ref when
+// the caller drops the shared_ptr, so RecoverDataBase drains even while a
+// ResultSet is being iterated outside TimeDatabase.
+std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::WrapResult(
+    std::shared_ptr<OHOS::NativeRdb::ResultSet> result)
+{
+    TimeDatabase *db = this;
+    return std::shared_ptr<OHOS::NativeRdb::ResultSet>(
+        result.get(),
+        [result, db](OHOS::NativeRdb::ResultSet *) {
+            if (result != nullptr) {
+                result->Close();
+            }
+            db->ReleaseStore();
+        });
 }
 
 int GetInt(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int line)
@@ -146,28 +237,30 @@ std::string GetString(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, int
 
 bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::ValuesBucket &insertValues)
 {
-    auto store = GetStore();
-    if (store == nullptr) {
+    auto store = StoreGuard(*this);
+    if (!store) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return false;
     }
 
     int64_t outRowId = 0;
-    auto ret = store->Insert(outRowId, table, insertValues);
+    auto ret = store.Get()->Insert(outRowId, table, insertValues);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "insert values failed, ret:%{public}d", ret);
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
             return false;
         }
+        // Release the in-flight ref before RecoverDataBase, which drains inFlight_.
+        store = nullptr;
         if (!RecoverDataBase()) {
             return false;
         }
-        store = GetStore();
-        if (store == nullptr) {
+        store = StoreGuard(*this);
+        if (!store) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
             return false;
         }
-        ret = store->Insert(outRowId, table, insertValues);
+        ret = store.Get()->Insert(outRowId, table, insertValues);
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Insert values after RecoverDataBase failed, ret:%{public}d", ret);
             return false;
@@ -179,28 +272,29 @@ bool TimeDatabase::Insert(const std::string &table, const OHOS::NativeRdb::Value
 bool TimeDatabase::Update(
     const OHOS::NativeRdb::ValuesBucket values, const OHOS::NativeRdb::AbsRdbPredicates &predicates)
 {
-    auto store = GetStore();
-    if (store == nullptr) {
+    auto store = StoreGuard(*this);
+    if (!store) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return false;
     }
 
     int changedRows = 0;
-    auto ret = store->Update(changedRows, values, predicates);
+    auto ret = store.Get()->Update(changedRows, values, predicates);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "update values failed, ret:%{public}d", ret);
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
             return false;
         }
+        store = nullptr;
         if (!RecoverDataBase()) {
             return false;
         }
-        store = GetStore();
-        if (store == nullptr) {
+        store = StoreGuard(*this);
+        if (!store) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
             return false;
         }
-        ret = store->Update(changedRows, values, predicates);
+        ret = store.Get()->Update(changedRows, values, predicates);
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Update values after RecoverDataBase failed, ret:%{public}d", ret);
             return false;
@@ -212,12 +306,12 @@ bool TimeDatabase::Update(
 std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
     const OHOS::NativeRdb::AbsRdbPredicates &predicates, const std::vector<std::string> &columns)
 {
-    auto store = GetStore();
-    if (store == nullptr) {
+    auto store = StoreGuard(*this);
+    if (!store) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return nullptr;
     }
-    auto result = store->Query(predicates, columns);
+    auto result = store.Get()->Query(predicates, columns);
     if (result == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "result is nullptr");
         return nullptr;
@@ -228,36 +322,43 @@ std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::Query(
         // underlying sqlite3 connection, so closing result afterwards would touch freed resources
         // (use-after-free).
         result->Close();
+        store = nullptr;
         RecoverDataBase();
         return nullptr;
     }
-    return result;
+    // The in-flight ref (bumped by AcquireStore) is transferred to the ResultSet's
+    // lifetime: Detach keeps inFlight_ elevated and makes WrapResult's deleter
+    // responsible for the eventual ReleaseStore, so RecoverDataBase drains even
+    // while the caller iterates this ResultSet outside TimeDatabase.
+    store.Detach();
+    return WrapResult(result);
 }
 
 bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
 {
-    auto store = GetStore();
-    if (store == nullptr) {
+    auto store = StoreGuard(*this);
+    if (!store) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return false;
     }
 
     int deletedRows = 0;
-    auto ret = store->Delete(deletedRows, predicates);
+    auto ret = store.Get()->Delete(deletedRows, predicates);
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "delete values failed, ret:%{public}d", ret);
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
             return false;
         }
+        store = nullptr;
         if (!RecoverDataBase()) {
             return false;
         }
-        store = GetStore();
-        if (store == nullptr) {
+        store = StoreGuard(*this);
+        if (!store) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
             return false;
         }
-        ret = store->Delete(deletedRows, predicates);
+        ret = store.Get()->Delete(deletedRows, predicates);
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Delete values after RecoverDataBase failed, ret:%{public}d", ret);
             return false;
@@ -268,12 +369,12 @@ bool TimeDatabase::Delete(const OHOS::NativeRdb::AbsRdbPredicates &predicates)
 
 std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::QuerySql(const std::string &sql)
 {
-    auto store = GetStore();
-    if (store == nullptr) {
+    auto store = StoreGuard(*this);
+    if (!store) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return nullptr;
     }
-    auto result = store->QuerySql(sql, std::vector<OHOS::NativeRdb::ValueObject>());
+    auto result = store.Get()->QuerySql(sql, std::vector<OHOS::NativeRdb::ValueObject>());
     if (result == nullptr) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "result is nullptr");
         return nullptr;
@@ -284,35 +385,38 @@ std::shared_ptr<OHOS::NativeRdb::ResultSet> TimeDatabase::QuerySql(const std::st
         // underlying sqlite3 connection, so closing result afterwards would touch freed resources
         // (use-after-free).
         result->Close();
+        store = nullptr;
         RecoverDataBase();
         return nullptr;
     }
-    return result;
+    store.Detach();
+    return WrapResult(result);
 }
 
 void TimeDatabase::ClearDropOnReboot()
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Clears drop_on_reboot table");
-    auto store = GetStore();
-    if (store == nullptr) {
+    auto store = StoreGuard(*this);
+    if (!store) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return;
     }
-    auto ret = store->ExecuteSql("DELETE FROM drop_on_reboot");
+    auto ret = store.Get()->ExecuteSql("DELETE FROM drop_on_reboot");
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Clears drop_on_reboot table failed");
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
             return;
         }
+        store = nullptr;
         if (!RecoverDataBase()) {
             return;
         }
-        store = GetStore();
-        if (store == nullptr) {
+        store = StoreGuard(*this);
+        if (!store) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
             return;
         }
-        ret = store->ExecuteSql("DELETE FROM drop_on_reboot");
+        ret = store.Get()->ExecuteSql("DELETE FROM drop_on_reboot");
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret:%{public}d", ret);
         }
@@ -322,26 +426,27 @@ void TimeDatabase::ClearDropOnReboot()
 void TimeDatabase::ClearInvaildDataInHoldOnReboot()
 {
     TIME_HILOGI(TIME_MODULE_SERVICE, "Clears hold_on_reboot table");
-    auto store = GetStore();
-    if (store == nullptr) {
+    auto store = StoreGuard(*this);
+    if (!store) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return;
     }
-    auto ret = store->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
+    auto ret = store.Get()->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Clears hold_on_reboot table failed");
         if (ret != OHOS::NativeRdb::E_SQLITE_CORRUPT) {
             return;
         }
+        store = nullptr;
         if (!RecoverDataBase()) {
             return;
         }
-        store = GetStore();
-        if (store == nullptr) {
+        store = StoreGuard(*this);
+        if (!store) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
             return;
         }
-        ret = store->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
+        ret = store.Get()->ExecuteSql("DELETE FROM hold_on_reboot WHERE state = 0 OR type = 2 OR type = 3");
         if (ret != OHOS::NativeRdb::E_OK) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "Clears after RecoverDataBase failed, ret:%{public}d", ret);
         }
@@ -352,12 +457,12 @@ void TimeDatabase::CheckpointWal()
 {
     // TRUNCATE merges the WAL into the main DB and physically truncates -wal to 0 bytes;
     // degrades to a plain checkpoint (no truncation) if a reader is in flight.
-    auto store = GetStore();
-    if (store == nullptr) {
+    auto store = StoreGuard(*this);
+    if (!store) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "store_ is nullptr");
         return;
     }
-    auto ret = store->ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    auto ret = store.Get()->ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
     if (ret != OHOS::NativeRdb::E_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "checkpoint WAL failed, ret:%{public}d", ret);
     }

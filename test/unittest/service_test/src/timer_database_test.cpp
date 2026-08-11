@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <sstream>
+#include <vector>
 #include <cJSON.h>
 
 #define private public
@@ -206,7 +207,7 @@ void RemoveTestTimers(const std::string& table, const std::vector<uint64_t>& ids
 }
 } // namespace
 
-class TimerDatabaseMonitorTest : public testing::Test {
+class TimerDatabaseTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
     static void TearDownTestCase(void);
@@ -214,21 +215,21 @@ public:
     void TearDown();
 };
 
-void TimerDatabaseMonitorTest::SetUpTestCase(void)
+void TimerDatabaseTest::SetUpTestCase(void)
 {
 }
 
-void TimerDatabaseMonitorTest::TearDownTestCase(void)
+void TimerDatabaseTest::TearDownTestCase(void)
 {
 }
 
-void TimerDatabaseMonitorTest::SetUp(void)
+void TimerDatabaseTest::SetUp(void)
 {
     // Ensure monitor is stopped before each test
     TimerDatabaseMonitor::GetInstance().Stop();
 }
 
-void TimerDatabaseMonitorTest::TearDown(void)
+void TimerDatabaseTest::TearDown(void)
 {
     // Clean up: stop monitor after each test
     TimerDatabaseMonitor::GetInstance().Stop();
@@ -239,7 +240,7 @@ void TimerDatabaseMonitorTest::TearDown(void)
  * @tc.desc: Test singleton instance returns same reference
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorSingletonTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorSingletonTest001, TestSize.Level1)
 {
     auto &instance1 = TimerDatabaseMonitor::GetInstance();
     auto &instance2 = TimerDatabaseMonitor::GetInstance();
@@ -251,7 +252,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorSingletonTest001, TestSiz
  * @tc.desc: Test Start and Stop basic functionality
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorStartStopTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorStartStopTest001, TestSize.Level1)
 {
     auto &monitor = TimerDatabaseMonitor::GetInstance();
     EXPECT_FALSE(monitor.running_);
@@ -264,7 +265,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorStartStopTest001, TestSiz
  * @tc.desc: Test GetTotalRecordCount returns non-negative value
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorGetTotalRecordCountTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorGetTotalRecordCountTest001, TestSize.Level1)
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
@@ -279,7 +280,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorGetTotalRecordCountTest00
  * @tc.desc: Test GetTopApps returns at most topN elements, invalid topN returns empty
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorGetTopAppsTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorGetTopAppsTest001, TestSize.Level1)
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
@@ -297,7 +298,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorGetTopAppsTest001, TestSi
  * @tc.desc: Test CheckDatabaseAndReport does not crash with small DB
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorCheckDatabaseAndReportTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorCheckDatabaseAndReportTest001, TestSize.Level1)
 {
     auto &monitor = TimerDatabaseMonitor::GetInstance();
     monitor.CheckDatabaseAndReport();
@@ -309,7 +310,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorCheckDatabaseAndReportTes
  * @tc.desc: Test TimerDbTopAppInfo struct initialization and assignment
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorTimerDbTopAppInfoTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorTimerDbTopAppInfoTest001, TestSize.Level1)
 {
     TimerDbTopAppInfo info;
     info.bundleName = "com.example.app";
@@ -326,7 +327,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorTimerDbTopAppInfoTest001,
  * @tc.desc: Test TimerDbSizeInfo struct initialization and GetTotalSize
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorTimerDbSizeInfoTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorTimerDbSizeInfoTest001, TestSize.Level1)
 {
     TimerDbSizeInfo info;
     info.dbSize = 100;
@@ -344,7 +345,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorTimerDbSizeInfoTest001, T
  * @tc.desc: Test TimerDbSizeInfo with zero values
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorTimerDbSizeInfoTest002, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorTimerDbSizeInfoTest002, TestSize.Level1)
 {
     TimerDbSizeInfo info;
     info.dbSize = 0;
@@ -359,7 +360,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorTimerDbSizeInfoTest002, T
  * @tc.desc: Test GetDatabaseSizeDetail returns valid TimerDbSizeInfo
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorGetDatabaseSizeDetailTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorGetDatabaseSizeDetailTest001, TestSize.Level1)
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
@@ -380,7 +381,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorGetDatabaseSizeDetailTest
  * @tc.desc: Test GetTotalRecordCount increases after adding entries to hold_on_reboot
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, GetTotalRecordCountWithDataTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, GetTotalRecordCountWithDataTest001, TestSize.Level1)
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
@@ -401,7 +402,7 @@ HWTEST_F(TimerDatabaseMonitorTest, GetTotalRecordCountWithDataTest001, TestSize.
  * @tc.desc: Test GetTotalRecordCount increases after adding entries to drop_on_reboot
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, GetTotalRecordCountWithDataTest002, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, GetTotalRecordCountWithDataTest002, TestSize.Level1)
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
@@ -423,7 +424,7 @@ HWTEST_F(TimerDatabaseMonitorTest, GetTotalRecordCountWithDataTest002, TestSize.
  * @tc.desc: Test GetTotalRecordCount sums entries from both tables
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, GetTotalRecordCountWithDataTest003, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, GetTotalRecordCountWithDataTest003, TestSize.Level1)
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
@@ -447,7 +448,7 @@ HWTEST_F(TimerDatabaseMonitorTest, GetTotalRecordCountWithDataTest003, TestSize.
  * @tc.desc: Test GetTopApps returns sorted results with test data
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, GetTopAppsWithDataTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, GetTopAppsWithDataTest001, TestSize.Level1)
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
@@ -480,7 +481,7 @@ HWTEST_F(TimerDatabaseMonitorTest, GetTopAppsWithDataTest001, TestSize.Level1)
  * @tc.desc: Test GetTopApps aggregates counts across both tables
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, GetTopAppsWithDataTest003, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, GetTopAppsWithDataTest003, TestSize.Level1)
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
@@ -514,7 +515,7 @@ HWTEST_F(TimerDatabaseMonitorTest, GetTopAppsWithDataTest003, TestSize.Level1)
  * @tc.desc: Test GetTopApps result is sorted by count descending
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, GetTopAppsWithDataTest004, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, GetTopAppsWithDataTest004, TestSize.Level1)
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
@@ -542,7 +543,7 @@ HWTEST_F(TimerDatabaseMonitorTest, GetTopAppsWithDataTest004, TestSize.Level1)
  * @tc.desc: Test GetTopApps with topN exactly equal to app count (no resize)
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, GetTopAppsWithDataTest005, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, GetTopAppsWithDataTest005, TestSize.Level1)
 {
 #ifdef RDB_ENABLE
     auto &db = TimeDatabase::GetInstance();
@@ -568,7 +569,7 @@ HWTEST_F(TimerDatabaseMonitorTest, GetTopAppsWithDataTest005, TestSize.Level1)
  * @tc.desc: Test CjsonHelper GetDatabaseSizeDetail returns positive dbSize with zero shm/wal
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetDatabaseSizeDetailTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperGetDatabaseSizeDetailTest001, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     TimerDbSizeInfo info = db.GetDatabaseSizeDetail();
@@ -582,7 +583,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetDatabaseSizeDetailTest001, Test
  * @tc.desc: Test CjsonHelper GetDatabaseSizeDetail GetTotalSize equals dbSize when shm/wal are zero
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetDatabaseSizeDetailTest002, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperGetDatabaseSizeDetailTest002, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     TimerDbSizeInfo info = db.GetDatabaseSizeDetail();
@@ -594,7 +595,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetDatabaseSizeDetailTest002, Test
  * @tc.desc: Test CjsonHelper GetTotalRecordCount increases after adding data to hold_on_reboot
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetTotalRecordCountTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperGetTotalRecordCountTest001, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     int32_t before = db.GetTotalRecordCount();
@@ -613,7 +614,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetTotalRecordCountTest001, TestSi
  * @tc.desc: Test CjsonHelper GetTopApps with data and sorted by count descending
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetTopAppsTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperGetTopAppsTest001, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     std::vector<uint64_t> ids = {
@@ -650,7 +651,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetTopAppsTest001, TestSize.Level1
  * @tc.desc: Test CjsonHelper GetTopApps resize when topN < app count
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetTopAppsTest002, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperGetTopAppsTest002, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     std::vector<uint64_t> ids = {
@@ -674,7 +675,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetTopAppsTest002, TestSize.Level1
  * @tc.desc: Test CjsonHelper GetTopApps with invalid topN returns empty
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetTopAppsTest003, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperGetTopAppsTest003, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     EXPECT_TRUE(db.GetTopApps(-1).empty());
@@ -686,7 +687,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperGetTopAppsTest003, TestSize.Level1
  * @tc.desc: Test CountTimersFromTable counts valid entries correctly
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperCountTimersFromTableTest001, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     std::vector<uint64_t> ids = {TEST_TIMER_ID_BASE + 10, TEST_TIMER_ID_BASE + 11, TEST_TIMER_ID_BASE + 12};
@@ -709,7 +710,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest001, TestS
  * @tc.desc: Test CountTimersFromTable skips entries with missing bundleName
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest002, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperCountTimersFromTableTest002, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     std::vector<uint64_t> ids = {TEST_TIMER_ID_BASE + 20, TEST_TIMER_ID_BASE + 21};
@@ -733,7 +734,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest002, TestS
  * @tc.desc: Test CountTimersFromTable skips entries with missing name
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest003, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperCountTimersFromTableTest003, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     std::vector<uint64_t> ids = {TEST_TIMER_ID_BASE + 30, TEST_TIMER_ID_BASE + 31};
@@ -757,7 +758,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest003, TestS
  * @tc.desc: Test CountTimersFromTable handles null valuestring as empty string
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest004, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperCountTimersFromTableTest004, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     std::vector<uint64_t> ids = {TEST_TIMER_ID_BASE + 40};
@@ -778,7 +779,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest004, TestS
  * @tc.desc: Test CountTimersFromTable does nothing when table not found
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest005, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperCountTimersFromTableTest005, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     std::map<std::pair<std::string, std::string>, int32_t> countMap;
@@ -791,7 +792,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest005, TestS
  * @tc.desc: Test CountTimersFromTable accumulates count for duplicate bundleName+name
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest006, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, CjsonHelperCountTimersFromTableTest006, TestSize.Level1)
 {
     auto &db = CjsonHelper::GetInstance();
     std::vector<uint64_t> ids = {TEST_TIMER_ID_BASE + 80, TEST_TIMER_ID_BASE + 81, TEST_TIMER_ID_BASE + 82};
@@ -815,7 +816,7 @@ HWTEST_F(TimerDatabaseMonitorTest, CjsonHelperCountTimersFromTableTest006, TestS
  * @tc.desc: Test QuerySql with valid query returns non-null result
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimeDatabaseQuerySqlTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimeDatabaseQuerySqlTest001, TestSize.Level1)
 {
     int64_t id = static_cast<int64_t>(TEST_TIMER_ID_BASE + 110);
     InsertRdbTimer(HOLD_ON_REBOOT, id, "com.test.query", "queryTimer");
@@ -834,7 +835,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimeDatabaseQuerySqlTest001, TestSize.Level1)
  * @tc.desc: Test QuerySql with invalid SQL
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimeDatabaseQuerySqlTest002, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimeDatabaseQuerySqlTest002, TestSize.Level1)
 {
     auto &db = TimeDatabase::GetInstance();
     auto result = db.QuerySql("SELECT * FROM nonexistent_table");
@@ -846,7 +847,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimeDatabaseQuerySqlTest002, TestSize.Level1)
  * @tc.desc: Test CheckpointWal truncates the -wal file to 0 bytes
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimeDatabaseCheckpointWalTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimeDatabaseCheckpointWalTest001, TestSize.Level1)
 {
     constexpr const char* WAL_PATH = "/data/service/el1/public/database/time/time.db-wal";
     auto walSize = [](const char* path) -> long {
@@ -863,6 +864,64 @@ HWTEST_F(TimerDatabaseMonitorTest, TimeDatabaseCheckpointWalTest001, TestSize.Le
 
     DeleteRdbTimers(HOLD_ON_REBOOT, {static_cast<int64_t>(TEST_TIMER_ID_BASE + 500)});
 }
+
+// ==================== Concurrency / recovery drain tests (RDB only) ====================
+
+/**
+ * @tc.name: TimeDatabaseRefcountBracketTest001
+ * @tc.desc: AcquireStore/ReleaseStore bracket the in-flight refcount correctly
+ * @tc.type: FUNC
+ */
+HWTEST_F(TimerDatabaseTest, TimeDatabaseRefcountBracketTest001, TestSize.Level1)
+{
+    auto &db = TimeDatabase::GetInstance();
+    int64_t id = static_cast<int64_t>(TEST_TIMER_ID_BASE + 700000);
+    InsertRdbTimer(HOLD_ON_REBOOT, id, "com.test.refcount", "t1");
+
+    // AcquireStore bumps inFlight_; the returned shared_ptr keeps it alive.
+    auto store = db.AcquireStore();
+    ASSERT_NE(store, nullptr);
+    EXPECT_EQ(db.inFlight_, 1u);
+
+    // A second acquisition stacks.
+    auto store2 = db.AcquireStore();
+    EXPECT_EQ(db.inFlight_, 2u);
+
+    // Release both.
+    db.ReleaseStore();
+    EXPECT_EQ(db.inFlight_, 1u);
+    db.ReleaseStore();
+    EXPECT_EQ(db.inFlight_, 0u);
+
+    DeleteRdbTimers(HOLD_ON_REBOOT, {id});
+}
+
+/**
+ * @tc.name: TimeDatabaseResultSetLifetimeTest001
+ * @tc.desc: A live ResultSet keeps inFlight_ > 0 until dropped; only then releases
+ * @tc.type: FUNC
+ */
+HWTEST_F(TimerDatabaseTest, TimeDatabaseResultSetLifetimeTest001, TestSize.Level1)
+{
+    auto &db = TimeDatabase::GetInstance();
+    int64_t id = static_cast<int64_t>(TEST_TIMER_ID_BASE + 700010);
+    InsertRdbTimer(HOLD_ON_REBOOT, id, "com.test.rslifetime", "t1");
+
+    size_t before = db.inFlight_;
+    {
+        OHOS::NativeRdb::RdbPredicates predicates(HOLD_ON_REBOOT);
+        predicates.EqualTo("timerId", id);
+        auto result = db.Query(predicates, std::vector<std::string>());
+        ASSERT_NE(result, nullptr);
+        // While the ResultSet is alive, inFlight_ must be elevated.
+        EXPECT_GT(db.inFlight_, before);
+        result->Close();
+    }
+    // Once the shared_ptr drops, the deleter releases the ref.
+    EXPECT_EQ(db.inFlight_, before);
+
+    DeleteRdbTimers(HOLD_ON_REBOOT, {id});
+}
 #endif // RDB_ENABLE
 
 // ==================== TimerDatabaseOverBaselineReporter tests ====================
@@ -872,7 +931,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimeDatabaseCheckpointWalTest001, TestSize.Le
  * @tc.desc: Test TimerDatabaseOverBaselineReporter with valid data does not crash
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseOverBaselineReporterTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseOverBaselineReporterTest001, TestSize.Level1)
 {
     TimerDbSizeInfo sizeInfo;
     sizeInfo.dbSize = 20 * 1024 * 1024;
@@ -887,7 +946,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseOverBaselineReporterTest001, Tes
  * @tc.desc: Test TimerDatabaseOverBaselineReporter with empty topAppInfo
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseOverBaselineReporterTest002, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseOverBaselineReporterTest002, TestSize.Level1)
 {
     TimerDbSizeInfo sizeInfo;
     sizeInfo.dbSize = 15 * 1024 * 1024;
@@ -902,7 +961,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseOverBaselineReporterTest002, Tes
  * @tc.desc: Test TimerDatabaseOverBaselineReporter with zero sizes
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseOverBaselineReporterTest003, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseOverBaselineReporterTest003, TestSize.Level1)
 {
     TimerDbSizeInfo sizeInfo;
     sizeInfo.dbSize = 0;
@@ -920,7 +979,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseOverBaselineReporterTest003, Tes
  * @tc.desc: Test CheckDatabaseAndReport triggers report when DB size exceeds baseline
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorCheckOverBaselineTest001, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorCheckOverBaselineTest001, TestSize.Level1)
 {
     AddPaddingField(11 * 1024 * 1024);
     auto &monitor = TimerDatabaseMonitor::GetInstance();
@@ -934,7 +993,7 @@ HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorCheckOverBaselineTest001,
  * @tc.desc: Test CheckDatabaseAndReport with over-baseline and data in tables
  * @tc.type: FUNC
  */
-HWTEST_F(TimerDatabaseMonitorTest, TimerDatabaseMonitorCheckOverBaselineTest002, TestSize.Level1)
+HWTEST_F(TimerDatabaseTest, TimerDatabaseMonitorCheckOverBaselineTest002, TestSize.Level1)
 {
     std::vector<uint64_t> holdIds = {TEST_TIMER_ID_BASE + 200, TEST_TIMER_ID_BASE + 201, TEST_TIMER_ID_BASE + 202};
     std::vector<uint64_t> dropIds = {TEST_TIMER_ID_BASE + 203};
