@@ -115,7 +115,17 @@
         "//base/time/time_service/test/unittest/native_test:unittest",
         "//base/time/time_service/test/fuzztest/timesetname_fuzzer:fuzztest",
         "//base/time/time_service/test/fuzztest/timesetdisposable_fuzzer:fuzztest",
-        "//base/time/time_service/test/fuzztest/time_fuzzer:fuzztest"
+        "//base/time/time_service/test/fuzztest/time_fuzzer:fuzztest",
+        "//base/time/time_service/test/fuzztest/ntptrustedtime_state_fuzzer:fuzztest",
+        "//base/time/time_service/test/fuzztest/timecmdparser_fuzzer:fuzztest",
+        "//base/time/time_service/test/fuzztest/timedumpcmd_fuzzer:fuzztest",
+        "//base/time/time_service/test/fuzztest/timegettimezonecapi_fuzzer:fuzztest",
+        "//base/time/time_service/test/fuzztest/timesntpdetail_fuzzer:fuzztest",
+        "//base/time/time_service/test/fuzztest/timezoneinfo_fuzzer:fuzztest",
+        "//base/time/time_service/test/fuzztest/timeipcstructured_fuzzer:fuzztest",
+        "//base/time/time_service/test/fuzztest/timerinfo_state_fuzzer:fuzztest",
+        "//base/time/time_service/test/fuzztest/timepermission_auth_fuzzer:fuzztest",
+        "//base/time/time_service/test/fuzztest/timerproxy_state_fuzzer:fuzztest"
       ]
     }
   }

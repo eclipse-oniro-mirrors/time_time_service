@@ -1,0 +1,65 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#####################hydra-fuzz###################
+import("//build/config/features.gni")
+import("//build/test.gni")
+import("../../../time.gni")
+
+##############################fuzztest##########################################
+ohos_fuzztest("TimeCmdParserFuzzTest") {
+  module_out_path = "time_service/time"
+
+  include_dirs = [
+    "${time_service_path}/dfx/include",
+  ]
+
+  fuzz_config_file = "${time_root_path}/test/fuzztest/timecmdparser_fuzzer"
+
+  cflags_cc = [
+    "-g",
+    "-O0",
+    "-Wno-unused-variable",
+    "-fno-omit-frame-pointer",
+    "-Wno-c99-designator",
+    "-include",
+    "functional",
+    "-include",
+    "memory",
+    "-include",
+    "stdio.h",
+    "-include",
+    "vector",
+  ]
+
+  sources = [
+    "timecmdparser_fuzzer.cpp",
+    "${time_service_path}/dfx/src/time_cmd_parse.cpp",
+    "${time_service_path}/dfx/src/time_cmd_dispatcher.cpp",
+  ]
+
+  deps = []
+
+  external_deps = []
+}
+
+###############################################################################
+group("fuzztest") {
+  testonly = true
+  deps = []
+  deps += [
+    # deps file
+    ":TimeCmdParserFuzzTest",
+  ]
+}
+###############################################################################
