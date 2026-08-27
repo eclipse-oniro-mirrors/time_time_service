@@ -37,6 +37,7 @@ ohos_shared_library("cj_system_date_time_ffi") {
       "napi:cj_bind_ffi",
       "samgr:samgr_proxy",
     ]
+    version_script = "libcj_system_date_time_ffi.map"
   } else {
     defines += [ "PREVIEWER" ]
     sources = [ "src/system_date_mock.cpp" ]

@@ -1,0 +1,9 @@
+{
+  global:
+    ANI_Constructor;
+    _ZTVN4OHOS12MiscServices4Time18ITimerInfoInstanceE;
+    _ZZNK5taihe10from_ani_tIN4ohos12time_service11systemtimer12TimerOptionsEEclEP9__ani_envP12__ani_objectE16field_4_from_ani;
+    _ZZNK5taihe10from_ani_tIN4ohos12time_service11systemtimer12TimerOptionsEEclEP9__ani_envP12__ani_objectE16field_6_from_ani;
+  local:
+    *;
+};

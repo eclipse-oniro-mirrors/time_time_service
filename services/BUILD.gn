@@ -134,6 +134,7 @@ ohos_shared_library("time_system_ability") {
     "bundle_framework:appexecfwk_core",
   ]
   ldflags = [ "-Wl,--gc-sections" ]
+  version_script = "libtime_system_ability.map"
 
   defines = []
   if (time_service_debug_able) {

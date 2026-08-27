@@ -76,6 +76,7 @@ ohos_shared_library("systemtimer") {
     debug = time_sanitize_debug
   }
   relative_install_dir = "module"
+  version_script = "libsystemtimer.map"
   subsystem_name = "time"
   part_name = "time_service"
 }
