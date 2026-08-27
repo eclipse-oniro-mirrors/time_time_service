@@ -1,0 +1,7 @@
+{
+  global:
+    OH_TimeService_GetTimeZone;
+    TIMEZONE_KEY;
+  local:
+    *;
+};

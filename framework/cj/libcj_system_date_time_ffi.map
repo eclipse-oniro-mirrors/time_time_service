@@ -1,0 +1,8 @@
+{
+  global:
+    FfiOHOSSysDateTimeGetTime;
+    FfiOHOSSysDateTimeGetUptime;
+    FfiOHOSSysGetTimezone;
+  local:
+    *;
+};

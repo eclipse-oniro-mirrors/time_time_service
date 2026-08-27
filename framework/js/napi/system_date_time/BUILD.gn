@@ -76,6 +76,7 @@ ohos_shared_library("systemdatetime") {
     debug = time_sanitize_debug
   }
   relative_install_dir = "module"
+  version_script = "libsystemdatetime.map"
   subsystem_name = "time"
   part_name = "time_service"
 }
