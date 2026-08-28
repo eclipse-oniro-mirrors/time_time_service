@@ -37,7 +37,6 @@ ohos_shared_library("cj_system_date_time_ffi") {
       "napi:cj_bind_ffi",
       "samgr:samgr_proxy",
     ]
-    version_script = "libcj_system_date_time_ffi.map"
   } else {
     defines += [ "PREVIEWER" ]
     sources = [ "src/system_date_mock.cpp" ]
@@ -53,6 +52,9 @@ ohos_shared_library("cj_system_date_time_ffi") {
     cfi_cross_dso = true
     debug = time_sanitize_debug
   }
+
+  version_script = "libcj_system_date_time_ffi.map"
+
   innerapi_tags = [ "platformsdk" ]
   subsystem_name = "time"
   part_name = "time_service"
