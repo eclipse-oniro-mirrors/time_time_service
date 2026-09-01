@@ -177,8 +177,10 @@ void ParseTimerOptions(napi_env env, ContextBase *context, std::string paraType,
             std::make_shared<OHOS::AbilityRuntime::WantAgent::WantAgent>(*wantAgent);
         iTimerInfoInstance->SetWantAgent(sWantAgent);
     } else if (paraType == "callback") {
-        napi_ref onTriggerCallback;
-        napi_create_reference(env, result, 1, &onTriggerCallback);
+        napi_ref onTriggerCallback = nullptr;
+        auto status = napi_create_reference(env, result, 1, &onTriggerCallback);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, status == napi_ok,
+            "create reference for callback failed.", JsErrorCode::PARAMETER_ERROR);
         iTimerInfoInstance->SetCallbackInfo(env, onTriggerCallback);
     } else if (paraType == "name") {
         std::string name = "";
