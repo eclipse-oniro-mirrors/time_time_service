@@ -149,6 +149,9 @@ bool TimerProxy::SetTimerExemption(const std::unordered_set<std::string> &nameAr
         }
         return isChanged;
     }
+    for (const auto &name : nameArr) {
+        TIME_HILOGI(TIME_MODULE_SERVICE, "SetTimerExemption, name : %{public}s", name.c_str());
+    }
     adjustExemptionList_.insert(nameArr.begin(), nameArr.end());
     return isChanged;
 }
