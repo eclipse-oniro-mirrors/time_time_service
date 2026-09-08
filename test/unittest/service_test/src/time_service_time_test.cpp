@@ -1420,6 +1420,27 @@ HWTEST_F(TimeServiceTimeTest, NtpTime002, TestSize.Level0)
 }
 
 /**
+* @tc.name: NtpTime003
+* @tc.desc: Test default NTP server list contains NTSC server
+* @tc.precon: NtpUpdateTime service is available
+* @tc.step: 1. Use the default NTP server string
+*           2. Call SplitNtpAddrs method
+*           3. Verify returned list contains ntp.ntsc.ac.cn as first item
+* @tc.expect: SplitNtpAddrs returns ["ntp.ntsc.ac.cn", "1.cn.pool.ntp.org"]
+* @tc.type: FUNC
+* @tc.require: issue#842
+* @tc.level: level0
+*/
+HWTEST_F(TimeServiceTimeTest, NtpTime003, TestSize.Level0)
+{
+    const std::string ntpStr = "ntp.ntsc.ac.cn,1.cn.pool.ntp.org";
+    auto res = NtpUpdateTime::GetInstance().SplitNtpAddrs(ntpStr);
+    EXPECT_EQ(res.size(), 2);
+    EXPECT_EQ(res[0], "ntp.ntsc.ac.cn");
+    EXPECT_EQ(res[1], "1.cn.pool.ntp.org");
+}
+
+/**
 * @tc.name: NtpUpdateTime001
 * @tc.desc: Test system time setting with network time switch off
 * @tc.precon: NtpUpdateTime service is available
