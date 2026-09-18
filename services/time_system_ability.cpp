@@ -1516,6 +1516,7 @@ void TimeSystemAbility::ArmPowerOffTimer(uint64_t triggerTime, int64_t currentTi
         TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_create error:%{public}s", strerror(errno));
         return;
     }
+    fdsan_exchange_owner_tag(tmfd, 0, BASE_TIME_FDSAN_TAG);
     if (static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI > triggerTime) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
         triggerTime = static_cast<uint64_t>(currentTime) + TWO_MINUTES_TO_MILLI;
@@ -1534,7 +1535,7 @@ void TimeSystemAbility::ArmPowerOffTimer(uint64_t triggerTime, int64_t currentTi
     if (ret < 0) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "timerfd_settime error:%{public}s", strerror(errno));
     }
-    close(tmfd);
+    fdsan_close_with_tag(tmfd, BASE_TIME_FDSAN_TAG);
 }
 #endif
 #endif
