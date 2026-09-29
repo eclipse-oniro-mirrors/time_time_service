@@ -46,6 +46,7 @@ ohos_fuzztest("TimeGetThreadTimeFuzzTest") {
     "ability_base:configuration",
     "ability_base:want",
     "ability_runtime:wantagent_innerkits",
+    "icu:shared_icuuc",
     "access_token:libaccesstoken_sdk",
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",

@@ -67,6 +67,7 @@ taihe_shared_library("systemdatetime_taihe_native") {
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hilog:libhilog",
+    "icu:shared_icuuc",
     "init:libbegetutil",
     "ipc:ipc_single",
     "samgr:samgr_proxy",

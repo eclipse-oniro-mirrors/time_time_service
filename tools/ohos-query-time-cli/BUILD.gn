@@ -45,6 +45,7 @@ ohos_cli_executable("ohos-queryTime") {
     "hilog:libhilog",
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
+    "icu:shared_icuuc",
     "ipc:ipc_single",
     "samgr:samgr_proxy",
     "ability_base:configuration",

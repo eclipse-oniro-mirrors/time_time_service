@@ -46,6 +46,7 @@ ohos_shared_library("time_client") {
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hilog:libhilog",
+    "icu:shared_icuuc",
     "ipc:ipc_single",
     "json:nlohmann_json_static",
     "resource_management:global_resmgr",

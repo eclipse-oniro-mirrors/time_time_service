@@ -148,6 +148,7 @@ foreach(item, time_fuzztests) {
       "c_utils:utils",
       "common_event_service:cesfwk_innerkits",
       "hilog:libhilog",
+      "icu:shared_icuuc",
       "init:libbegetutil",
       "ipc:ipc_single",
       "power_manager:powermgr_client",

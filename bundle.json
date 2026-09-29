@@ -59,7 +59,8 @@
         "ets_frontend",
         "bundle_framework",
         "taihe_ffi_gen",
-        "node"
+        "node",
+        "icu"
       ]
     },
     "build": {

@@ -32,6 +32,7 @@ ohos_shared_library("cj_system_date_time_ffi") {
       "ability_runtime:wantagent_innerkits",
       "c_utils:utils",
       "hilog:libhilog",
+      "icu:shared_icuuc",
       "init:libbegetutil",
       "ipc:ipc_single",
       "napi:cj_bind_ffi",

@@ -60,6 +60,7 @@ ohos_shared_library("systemtimer") {
     "ability_runtime:wantagent_innerkits",
     "c_utils:utils",
     "hilog:libhilog",
+    "icu:shared_icuuc",
     "ipc:ipc_single",
     "napi:ace_napi",
     "samgr:samgr_proxy",
