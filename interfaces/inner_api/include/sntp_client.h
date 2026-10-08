@@ -17,6 +17,7 @@
 #define SNTP_CLIENT_SNTP_CLIENT_H
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <sys/types.h>
 
@@ -25,9 +26,19 @@ namespace MiscServices {
 class SNTPClient {
 public:
     bool RequestTime(const std::string &host);
+    // Request with a per-request timeout limit (milliseconds). The original
+    // overload keeps the current 5000ms default behavior.
+    bool RequestTime(const std::string &host, uint32_t timeoutMs);
     int64_t getNtpTime();
     int64_t getNtpTimeReference();
     int64_t getRoundTripTime();
+    int64_t getClockOffset();
+    // Values captured during the last successful request, used by the SA side
+    // to report the equivalent NTP_REFRESH event (moved out of the engine).
+    int64_t getOriginTimestamp();
+    int64_t getReceiveClientTime();
+    int64_t getReceiveServerTime();
+    int64_t getTransmitServerTime();
 
 private:
     struct ntp_timestamp {
@@ -82,7 +93,7 @@ private:
      *
      * @param clockOffset the clock offset in ms
      */
-    void SetClockOffset(int clockOffset);
+    void SetClockOffset(int64_t clockOffset);
 
     /**
      * This function converts the UNIX time to NTP
@@ -113,10 +124,11 @@ private:
      * socket with send/recv timeout configured.
      *
      * @param host the NTP server host
+     * @param timeoutMs the send/recv timeout limit in milliseconds
      *
      * Returns the socket fd on success, -1 on failure.
      */
-    int32_t CreateConnectedSocket(const std::string &host);
+    int32_t CreateConnectedSocket(const std::string &host, uint32_t timeoutMs);
 
     /**
      * This function returns the timestamp (64-bit) from the received
@@ -142,6 +154,9 @@ private:
     int64_t mNtpTime;
     int64_t mNtpTimeReference;
     int64_t mRoundTripTime;
+    int64_t mReceiveClientTime;
+    int64_t mReceiveServerTime;
+    int64_t mTransmitServerTime;
 };
 } // namespace MiscServices
 } // namespace OHOS

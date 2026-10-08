@@ -1,0 +1,17 @@
+{
+  global:
+    _ZN4OHOS12MiscServices10SNTPClient10getNtpTimeEv;
+    _ZN4OHOS12MiscServices10SNTPClient11RequestTimeERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
+    _ZN4OHOS12MiscServices10SNTPClient11RequestTimeERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEj;
+    _ZN4OHOS12MiscServices10SNTPClient14getClockOffsetEv;
+    _ZN4OHOS12MiscServices10SNTPClient16getRoundTripTimeEv;
+    _ZN4OHOS12MiscServices10SNTPClient18getOriginTimestampEv;
+    _ZN4OHOS12MiscServices10SNTPClient19getNtpTimeReferenceEv;
+    _ZN4OHOS12MiscServices10SNTPClient20getReceiveClientTimeEv;
+    _ZN4OHOS12MiscServices10SNTPClient20getReceiveServerTimeEv;
+    _ZN4OHOS12MiscServices10SNTPClient21getTransmitServerTimeEv;
+    _ZN4OHOS12MiscServices13NtpTimeClient11RequestTimeERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEERKNS0_14NtpTimeOptionsERNS0_15NtpServerResultE;
+    _ZN4OHOS12MiscServices13NtpTimeClient11RequestTimeERKNSt3__h6vectorINS2_12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEENS7_IS9_EEEERKNS0_14NtpTimeOptionsERNS0_15NtpServerResultE;
+  local:
+    *;
+};

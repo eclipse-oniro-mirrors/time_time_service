@@ -91,7 +91,6 @@ ohos_shared_library("time_system_ability") {
     "time/src/ntp_trusted_time.cpp",
     "time/src/ntp_update_time.cpp",
     "time/src/simple_timer_info.cpp",
-    "time/src/sntp_client.cpp",
     "time/src/time_service_notify.cpp",
     "time/src/time_tick_notify.cpp",
     "time/src/time_zone_info.cpp",
@@ -117,6 +116,7 @@ ohos_shared_library("time_system_ability") {
 
   deps = [
     ":timeservice_interface",
+    "${api_path}:ntp_time_client_sources",
     "${time_utils_path}:time_utils",
   ]
   external_deps = [
@@ -211,7 +211,6 @@ ohos_static_library("time_system_ability_static") {
     "time/src/ntp_trusted_time.cpp",
     "time/src/ntp_update_time.cpp",
     "time/src/simple_timer_info.cpp",
-    "time/src/sntp_client.cpp",
     "time/src/time_service_notify.cpp",
     "time/src/time_tick_notify.cpp",
     "time/src/time_zone_info.cpp",
@@ -238,6 +237,7 @@ ohos_static_library("time_system_ability_static") {
 
   deps = [
     ":timeservice_interface",
+    "${api_path}:ntp_time_client_sources",
     "${time_utils_path}:time_utils",
   ]
   external_deps = [
