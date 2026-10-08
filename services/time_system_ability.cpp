@@ -126,7 +126,10 @@ sptr<TimeSystemAbility> TimeSystemAbility::GetInstance()
     // Use C++11 function-local static (magic statics) for thread-safe initialization.
     // The previous double-checked locking pattern read the non-atomic `instance_` without a
     // lock, which could observe a partially-constructed object on some platforms.
-    static sptr<TimeSystemAbility> instance = new TimeSystemAbility;
+    // no_destroy: background NTP threads (detached) may still reference this singleton
+    // while the process is tearing down; leaking avoids use-after-free (same pattern as
+    // TimeServiceClient::instance_).
+    __attribute__((no_destroy)) static sptr<TimeSystemAbility> instance = new TimeSystemAbility;
     return instance;
 }
 
@@ -571,6 +574,27 @@ int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId)
 int32_t TimeSystemAbility::DestroyTimerAsync(uint64_t timerId)
 {
     return DestroyTimer(timerId);
+}
+
+int32_t TimeSystemAbility::SetPowerOnTimerEnabled(const std::string &name, bool enable)
+{
+    TimeXCollie timeXCollie("TimeService::SetPowerOnTimerEnabled");
+    if (!TimePermission::CheckSystemUidCallingPermission(IPCSkeleton::GetCallingFullTokenID())) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "not system applications");
+        return E_TIME_NOT_SYSTEM_APP;
+    }
+#ifdef SET_AUTO_REBOOT_ENABLE
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    // SetPowerOnTimerEnabledByName has no failure path (always E_TIME_OK), so
+    // pass its result through directly.
+    return timerManager->SetPowerOnTimerEnabledByName(name, enable);
+#else
+    // Feature not compiled in: silent no-op (spec R-10 / ADR-7).
+    return E_TIME_OK;
+#endif
 }
 
 bool TimeSystemAbility::IsValidTime(int64_t time)
@@ -1478,7 +1502,7 @@ void TimeSystemAbility::SetAutoReboot()
     auto &database = TimeDatabase::GetInstance();
     OHOS::NativeRdb::RdbPredicates holdRdbPredicates(HOLD_ON_REBOOT);
     holdRdbPredicates.EqualTo("state", 1)->OrderByAsc("triggerTime");
-    auto resultSet = database.Query(holdRdbPredicates, { "bundleName", "triggerTime", "name" });
+    auto resultSet = database.Query(holdRdbPredicates, { "bundleName", "triggerTime", "name", "timerId" });
     if (resultSet == nullptr) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "no need to set RTC");
         return;
@@ -1499,8 +1523,20 @@ void TimeSystemAbility::SetAutoReboot()
                         "triggerTime:%{public}" PRIu64" currentTime:%{public}" PRId64"", triggerTime, currentTime);
             continue;
         }
-        if (std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, 0)) != bundleList.end() ||
-            std::find(bundleList.begin(), bundleList.end(), GetString(resultSet, INDEX_TWO)) != bundleList.end()) {
+        // Skip power-on timers disabled via setPowerOnTimerEnabled for this run
+        // cycle (ADR-2/ADR-3): the shutdown path must honor the in-memory
+        // disabled registry, otherwise a disabled timer is re-armed into the
+        // power-off alarm and the device still boots on its trigger time.
+        uint64_t timerId = static_cast<uint64_t>(GetLong(resultSet, 3));
+        if (timerManager->IsPowerOnTimerDisabled(timerId)) {
+            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE,
+                "SetAutoReboot skip disabled id:%{public}" PRIu64 " trigger:%{public}" PRIu64, timerId, triggerTime);
+            continue;
+        }
+        auto candidateBundle = GetString(resultSet, 0);
+        auto candidateName = GetString(resultSet, INDEX_TWO);
+        if (std::find(bundleList.begin(), bundleList.end(), candidateBundle) != bundleList.end() ||
+            std::find(bundleList.begin(), bundleList.end(), candidateName) != bundleList.end()) {
             ArmPowerOffTimer(triggerTime, currentTime);
             resultSet->Close();
             return;

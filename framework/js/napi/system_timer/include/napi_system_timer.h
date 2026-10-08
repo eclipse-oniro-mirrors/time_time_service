@@ -55,6 +55,9 @@ public:
     static napi_value StartTimer(napi_env env, napi_callback_info info);
     static napi_value StopTimer(napi_env env, napi_callback_info info);
     static napi_value DestroyTimer(napi_env env, napi_callback_info info);
+    static void ParsePowerOnTimerEnabledOptions(const napi_env &env, ContextBase *context, const napi_value &value,
+        std::string &timerName, bool &enable);
+    static napi_value SetPowerOnTimerEnabled(napi_env env, napi_callback_info info);
 };
 
 }

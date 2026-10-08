@@ -418,6 +418,16 @@ public:
     TIME_API int32_t SetAdjustPolicy(const std::unordered_map<std::string, uint32_t> &policyMap);
 
     /**
+     * @brief SetPowerOnTimerEnabled
+     * enable/disable a power-on (power-off alarm) timer by name for this run cycle.
+     * In-memory only: service/device restart restores the original state.
+     * @param name timer name.
+     * @param enable true to restore, false to disable.
+     * @return int32_t return error code.
+     */
+    TIME_API int32_t SetPowerOnTimerEnabled(const std::string &name, bool enable);
+
+    /**
      * @brief ResetAllProxy
      *
      * Wake up all timers by proxy.
