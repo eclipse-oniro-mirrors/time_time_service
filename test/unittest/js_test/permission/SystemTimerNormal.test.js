@@ -975,4 +975,64 @@ describe('SystemTimerNormalTest', function () {
         })
         console.log('testDestroyTimer006 end');
     });
+
+    /**
+     * @tc.number: TestSetPowerOnTimerEnabled001
+     * @tc.name: TestSetPowerOnTimerEnabled001
+     * @tc.desc: Test setPowerOnTimerEnabled API disables a power-on timer for a system app using Promise
+     * @tc.precon: Time service SA (3702) is running, caller is a system application
+     * @tc.step: 1. Prepare options with a timer name and enable=false
+     *           2. Call setPowerOnTimerEnabled using Promise
+     *           3. Verify the call resolves without error
+     * @tc.expect: setPowerOnTimerEnabled resolves successfully for a system caller
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level1
+     * @tc.require: issue#844
+     */
+    it('testSetPowerOnTimerEnabled001', 0, async (done) => {
+        console.log("testSetPowerOnTimerEnabled001 start")
+        let options = {
+            timerName: "testTimerName",
+            enable: false,
+        }
+        systemTimer.setPowerOnTimerEnabled(options).then(() => {
+            expect(true).assertTrue();
+            done();
+        }).catch((err) => {
+            expect(false).assertTrue();
+            done();
+        })
+        console.log('testSetPowerOnTimerEnabled001 end');
+    });
+
+    /**
+     * @tc.number: TestSetPowerOnTimerEnabled002
+     * @tc.name: TestSetPowerOnTimerEnabled002
+     * @tc.desc: Test setPowerOnTimerEnabled API restores a power-on timer for a system app using Promise
+     * @tc.precon: Time service SA (3702) is running, caller is a system application
+     * @tc.step: 1. Prepare options with a timer name and enable=true
+     *           2. Call setPowerOnTimerEnabled using Promise
+     *           3. Verify the call resolves without error
+     * @tc.expect: setPowerOnTimerEnabled resolves successfully for a system caller
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level1
+     * @tc.require: issue#844
+     */
+    it('testSetPowerOnTimerEnabled002', 0, async (done) => {
+        console.log("testSetPowerOnTimerEnabled002 start")
+        let options = {
+            timerName: "testTimerName",
+            enable: true,
+        }
+        systemTimer.setPowerOnTimerEnabled(options).then(() => {
+            expect(true).assertTrue();
+            done();
+        }).catch((err) => {
+            expect(false).assertTrue();
+            done();
+        })
+        console.log('testSetPowerOnTimerEnabled002 end');
+    });
 })

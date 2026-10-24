@@ -533,6 +533,16 @@ int32_t TimerManager::StopTimerInnerLocked(bool needDestroy, uint64_t timerNumbe
         auto uid = it->second->uid;
         auto name = it->second->name;
         timerEntryMap_.erase(it);
+        #ifdef SET_AUTO_REBOOT_ENABLE
+        {
+            // Hygiene: a destroyed timer's id must not linger in the disabled registry (INV-6).
+            // The looper thread reads this registry under mutex_ in
+            // ReschedulePowerOnTimerLocked, so hold mutex_ here too (lock order
+            // entryMapMutex_ -> mutex_, matching the RemoveHandler call above).
+            std::lock_guard<std::mutex> lockPowerOn(mutex_);
+            disabledPowerOnTimerIds_.erase(timerNumber);
+        }
+        #endif
         DecreaseTimerCount(uid);
         if (name != "") {
             DeleteTimerName(uid, name, timerNumber);
@@ -963,6 +973,122 @@ void TimerManager::DeleteTimerFromPowerOnTimerListById(uint64_t timerId)
     #endif
 }
 
+std::shared_ptr<TimerInfo> TimerManager::BuildTimerInfoFromEntry(const std::shared_ptr<TimerEntry>& entry)
+{
+    return std::make_shared<TimerInfo>(entry->name, entry->id, entry->type, std::chrono::milliseconds(0),
+        std::chrono::steady_clock::time_point(), std::chrono::milliseconds(entry->windowLength),
+        std::chrono::steady_clock::time_point(), std::chrono::milliseconds(entry->interval), entry->callback,
+        entry->wantAgent, entry->flag, entry->autoRestore, entry->uid, entry->pid, entry->bundleName);
+}
+
+bool TimerManager::EnableAllPowerOnTimersLocked()
+{
+    if (disabledPowerOnTimerIds_.empty()) {
+        return false;
+    }
+    size_t restoredCount = disabledPowerOnTimerIds_.size();
+    disabledPowerOnTimerIds_.clear();
+    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "PowerOnTimer enable all, restored:%{public}zu", restoredCount);
+    return true;
+}
+
+bool TimerManager::DisableAllPowerOnTimersLocked()
+{
+    bool registryChanged = false;
+    for (const auto &entryPair : timerEntryMap_) {
+        auto timerInfo = BuildTimerInfoFromEntry(entryPair.second);
+        if (IsPowerOnTimer(timerInfo) && disabledPowerOnTimerIds_.insert(entryPair.first).second) {
+            registryChanged = true;
+        }
+    }
+    TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "PowerOnTimer disable all, disabled:%{public}zu",
+        disabledPowerOnTimerIds_.size());
+    return registryChanged;
+}
+
+bool TimerManager::SetPowerOnTimerEnabledByNameLocked(const std::string &name, bool enable)
+{
+    bool registryChanged = false;
+    std::vector<uint64_t> matchedTimerIds;
+    for (const auto &uidTimerMap : timerNameMap_) {
+        auto it = uidTimerMap.second.find(name);
+        if (it != uidTimerMap.second.end()) {
+            matchedTimerIds.push_back(it->second);
+        }
+    }
+    for (auto timerId : matchedTimerIds) {
+        auto entryIt = timerEntryMap_.find(timerId);
+        if (entryIt == timerEntryMap_.end()) {
+            continue;
+        }
+        if (enable) {
+            // enable = restore for this run cycle: remove from disabled set whenever present.
+            if (disabledPowerOnTimerIds_.erase(timerId) > 0) {
+                registryChanged = true;
+                TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "PowerOnTimer restored id:%{public}" PRIu64 "", timerId);
+            }
+            continue;
+        }
+        // disable: only mark power-on timers.
+        auto timerInfo = BuildTimerInfoFromEntry(entryIt->second);
+        if (IsPowerOnTimer(timerInfo) && disabledPowerOnTimerIds_.insert(timerId).second) {
+            registryChanged = true;
+            TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "PowerOnTimer disabled id:%{public}" PRIu64 "", timerId);
+        }
+    }
+    return registryChanged;
+}
+
+int32_t TimerManager::SetPowerOnTimerEnabledByName(const std::string &name, bool enable)
+{
+    // Lock order: entryMapMutex_ -> mutex_ (never reversed).
+    std::lock_guard<std::mutex> lockEntry(entryMapMutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
+    bool registryChanged = false;
+    if (name.empty()) {
+        // Empty name means the operation applies to all power-on timers (spec).
+        registryChanged = enable ? EnableAllPowerOnTimersLocked() : DisableAllPowerOnTimersLocked();
+    } else {
+        registryChanged = SetPowerOnTimerEnabledByNameLocked(name, enable);
+    }
+    if (registryChanged) {
+        // Call-and-take-effect (ADR-1): reschedule in the same critical section.
+        #ifdef CALLBACK_AUTOBOOT_ENABLE
+        ReschedulePowerOnTimerLocked(false);
+        #else
+        ReschedulePowerOnTimerLocked();
+        #endif
+    }
+    return E_TIME_OK;
+}
+
+bool TimerManager::IsPowerOnTimerDisabled(uint64_t timerId)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return disabledPowerOnTimerIds_.count(timerId) > 0;
+}
+
+bool TimerManager::GetNextPowerOnTriggerTimeLocked(int64_t currentTime,
+    std::chrono::milliseconds &setTimePoint)
+{
+    size_t index = 0;
+    while (index < powerOnTriggerTimerList_.size()) {
+        auto timerInfo = powerOnTriggerTimerList_[index];
+        auto triggerTime = timerInfo->when;
+        if (triggerTime.count() >= currentTime &&
+            disabledPowerOnTimerIds_.count(timerInfo->id) == 0) {
+            setTimePoint = triggerTime;
+            return true;
+        }
+        if (triggerTime.count() < currentTime) {
+            powerOnTriggerTimerList_.erase(powerOnTriggerTimerList_.begin() + index);
+        } else {
+            index++;
+        }
+    }
+    return false;
+}
+
 #ifdef CALLBACK_AUTOBOOT_ENABLE
 void TimerManager::ReschedulePowerOnTimerLocked(bool isShutDown)
 #else
@@ -975,43 +1101,32 @@ void TimerManager::ReschedulePowerOnTimerLocked()
         TIME_HILOGE(TIME_MODULE_SERVICE, "currentTime get failed");
         return;
     }
-    if (powerOnTriggerTimerList_.size() == 0) {
-        // current version cannot cancel a power-on timer
-        // set trigger time to ten years as a never trigger timer to cancel the timer
-        int64_t timeNeverTrigger = currentTime + TEN_YEARS_TO_SECOND * ONE_THOUSAND;
-        SetLocked(POWER_ON_ALARM, std::chrono::milliseconds(timeNeverTrigger), bootTime);
-        lastSetTime_[POWER_ON_ALARM] = timeNeverTrigger;
-        return;
-    }
     std::sort(powerOnTriggerTimerList_.begin(), powerOnTriggerTimerList_.end(),
         [](const std::shared_ptr<TimerInfo>& a, const std::shared_ptr<TimerInfo>& b) {
             return a->when < b->when;
         });
-    auto timerInfo = powerOnTriggerTimerList_[0];
-    auto setTimePoint = timerInfo->when;
-    while (setTimePoint.count() < currentTime) {
-        powerOnTriggerTimerList_.erase(powerOnTriggerTimerList_.begin());
-        if (powerOnTriggerTimerList_.size() == 0) {
-            // current version cannot cancel a power-on timer
-            // set trigger time to ten years as a never trigger timer to cancel the timer
-            int64_t timeNeverTrigger = currentTime + TEN_YEARS_TO_SECOND * ONE_THOUSAND;
-            SetLocked(POWER_ON_ALARM, std::chrono::milliseconds(timeNeverTrigger), bootTime);
-            lastSetTime_[POWER_ON_ALARM] = timeNeverTrigger;
-            return;
-        }
-        timerInfo = powerOnTriggerTimerList_[0];
-        setTimePoint = timerInfo->when;
+    std::chrono::milliseconds setTimePoint(0);
+    if (!GetNextPowerOnTriggerTimeLocked(currentTime, setTimePoint)) {
+        // Empty list or every remaining entry is disabled: current version cannot
+        // cancel a power-on timer, so set trigger time to ten years as a never
+        // trigger timer to cancel it.
+        int64_t timeNeverTrigger = currentTime + TEN_YEARS_TO_SECOND * ONE_THOUSAND;
+        SetLocked(POWER_ON_ALARM, std::chrono::milliseconds(timeNeverTrigger), bootTime);
+        lastSetTime_[POWER_ON_ALARM] = timeNeverTrigger;
+        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "PowerOnTimer alarm set to never-trigger (no enabled timer)");
+        return;
     }
     #ifdef CALLBACK_AUTOBOOT_ENABLE
     if (isShutDown && currentTime + static_cast<int64_t>(TWO_MINUTES_TO_MILLI) > setTimePoint.count()) {
         TIME_HILOGI(TIME_MODULE_SERVICE, "interval less than 2min");
-        auto triggerTime = currentTime + static_cast<int64_t>(TWO_MINUTES_TO_MILLI);
-        setTimePoint = std::chrono::milliseconds(triggerTime);
+        setTimePoint = std::chrono::milliseconds(currentTime + static_cast<int64_t>(TWO_MINUTES_TO_MILLI));
     }
     #endif
     if (setTimePoint.count() != lastSetTime_[POWER_ON_ALARM]) {
         SetLocked(POWER_ON_ALARM, setTimePoint, bootTime);
         lastSetTime_[POWER_ON_ALARM] = setTimePoint.count();
+        TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "PowerOnTimer alarm rescheduled to %{public}" PRId64 "",
+            static_cast<int64_t>(setTimePoint.count()));
     }
 }
 

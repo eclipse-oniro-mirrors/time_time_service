@@ -70,3 +70,13 @@ function DestroyTimerAsync(timer: i64);
 @promise
 function DestroyTimerPromise(timer: i64);
 function DestroyTimerSync(timer: i64);
+
+struct PowerOnTimerEnabledOptions {
+    timerName: Optional<String>;
+    enable: Optional<bool>;
+}
+
+@rename("setPowerOnTimerEnabled")
+@promise
+function SetPowerOnTimerEnabledPromise(options: Optional<PowerOnTimerEnabledOptions>): void;
+function SetPowerOnTimerEnabledSync(options: Optional<PowerOnTimerEnabledOptions>): void;

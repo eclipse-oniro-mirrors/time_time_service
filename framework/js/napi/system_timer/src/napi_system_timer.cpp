@@ -15,6 +15,8 @@
 
 #include "napi_system_timer.h"
 
+#include <vector>
+
 #include "napi_utils.h"
 #include "timer_type.h"
 
@@ -105,6 +107,7 @@ napi_value NapiSystemTimer::SystemTimerInit(napi_env env, napi_value exports)
         DECLARE_NAPI_STATIC_FUNCTION("startTimer", StartTimer),
         DECLARE_NAPI_STATIC_FUNCTION("stopTimer", StopTimer),
         DECLARE_NAPI_STATIC_FUNCTION("destroyTimer", DestroyTimer),
+        DECLARE_NAPI_STATIC_FUNCTION("setPowerOnTimerEnabled", SetPowerOnTimerEnabled),
         DECLARE_NAPI_PROPERTY("TIMER_TYPE_REALTIME", NapiUtils::CreateNapiNumber(env, 1 << TIMER_TYPE_REALTIME)),
         DECLARE_NAPI_PROPERTY("TIMER_TYPE_WAKEUP", NapiUtils::CreateNapiNumber(env, 1 << TIMER_TYPE_WAKEUP)),
         DECLARE_NAPI_PROPERTY("TIMER_TYPE_EXACT", NapiUtils::CreateNapiNumber(env, 1 << TIMER_TYPE_EXACT)),
@@ -371,6 +374,92 @@ napi_value NapiSystemTimer::DestroyTimer(napi_env env, napi_callback_info info)
     auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
 
     return NapiWork::AsyncEnqueue(env, destroyTimerContext, "DestroyTimer", executor, complete);
+}
+
+void NapiSystemTimer::ParsePowerOnTimerEnabledOptions(const napi_env &env, ContextBase *context,
+    const napi_value &value, std::string &timerName, bool &enable)
+{
+    napi_valuetype optionsType = napi_undefined;
+    context->status = napi_typeof(env, value, &optionsType);
+    CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context,
+        context->status == napi_ok && optionsType == napi_object,
+        "The type of 'options' must be object", JsErrorCode::PARAMETER_ERROR);
+    // timerName: optional; when not specified, the operation applies to all
+    // power-on timers (timerName left empty). An explicit empty or over-64-byte
+    // string is rejected (d.ts: "value cannot be an empty string").
+    bool hasTimerName = false;
+    napi_has_named_property(env, value, "timerName", &hasTimerName);
+    if (hasTimerName) {
+        napi_value timerNameValue = nullptr;
+        napi_get_named_property(env, value, "timerName", &timerNameValue);
+        napi_valuetype timerNameType = napi_undefined;
+        napi_typeof(env, timerNameValue, &timerNameType);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, timerNameType == napi_string,
+            "The type of 'timerName' must be string", JsErrorCode::PARAMETER_ERROR);
+        size_t length = 0;
+        context->status = napi_get_value_string_utf8(env, timerNameValue, nullptr, 0, &length);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context,
+            context->status == napi_ok && length > 0 && length <= STR_MAX_LENGTH,
+            "The length of 'timerName' must be within 64 bytes", JsErrorCode::PARAMETER_ERROR);
+        std::vector<char> buffer(length + 1, 0);
+        size_t copied = 0;
+        context->status = napi_get_value_string_utf8(env, timerNameValue, buffer.data(), length + 1, &copied);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok,
+            "Failed to read 'timerName'", JsErrorCode::PARAMETER_ERROR);
+        timerName.assign(buffer.data(), copied);
+    }
+    // enable: optional boolean, defaults to true (enable).
+    bool hasEnable = false;
+    napi_has_named_property(env, value, "enable", &hasEnable);
+    if (hasEnable) {
+        napi_value enableValue = nullptr;
+        napi_get_named_property(env, value, "enable", &enableValue);
+        napi_valuetype enableType = napi_undefined;
+        napi_typeof(env, enableValue, &enableType);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, enableType == napi_boolean,
+            "The type of 'enable' must be boolean", JsErrorCode::PARAMETER_ERROR);
+        napi_get_value_bool(env, enableValue, &enable);
+    } else {
+        enable = true;
+    }
+    context->status = napi_ok;
+}
+
+napi_value NapiSystemTimer::SetPowerOnTimerEnabled(napi_env env, napi_callback_info info)
+{
+    struct SetPowerOnTimerEnabledContext : public ContextBase {
+        std::string timerName;
+        bool enable = false;
+    };
+    SetPowerOnTimerEnabledContext *context = new SetPowerOnTimerEnabledContext();
+    auto inputParser = [env, context](size_t argc, napi_value *argv) {
+        // No AsyncCallback overload (spec): at most one options argument; when
+        // omitted, all power-on timers are enabled.
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, argc <= ARGC_ONE,
+            "Too many arguments", JsErrorCode::PARAMETER_ERROR);
+        if (argc == 0) {
+            context->timerName = "";
+            context->enable = true;
+            context->status = napi_ok;
+            return;
+        }
+        ParsePowerOnTimerEnabledOptions(env, context, argv[ARGV_FIRST], context->timerName, context->enable);
+        CHECK_ARGS_RETURN_VOID(TIME_MODULE_JS_NAPI, context, context->status == napi_ok,
+            "Invalid options", JsErrorCode::PARAMETER_ERROR);
+    };
+    context->GetCbInfo(env, info, inputParser);
+    auto executor = [context]() {
+        auto innerCode =
+            TimeServiceClient::GetInstance()->SetPowerOnTimerEnabled(context->timerName, context->enable);
+        TIME_HILOGI(TIME_MODULE_JS_NAPI, "NAPI SetPowerOnTimerEnabled name:%{public}s enable:%{public}d ret:%{public}d",
+            context->timerName.c_str(), context->enable, innerCode);
+        if (innerCode != ERROR_OK) {
+            context->errCode = innerCode;
+            context->status = napi_generic_failure;
+        }
+    };
+    auto complete = [env](napi_value &output) { output = NapiUtils::GetUndefinedValue(env); };
+    return NapiWork::AsyncEnqueue(env, context, "SetPowerOnTimerEnabled", executor, complete);
 }
 } // namespace Time
 } // namespace MiscServices

@@ -232,4 +232,64 @@ describe('SystemTimerTest', function () {
         });
         console.log("testStopTimerNoPermission002 end");
     });
+
+    /**
+     * @tc.number: TestSetPowerOnTimerEnabledNoPermission001
+     * @tc.name: TestSetPowerOnTimerEnabledNoPermission001
+     * @tc.desc: Test setPowerOnTimerEnabled API returns error when called without system app permission using Promise
+     * @tc.precon: SystemTimer service is available and system app permission is not granted
+     * @tc.step: 1. Prepare options with a valid timer name and enable=false
+     *           2. Call setPowerOnTimerEnabled using Promise without system app permission
+     *           3. Catch the rejection and verify error code equals 202
+     * @tc.expect: setPowerOnTimerEnabled Promise should reject with error code 202 when caller is not a system app
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level1
+     * @tc.require: issue#844
+     */
+    it('testSetPowerOnTimerEnabledNoPermission001', 0, async function (done) {
+        console.log("testSetPowerOnTimerEnabledNoPermission001 start");
+        let options = {
+            timerName: "testTimerName",
+            enable: false,
+        }
+        systemTimer.setPowerOnTimerEnabled(options).then(() => {
+            expect(false).assertTrue();
+            done();
+        }).catch((err) => {
+            expect(err.code).assertEqual(202);
+            done();
+        })
+        console.log('testSetPowerOnTimerEnabledNoPermission001 end');
+    });
+
+    /**
+     * @tc.number: TestSetPowerOnTimerEnabledNoPermission002
+     * @tc.name: TestSetPowerOnTimerEnabledNoPermission002
+     * @tc.desc: Test setPowerOnTimerEnabled API returns error when restoring a timer without system app permission using Promise
+     * @tc.precon: SystemTimer service is available and system app permission is not granted
+     * @tc.step: 1. Prepare options with a valid timer name and enable=true
+     *           2. Call setPowerOnTimerEnabled using Promise without system app permission
+     *           3. Catch the rejection and verify error code equals 202
+     * @tc.expect: setPowerOnTimerEnabled Promise should reject with error code 202 when caller is not a system app
+     * @tc.size: MediumTest
+     * @tc.type: Function
+     * @tc.level: Level1
+     * @tc.require: issue#844
+     */
+    it('testSetPowerOnTimerEnabledNoPermission002', 0, async function (done) {
+        console.log("testSetPowerOnTimerEnabledNoPermission002 start");
+        let options = {
+            timerName: "testTimerName",
+            enable: true,
+        }
+        systemTimer.setPowerOnTimerEnabled(options).then(() => {
+            expect(false).assertTrue();
+            done();
+        }).catch((err) => {
+            expect(err.code).assertEqual(202);
+            done();
+        })
+        console.log('testSetPowerOnTimerEnabledNoPermission002 end');
+    });
 })

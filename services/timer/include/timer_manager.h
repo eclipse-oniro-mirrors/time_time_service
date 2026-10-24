@@ -20,6 +20,7 @@
 #include <thread>
 #include <cinttypes>
 #include <cstdint>
+#include <unordered_set>
 
 #include "batch.h"
 #include "timer_handler.h"
@@ -77,6 +78,8 @@ public:
     static TimerManager* GetInstance();
     #ifdef SET_AUTO_REBOOT_ENABLE
     std::vector<std::string> GetPowerOnApps();
+    int32_t SetPowerOnTimerEnabledByName(const std::string &name, bool enable);
+    bool IsPowerOnTimerDisabled(uint64_t timerId);
     #ifdef CALLBACK_AUTOBOOT_ENABLE
     void ShutDownReschedulePowerOnTimer();
     #endif
@@ -146,6 +149,11 @@ private:
     #ifdef SET_AUTO_REBOOT_ENABLE
     bool IsPowerOnTimer(std::shared_ptr<TimerInfo> timerInfo);
     void DeleteTimerFromPowerOnTimerListById(uint64_t timerId);
+    bool GetNextPowerOnTriggerTimeLocked(int64_t currentTime, std::chrono::milliseconds &setTimePoint);
+    bool EnableAllPowerOnTimersLocked();
+    bool DisableAllPowerOnTimersLocked();
+    bool SetPowerOnTimerEnabledByNameLocked(const std::string &name, bool enable);
+    std::shared_ptr<TimerInfo> BuildTimerInfoFromEntry(const std::shared_ptr<TimerEntry>& entry);
     #ifdef CALLBACK_AUTOBOOT_ENABLE
     void ReschedulePowerOnTimerLocked(bool isShutDown);
     #else
@@ -188,6 +196,9 @@ private:
     #ifdef SET_AUTO_REBOOT_ENABLE
     std::vector<std::shared_ptr<TimerInfo>> powerOnTriggerTimerList_;
     std::vector<std::string> powerOnApps_;
+    // In-memory registry of power-on timer ids disabled for this run cycle only
+    // (ADR-2/ADR-3): not persisted; cleared on service/device restart.
+    std::unordered_set<uint64_t> disabledPowerOnTimerIds_;
     #endif
     #ifdef POWER_MANAGER_ENABLE
     std::mutex runningLockMutex_;

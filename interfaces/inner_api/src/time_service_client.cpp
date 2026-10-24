@@ -888,6 +888,21 @@ int32_t TimeServiceClient::SetAdjustPolicy(const std::unordered_map<std::string,
     return code;
 }
 
+int32_t TimeServiceClient::SetPowerOnTimerEnabled(const std::string &name, bool enable)
+{
+    TIME_HILOGD(TIME_MODULE_CLIENT, "set power-on timer enabled name: %{public}s", name.c_str());
+    if (!ConnectService()) {
+        return E_TIME_SA_DIED;
+    }
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        return E_TIME_NULLPTR;
+    }
+    auto code = proxy->SetPowerOnTimerEnabled(name, enable);
+    code = ConvertErrCode(code);
+    return code;
+}
+
 bool TimeServiceClient::ResetAllProxy()
 {
     TIME_HILOGD(TIME_MODULE_CLIENT, "ResetAllProxy");

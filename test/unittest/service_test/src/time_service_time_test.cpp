@@ -1361,6 +1361,9 @@ HWTEST_F(TimeServiceTimeTest, SetSystemTime001, TestSize.Level1)
     thread3.join();
     thread4.join();
 
+    // Destroy the NTP timer created by Init() so its background callback
+    // cannot spawn a detached thread after this test's process state changes.
+    NtpUpdateTime::GetInstance().Stop();
     NtpUpdateTime::autoTimeInfo_.status = tmp;
 }
 

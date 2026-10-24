@@ -19,6 +19,7 @@
 #include "stdexcept"
 #include "ani_system_timer.h"
 #include "ani_utils.h"
+#include "time_common.h"
 #include "time_hilog.h"
 #include "ani_common_want_agent.h"
 
@@ -30,6 +31,9 @@ using namespace OHOS;
 
 namespace {
 // To be implemented.
+
+// Max UTF-8 bytes of the timer name (aligned with NAPI STR_MAX_LENGTH=64).
+constexpr size_t MAX_TIMER_NAME_BYTES = 64;
 
 ani_status GetWantAgent(ani_env *env, const ani_object &value,
     std::shared_ptr<AbilityRuntime::WantAgent::WantAgent> &wantAgent)
@@ -111,6 +115,43 @@ void DestroyTimerSync(int64_t timer)
         return;
     }
 }
+
+void SetPowerOnTimerEnabledSync(optional_view<PowerOnTimerEnabledOptions> const& options)
+{
+    // options omitted: enable all power-on timers (spec).
+    if (!options.has_value()) {
+        int32_t innerCode = TimeServiceClient::GetInstance()->SetPowerOnTimerEnabled("", true);
+        if (innerCode != JsErrorCode::ERROR_OK) {
+            int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+            std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+            set_business_error(errorCode, errorMessage);
+        }
+        return;
+    }
+    auto const& opts = options.value();
+    // timerName optional: when omitted, the operation applies to all power-on
+    // timers (timerName stays empty). An explicit empty or over-64-byte string
+    // is rejected.
+    std::string timerName;
+    if (opts.timerName.has_value()) {
+        timerName = std::string(opts.timerName.value());
+        if (timerName.empty() || timerName.size() > MAX_TIMER_NAME_BYTES) {
+            set_business_error(AniUtils::ConvertErrorCode(E_TIME_PARAMETERS_INVALID), "Invalid timer name");
+            return;
+        }
+    }
+    // enable is optional, defaults to true (enable).
+    bool enable = opts.enable.value_or(true);
+    int32_t innerCode = TimeServiceClient::GetInstance()->SetPowerOnTimerEnabled(timerName, enable);
+    TIME_HILOGI(TIME_MODULE_JS_ANI, "Taihe SetPowerOnTimerEnabled name:%{public}s enable:%{public}d ret:%{public}d",
+        timerName.c_str(), enable, innerCode);
+    if (innerCode != JsErrorCode::ERROR_OK) {
+        int32_t errorCode = AniUtils::ConvertErrorCode(innerCode);
+        std::string errorMessage = AniUtils::GetErrorMessage(errorCode);
+        set_business_error(errorCode, errorMessage);
+        return;
+    }
+}
 }  // namespace
 
 TH_EXPORT_CPP_API_CreateTimerAsync(CreateTimerSync);
@@ -125,3 +166,5 @@ TH_EXPORT_CPP_API_StopTimerSync(StopTimerSync);
 TH_EXPORT_CPP_API_DestroyTimerAsync(DestroyTimerSync);
 TH_EXPORT_CPP_API_DestroyTimerPromise(DestroyTimerSync);
 TH_EXPORT_CPP_API_DestroyTimerSync(DestroyTimerSync);
+TH_EXPORT_CPP_API_SetPowerOnTimerEnabledPromise(SetPowerOnTimerEnabledSync);
+TH_EXPORT_CPP_API_SetPowerOnTimerEnabledSync(SetPowerOnTimerEnabledSync);
