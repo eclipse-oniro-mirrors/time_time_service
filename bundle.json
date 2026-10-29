@@ -23,7 +23,8 @@
       "time_service_multi_account",
       "time_service_callback_autoboot_enable",
       "time_service_running_lock_optimize",
-      "time_service_time_rand_enable"
+      "time_service_time_rand_enable",
+      "time_service_disable_wakeup_alarm"
     ],
     "hisysevent_config": [
       "//base/time/time_service/hisysevent.yaml"
