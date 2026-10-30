@@ -39,4 +39,5 @@ declare_args() {
   }
   time_service_running_lock_optimize = false
   time_service_time_rand_enable = true
+  time_service_disable_wakeup_alarm = false
 }

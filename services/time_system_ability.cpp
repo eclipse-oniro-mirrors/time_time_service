@@ -383,6 +383,10 @@ void TimeSystemAbility::ParseTimerPara(const std::shared_ptr<ITimerInfo> &timerO
     auto uIntType = static_cast<uint32_t>(timerOptions->type);
     bool isRealtime = (uIntType & TIMER_TYPE_REALTIME_MASK) > 0;
     bool isWakeup = (uIntType & TIMER_TYPE_REALTIME_WAKEUP_MASK) > 0;
+#ifdef DISABLE_WAKEUP_ALARM_ENABLE
+    // 屏蔽RTC唤醒能力，wakeup定时器降级为非唤醒
+    isWakeup = false;
+#endif
     paras.windowLength = (uIntType & TIMER_TYPE_EXACT_MASK) > 0 ? 0 : -1;
     paras.flag = (uIntType & TIMER_TYPE_EXACT_MASK) > 0 ? 1 : 0;
     paras.autoRestore = timerOptions->autoRestore;
