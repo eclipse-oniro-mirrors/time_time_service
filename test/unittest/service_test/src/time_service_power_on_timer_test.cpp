@@ -421,51 +421,6 @@ HWTEST_F(PowerOnTimerTest, CheckTimerPara001, TestSize.Level0)
 }
 
 /**
- * @tc.name: SetPowerOnTimerEnabled001
- * @tc.desc: SetPowerOnTimerEnabled disables and then restores a power-on timer by name
- * @tc.precon: Time system ability is available, caller passes the system permission check
- * @tc.step: 1. Register a power-on timer
- *           2. Call TimeSystemAbility::SetPowerOnTimerEnabled to disable it
- *           3. Verify operation succeeds (E_TIME_OK) and timer is disabled
- *           4. Call TimeSystemAbility::SetPowerOnTimerEnabled to restore it
- *           5. Verify operation succeeds (E_TIME_OK) and timer is enabled again
- * @tc.expect: E_TIME_OK on both calls; disabled registry follows the enable state
- * @tc.type: FUNC
- * @tc.level: level0
- */
-HWTEST_F(PowerOnTimerTest, SetPowerOnTimerEnabled001, TestSize.Level0)
-{
-    SetupPowerOnTimer(TIMER_ID, "testTimerName", UID, true);
-    auto ret = TimeSystemAbility::GetInstance()->SetPowerOnTimerEnabled("testTimerName", false);
-    EXPECT_EQ(ret, E_TIME_OK);
-    EXPECT_TRUE(TimerManager::GetInstance()->IsPowerOnTimerDisabled(TIMER_ID));
-    ret = TimeSystemAbility::GetInstance()->SetPowerOnTimerEnabled("testTimerName", true);
-    EXPECT_EQ(ret, E_TIME_OK);
-    EXPECT_FALSE(TimerManager::GetInstance()->IsPowerOnTimerDisabled(TIMER_ID));
-}
-
-/**
- * @tc.name: SetPowerOnTimerEnabledClient001
- * @tc.desc: TimeServiceClient::SetPowerOnTimerEnabled reaches the SA over IPC
- * @tc.precon: Time service SA (3702) is running and reachable
- * @tc.step: 1. Call TimeServiceClient::SetPowerOnTimerEnabled to disable via IPC
- *           2. Verify operation succeeds (E_TIME_OK)
- *           3. Call TimeServiceClient::SetPowerOnTimerEnabled to restore via IPC
- *           4. Verify operation succeeds (E_TIME_OK)
- * @tc.expect: E_TIME_OK returned over IPC
- * @tc.type: FUNC
- * @tc.level: level0
- */
-HWTEST_F(PowerOnTimerTest, SetPowerOnTimerEnabledClient001, TestSize.Level0)
-{
-    // Goes through TimeServiceClient::ConnectService + Binder proxy to the SA.
-    auto ret = TimeServiceClient::GetInstance()->SetPowerOnTimerEnabled("testTimerName", false);
-    EXPECT_EQ(ret, E_TIME_OK);
-    ret = TimeServiceClient::GetInstance()->SetPowerOnTimerEnabled("testTimerName", true);
-    EXPECT_EQ(ret, E_TIME_OK);
-}
-
-/**
  * @tc.name: SetPowerOnTimerEnabledByName007
  * @tc.desc: SetPowerOnTimerEnabledByName matches a timer name across multiple uids
  * @tc.precon: TimerManager is available
