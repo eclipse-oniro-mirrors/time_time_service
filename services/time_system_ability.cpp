@@ -527,7 +527,7 @@ int32_t TimeSystemAbility::StartTimer(uint64_t timerId, uint64_t triggerTime)
     }
     auto ret = timerManager->StartTimer(timerId, triggerTime);
     if (ret != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to start timer");
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Failed to start timer, ret:%{public}d", ret);
         return E_TIME_DEAL_FAILED;
     }
     return ret;
@@ -546,7 +546,7 @@ int32_t TimeSystemAbility::StopTimer(uint64_t timerId)
     }
     auto ret = timerManager->StopTimer(timerId);
     if (ret != E_TIME_OK) {
-        TIME_SIMPLIFY_HILOGE(TIME_MODULE_SERVICE, "Failed to stop timer");
+        TIME_SIMPLIFY_HILOGE(TIME_MODULE_SERVICE, "Failed to stop timer, ret:%{public}d", ret);
         return E_TIME_DEAL_FAILED;
     }
     return ret;
@@ -565,7 +565,7 @@ int32_t TimeSystemAbility::DestroyTimer(uint64_t timerId)
     }
     auto ret = timerManager->DestroyTimer(timerId);
     if (ret != E_TIME_OK) {
-        TIME_SIMPLIFY_HILOGE(TIME_MODULE_SERVICE, "Failed to destory timer");
+        TIME_SIMPLIFY_HILOGE(TIME_MODULE_SERVICE, "Failed to destroy timer, ret:%{public}d", ret);
         return E_TIME_DEAL_FAILED;
     }
     return ret;
@@ -593,6 +593,8 @@ int32_t TimeSystemAbility::SetPowerOnTimerEnabled(const std::string &name, bool 
     return timerManager->SetPowerOnTimerEnabledByName(name, enable);
 #else
     // Feature not compiled in: silent no-op (spec R-10 / ADR-7).
+    TIME_HILOGW(TIME_MODULE_SERVICE, "SetPowerOnTimerEnabled is not supported on this product, "
+        "name:%{public}s enable:%{public}d no-op", name.c_str(), static_cast<int>(enable));
     return E_TIME_OK;
 #endif
 }

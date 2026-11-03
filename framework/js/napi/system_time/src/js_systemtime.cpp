@@ -145,7 +145,7 @@ napi_value JSSystemTimeSetTimeZone(napi_env env, napi_callback_info info)
             asyncContext->isOK = TimeServiceClient::GetInstance()->SetTimeZone(asyncContext->timeZone, errorCode);
             if (!asyncContext->isOK) {
                 auto jsErrorCode = NapiUtils::ConvertErrorCode(errorCode);
-                asyncContext->message = NapiUtils::GetErrorMessage(jsErrorCode).c_str();
+                asyncContext->message = NapiUtils::GetErrorMessage(jsErrorCode);
                 asyncContext->errorCode = JsErrorCode::ERROR;
             }
         },

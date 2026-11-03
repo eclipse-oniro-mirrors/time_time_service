@@ -294,6 +294,24 @@ void NtpUpdateTime::SetSystemTime(NtpUpdateSource code)
     requestMutex_.unlock();
 }
 
+/**
+ * Retry backoff state machine.
+ * - Success or switch-off: reset the backoff to MAX. The early return without rescheduling
+ *   is intentional: it only fires when the interval already equals MAX and code != RETRY_BY_TIMER.
+ *   In the steady state a retry timer armed with the MAX interval by a previous run is still
+ *   pending, so this branch relies on that existing timer instead of re-arming (TimerManager
+ *   replaces a same-id timer rather than stacking, but re-arming here would still postpone the
+ *   next trigger). Caveat: on a path where no timer was ever armed (e.g. boot with the auto-
+ *   time switch OFF, then the user enables the switch and the first sync succeeds), this early
+ *   return leaves no pending timer and periodic NTP retry stops until the next external
+ *   trigger; otherwise fall through and re-arm with the reset interval.
+ * - Failure (switch on): a failure from any non-timer source (INIT / REGISTER_SUBSCRIBER /
+ *   NET_CONNECTED / NTP_SERVER_CHANGE / AUTO_TIME_CHANGE) resets the backoff to MIN;
+ *   timer-driven retries (RETRY_BY_TIMER) multiply the interval by INCREASE_TIMES up to MAX.
+ * - The default branch logs the unknown code and still reschedules with the current
+ *   interval, so a future NtpUpdateSource value added to this module cannot silently
+ *   stop the periodic NTP refresh chain.
+ */
 void NtpUpdateTime::RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess, bool isSwitchOpen)
 {
     std::lock_guard<std::mutex> lock(ntpRetryMutex_);
@@ -320,8 +338,11 @@ void NtpUpdateTime::RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess,
                                     ntpRetryInterval_;
                 break;
             default:
-                TIME_HILOGE(TIME_MODULE_SERVICE, "Error state, code:%{public}d", code);
-                return;
+                // Unknown source: fall back to a conservative retry instead of letting the
+                // periodic NTP refresh chain die silently. Keep the current interval (already
+                // capped at MAX) so the next trigger stays close to the previous schedule.
+                TIME_HILOGE(TIME_MODULE_SERVICE, "Error state, code:%{public}d, retry at current interval", code);
+                break;
         }
     }
     if (timerId_ == 0) {

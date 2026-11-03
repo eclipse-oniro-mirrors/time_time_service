@@ -213,6 +213,9 @@ OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerI
 // When a replacement happens, needRecover is set to the replaced timer's recover-on-reboot flag so
 // the caller can call UpdateOrDeleteDatabase for the returned id outside the lock, avoiding holding
 // entryMapMutex_ during SQLite/JSON file I/O.
+// 0 is a safe "no replacement" sentinel: CreateTimer forces timerId to a non-zero random
+// value when the caller passes 0, so timerNameMap_ never stores 0 and a returned 0 can
+// never alias a real replaced timer.
 uint64_t TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId, bool &needRecover)
 {
     needRecover = false;
@@ -253,6 +256,38 @@ void TimerManager::DeleteTimerName(int uid, std::string name, uint64_t timerId)
         "timer %{public}" PRId64 " not exist in map, name:%{public}s uid%{public}d", timerId, name.c_str(), uid);
 }
 
+/**
+ * Generates a random timer id when the given id is 0 and keeps the first value
+ * that is unused in timerEntryMap_.
+ * Needs to acquire the lock `entryMapMutex_` before calling this method.
+ */
+void TimerManager::GenerateTimerIdLocked(uint64_t &timerId)
+{
+    if (timerId != 0) {
+        return;
+    }
+    for (int retryCount = 0; retryCount < MAX_RANDOM_TIMES; retryCount++) {
+        // random_() needs to be protected in a lock.
+        timerId = random_();
+        if (timerId != 0 && timerEntryMap_.find(timerId) == timerEntryMap_.end()) {
+            break;
+        }
+    }
+}
+
+void TimerManager::InsertTimerToDatabase(std::shared_ptr<TimerEntry> timerInfo, TimerPara &paras,
+    std::string bundleName)
+{
+    auto tableName = (CheckNeedRecoverOnReboot(bundleName, paras.timerType, paras.autoRestore)
+                      ? HOLD_ON_REBOOT
+                      : DROP_ON_REBOOT);
+    #ifdef RDB_ENABLE
+    TimeDatabase::GetInstance().Insert(tableName, GetInsertValues(timerInfo, paras));
+    #else
+    CjsonHelper::GetInstance().Insert(tableName, timerInfo);
+    #endif
+}
+
 int32_t TimerManager::CreateTimer(TimerPara &paras,
                                   std::function<int32_t (const uint64_t)> callback,
                                   std::shared_ptr<WantAgent> wantAgent,
@@ -275,20 +310,14 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     bool replacedNeedRecover = false;
     {
         std::lock_guard<std::mutex> lock(entryMapMutex_);
-        if (timerId == 0) {
-            int retryCount;
-            for (retryCount = 0; retryCount < MAX_RANDOM_TIMES; retryCount++) {
-                // random_() needs to be protected in a lock.
-                timerId = random_();
-                if (timerId != 0 && timerEntryMap_.find(timerId) == timerEntryMap_.end()) {
-                    break;
-                }
-            }
-        }
+        GenerateTimerIdLocked(timerId);
         timerInfo = std::make_shared<TimerEntry>(TimerEntry {timerName, timerId, paras.timerType, paras.windowLength,
             paras.interval, paras.flag, paras.autoRestore, std::move(callback), wantAgent, uid, pid, bundleName});
+        auto insertResult = timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
+        if (!insertResult.second) {
+            TIME_HILOGE(TIME_MODULE_SERVICE, "CreateTimer id:%{public}" PRId64 " already exist", timerId);
+        }
         IncreaseTimerCount(uid);
-        timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
         if (timerName != "") {
             replacedTimerId = AddTimerName(uid, timerName, timerId, replacedNeedRecover);
         }
@@ -299,14 +328,7 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     if (type == NOT_STORE) {
         return E_TIME_OK;
     }
-    auto tableName = (CheckNeedRecoverOnReboot(bundleName, paras.timerType, paras.autoRestore)
-                      ? HOLD_ON_REBOOT
-                      : DROP_ON_REBOOT);
-    #ifdef RDB_ENABLE
-    TimeDatabase::GetInstance().Insert(tableName, GetInsertValues(timerInfo, paras));
-    #else
-    CjsonHelper::GetInstance().Insert(tableName, timerInfo);
-    #endif
+    InsertTimerToDatabase(timerInfo, paras, bundleName);
     return E_TIME_OK;
 }
 

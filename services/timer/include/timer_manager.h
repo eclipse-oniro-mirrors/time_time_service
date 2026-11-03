@@ -120,6 +120,7 @@ private:
     int32_t StopTimerInner(uint64_t timerNumber, bool needDestroy);
     int32_t StopTimerInnerLocked(bool needDestroy, uint64_t timerNumber, bool &needRecover);
     void UpdateOrDeleteDatabase(bool needDestroy, uint64_t timerNumber, bool needRecover);
+    void InsertTimerToDatabase(std::shared_ptr<TimerEntry> timerInfo, TimerPara &paras, std::string bundleName);
     #ifdef MULTI_ACCOUNT_ENABLE
     int32_t CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &timer);
     #endif
@@ -146,6 +147,7 @@ private:
     void ShowTimerCountByUid(int count);
     uint64_t AddTimerName(int uid, std::string name, uint64_t timerId, bool &needRecover);
     void DeleteTimerName(int uid, std::string name, uint64_t timerId);
+    void GenerateTimerIdLocked(uint64_t &timerId);
     #ifdef SET_AUTO_REBOOT_ENABLE
     bool IsPowerOnTimer(std::shared_ptr<TimerInfo> timerInfo);
     void DeleteTimerFromPowerOnTimerListById(uint64_t timerId);
@@ -171,6 +173,11 @@ private:
     std::shared_ptr<TimerHandler> handler_;
     std::unique_ptr<std::thread> alarmThread_;
     std::vector<std::shared_ptr<Batch>> alarmBatches_;
+    // Lock hierarchy (never reversed): entryMapMutex_ -> mutex_.
+    // entryMapMutex_ guards the timer registry (timerEntryMap_/timerNameMap_/timerCount_);
+    // mutex_ guards the scheduling state (alarmBatches_ and batch reschedule). A critical
+    // section holding entryMapMutex_ may additionally acquire mutex_ (see
+    // StopTimerInnerLocked / SetPowerOnTimerEnabledByName / StartTimer), never the reverse.
     std::mutex mutex_;
     std::mutex entryMapMutex_;
     std::mutex timerMapMutex_;

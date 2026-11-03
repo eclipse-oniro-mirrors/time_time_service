@@ -66,7 +66,7 @@ static ani_double GetTime([[maybe_unused]] ani_env *env, ani_object booleanObjec
     if (isUndefined) {
         return GetRealTime(false);
     }
-    ani_boolean isNano;
+    ani_boolean isNano = false;
     if (ANI_OK !=env->Object_CallMethodByName_Boolean(booleanObject, "toBoolean", nullptr, &isNano)) {
         TIME_HILOGE(TIME_MODULE_JS_ANI, "Object_CallMethodByName_Boolean Fail");
     }
