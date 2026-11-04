@@ -47,7 +47,8 @@ void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer)
     std::string timerName = timer->name;
     int32_t type = timer->type;
     int64_t triggerTime = timer->whenElapsed.time_since_epoch().count();
-    auto interval = static_cast<uint64_t>(timer->repeatInterval.count());
+    // INTERVAL is defined as INT32 in hisysevent.yaml; intervals in ms fit int32 in practice.
+    auto interval = static_cast<int32_t>(timer->repeatInterval.count());
     struct HiSysEventParam params[] = {
         {"CALLER_PID",             HISYSEVENT_INT32,  {.i32 = callerPid},                                    0},
         {"CALLER_UID",             HISYSEVENT_INT32,  {.i32 = callerUid},                                    0},
@@ -56,7 +57,7 @@ void StatisticReporter(int32_t size, std::shared_ptr<TimerInfo> timer)
         {"TIMER_SIZE",             HISYSEVENT_INT32,  {.i32 = size},                                         0},
         {"TIMER_TYPE",             HISYSEVENT_INT32,  {.i32 = type},                                         0},
         {"TRIGGER_TIME",           HISYSEVENT_INT64,  {.i64 = triggerTime},                                  0},
-        {"INTERVAL",               HISYSEVENT_UINT64, {.ui64 = interval},                                    0}
+        {"INTERVAL",               HISYSEVENT_INT32,  {.i32 = interval},                                     0}
     };
     int ret = OH_HiSysEvent_Write("TIME", "MISC_TIME_STATISTIC_REPORT", HISYSEVENT_STATISTIC, params,
         sizeof(params)/sizeof(params[0]));
@@ -146,10 +147,10 @@ void TimerCountStaticReporter(int count, int (&uidArr)[COUNT_REPORT_ARRAY_LENGTH
     int (&createTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH], int (&startTimerCountArr)[COUNT_REPORT_ARRAY_LENGTH])
 {
     struct HiSysEventParam params[] = {
-        {"TIMER_NUM",     HISYSEVENT_INT32,       {.i32 = count},                 0},
-        {"TOP_UID",       HISYSEVENT_INT32_ARRAY, {.array = uidArr},              COUNT_REPORT_ARRAY_LENGTH},
-        {"TOP_NUM",       HISYSEVENT_INT32_ARRAY, {.array = createTimerCountArr}, COUNT_REPORT_ARRAY_LENGTH},
-        {"TOP_STRAT_NUM", HISYSEVENT_INT32_ARRAY, {.array = startTimerCountArr},  COUNT_REPORT_ARRAY_LENGTH}
+        {"TIMER_NUM",       HISYSEVENT_INT32,       {.i32 = count},                 0},
+        {"TOP_UID",         HISYSEVENT_INT32_ARRAY, {.array = uidArr},              COUNT_REPORT_ARRAY_LENGTH},
+        {"TOP_NUM",         HISYSEVENT_INT32_ARRAY, {.array = createTimerCountArr}, COUNT_REPORT_ARRAY_LENGTH},
+        {"TOP_STRATED_NUM", HISYSEVENT_INT32_ARRAY, {.array = startTimerCountArr},  COUNT_REPORT_ARRAY_LENGTH}
     };
     int ret = OH_HiSysEvent_Write("TIME", "ALARM_COUNT", HISYSEVENT_STATISTIC,
         params, sizeof(params)/sizeof(params[0]));
