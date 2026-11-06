@@ -41,7 +41,7 @@ ani_status GetWantAgent(ani_env *env, const ani_object &value,
     AbilityRuntime::WantAgent::WantAgent *wantAgentPtr = nullptr;
     AppExecFwk::UnwrapWantAgent(env, value, reinterpret_cast<void **>(&wantAgentPtr));
     if (wantAgentPtr == nullptr) {
-        TIME_HILOGI(TIME_MODULE_JS_NAPI, "wantAgentPtr is nullptr");
+        TIME_HILOGE(TIME_MODULE_JS_ANI, "wantAgentPtr is nullptr, timer will be created without wantAgent");
         return ANI_ERROR;
     }
     wantAgent = std::make_shared<AbilityRuntime::WantAgent::WantAgent>(*wantAgentPtr);

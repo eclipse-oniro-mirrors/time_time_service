@@ -50,7 +50,19 @@ void ITimerInfoInstance::Call(napi_env env, void *data)
     };
     auto ret = napi_send_event(env, task, napi_eprio_immediate, "time:systemTimer.createTimer");
     if (ret != 0) {
-        delete static_cast<CallbackInfo *>(data);
+        // The task will never run, so release the reference here just like the
+        // success path does inside the task. napi_delete_reference itself has no
+        // JS-thread requirement, but napi_closing means the engine is already being
+        // torn down; touching the env then may crash (see ~ArkNativeReference), so
+        // in that case only release the heap object owned by this module and leave
+        // the reference to the engine teardown.
+        auto *callback = static_cast<CallbackInfo *>(data);
+        if (callback != nullptr) {
+            if (ret != napi_closing) {
+                napi_delete_reference(callback->env, callback->ref);
+            }
+            delete callback;
+        }
         TIME_HILOGE(TIME_MODULE_JS_NAPI, "napi_send_event failed retCode:%{public}d", ret);
     }
 }
@@ -281,7 +293,7 @@ napi_value NapiSystemTimer::CreateTimer(napi_env env, napi_callback_info info)
         CHECK_STATUS_RETURN_VOID(TIME_MODULE_JS_NAPI, createTimerContext,
             "convert native object to javascript object failed", ERROR);
     };
-    return NapiWork::AsyncEnqueue(env, createTimerContext, "SetTime", executor, complete);
+    return NapiWork::AsyncEnqueue(env, createTimerContext, "CreateTimer", executor, complete);
 }
 
 napi_value NapiSystemTimer::StartTimer(napi_env env, napi_callback_info info)

@@ -102,6 +102,10 @@ private:
     // Returns empty string if failed to retrieve
     std::string GetBundleNameMultiUser(const std::shared_ptr<TimerInfo>& timer);
 
+    // Raw pointer is safe by the singleton contract: TimerManager::GetInstance() publishes
+    // an instance that is never destroyed for the lifetime of the process (see the
+    // publish-then-store comment in TimerManager::GetInstance), and this optimizer is owned
+    // by that singleton (lockOptimizer_), so manager_ always outlives this object.
     TimerManager* const manager_;
 
     // Initialization flag

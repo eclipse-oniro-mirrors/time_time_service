@@ -59,7 +59,8 @@ string GetTimezoneSync()
 {
     auto timeZone = OHOS::system::GetParameter(TIMEZONE_KEY, "Asia/Shanghai");
     if (timeZone.empty()) {
-        set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
+        set_business_error(JsErrorCode::ERROR,
+            "Failed to get timezone: system parameter persist.time.timezone is empty");
         return "";
     }
     return timeZone;
@@ -80,7 +81,7 @@ int64_t GetUptime(TimeType timeType, optional_view<bool> isNanoseconds)
     }
 
     if (innerCode != JsErrorCode::ERROR_OK) {
-        set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
+        set_business_error(JsErrorCode::ERROR, "Failed to get uptime: clock_gettime failed");
         return 0;
     }
     return time;
@@ -92,7 +93,7 @@ int64_t GetTime(optional_view<bool> isNanoseconds)
 #ifdef TIME_GETTIME_RANDOM
     int64_t ns = GetMonotoneWallTimeNs();
     if (ns < 0) {
-        set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
+        set_business_error(JsErrorCode::ERROR, "Failed to get time: get monotone wall time failed");
         return 0;
     }
     return isNanosecondsValue ? ns : ns / NANO_TO_MILLI;
@@ -100,7 +101,7 @@ int64_t GetTime(optional_view<bool> isNanoseconds)
     int64_t time = 0;
     int32_t innerCode = GetDeviceTime(CLOCK_REALTIME, isNanosecondsValue, time);
     if (innerCode != JsErrorCode::ERROR_OK) {
-        set_business_error(JsErrorCode::ERROR, "convert native object to javascript object failed");
+        set_business_error(JsErrorCode::ERROR, "Failed to get time: clock_gettime failed");
         return 0;
     }
     return time;

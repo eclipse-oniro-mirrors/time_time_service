@@ -41,6 +41,10 @@ NtpTrustedTime &NtpTrustedTime::GetInstance()
     return instance;
 }
 
+// Unconditionally accepts the server's result as the new trusted time; only the SNTP
+// request itself can fail. Used only for the operator-configured specific server list
+// (persist.time.ntpserver_specific), whose servers are trusted by configuration.
+// A false return means the SNTP request failed; it is never a drift rejection.
 bool NtpTrustedTime::ForceRefreshTrusted(const std::string &ntpServer)
 {
     SNTPClient client;
@@ -54,6 +58,13 @@ bool NtpTrustedTime::ForceRefreshTrusted(const std::string &ntpServer)
     return false;
 }
 
+// Validates the server's result against the current trusted time before accepting it:
+// IsTimeResultTrusted pushes the result into the candidate list when no trusted time
+// exists yet, when the cached time is invalid, or when the drift exceeds
+// MAX_TIME_DRIFT_IN_ONE_DAY. A false return therefore mixes two causes: the SNTP request
+// failed, or the result was rejected as untrusted. The two are indistinguishable from the
+// boolean return value; check the logs / candidate list for details. Used for the default
+// server list.
 bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
 {
     SNTPClient client;

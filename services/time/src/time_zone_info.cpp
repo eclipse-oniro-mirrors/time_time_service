@@ -86,8 +86,10 @@ bool TimeZoneInfo::SetTimezone(const std::string &timezoneId)
         TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone Set kernel failed");
         return false;
     }
+    // SetParameter returns 0 on success and negative values (-9 invalid parameter, -1 others)
+    // on failure, so any non-zero result means the persistence failed.
     auto errNo = SetParameter(TIMEZONE_KEY, setTimeZone.c_str());
-    if (errNo > TIMEZONE_OK) {
+    if (errNo != TIMEZONE_OK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "SetTimezone timezoneId:%{public}d:%{public}s", errNo, setTimeZone.c_str());
         return false;
     }

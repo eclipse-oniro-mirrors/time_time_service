@@ -18,7 +18,9 @@ import { BusinessError } from '@ohos.base';
 
 export default namespace systemDateTime {
 
-  const SYSTEM_ERROR: int = 401
+  // 401 is the existing observable error code (parameter-style error) returned when
+  // the timezone is empty; the value is kept for compatibility.
+  const TIMEZONE_EMPTY_ERROR: int = 401
 
   loadLibraryWithPermissionCheck("systemdatetime_ani", "@ohos.systemDateTime")
 
@@ -28,6 +30,8 @@ export default namespace systemDateTime {
       let error = new BusinessError<void>
       error.code = 0
       callback(error, e as number)
+    }, (err: Error): void => {
+      callback(err as BusinessError, 0)
     });
   }
 
@@ -37,6 +41,8 @@ export default namespace systemDateTime {
       let error = new BusinessError<void>
       error.code = 0
       callback(error, e as number)
+    }, (err: Error): void => {
+      callback(err as BusinessError, 0)
     });
   }
 
@@ -45,6 +51,9 @@ export default namespace systemDateTime {
       let p1 = taskpool.execute(getTime, isNano);
       p1.then((e: Any): void => {
         resolve(e as number);
+      });
+      p1.catch((e: Error): void => {
+        reject(e);
       });
     });
     return p
@@ -59,11 +68,13 @@ export default namespace systemDateTime {
       let s = e as string
       let error = new BusinessError<void>
       if (s === "") {
-        error.code = SYSTEM_ERROR
+        error.code = TIMEZONE_EMPTY_ERROR
       } else {
         error.code = 0
       }
       callback(error, s)
+    }, (err: Error): void => {
+      callback(err as BusinessError, "")
     });
   }
 
@@ -74,11 +85,14 @@ export default namespace systemDateTime {
         let s = e as string
         if (s === "") {
           let error = new BusinessError<void>
-          error.code = SYSTEM_ERROR
+          error.code = TIMEZONE_EMPTY_ERROR
           reject(error)
         } else {
           resolve(s);
         }
+      });
+      p1.catch((e: Error): void => {
+        reject(e);
       });
     });
     return p
