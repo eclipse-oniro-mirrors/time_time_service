@@ -30,7 +30,19 @@ constexpr int NANO_TO_SECOND =  1000000000;
 constexpr int64_t ONE_DAY = 86400000;
 // RTC has approximate 2s error per day
 constexpr int64_t MAX_TIME_DRIFT_IN_ONE_DAY = 2000;
+// Keep in sync with interfaces/inner_api/src/ntp/ntp_time_client.cpp
+// (engine VOTE uses the same tolerance value).
 constexpr int64_t MAX_TIME_TOLERANCE_BETWEEN_NTP_SERVERS = 100;
+
+// Report the equivalent NTP_REFRESH event moved out of SNTPClient into the
+// SA side (invariant INV-5: event code/params/trigger unchanged).
+void ReportNtpRefreshEvent(SNTPClient &client)
+{
+    TimeBehaviorReport(ReportEventCode::NTP_REFRESH,
+        std::to_string(client.getOriginTimestamp()) + "|" + std::to_string(client.getReceiveClientTime()),
+        std::to_string(client.getTransmitServerTime()) + "|" + std::to_string(client.getReceiveServerTime()),
+        client.getNtpTime());
+}
 } // namespace
 
 std::mutex NtpTrustedTime::mTimeResultMutex_;
@@ -49,6 +61,7 @@ bool NtpTrustedTime::ForceRefreshTrusted(const std::string &ntpServer)
 {
     SNTPClient client;
     if (client.RequestTime(ntpServer)) {
+        ReportNtpRefreshEvent(client);
         auto timeResult = std::make_shared<TimeResult>(client.getNtpTime(), client.getNtpTimeReference(),
             client.getRoundTripTime() / HALF, ntpServer);
         std::lock_guard<std::mutex> lock(mTimeResultMutex_);
@@ -69,6 +82,7 @@ bool NtpTrustedTime::ForceRefresh(const std::string &ntpServer)
 {
     SNTPClient client;
     if (client.RequestTime(ntpServer)) {
+        ReportNtpRefreshEvent(client);
         auto timeResult = std::make_shared<TimeResult>(client.getNtpTime(), client.getNtpTimeReference(),
             client.getRoundTripTime() / HALF, ntpServer);
         std::lock_guard<std::mutex> lock(mTimeResultMutex_);

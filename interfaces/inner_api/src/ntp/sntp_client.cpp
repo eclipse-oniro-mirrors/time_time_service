@@ -14,16 +14,18 @@
  */
 
 #include "sntp_client.h"
-#include "ntp_trusted_time.h"
 
 #include <cctype>
+#include <cerrno>
+#include <cstdio>
 #include <cstring>
+#include <ctime>
 #include <netdb.h>
 #include <securec.h>
 #include <sstream>
 #include <sys/time.h>
 
-#include "time_sysevent.h"
+#include "time_hilog.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -39,6 +41,7 @@ std::string SafeStrError(int errnum)
 
 constexpr uint64_t SECONDS_SINCE_FIRST_EPOCH = 2208988800; // Seconds from 1/1/1900 00.00 to 1/1/1970 00.00;
 constexpr uint64_t MILLISECOND_TO_SECOND = 1000;
+constexpr uint64_t NANO_TO_MILLI = 1000000;
 constexpr uint64_t FRACTION_TO_SECOND = 0x100000000;
 constexpr uint64_t UINT32_MASK = 0xFFFFFFFF;
 constexpr int VERSION_MASK = 0x38;
@@ -48,7 +51,7 @@ constexpr int32_t INDEX_ONE = 1;
 constexpr int32_t INDEX_TWO = 2;
 constexpr int32_t INDEX_THREE = 3;
 constexpr int32_t INDEX_FOUR = 4;
-constexpr int32_t TIME_OUT = 5;
+constexpr uint32_t DEFAULT_TIMEOUT_MS = 5000;
 constexpr unsigned char MODE_THREE = 3;
 constexpr unsigned char VERSION_THREE = 3;
 constexpr double TEN_TO_MINUS_SIX_POWER = 1.0e-6;
@@ -64,9 +67,28 @@ constexpr int32_t TRANSMIT_TIMESTAMP_OFFSET = 40;
 constexpr int32_t NTP_PACKAGE_SIZE = 48;
 constexpr int32_t SNTP_MSG_OFFSET_SIX = 6;
 constexpr int32_t SNTP_MSG_OFFSET_THREE = 3;
+
+// Monotonic boot time in milliseconds, used as the reference clock of the
+// engine. It keeps the SA behavior identical (previous TimeUtils::GetBootTimeMs
+// reads CLOCK_BOOTTIME as well) with no dependency on the SA-side utility lib.
+bool GetBootTimeMs(int64_t &time)
+{
+    struct timespec tv {};
+    if (clock_gettime(CLOCK_BOOTTIME, &tv) != 0) {
+        TIME_HILOGE(TIME_MODULE_SERVICE, "get boot time failed");
+        return false;
+    }
+    time = tv.tv_sec * MILLISECOND_TO_SECOND + tv.tv_nsec / NANO_TO_MILLI;
+    return true;
+}
 } // namespace
 
 bool SNTPClient::RequestTime(const std::string &host)
+{
+    return RequestTime(host, DEFAULT_TIMEOUT_MS);
+}
+
+bool SNTPClient::RequestTime(const std::string &host, uint32_t timeoutMs)
 {
     if (host.empty() || host.size() > NTP_HOST_MAX_LEN) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "invalid host length:%{public}zu", host.size());
@@ -79,7 +101,7 @@ bool SNTPClient::RequestTime(const std::string &host)
         }
     }
     int bufLen = NTP_PACKAGE_SIZE;
-    int sendSocket = CreateConnectedSocket(host);
+    int sendSocket = CreateConnectedSocket(host, timeoutMs);
     if (sendSocket < 0) {
         return false;
     }
@@ -112,7 +134,7 @@ bool SNTPClient::RequestTime(const std::string &host)
     return true;
 }
 
-int32_t SNTPClient::CreateConnectedSocket(const std::string &host)
+int32_t SNTPClient::CreateConnectedSocket(const std::string &host, uint32_t timeoutMs)
 {
     struct addrinfo hints = { 0 };
     struct addrinfo *addrs = nullptr;
@@ -147,7 +169,8 @@ int32_t SNTPClient::CreateConnectedSocket(const std::string &host)
     fdsan_exchange_owner_tag(sendSocket, 0, BASE_TIME_FDSAN_TAG);
 
     // Set send and recv function timeout
-    struct timeval timeout = { TIME_OUT, 0 };
+    struct timeval timeout = { static_cast<time_t>(timeoutMs / MILLISECOND_TO_SECOND),
+        static_cast<suseconds_t>((timeoutMs % MILLISECOND_TO_SECOND) * MILLISECOND_TO_SECOND) };
     setsockopt(sendSocket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(struct timeval));
     setsockopt(sendSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
     if (connect(sendSocket, addrs->ai_addr, addrs->ai_addrlen) < 0) {
@@ -158,7 +181,7 @@ int32_t SNTPClient::CreateConnectedSocket(const std::string &host)
     return sendSocket;
 }
 
-void SNTPClient::SetClockOffset(int clockOffset)
+void SNTPClient::SetClockOffset(int64_t clockOffset)
 {
     m_clockOffset = clockOffset;
 }
@@ -244,8 +267,7 @@ void SNTPClient::CreateMessage(char *buffer)
     ConvertUnixToNtp(&ntp, &unix);
     uint64_t _ntpTs = ntp.second;
     _ntpTs = (_ntpTs << RECEIVE_TIMESTAMP_OFFSET) | ntp.fraction;
-    errno_t ret = TimeUtils::GetBootTimeMs(m_originateTimestamp);
-    if (ret != E_TIME_OK) {
+    if (!GetBootTimeMs(m_originateTimestamp)) {
         return;
     }
 
@@ -258,7 +280,7 @@ void SNTPClient::CreateMessage(char *buffer)
     // optional (?)
     _sntpMsg._originateTimestamp = _ntpTs;
     char value[sizeof(uint64_t)];
-    ret = memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
+    errno_t ret = memcpy_s(value, sizeof(uint64_t), &_sntpMsg._originateTimestamp, sizeof(uint64_t));
     if (ret != EOK) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "memcpy_s failed, err = %{public}d", ret);
         return;
@@ -278,8 +300,7 @@ void SNTPClient::CreateMessage(char *buffer)
 bool SNTPClient::ReceivedMessage(char *buffer)
 {
     int64_t receiveBootTime = 0;
-    errno_t ret = TimeUtils::GetBootTimeMs(receiveBootTime);
-    if (ret != E_TIME_OK) {
+    if (!GetBootTimeMs(receiveBootTime)) {
         return false;
     }
     SNTPMessage _sntpMsg;
@@ -313,15 +334,16 @@ bool SNTPClient::ReceivedMessage(char *buffer)
     int64_t _roundTripDelay = (_receiveClient - _originClient) - (_transmitServer - _receiveServer);
     mRoundTripTime = _roundTripDelay;
     mNtpTime = receiveBootTime + _clockOffset;
-    TimeUtils::GetBootTimeMs(mNtpTimeReference);
+    GetBootTimeMs(mNtpTimeReference);
     SetClockOffset(_clockOffset);
+    // Values captured for the SA side to report the equivalent NTP_REFRESH event.
+    mReceiveClientTime = _receiveClient;
+    mReceiveServerTime = _receiveServer;
+    mTransmitServerTime = _transmitServer;
     TIME_HILOGD(TIME_MODULE_SERVICE, "_originClient:%{public}s, _receiveServer:%{public}s, _transmitServer:%{public}s,"
                 "_receiveClient:%{public}s", std::to_string(_originClient).c_str(),
                 std::to_string(_receiveServer).c_str(), std::to_string(_transmitServer).c_str(),
                 std::to_string(_receiveClient).c_str());
-    TimeBehaviorReport(ReportEventCode::NTP_REFRESH,
-        std::to_string(_originClient) + "|" + std::to_string(_receiveClient),
-        std::to_string(_transmitServer) + "|" + std::to_string(_receiveServer), mNtpTime);
     return true;
 }
 
@@ -392,6 +414,31 @@ int64_t SNTPClient::getNtpTimeReference()
 int64_t SNTPClient::getRoundTripTime()
 {
     return mRoundTripTime;
+}
+
+int64_t SNTPClient::getClockOffset()
+{
+    return m_clockOffset;
+}
+
+int64_t SNTPClient::getOriginTimestamp()
+{
+    return m_originateTimestamp;
+}
+
+int64_t SNTPClient::getReceiveClientTime()
+{
+    return mReceiveClientTime;
+}
+
+int64_t SNTPClient::getReceiveServerTime()
+{
+    return mReceiveServerTime;
+}
+
+int64_t SNTPClient::getTransmitServerTime()
+{
+    return mTransmitServerTime;
 }
 // LCOV_EXCL_STOP
 } // namespace MiscServices

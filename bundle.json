@@ -72,6 +72,7 @@
           "//base/time/time_service/framework/js/napi/system_timer:systemtimer",
           "//base/time/time_service/framework/js/napi/system_date_time:systemdatetime",
           "//base/time/time_service/interfaces/inner_api:time_client",
+          "//base/time/time_service/interfaces/inner_api:ntp_time_client",
           "//base/time/time_service/interfaces/kits/c:time_service_ndk",
           "//base/time/time_service/framework/js/taihe/system_datetime:systemdatetime_taihe",
           "//base/time/time_service/framework/js/taihe/system_timer:systemtimer_taihe",
@@ -86,6 +87,16 @@
         ]
       },
       "inner_kits": [
+        {
+          "name": "//base/time/time_service/interfaces/inner_api:ntp_time_client",
+          "header": {
+            "header_files": [
+              "ntp_time_client.h",
+              "sntp_client.h"
+            ],
+            "header_base": "//base/time/time_service/interfaces/inner_api/include"
+          }
+        },
         {
           "name": "//base/time/time_service/interfaces/inner_api:time_client",
           "header": {

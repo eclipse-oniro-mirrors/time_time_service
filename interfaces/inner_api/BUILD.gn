@@ -23,6 +23,70 @@ config("time_client_config") {
   ]
 }
 
+config("ntp_time_client_config") {
+  include_dirs = [
+    "include",
+    "${time_utils_path}/native/include",
+  ]
+}
+
+ohos_source_set("ntp_time_client_sources") {
+  sources = [
+    "src/ntp/ntp_time_client.cpp",
+    "src/ntp/sntp_client.cpp",
+  ]
+  configs = [ ":ntp_time_client_config" ]
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+  branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = time_sanitize_debug
+  }
+  subsystem_name = "time"
+  part_name = "time_service"
+}
+
+ohos_shared_library("ntp_time_client") {
+  sources = []
+  configs = [ ":ntp_time_client_config" ]
+  configs += [ "//build/config/gcc:symbol_visibility_hidden" ]
+  version_script = "libtime_ntp_client.map"
+  public_configs = [ ":ntp_time_client_config" ]
+  innerapi_tags = [
+    "platformsdk",
+    "sasdk",
+  ]
+  install_images = [
+    "system",
+    "updater",
+  ]
+  deps = [ ":ntp_time_client_sources" ]
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+  branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = time_sanitize_debug
+  }
+  subsystem_name = "time"
+  part_name = "time_service"
+}
+
 ohos_shared_library("time_client") {
   sources = [
     "${api_path}/src/time_service_client.cpp",
