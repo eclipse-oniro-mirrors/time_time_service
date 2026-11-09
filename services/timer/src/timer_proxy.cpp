@@ -30,17 +30,17 @@ IMPLEMENT_SINGLE_INSTANCE(TimerProxy)
 
 static const std::string ANCO_EXEMPTION_TAG = "@anco_exemption";
 
-uint64_t GetProxyKey(int uid, int pid)
+uint64_t GetProxyKey(int appUid, int pid)
 {
-    uint64_t key = (static_cast<uint64_t>(uid) << UID_PROXY_OFFSET) | static_cast<uint64_t>(pid);
+    uint64_t key = (static_cast<uint64_t>(appUid) << UID_PROXY_OFFSET) | static_cast<uint64_t>(pid);
     return key;
 }
 
 std::pair<int, int> ParseProxyKey(uint64_t key)
 {
-    auto uid = static_cast<uint32_t>(key >> UID_PROXY_OFFSET);
+    auto appUid = static_cast<uint32_t>(key >> UID_PROXY_OFFSET);
     auto pid = key & ((static_cast<uint64_t>(1) << UID_PROXY_OFFSET) - 1);
-    return std::make_pair(uid, pid);
+    return std::make_pair(appUid, pid);
 }
 
 int32_t TimerProxy::CallbackAlarmIfNeed(const std::shared_ptr<TimerInfo> &alarm)
@@ -117,7 +117,7 @@ bool TimerProxy::UpdateAdjustWhenElapsed(const std::chrono::steady_clock::time_p
         return false;
     }
     TIME_HILOGD(TIME_MODULE_SERVICE, "adjust single time id:%{public}" PRId64 ", "
-        "uid:%{public}d, bundleName:%{public}s",
+        "appUid:%{public}d, bundleName:%{public}s",
         timer->id, timer->uid, timer->bundleName.c_str());
     uint32_t policy = 0;
     auto it = adjustPolicyList_.find(timer->bundleName);
@@ -290,13 +290,13 @@ void TimerProxy::RecordProxyTimerMap(const std::shared_ptr<TimerInfo> &alarm, bo
         return;
     }
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    auto uid = alarm->uid;
+    auto appUid = alarm->uid;
     auto pid = alarm->pid;
     uint64_t key;
     if (isPid) {
-        key =  GetProxyKey(uid, pid);
+        key =  GetProxyKey(appUid, pid);
     } else {
-        key = GetProxyKey(uid, 0);
+        key = GetProxyKey(appUid, 0);
     }
     auto it = proxyTimers_.find(key);
     if (it != proxyTimers_.end()) {
@@ -358,14 +358,14 @@ void TimerProxy::UpdateProxyWhenElapsedForProxyTimers(int32_t uid, int pid,
     uint64_t key = GetProxyKey(uid, pid);
     auto it = proxyTimers_.find(key);
     if (it != proxyTimers_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid:%{public}d is already proxy", uid, pid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "appUid:%{public}d pid:%{public}d is already proxy", uid, pid);
         return;
     }
     std::lock_guard<std::mutex> lockUidTimers(uidTimersMutex_);
     std::unordered_set<uint64_t> timerSet;
     auto itUidTimersMap = uidTimersMap_.find(uid);
     if (itUidTimersMap == uidTimersMap_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d in map not found", uid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "appUid:%{public}d in map not found", uid);
         proxyTimers_[key] = timerSet;
         return;
     }
@@ -405,13 +405,13 @@ bool TimerProxy::RestoreProxyWhenElapsed(const int uid, const int pid,
     uint64_t key = GetProxyKey(uid, pid);
     auto itProxy = proxyTimers_.find(key);
     if (itProxy == proxyTimers_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d pid:%{public}d not in proxy", uid, pid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "appUid:%{public}d pid:%{public}d not in proxy", uid, pid);
         return false;
     }
     std::lock_guard<std::mutex> lockPidTimers(uidTimersMutex_);
     auto itTimer = uidTimersMap_.find(uid);
     if (uidTimersMap_.find(uid) == uidTimersMap_.end()) {
-        TIME_HILOGD(TIME_MODULE_SERVICE, "uid:%{public}d timer info not found, erase proxy map", uid);
+        TIME_HILOGD(TIME_MODULE_SERVICE, "appUid:%{public}d timer info not found, erase proxy map", uid);
         return true;
     }
 
@@ -464,7 +464,7 @@ bool TimerProxy::ShowProxyTimerInfo(int fd, const int64_t now)
     dprintf(fd, "current time %" PRId64 "\n", now);
     for (auto itProxyPids = proxyTimers_.begin(); itProxyPids != proxyTimers_.end(); ++itProxyPids) {
         auto resPair = ParseProxyKey(itProxyPids->first);
-        dprintf(fd, " - proxy uid = %d pid = %d\n", resPair.first, resPair.second);
+        dprintf(fd, " - proxy appUid = %d pid = %d\n", resPair.first, resPair.second);
         for (auto elem : itProxyPids->second) {
             dprintf(fd, "   * save timer id          = %" PRIu64 "\n", elem);
         }
@@ -479,7 +479,7 @@ bool TimerProxy::ShowUidTimerMapInfo(int fd, const int64_t now)
     std::lock_guard<std::mutex> lockProxy(uidTimersMutex_);
     dprintf(fd, "current time %" PRId64 "\n", now);
     for (auto itTimerInfoMap = uidTimersMap_.begin(); itTimerInfoMap != uidTimersMap_.end(); ++itTimerInfoMap) {
-            dprintf(fd, " - uid = %d\n", itTimerInfoMap->first);
+            dprintf(fd, " - appUid = %d\n", itTimerInfoMap->first);
         for (auto itTimerInfo = itTimerInfoMap->second.begin(); itTimerInfo != itTimerInfoMap->second.end();
             ++itTimerInfo) {
             dprintf(fd, "   * timer id          = %" PRIu64 "\n", itTimerInfo->second->id);

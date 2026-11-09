@@ -22,6 +22,7 @@
 #include <sys/ioctl.h>
 #include <sys/timerfd.h>
 
+#include "identity.h"
 #include "iservice_registry.h"
 #include "ntp_update_time.h"
 #include "ntp_trusted_time.h"
@@ -483,13 +484,14 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
     if (timerOptions->wantAgent != nullptr) {
         type = DatabaseType::STORE;
     }
-    int uid = IPCSkeleton::GetCallingUid();
+    // Application identity.
+    int appUid = IdentityHelper::GetCallingAppUid();
     int pid = IPCSkeleton::GetCallingPid();
     struct TimerPara paras {};
     ParseTimerPara(timerOptions, paras);
     int32_t res = CheckTimerPara(type, paras);
     if (res != E_TIME_OK) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "check para err:%{public}d,uid:%{public}d", res, uid);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "check para err:%{public}d,appUid:%{public}d", res, appUid);
         return res;
     }
     auto timerManager = TimerManager::GetInstance();
@@ -505,7 +507,7 @@ int32_t TimeSystemAbility::CreateTimer(const std::shared_ptr<ITimerInfo> &timerO
         paras.flag &= ~ITimerManager::TimerFlag::IDLE_UNTIL;
     }
     return timerManager->CreateTimer(paras, callbackFunc, timerOptions->wantAgent,
-                                     uid, pid, timerId, type);
+                                     appUid, pid, timerId, type);
 }
 
 int32_t TimeSystemAbility::CreateTimer(TimerPara &paras, std::function<int32_t (const uint64_t)> callback,
@@ -628,6 +630,7 @@ bool TimeSystemAbility::SetRealTime(int64_t time)
     // validity, see S-08). WARN level with plaintext uid/pid is intentional so that time
     // tampering is attributable to the caller in production logs. Do not downgrade to DEBUG
     // (would lose audit) or privatize uid/pid (would defeat attribution).
+    // System/process-level determination.
     TIME_HILOGW(TIME_MODULE_SERVICE,
         "Before Current Time:%{public}s"
         " Set time:%{public}s"
@@ -705,6 +708,7 @@ int32_t TimeSystemAbility::SetTimeInner(int64_t time, int8_t apiVersion)
 #ifdef HIDUMPER_ENABLE
 int TimeSystemAbility::Dump(int fd, const std::vector<std::u16string> &args)
 {
+    // System/process-level determination.
     int uid = static_cast<int>(IPCSkeleton::GetCallingUid());
     const int maxUid = 10000;
     if (uid > maxUid) {
@@ -1089,7 +1093,7 @@ int32_t TimeSystemAbility::ProxyTimer(int32_t uid, const std::vector<int>& pidLi
         return E_TIME_PARAMETERS_INVALID;
     }
     if (uid < 0) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "Error uid:%{public}d", uid);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "Error appUid:%{public}d", uid);
         return E_TIME_PARAMETERS_INVALID;
     }
     for (auto pid : pidList) {
@@ -1358,7 +1362,7 @@ std::shared_ptr<TimerEntry> TimeSystemAbility::GetEntry(cJSON* obj, bool autoRes
     auto wantAgent = OHOS::AbilityRuntime::WantAgent::WantAgentHelper::FromString(item->valuestring);
     item = cJSON_GetObjectItem(obj, "uid");
     if (!cjson.IsNumber(item)) return nullptr;
-    int uid = item->valueint;
+    int appUid = item->valueint;
     item = cJSON_GetObjectItem(obj, "pid");
     if (!cjson.IsNumber(item)) return nullptr;
     int pid = item->valueint;
@@ -1366,7 +1370,7 @@ std::shared_ptr<TimerEntry> TimeSystemAbility::GetEntry(cJSON* obj, bool autoRes
     if (!cjson.IsString(item)) return nullptr;
     auto bundleName = item->valuestring;
     return std::make_shared<TimerEntry>(TimerEntry {name, timerId, type, windowLength, interval, flag, autoRestore,
-                                                    nullptr, wantAgent, uid, pid, bundleName});
+                                                    nullptr, wantAgent, appUid, pid, bundleName});
 }
 
 #ifdef RDB_ENABLE
@@ -1381,7 +1385,7 @@ void TimeSystemAbility::CjsonIntoDatabase(cJSON* resultSet, bool autoRestore, co
             continue;
         }
         if (timerInfo->wantAgent == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "wantAgent is nullptr, uid=%{public}d, id=%{public}" PRId64 "",
+            TIME_HILOGE(TIME_MODULE_SERVICE, "wantAgent is nullptr, appUid=%{public}d, id=%{public}" PRId64 "",
                 timerInfo->uid, timerInfo->id);
             continue;
         }
@@ -1404,6 +1408,7 @@ void TimeSystemAbility::CjsonIntoDatabase(cJSON* resultSet, bool autoRestore, co
         insertValues.PutInt("flag", timerInfo->flag);
         insertValues.PutLong("windowLength", timerInfo->windowLength);
         insertValues.PutLong("interval", timerInfo->interval);
+        // uid = application identity.
         insertValues.PutInt("uid", timerInfo->uid);
         insertValues.PutString("bundleName", timerInfo->bundleName);
         insertValues.PutString("wantAgent",
@@ -1443,7 +1448,7 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             GetString(resultSet, COLUMN_INDEX_BUNDLE_NAME)
         });
         if (timerInfo->wantAgent == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "wantAgent is nullptr, uid=%{public}d, id=%{public}" PRId64 "",
+            TIME_HILOGE(TIME_MODULE_SERVICE, "wantAgent is nullptr, appUid=%{public}d, id=%{public}" PRId64 "",
                 timerInfo->uid, timerInfo->id);
             continue;
         }
@@ -1473,7 +1478,7 @@ void TimeSystemAbility::RecoverTimerInnerCjson(cJSON* resultSet, bool autoRestor
             return;
         }
         if (timerInfo->wantAgent == nullptr) {
-            TIME_HILOGE(TIME_MODULE_SERVICE, "wantAgent is nullptr, uid=%{public}d, id=%{public}" PRId64 "",
+            TIME_HILOGE(TIME_MODULE_SERVICE, "wantAgent is nullptr, appUid=%{public}d, id=%{public}" PRId64 "",
                 timerInfo->uid, timerInfo->id);
             continue;
         }

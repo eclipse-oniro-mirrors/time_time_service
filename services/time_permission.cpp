@@ -60,6 +60,7 @@ const std::string TimePermission::setTimePrivilege = "ohos.privilege.modify_syst
 const std::vector<std::string> TimePermission::checkedBundles_ = {
     "settings"};
 
+// Permission check is based on token (AccessTokenKit/TokenIdKit).
 bool TimePermission::CheckCallingPermission(const std::string &permissionName)
 {
     if (permissionName.empty()) {

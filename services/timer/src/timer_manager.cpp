@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "timer_manager.h"
 
+#include "identity.h"
 #include "time_file_utils.h"
 #include "timer_proxy.h"
 #include "time_tick_notify.h"
@@ -196,6 +197,7 @@ OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerI
     insertValues.PutInt("flag", paras.flag);
     insertValues.PutLong("windowLength", paras.windowLength);
     insertValues.PutLong("interval", paras.interval);
+    // uid = application identity.
     insertValues.PutInt("uid", timerInfo->uid);
     insertValues.PutString("bundleName", timerInfo->bundleName);
     insertValues.PutString("wantAgent",
@@ -213,47 +215,50 @@ OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerI
 // When a replacement happens, needRecover is set to the replaced timer's recover-on-reboot flag so
 // the caller can call UpdateOrDeleteDatabase for the returned id outside the lock, avoiding holding
 // entryMapMutex_ during SQLite/JSON file I/O.
+// Internal map keyed by appUid (application identity).
 // 0 is a safe "no replacement" sentinel: CreateTimer forces timerId to a non-zero random
 // value when the caller passes 0, so timerNameMap_ never stores 0 and a returned 0 can
 // never alias a real replaced timer.
-uint64_t TimerManager::AddTimerName(int uid, std::string name, uint64_t timerId, bool &needRecover)
+uint64_t TimerManager::AddTimerName(int appUid, std::string name, uint64_t timerId, bool &needRecover)
 {
     needRecover = false;
-    if (timerNameMap_.find(uid) == timerNameMap_.end() || timerNameMap_[uid].find(name) == timerNameMap_[uid].end()) {
-        timerNameMap_[uid][name] = timerId;
+    if (timerNameMap_.find(appUid) == timerNameMap_.end() ||
+        timerNameMap_[appUid].find(name) == timerNameMap_[appUid].end()) {
+        timerNameMap_[appUid][name] = timerId;
         TIME_SIMPLIFY_HILOGI(TIME_MODULE_SERVICE, "%{public}s:%{public}" PRId64 "", name.c_str(), timerId);
         return 0;
     }
-    auto oldTimerId = timerNameMap_[uid][name];
+    auto oldTimerId = timerNameMap_[appUid][name];
     if (timerId != oldTimerId) {
         StopTimerInnerLocked(true, oldTimerId, needRecover);
-        timerNameMap_[uid][name] = timerId;
+        timerNameMap_[appUid][name] = timerId;
         TIME_HILOGW(TIME_MODULE_SERVICE, "create:%{public}" PRId64 " name:%{public}s in %{public}d already exist "
-            "destory:%{public}" PRId64 "", timerId, name.c_str(), uid, oldTimerId);
+            "destory:%{public}" PRId64 "", timerId, name.c_str(), appUid, oldTimerId);
         return oldTimerId;
     }
     return 0;
 }
 
 // needs to acquire the lock `entryMapMutex_` before calling this method
-void TimerManager::DeleteTimerName(int uid, std::string name, uint64_t timerId)
+// Internal map keyed by appUid (application identity).
+void TimerManager::DeleteTimerName(int appUid, std::string name, uint64_t timerId)
 {
-    auto nameIter = timerNameMap_.find(uid);
+    auto nameIter = timerNameMap_.find(appUid);
     if (nameIter == timerNameMap_.end()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "NameMap has no uid %{public}d", uid);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "NameMap has no appUid %{public}d", appUid);
         return;
     }
     auto timerIter = nameIter->second.find(name);
     if (timerIter == nameIter->second.end()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "NameMap has no name:%{public}s uid:%{public}d", name.c_str(), uid);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "NameMap has no name:%{public}s appUid:%{public}d", name.c_str(), appUid);
         return;
     }
     if (timerIter->second == timerId) {
-        timerNameMap_[uid].erase(timerIter);
+        timerNameMap_[appUid].erase(timerIter);
         return;
     }
     TIME_HILOGW(TIME_MODULE_SERVICE,
-        "timer %{public}" PRId64 " not exist in map, name:%{public}s uid%{public}d", timerId, name.c_str(), uid);
+        "timer %{public}" PRId64 " not exist in map, name:%{public}s appUid%{public}d", timerId, name.c_str(), appUid);
 }
 
 /**
@@ -291,15 +296,16 @@ void TimerManager::InsertTimerToDatabase(std::shared_ptr<TimerEntry> timerInfo, 
 int32_t TimerManager::CreateTimer(TimerPara &paras,
                                   std::function<int32_t (const uint64_t)> callback,
                                   std::shared_ptr<WantAgent> wantAgent,
-                                  int uid,
+                                  int appUid,
                                   int pid,
                                   uint64_t &timerId,
                                   DatabaseType type)
 {
+    // Application identity.
     TIME_HILOGD(TIME_MODULE_SERVICE,
                 "Create timer:%{public}d windowLength:%{public}" PRId64 "interval:%{public}" PRId64 "flag:%{public}u"
-                "uid:%{public}d pid:%{public}d timerId:%{public}" PRId64 "", paras.timerType, paras.windowLength,
-                paras.interval, paras.flag, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingPid(), timerId);
+                "appUid:%{public}d pid:%{public}d timerId:%{public}" PRId64 "", paras.timerType, paras.windowLength,
+                paras.interval, paras.flag, appUid, pid, timerId);
     std::string bundleName = TimeFileUtils::GetBundleNameByTokenID(IPCSkeleton::GetCallingTokenID());
     if (bundleName.empty()) {
         bundleName = TimeFileUtils::GetNameByPid(IPCSkeleton::GetCallingPid());
@@ -312,14 +318,14 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
         std::lock_guard<std::mutex> lock(entryMapMutex_);
         GenerateTimerIdLocked(timerId);
         timerInfo = std::make_shared<TimerEntry>(TimerEntry {timerName, timerId, paras.timerType, paras.windowLength,
-            paras.interval, paras.flag, paras.autoRestore, std::move(callback), wantAgent, uid, pid, bundleName});
+            paras.interval, paras.flag, paras.autoRestore, std::move(callback), wantAgent, appUid, pid, bundleName});
         auto insertResult = timerEntryMap_.insert(std::make_pair(timerId, timerInfo));
         if (!insertResult.second) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "CreateTimer id:%{public}" PRId64 " already exist", timerId);
         }
-        IncreaseTimerCount(uid);
+        IncreaseTimerCount(appUid);
         if (timerName != "") {
-            replacedTimerId = AddTimerName(uid, timerName, timerId, replacedNeedRecover);
+            replacedTimerId = AddTimerName(appUid, timerName, timerId, replacedNeedRecover);
         }
     }
     if (replacedTimerId != 0) {
@@ -439,28 +445,28 @@ int32_t TimerManager::StartTimerGroup(std::vector<std::pair<uint64_t, uint64_t>>
 }
 #endif
 
-void TimerManager::IncreaseTimerCount(int uid)
+void TimerManager::IncreaseTimerCount(int appUid)
 {
     auto it = std::find_if(timerCount_.begin(), timerCount_.end(),
-        [uid](const std::pair<int32_t, size_t>& pair) {
-            return pair.first == uid;
+        [appUid](const std::pair<int32_t, size_t>& pair) {
+            return pair.first == appUid;
         });
     if (it == timerCount_.end()) {
-        timerCount_.push_back(std::make_pair(uid, 1));
+        timerCount_.push_back(std::make_pair(appUid, 1));
     } else {
         it->second++;
     }
     CheckTimerCount();
 }
 
-void TimerManager::DecreaseTimerCount(int uid)
+void TimerManager::DecreaseTimerCount(int appUid)
 {
     auto it = std::find_if(timerCount_.begin(), timerCount_.end(),
-        [uid](const std::pair<int32_t, size_t>& pair) {
-            return pair.first == uid;
+        [appUid](const std::pair<int32_t, size_t>& pair) {
+            return pair.first == appUid;
         });
     if (it == timerCount_.end()) {
-        TIME_HILOGE(TIME_MODULE_SERVICE, "uid:%{public}d has no timer", uid);
+        TIME_HILOGE(TIME_MODULE_SERVICE, "appUid:%{public}d has no timer", appUid);
     } else {
         it->second--;
     }
@@ -500,13 +506,13 @@ void TimerManager::ShowTimerCountByUid(int count)
     auto limitedSize = (size > TIMER_COUNT_TOP_NUM) ? TIMER_COUNT_TOP_NUM : size;
     int index = 0;
     for (auto it = timerCount_.begin(); it != timerCount_.begin() + limitedSize; ++it) {
-        int uid = it->first;
+        int appUid = it->first;
         int createTimerCount = it->second;
-        uidStr = uidStr + std::to_string(uid) + " ";
+        uidStr = uidStr + std::to_string(appUid) + " ";
         countStr = countStr + std::to_string(createTimerCount) + " ";
-        uidArr[index] = uid;
+        uidArr[index] = appUid;
         createTimerCountArr[index] = createTimerCount;
-        startTimerCountArr[index] = TimerProxy::GetInstance().CountUidTimerMapByUid(uid);
+        startTimerCountArr[index] = TimerProxy::GetInstance().CountUidTimerMapByUid(appUid);
         ++index;
     }
     TimerCountStaticReporter(count, uidArr, createTimerCountArr, startTimerCountArr);
@@ -552,7 +558,7 @@ int32_t TimerManager::StopTimerInnerLocked(bool needDestroy, uint64_t timerNumbe
     TimerProxy::GetInstance().EraseTimerFromProxyTimerMap(timerNumber, it->second->uid, it->second->pid);
     needRecover = CheckNeedRecoverOnReboot(it->second->bundleName, it->second->type, it->second->autoRestore);
     if (needDestroy) {
-        auto uid = it->second->uid;
+        auto appUid = it->second->uid;
         auto name = it->second->name;
         timerEntryMap_.erase(it);
         #ifdef SET_AUTO_REBOOT_ENABLE
@@ -565,9 +571,9 @@ int32_t TimerManager::StopTimerInnerLocked(bool needDestroy, uint64_t timerNumbe
             disabledPowerOnTimerIds_.erase(timerNumber);
         }
         #endif
-        DecreaseTimerCount(uid);
+        DecreaseTimerCount(appUid);
         if (name != "") {
-            DeleteTimerName(uid, name, timerNumber);
+            DeleteTimerName(appUid, name, timerNumber);
         }
     }
     return E_TIME_OK;
@@ -602,7 +608,7 @@ void TimerManager::SetHandlerLocked(std::shared_ptr<TimerInfo> alarm)
     TIME_HILOGD(TIME_MODULE_SERVICE, "start id:%{public}" PRId64 "", alarm->id);
     auto bootTimePoint = TimeUtils::GetBootTimeNs();
     if (TimerProxy::GetInstance().IsProxy(alarm->uid, 0)) {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, uid=%{public}d id=%{public}" PRId64 "",
+        TIME_HILOGI(TIME_MODULE_SERVICE, "Timer already proxy, appUid=%{public}d id=%{public}" PRId64 "",
             alarm->uid, alarm->id);
         TimerProxy::GetInstance().RecordProxyTimerMap(alarm, false);
         alarm->ProxyTimer(bootTimePoint, milliseconds(TimerProxy::GetInstance().GetProxyDelayTime()));
@@ -1285,7 +1291,7 @@ int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &tim
     if (userIdOfTimer == foregroundUserId || userIdOfTimer == SYSTEM_USER_ID) {
         return E_TIME_OK;
     } else {
-        TIME_HILOGI(TIME_MODULE_SERVICE, "WA wait switch user, uid:%{public}d, timerId:%{public}" PRId64,
+        TIME_HILOGI(TIME_MODULE_SERVICE, "WA wait switch user, appUid:%{public}d, timerId:%{public}" PRId64,
             timer->uid, timer->id);
         return E_TIME_ACCOUNT_NOT_MATCH;
     }
@@ -1598,7 +1604,7 @@ bool TimerManager::CheckAllowWhileIdle(const std::shared_ptr<TimerInfo> &alarm)
 // needs to acquire the lock `mutex_` before calling this method
 bool TimerManager::AdjustDeliveryTimeBasedOnDeviceIdle(const std::shared_ptr<TimerInfo> &alarm)
 {
-    TIME_HILOGD(TIME_MODULE_SERVICE, "start adjust timer, uid=%{public}d, id=%{public}" PRId64 "",
+    TIME_HILOGD(TIME_MODULE_SERVICE, "start adjust timer, appUid=%{public}d, id=%{public}" PRId64 "",
         alarm->uid, alarm->id);
     if (mPendingIdleUntil_ == alarm) {
         return false;

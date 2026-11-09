@@ -76,6 +76,7 @@ void TimeBehaviorReport(ReportEventCode eventCode, const std::string &originTime
     // validity, see S-08) and must be attributable with before/after values. HiSysEvent has
     // its own access control (READ_HILOG_EVENT / hiview authorization), stricter than HiLog,
     // so this is not a plaintext log leak. Do not privatize or drop these fields.
+    // CALLER_UID: calling uid report field.
     std::string bundleOrProcessName = GetBundleOrProcessName();
     struct HiSysEventParam params[] = {
         {"EVENT_CODE",    HISYSEVENT_INT32,  {.i32 = eventCode},                                    0},
