@@ -45,7 +45,7 @@ AutoTimeInfo NtpUpdateTime::autoTimeInfo_{};
 std::mutex NtpUpdateTime::requestMutex_;
 std::mutex NtpUpdateTime::ntpRetryMutex_;
 std::mutex NtpUpdateTime::autoTimeInfoMutex_;
-uint64_t NtpUpdateTime::timerId_ = 0;
+std::atomic<uint64_t> NtpUpdateTime::timerId_ {0};
 int64_t NtpUpdateTime::ntpRetryInterval_ = MAX_NTP_RETRY_INTERVAL;
 
 
@@ -82,7 +82,11 @@ void NtpUpdateTime::Init()
     timerPara.windowLength = 0;
     timerPara.interval = 0;
     timerPara.flag = 0;
-    TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId_);
+    // CreateTimer takes uint64_t&; std::atomic cannot bind to a non-const
+    // reference, so receive into a local and publish via store().
+    uint64_t timerId = 0;
+    TimeSystemAbility::GetInstance()->CreateTimer(timerPara, callback, timerId);
+    timerId_.store(timerId, std::memory_order_relaxed);
     RefreshNextTriggerTime(NtpUpdateSource::INIT, false, CheckStatus());
 }
 
@@ -345,14 +349,15 @@ void NtpUpdateTime::RefreshNextTriggerTime(NtpUpdateSource code, bool isSuccess,
                 break;
         }
     }
-    if (timerId_ == 0) {
+    uint64_t timerId = timerId_.load(std::memory_order_relaxed);
+    if (timerId == 0) {
         return;
     }
     int64_t bootTime = 0;
     TimeUtils::GetBootTimeMs(bootTime);
     auto nextTriggerTime = bootTime + ntpRetryInterval_;
-    TimeSystemAbility::GetInstance()->StartTimer(timerId_, nextTriggerTime);
-    TIME_HILOGI(TIME_MODULE_SERVICE, "refresh timerId:%{public}" PRIu64 "", timerId_);
+    TimeSystemAbility::GetInstance()->StartTimer(timerId, nextTriggerTime);
+    TIME_HILOGI(TIME_MODULE_SERVICE, "refresh timerId:%{public}" PRIu64 "", timerId);
 }
 
 bool NtpUpdateTime::CheckStatus()
@@ -376,7 +381,10 @@ bool NtpUpdateTime::IsValidNITZTime()
 
 void NtpUpdateTime::Stop()
 {
-    TimeSystemAbility::GetInstance()->DestroyTimer(timerId_);
+    uint64_t timerId = timerId_.load(std::memory_order_relaxed);
+    if (timerId != 0) {
+        TimeSystemAbility::GetInstance()->DestroyTimer(timerId);
+    }
 }
 
 void NtpUpdateTime::RegisterSystemParameterListener()

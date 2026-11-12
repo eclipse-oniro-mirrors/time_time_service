@@ -213,8 +213,9 @@ OHOS::NativeRdb::ValuesBucket GetInsertValues(std::shared_ptr<TimerEntry> timerI
 // needs to acquire the lock `entryMapMutex_` before calling this method
 // Returns the old timerId that was replaced by the new one (0 if no replacement happened).
 // When a replacement happens, needRecover is set to the replaced timer's recover-on-reboot flag so
-// the caller can call UpdateOrDeleteDatabase for the returned id outside the lock, avoiding holding
-// entryMapMutex_ during SQLite/JSON file I/O.
+// the caller can call UpdateOrDeleteDatabase for the returned id within the same
+// entryMapMutex_ critical section, keeping the in-memory replacement and its DB Delete atomic
+// with concurrent CreateTimer/DestroyTimer database writes.
 // Internal map keyed by appUid (application identity).
 // 0 is a safe "no replacement" sentinel: CreateTimer forces timerId to a non-zero random
 // value when the caller passes 0, so timerNameMap_ never stores 0 and a returned 0 can
@@ -315,6 +316,13 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
     uint64_t replacedTimerId = 0;
     bool replacedNeedRecover = false;
     {
+        // The map insert and the database writes must be atomic under entryMapMutex_:
+        // performing them outside the lock lets a concurrent DestroyTimer (or a
+        // same-name replacement on another thread) interleave its DB Delete between
+        // the map insert and this DB Insert, leaving an orphan DB row for a timer
+        // that no longer exists in memory (revives after SA restart). This adds one
+        // DB write to the critical section (~0.1ms per row for RDB); timer APIs are
+        // low-QPS system calls, so the serialization cost is acceptable.
         std::lock_guard<std::mutex> lock(entryMapMutex_);
         GenerateTimerIdLocked(timerId);
         timerInfo = std::make_shared<TimerEntry>(TimerEntry {timerName, timerId, paras.timerType, paras.windowLength,
@@ -327,14 +335,13 @@ int32_t TimerManager::CreateTimer(TimerPara &paras,
         if (timerName != "") {
             replacedTimerId = AddTimerName(appUid, timerName, timerId, replacedNeedRecover);
         }
+        if (replacedTimerId != 0) {
+            UpdateOrDeleteDatabase(true, replacedTimerId, replacedNeedRecover);
+        }
+        if (type != NOT_STORE) {
+            InsertTimerToDatabase(timerInfo, paras, bundleName);
+        }
     }
-    if (replacedTimerId != 0) {
-        UpdateOrDeleteDatabase(true, replacedTimerId, replacedNeedRecover);
-    }
-    if (type == NOT_STORE) {
-        return E_TIME_OK;
-    }
-    InsertTimerToDatabase(timerInfo, paras, bundleName);
     return E_TIME_OK;
 }
 
@@ -358,9 +365,12 @@ void TimerManager::ReCreateTimer(uint64_t timerId, std::shared_ptr<TimerEntry> t
             replacedTimerId = AddTimerName(timerInfo->uid, timerInfo->name, timerId, replacedNeedRecover);
         }
         IncreaseTimerCount(timerInfo->uid);
-    }
-    if (replacedTimerId != 0) {
-        UpdateOrDeleteDatabase(true, replacedTimerId, replacedNeedRecover);
+        if (replacedTimerId != 0) {
+            // Inside the lock for the same atomicity reason as CreateTimer (see
+            // the comment there): keep the in-memory replacement and its DB Delete
+            // from interleaving with a concurrent CreateTimer's DB Insert.
+            UpdateOrDeleteDatabase(true, replacedTimerId, replacedNeedRecover);
+        }
     }
 }
 
@@ -539,10 +549,17 @@ int32_t TimerManager::StopTimerInner(uint64_t timerNumber, bool needDestroy)
     int32_t ret;
     bool needRecover = false;
     {
+        // The in-memory erase and the DB Delete/Update must be atomic under
+        // entryMapMutex_: outside the lock, a concurrent CreateTimer's DB Insert
+        // (now also inside the lock) or a crash window between the erase and the
+        // DB write leaves a persistent row for a destroyed timer, which revives
+        // after SA restart (state=1 rows) or lingers as a zombie row (state=0).
+        // Timer APIs are low-QPS system calls, so one DB write inside the critical
+        // section is acceptable.
         std::lock_guard<std::mutex> lock(entryMapMutex_);
         ret = StopTimerInnerLocked(needDestroy, timerNumber, needRecover);
+        UpdateOrDeleteDatabase(needDestroy, timerNumber, needRecover);
     }
-    UpdateOrDeleteDatabase(needDestroy, timerNumber, needRecover);
     return ret;
 }
 
