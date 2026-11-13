@@ -20,6 +20,7 @@
 
 namespace OHOS {
 namespace MiscServices {
+// uid = application identity.
 constexpr const char *CREATE_TIME_TIMER_HOLD_ON_REBOOT = "CREATE TABLE IF NOT EXISTS hold_on_reboot "
                                                          "(timerId INTEGER PRIMARY KEY, "
                                                          "type INTEGER, "
@@ -34,6 +35,7 @@ constexpr const char *CREATE_TIME_TIMER_HOLD_ON_REBOOT = "CREATE TABLE IF NOT EX
                                                          "pid INTEGER, "
                                                          "name TEXT)";
 
+// uid = application identity.
 constexpr const char *CREATE_TIME_TIMER_DROP_ON_REBOOT = "CREATE TABLE IF NOT EXISTS drop_on_reboot "
                                                          "(timerId INTEGER PRIMARY KEY, "
                                                          "type INTEGER, "
