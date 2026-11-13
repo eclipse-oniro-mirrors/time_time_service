@@ -55,7 +55,6 @@ constexpr int32_t MAX_UINT8_TIMER_TYPE = 255;
 constexpr uint32_t MAX_POLICY_VALUE = 2;
 constexpr int MIN_API_VERSION = 7;
 constexpr int MAX_API_VERSION = 12;
-constexpr uint32_t CREATE_TIMER_CODE_OFFSET = 1U;
 constexpr uint32_t MAX_ADJUST_SECONDS = 3600;
 constexpr size_t MIN_OPERATION_COUNT = 1;
 constexpr size_t MAX_OPERATION_COUNT = 3;
@@ -131,13 +130,17 @@ std::vector<int32_t> ConsumePidVector(FuzzedDataProvider &provider)
     return pidVector;
 }
 
-std::vector<std::string> ConsumeNameVector(FuzzedDataProvider &provider)
+std::vector<std::string> ConsumeExemptionNames(FuzzedDataProvider &provider)
 {
+    // Keep singleton exemption state bounded across fuzz iterations.
+    static const std::vector<std::string> exemptionNames = {
+        "time_service", "settings", "TimerProxyState", "ipc.timer", "ohos.timer.fuzz", ""
+    };
     std::vector<std::string> names;
     size_t count = provider.ConsumeIntegralInRange<size_t>(0, MAX_VECTOR_LENGTH);
     names.reserve(count);
     for (size_t index = 0; index < count; ++index) {
-        names.emplace_back(ConsumeTimerName(provider));
+        names.emplace_back(exemptionNames[provider.ConsumeIntegralInRange<size_t>(0, exemptionNames.size() - 1)]);
     }
     return names;
 }
@@ -176,8 +179,7 @@ uint32_t GetIpcCode(uint8_t opcode)
         case IPC_SET_TIME_ZONE:
             return static_cast<uint32_t>(MiscServices::ITimeServiceIpcCode::COMMAND_SET_TIME_ZONE);
         case IPC_CREATE_TIMER:
-            return static_cast<uint32_t>(MiscServices::ITimeServiceIpcCode::COMMAND_CREATE_TIMER) +
-                CREATE_TIMER_CODE_OFFSET;
+            return static_cast<uint32_t>(MiscServices::ITimeServiceIpcCode::COMMAND_CREATE_TIMER_WITHOUT_W_A);
         case IPC_START_TIMER:
             return static_cast<uint32_t>(MiscServices::ITimeServiceIpcCode::COMMAND_START_TIMER);
         case IPC_STOP_TIMER:
@@ -252,7 +254,7 @@ void WriteAdjustTimerPayload(MessageParcel &parcel, FuzzedDataProvider &provider
 
 void WriteTimerExemptionPayload(MessageParcel &parcel, FuzzedDataProvider &provider)
 {
-    parcel.WriteStringVector(ConsumeNameVector(provider));
+    parcel.WriteStringVector(ConsumeExemptionNames(provider));
     parcel.WriteBool(provider.ConsumeBool());
 }
 
