@@ -70,7 +70,12 @@ private:
     static void ChangeAutoTimeCallback(const char *key, const char *value, void *context);
 
     static AutoTimeInfo autoTimeInfo_;
-    static uint64_t timerId_;
+    // Atomic: written by Init() on the SA init thread and read by the param listener
+    // callbacks (RefreshNextTriggerTime runs on the system parameter watcher thread)
+    // with no happens-before edge between them; a plain read is a data race even when
+    // torn 64-bit loads are harmless on the target hardware. Matches the
+    // TimeTickNotify::timerId_ pattern.
+    static std::atomic<uint64_t> timerId_;
     // Atomic: read by IsValidNITZTime(), written by UpdateNITZSetTime() on the
     // NITZ broadcast thread. relaxed ordering is sufficient (independent timestamp).
     std::atomic<uint64_t> nitzUpdateTimeMilli_;

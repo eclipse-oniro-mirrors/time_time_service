@@ -1325,7 +1325,14 @@ void TimeSystemAbility::RecoverTimerFromDb(const std::string &tableName, bool au
         } else {
             TIME_HILOGI(TIME_MODULE_SERVICE, "%{public}s result rows count:%{public}d",
                 tableName.c_str(), count);
-            RecoverTimerInner(resultSet, autoRestore);
+            // Ownership transfer: RecoverTimerInner materializes the rows, then
+            // resets this (last) shared_ptr to drop the in-flight DB reference
+            // BEFORE calling into TimerManager. If it merely cleared its own
+            // by-value copy, this caller's copy would keep the reference alive
+            // across those calls and the CORRUPT-recovery deadlock described in
+            // RecoverTimerInner would remain reachable.
+            RecoverTimerInner(std::move(resultSet), autoRestore);
+            return;
         }
     }
     if (resultSet != nullptr) {
@@ -1424,15 +1431,27 @@ void TimeSystemAbility::CjsonIntoDatabase(cJSON* resultSet, bool autoRestore, co
 
 void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::ResultSet> resultSet, bool autoRestore)
 {
-    auto timerManager = TimerManager::GetInstance();
-    if (timerManager == nullptr) {
-        return;
-    }
+    // Materialize all rows BEFORE touching TimerManager: the ResultSet keeps an
+    // in-flight reference on TimeDatabase (WrapResult binds it to the shared_ptr
+    // lifetime), while ReCreateTimer/StartTimer take entryMapMutex_. If another
+    // thread holds entryMapMutex_ and hits E_SQLITE_CORRUPT, RecoverDataBase waits
+    // on storeMutex_ until inFlight_ drops to zero; holding the ResultSet here while
+    // blocking on entryMapMutex_ would deadlock the SA permanently (review §4.2.1).
+    // The shared_ptr is passed by value and must be the caller's LAST reference:
+    // the reset() below then drops the in-flight reference before TimerManager runs.
+    struct RecoverRow {
+        uint64_t timerId;
+        std::shared_ptr<TimerEntry> timerInfo;
+        uint8_t state;
+        uint64_t triggerTime;
+    };
+    std::vector<RecoverRow> rows;
     do {
-        auto timerId = static_cast<uint64_t>(GetLong(resultSet, COLUMN_INDEX_TIMER_ID));
-        auto timerInfo = std::make_shared<TimerEntry>(TimerEntry {
+        RecoverRow row;
+        row.timerId = static_cast<uint64_t>(GetLong(resultSet, COLUMN_INDEX_TIMER_ID));
+        row.timerInfo = std::make_shared<TimerEntry>(TimerEntry {
             GetString(resultSet, COLUMN_INDEX_NAME),
-            timerId,
+            row.timerId,
             GetInt(resultSet, COLUMN_INDEX_TYPE),
             static_cast<uint64_t>(GetLong(resultSet, COLUMN_INDEX_WINDOW_LENGTH)),
             static_cast<uint64_t>(GetLong(resultSet, COLUMN_INDEX_INTERVAL)),
@@ -1447,18 +1466,28 @@ void TimeSystemAbility::RecoverTimerInner(std::shared_ptr<OHOS::NativeRdb::Resul
             GetInt(resultSet, COLUMN_INDEX_PID),
             GetString(resultSet, COLUMN_INDEX_BUNDLE_NAME)
         });
-        if (timerInfo->wantAgent == nullptr) {
+        row.state = static_cast<uint8_t>(GetInt(resultSet, COLUMN_INDEX_STATE));
+        row.triggerTime = static_cast<uint64_t>(GetLong(resultSet, COLUMN_INDEX_TRIGGER_TIME));
+        rows.push_back(std::move(row));
+    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
+    resultSet->Close();
+    resultSet.reset();
+
+    auto timerManager = TimerManager::GetInstance();
+    if (timerManager == nullptr) {
+        return;
+    }
+    for (auto &row : rows) {
+        if (row.timerInfo->wantAgent == nullptr) {
             TIME_HILOGE(TIME_MODULE_SERVICE, "wantAgent is nullptr, appUid=%{public}d, id=%{public}" PRId64 "",
-                timerInfo->uid, timerInfo->id);
+                row.timerInfo->uid, row.timerInfo->id);
             continue;
         }
-        timerManager->ReCreateTimer(timerId, timerInfo);
-        auto state = static_cast<uint8_t>(GetInt(resultSet, COLUMN_INDEX_STATE));
-        if (state == 1) {
-            auto triggerTime = static_cast<uint64_t>(GetLong(resultSet, COLUMN_INDEX_TRIGGER_TIME));
-            timerManager->StartTimer(timerId, triggerTime);
+        timerManager->ReCreateTimer(row.timerId, row.timerInfo);
+        if (row.state == 1) {
+            timerManager->StartTimer(row.timerId, row.triggerTime);
         }
-    } while (resultSet->GoToNextRow() == OHOS::NativeRdb::E_OK);
+    }
 }
 
 #else
