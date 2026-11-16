@@ -268,8 +268,14 @@ HWTEST_F(TimeServiceTimeTest, SetTime001, TestSize.Level1)
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
     ASSERT_GT(time, 0);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
+    // Remember the pre-case wall clock so the case can restore it before
+    // releasing the permission (repeated runs must not drift the clock).
+    int64_t beforeTime = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
     bool result = TimeServiceClient::GetInstance()->SetTime(time);
     EXPECT_TRUE(result);
+    // Restore the wall clock to the pre-case value.
+    bool restore = TimeServiceClient::GetInstance()->SetTime(beforeTime);
+    EXPECT_TRUE(restore);
     DeletePermission();
 }
 
@@ -331,10 +337,15 @@ HWTEST_F(TimeServiceTimeTest, SetTime004, TestSize.Level1)
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
     ASSERT_GT(time, 0);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
+    // Remember the pre-case wall clock so the case can restore it before
+    // releasing the permission (repeated runs must not drift the clock).
+    int64_t beforeTime = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
     int32_t code;
     bool result = TimeServiceClient::GetInstance()->SetTime(time, code);
     EXPECT_TRUE(result);
     EXPECT_EQ(code, 0);
+    // Restore the wall clock to the pre-case value.
+    TimeServiceClient::GetInstance()->SetTime(beforeTime, code);
     DeletePermission();
     auto res = TimeSystemAbility::GetInstance()->SetTime(0, 0);
     EXPECT_EQ(res, E_TIME_NO_PERMISSION);
@@ -360,8 +371,15 @@ HWTEST_F(TimeServiceTimeTest, SetTimeInner001, TestSize.Level1)
     int64_t time = (currentTime.tv_sec + 1000) * 1000 + currentTime.tv_usec / 1000;
     ASSERT_GT(time, 0);
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
+    // Remember the pre-case wall clock so the case can restore it afterwards
+    // (SetTimeInner is the permission-free internal path, repeated runs must
+    // not drift the clock).
+    int64_t beforeTime = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
     auto result = TimeSystemAbility::GetInstance()->SetTimeInner(time);
     EXPECT_EQ(result, E_TIME_OK);
+    // Restore the wall clock to the pre-case value.
+    auto restore = TimeSystemAbility::GetInstance()->SetTimeInner(beforeTime);
+    EXPECT_EQ(restore, E_TIME_OK);
 }
 
 /**

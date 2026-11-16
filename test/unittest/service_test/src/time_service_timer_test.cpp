@@ -1488,6 +1488,9 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer009, TestSize.Level1)
     struct timeval currentTime {
     };
     gettimeofday(&currentTime, NULL);
+    // Remember the pre-case wall clock so the case can restore it afterwards
+    // (the one-day jump below must not leave the device clock ahead).
+    int64_t beforeTime = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
     // Set the time to one day later
     int64_t time = (currentTime.tv_sec + 86400) * 1000 + currentTime.tv_usec / 1000;
     TIME_HILOGI(TIME_MODULE_CLIENT, "Time now : %{public}" PRId64 "", time);
@@ -1514,6 +1517,10 @@ HWTEST_F(TimeServiceTimerTest, CreateTimer009, TestSize.Level1)
     ret = TimeServiceClient::GetInstance()->StopTimer(timerId);
     EXPECT_TRUE(ret);
     ret = TimeServiceClient::GetInstance()->DestroyTimer(timerId);
+    EXPECT_TRUE(ret);
+    // Restore the wall clock to the pre-case value (while the permission is
+    // still held, before DeletePermission).
+    ret = TimeServiceClient::GetInstance()->SetTime(beforeTime);
     EXPECT_TRUE(ret);
     DeletePermission();
 }
