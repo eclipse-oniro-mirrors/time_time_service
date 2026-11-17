@@ -15,7 +15,17 @@ import("//build/ohos.gni")
 import("../../time.gni")
 
 ohos_prebuilt_etc("time.para") {
-  source = "${time_service_path}/etc/time.para"
+  # 打包到镜像的文件名保持 time.para 不变（source 可随编译形态切换）
+  output = "time.para"
+  if (time_service_car_para) {
+    source = "${time_service_path}/etc/time.para_car"
+  } else {
+    source = "${time_service_path}/etc/time.para"
+  }
+  install_images = [
+    "system",
+    "updater",
+  ]
   part_name = "time_service"
   subsystem_name = "time"
   module_install_dir = "etc/param"
