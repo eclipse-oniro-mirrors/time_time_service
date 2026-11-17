@@ -23,7 +23,7 @@
 namespace OHOS {
 namespace MiscServices {
 namespace {
-static constexpr uint32_t ALARM_TIME_CHANGE_MASK = 1 << 16;
+static constexpr uint32_t ALARM_TIME_CHANGE_MASK = 1u << 16;
 constexpr int CLOCK_POWEROFF_ALARM = 12;
 static constexpr clockid_t alarm_to_clock_id[N_TIMER_FDS] = {
     CLOCK_REALTIME_ALARM,
@@ -168,7 +168,7 @@ int TimerHandler::Set(uint32_t type, std::chrono::nanoseconds when, std::chrono:
     return ret;
 }
 
-uint32_t TimerHandler::WaitForAlarm()
+int TimerHandler::WaitForAlarm()
 {
     epoll_event events[N_TIMER_FDS];
 
@@ -177,6 +177,9 @@ uint32_t TimerHandler::WaitForAlarm()
         nevents = epoll_wait(epollFd_, events, N_TIMER_FDS, -1);
     } while (nevents < 0 && errno == EINTR);
 
+    // Accumulate the alarm bitmask in an unsigned type (G.EXP.23-CPP requires
+    // bitwise operations on unsigned operands); the negative error path is
+    // propagated through the signed int return type instead.
     uint32_t result = 0;
     for (int i = 0; i < nevents; i++) {
         uint32_t alarm_idx = events[i].data.u32;
@@ -187,16 +190,25 @@ uint32_t TimerHandler::WaitForAlarm()
         uint64_t unused;
         ssize_t err = read(fds_[alarm_idx], &unused, sizeof(unused));
         if (err < 0) {
-            if (alarm_idx == ALARM_TYPE_COUNT && errno == ECANCELED) {
+            // A clock change cancels the CANCEL_ON_SET timerfd and surfaces here
+            // as read() == -1 with errno == ECANCELED, or on some libc paths as
+            // the raw -ECANCELED return itself. Only fds[ALARM_TYPE_COUNT] is
+            // armed with TFD_TIMER_CANCEL_ON_SET, so an ECANCELED failure
+            // unambiguously means "time changed". Do not gate this on the fd
+            // index: index gating has misrouted real time-change events into
+            // the error path on device.
+            if (err == -ECANCELED || errno == ECANCELED) {
                 result |= ALARM_TIME_CHANGE_MASK;
             } else {
-                return err;
+                TIME_HILOGE(TIME_MODULE_SERVICE, "read alarm fd failed, alarm_idx:%{public}u, errno:%{public}d",
+                    alarm_idx, errno);
+                return static_cast<int>(err);
             }
         } else {
-            result |= (1 << alarm_idx);
+            result |= (1u << alarm_idx);
         }
     }
-    return result;
+    return static_cast<int>(result);
 }
 } // MiscServices
 } // OHOS
