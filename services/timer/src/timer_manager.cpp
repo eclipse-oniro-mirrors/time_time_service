@@ -44,6 +44,7 @@
 
 #ifdef MULTI_ACCOUNT_ENABLE
 #include "os_account.h"
+#include "os_account_constants.h"
 #include "os_account_manager.h"
 #endif
 
@@ -85,7 +86,6 @@ static const std::vector<std::string> ALL_DATA = { "timerId", "type", "flag", "w
 #endif
 
 #ifdef MULTI_ACCOUNT_ENABLE
-constexpr int SYSTEM_USER_ID  = 0;
 constexpr const char* TIMER_ACROSS_ACCOUNTS = "persist.time.timer_across_accounts";
 #endif
 
@@ -1305,7 +1305,10 @@ int32_t TimerManager::CheckUserIdForNotify(const std::shared_ptr<TimerInfo> &tim
         TIME_HILOGE(TIME_MODULE_SERVICE, "Get foreground account id failed, errcode:%{public}d", getForegroundIdErr);
         return E_TIME_ACCOUNT_ERROR;
     }
-    if (userIdOfTimer == foregroundUserId || userIdOfTimer == SYSTEM_USER_ID) {
+    // System-level users (localId in [0, START_USER_ID)) are always allowed to notify,
+    // e.g. user 0 (admin) and user 1 (U1, gated by os_account_enable_account_1).
+    if (userIdOfTimer == foregroundUserId
+        || userIdOfTimer < AccountSA::Constants::START_USER_ID) {
         return E_TIME_OK;
     } else {
         TIME_HILOGI(TIME_MODULE_SERVICE, "WA wait switch user, appUid:%{public}d, timerId:%{public}" PRId64,

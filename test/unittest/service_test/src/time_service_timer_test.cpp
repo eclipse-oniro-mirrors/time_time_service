@@ -3246,6 +3246,27 @@ HWTEST_F(TimeServiceTimerTest, CheckUserIdForNotify001, TestSize.Level0)
     res = TimerManager::GetInstance()->CheckUserIdForNotify(timerInfo);
     EXPECT_EQ(res, E_TIME_OK);
 }
+
+/**
+ * @tc.name: CheckUserIdForNotify002
+ * @tc.desc: Test CheckUserIdForNotify with system-level user ids below START_USER_ID
+ * @tc.precon: TimerManager instance is available and multi-account feature is enabled
+ * @tc.step: 1. Create timer owned by user 1 (U1 uid segment, 200000)
+ *           2. Verify CheckUserIdForNotify returns success without foreground query
+ * @tc.expect: Timers of system-level users (localId < 100) always pass the check
+ * @tc.type: FUNC
+ * @tc.require: issue#843
+ * @tc.level: level0
+ */
+HWTEST_F(TimeServiceTimerTest, CheckUserIdForNotify002, TestSize.Level0)
+{
+    auto duration = std::chrono::milliseconds::zero();
+    auto timePoint = std::chrono::steady_clock::now();
+    auto timerInfo = std::make_shared<TimerInfo>("", TIMER_ID, 0, duration, timePoint, duration, timePoint, duration,
+                                                 nullptr, nullptr, 0, false, 200000, 0, "");
+    auto res = TimerManager::GetInstance()->CheckUserIdForNotify(timerInfo);
+    EXPECT_EQ(res, E_TIME_OK);
+}
 #endif
 
 /**
