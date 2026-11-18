@@ -1120,7 +1120,10 @@ HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
     EXPECT_EQ(errCode, TimeError::E_TIME_OK);
     EXPECT_NE(timerId, 0);
     TIME_HILOGI(TIME_MODULE_CLIENT, "timerId now : %{public}" PRId64 "", timerId);
-    auto time = TimeServiceClient::GetInstance()->GetWallTimeMs() - 86400000;
+    // Remember the pre-case wall clock so the case can restore it afterwards
+    // (the time jumps below must not drift the clock across repeated runs).
+    int64_t beforeTime = TimeServiceClient::GetInstance()->GetWallTimeMs();
+    auto time = beforeTime - 86400000;
     bool result = TimeServiceClient::GetInstance()->SetTime(time);
     EXPECT_TRUE(result);
     TimeServiceClient::GetInstance()->StartTimerV9(timerId, time + 100000);
@@ -1137,6 +1140,8 @@ HWTEST_F(TimeClientTest, StartTimer007, TestSize.Level1)
     usleep(FIVE_HUNDRED * MICRO_TO_MILLISECOND);
     EXPECT_EQ(g_data1, 1);
     TimeServiceClient::GetInstance()->DestroyTimerV9(timerId);
+    // Restore the wall clock to the pre-case value.
+    TimeServiceClient::GetInstance()->SetTime(beforeTime);
 }
 
 /**

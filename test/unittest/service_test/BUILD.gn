@@ -27,6 +27,8 @@ config("module_private_config") {
     "${time_service_path}/ipc/stub",
     "${time_service_path}/ipc/base",
     "${time_service_path}/timer/include",
+    "${time_service_path}/time/include/inner_api_include",
+    "${root_gen_dir}/base/time/time_service/services",
   ]
   cflags = [ "-fvisibility=hidden" ]
   cflags_cc = [ "-fvisibility-inlines-hidden" ]
@@ -41,7 +43,11 @@ module_output_path = "time_service/time_service/native"
 ohos_unittest("TimeServiceTimeTest") {
   module_out_path = module_output_path
 
-  sources = [ "src/time_service_time_test.cpp" ]
+  sources = [
+    "src/time_service_time_test.cpp",
+    "src/time_service_permission_branch_test.cpp",
+    "src/time_misc_branch_test.cpp",
+  ]
 
   configs = [ ":module_private_config" ]
 
@@ -98,7 +104,11 @@ ohos_unittest("TimeServiceTimeTest") {
 ohos_unittest("TimeServiceTimerTest") {
   module_out_path = module_output_path
 
-  sources = [ "src/time_service_timer_test.cpp", "src/time_service_power_on_timer_test.cpp" ]
+  sources = [
+    "src/time_service_timer_test.cpp",
+    "src/time_service_power_on_timer_test.cpp",
+    "src/timer_manager_deep_branch_test.cpp",
+  ]
 
   configs = [ ":module_private_config" ]
 
@@ -163,12 +173,23 @@ ohos_unittest("TimeServiceTimerTest") {
 ohos_unittest("TimeClientTest") {
   module_out_path = module_output_path
 
-  sources = [ "src/time_client_test.cpp" ]
+  # Compile the client sources directly into the binary (same pattern as
+  # TimerDatabaseTest): all TimeServiceClient/TimerCallback symbols become
+  # local, so white-box cases (OnRemoteDied/UnsubscribeSA/lifecycle) do not
+  # depend on the so export surface trimmed by strict innerapi CI checks.
+  sources = [
+    "src/time_client_test.cpp",
+    "src/time_client_branch_test.cpp",
+    "${api_path}/src/time_service_client.cpp",
+    "${time_service_path}/time/src/itimer_info.cpp",
+    "${time_service_path}/time/src/timer_call_back.cpp",
+  ]
 
   configs = [ ":module_private_config" ]
 
   deps = [
-    "${api_path}:time_client",
+    "${api_path}:ntp_time_client_sources",
+    "${time_service_path}:timeservice_proxy",
     "${time_service_path}:time_system_ability_static",
   ]
   branch_protector_ret = "pac_ret"
@@ -201,7 +222,10 @@ ohos_unittest("TimeClientTest") {
 ohos_unittest("TimeDfxTest") {
   module_out_path = module_output_path
 
-  sources = [ "src/time_dfx_test.cpp" ]
+  sources = [
+    "src/time_dfx_test.cpp",
+    "src/time_dfx_cmd_dispatch_test.cpp",
+  ]
 
   configs = [ ":module_private_config" ]
 
@@ -271,7 +295,10 @@ ohos_unittest("TimePermissionTest") {
 ohos_unittest("TimeProxyTest") {
   module_out_path = module_output_path
 
-  sources = [ "src/time_proxy_test.cpp" ]
+  sources = [
+    "src/time_proxy_test.cpp",
+    "src/timer_proxy_branch_test.cpp",
+  ]
 
   configs = [ ":module_private_config" ]
 
@@ -295,11 +322,13 @@ ohos_unittest("TimeProxyTest") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
+    "cJSON:cjson",
     "common_event_service:cesfwk_innerkits",
     "googletest:gtest_main",
     "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_single",
+    "power_manager:powermgr_client",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -392,6 +421,7 @@ ohos_unittest("TimerDatabaseTest") {
 
   sources = [
     "src/timer_database_test.cpp",
+    "src/timer_database_branch_test.cpp",
     "${time_service_path}/timer/src/timer_database.cpp",
     "${time_service_path}/timer/src/timer_database_monitor.cpp",
   ]
@@ -459,6 +489,28 @@ ohos_unittest("TimeGettimeUtilsTest") {
     debug = false
   }
   external_deps = [
+    "googletest:gtest_main",
+    "hilog:libhilog",
+  ]
+}
+
+# Feasibility probe for linking the NTP engine via its exported dynamic
+# library (dashboard coverage lands on the so interface) instead of the static
+# source_set copy used by NtpTimeClientTest.
+ohos_unittest("NtpDynamicLinkTest") {
+  module_out_path = module_output_path
+
+  sources = [ "src/ntp_dynamic_link_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "${api_path}:ntp_time_client",
+    "${time_utils_path}:time_utils",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
     "googletest:gtest_main",
     "hilog:libhilog",
   ]
