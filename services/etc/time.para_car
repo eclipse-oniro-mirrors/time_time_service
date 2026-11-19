@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# 车机形态的系统参数默认值。
+# 车机产品（time_service_car_para=true）通过编译切换使用本文件，
+# 打包到产品的文件名仍为 time.para。
+persist.time.timezone = "Asia/Shanghai"
+persist.time.ntpserver = "ntp.ntsc.ac.cn,1.cn.pool.ntp.org"
+persist.time.ntpserver_specific = ""
+persist.time.auto_time = "ON"
+persist.time.auto_restore_timer_apps = ""
+persist.time.scheduled_power_on_apps = ""
+const.time.scheduled_power_on_apps = ""
+persist.time.timer_across_accounts = ""
+persist.time.running_lock_duration = 1000000000
