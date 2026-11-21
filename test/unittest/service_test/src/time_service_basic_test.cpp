@@ -67,8 +67,6 @@ constexpr int TIMER_TYPE_COMBINED_WAKEUP_EXACT = TIMER_TYPE_WAKEUP | TIMER_TYPE_
 
 // Timer intervals (milliseconds)
 constexpr uint32_t INTERVAL_100_MS = 100;
-constexpr uint32_t INTERVAL_200_MS = 200;
-constexpr uint32_t INTERVAL_500_MS = 500;
 constexpr uint32_t INTERVAL_1000_MS = 1000;
 constexpr uint32_t INTERVAL_2000_MS = 2000;
 constexpr uint32_t INTERVAL_5000_MS = 5000;
@@ -77,7 +75,6 @@ constexpr uint32_t INTERVAL_30000_MS = 30000;
 constexpr uint32_t INTERVAL_60000_MS = 60000;
 constexpr uint32_t INTERVAL_300000_MS = 300000;
 constexpr uint32_t INTERVAL_600000_MS = 600000;
-constexpr uint32_t INTERVAL_120000_MS = 120000;
 constexpr int64_t TRIGGER_TIME_OFFSET_60S = 60000;
 
 // Loop counts
@@ -85,14 +82,8 @@ constexpr int LOOP_COUNT_SMALL = 10;
 constexpr int LOOP_COUNT_MEDIUM = 20;
 constexpr int LOOP_COUNT_LARGE = 50;
 constexpr int LOOP_COUNT_XLARGE = 100;
-constexpr int LOOP_COUNT_XXLARGE = 200;
-constexpr int LOOP_COUNT_MAX = 500;
 constexpr int LOOP_COUNT_EXTREME = 1000;
 constexpr int LOOP_COUNT_BATCH_SMALL = 30;
-constexpr int LOOP_COUNT_BATCH_MEDIUM = 50;
-constexpr int LOOP_COUNT_BATCH_LARGE = 100;
-constexpr int LOOP_COUNT_BATCH_XLARGE = 500;
-constexpr int LOOP_COUNT_BATCH_MAX = 5000;
 constexpr int LOOP_COUNT_BATCH_EXTREME = 50000;
 constexpr int LOOP_COUNT_STABILITY = 5000;
 constexpr int LOOP_COUNT_TIME_QUERY = 10000;
@@ -104,7 +95,6 @@ constexpr int THREAD_COUNT_MEDIUM = 8;
 constexpr int THREAD_COUNT_LARGE = 10;
 
 // Success thresholds
-constexpr int SUCCESS_THRESHOLD_80 = 80;
 constexpr int SUCCESS_THRESHOLD_90 = 90;
 constexpr int SUCCESS_COUNT_80 = 80;
 constexpr int SUCCESS_COUNT_ALL = 1000;
@@ -608,7 +598,13 @@ public:
     static void SetUpTestCase(void) {}
     static void TearDownTestCase(void) {}
     void SetUp() {}
-    void TearDown() {}
+    void TearDown()
+    {
+        // The city-switching cases move the device timezone; restore the
+        // default so later suites (SetTimeZoneInner001 pins Asia/Shanghai)
+        // are not affected by the state left behind here.
+        TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
+    }
 };
 
 /**
@@ -796,7 +792,13 @@ public:
     static void SetUpTestCase(void) {}
     static void TearDownTestCase(void) {}
     void SetUp() {}
-    void TearDown() {}
+    void TearDown()
+    {
+        // Restore the default timezone: the city/rapid-switch cases in this
+        // suite (and the defensive reject cases, in case an EXPECT_FALSE ever
+        // fails on a bad day) must not leave a dirty zone for later suites.
+        TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
+    }
 };
 
 /**
@@ -933,7 +935,13 @@ public:
     static void SetUpTestCase(void) {}
     static void TearDownTestCase(void) {}
     void SetUp() {}
-    void TearDown() {}
+    void TearDown()
+    {
+        // Restore the default timezone: the city/rapid-switch cases in this
+        // suite (and the defensive reject cases, in case an EXPECT_FALSE ever
+        // fails on a bad day) must not leave a dirty zone for later suites.
+        TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
+    }
 };
 
 static void CreateTimerBatchTask(std::atomic<int>& successCount)
@@ -1064,7 +1072,13 @@ public:
     static void SetUpTestCase(void) {}
     static void TearDownTestCase(void) {}
     void SetUp() {}
-    void TearDown() {}
+    void TearDown()
+    {
+        // Restore the default timezone: the city/rapid-switch cases in this
+        // suite (and the defensive reject cases, in case an EXPECT_FALSE ever
+        // fails on a bad day) must not leave a dirty zone for later suites.
+        TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
+    }
 };
 
 /**
@@ -1203,7 +1217,13 @@ public:
     static void SetUpTestCase(void) {}
     static void TearDownTestCase(void) {}
     void SetUp() {}
-    void TearDown() {}
+    void TearDown()
+    {
+        // Restore the default timezone: the city/rapid-switch cases in this
+        // suite (and the defensive reject cases, in case an EXPECT_FALSE ever
+        // fails on a bad day) must not leave a dirty zone for later suites.
+        TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
+    }
 };
 
 /**
@@ -1521,7 +1541,13 @@ public:
     static void SetUpTestCase(void) {}
     static void TearDownTestCase(void) {}
     void SetUp() {}
-    void TearDown() {}
+    void TearDown()
+    {
+        // Restore the default timezone: the city/rapid-switch cases in this
+        // suite (and the defensive reject cases, in case an EXPECT_FALSE ever
+        // fails on a bad day) must not leave a dirty zone for later suites.
+        TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
+    }
 };
 
 /**
@@ -1643,7 +1669,13 @@ public:
     static void SetUpTestCase(void) {}
     static void TearDownTestCase(void) {}
     void SetUp() {}
-    void TearDown() {}
+    void TearDown()
+    {
+        // Restore the default timezone: the city/rapid-switch cases in this
+        // suite (and the defensive reject cases, in case an EXPECT_FALSE ever
+        // fails on a bad day) must not leave a dirty zone for later suites.
+        TimeServiceClient::GetInstance()->SetTimeZone("Asia/Shanghai");
+    }
 };
 
 /**
@@ -1661,7 +1693,7 @@ HWTEST_F(TimeServiceSetTimeTest, SetTimeBasic001, TestSize.Level1)
     int64_t afterSet = TimeServiceClient::GetInstance()->GetWallTimeMs();
     EXPECT_GE(afterSet, newTime - ONE_SECOND);
     EXPECT_LE(afterSet, newTime + ONE_SECOND * 10);
-    TimeServiceClient::GetInstance()->SetTime(currentTime);
+    EXPECT_TRUE(TimeServiceClient::GetInstance()->SetTime(currentTime));
 }
 
 /**
@@ -1678,7 +1710,7 @@ HWTEST_F(TimeServiceSetTimeTest, SetTimeFuture001, TestSize.Level1)
     EXPECT_TRUE(TimeServiceClient::GetInstance()->SetTime(futureTime));
     int64_t afterSet = TimeServiceClient::GetInstance()->GetWallTimeMs();
     EXPECT_GE(afterSet, futureTime - ONE_SECOND);
-    TimeServiceClient::GetInstance()->SetTime(currentTime);
+    EXPECT_TRUE(TimeServiceClient::GetInstance()->SetTime(currentTime));
 }
 
 /**
@@ -1696,7 +1728,7 @@ HWTEST_F(TimeServiceSetTimeTest, SetTimePast001, TestSize.Level1)
     int64_t afterSet = TimeServiceClient::GetInstance()->GetWallTimeMs();
     EXPECT_GE(afterSet, pastTime - ONE_SECOND);
     EXPECT_LE(afterSet, pastTime + ONE_SECOND * 10);
-    TimeServiceClient::GetInstance()->SetTime(currentTime);
+    EXPECT_TRUE(TimeServiceClient::GetInstance()->SetTime(currentTime));
 }
 
 /**
@@ -1715,7 +1747,7 @@ HWTEST_F(TimeServiceSetTimeTest, SetTimeZero001, TestSize.Level2)
         EXPECT_GE(afterSet, 0);
         EXPECT_LE(afterSet, MINUTE_TO_MILLISECOND);
     }
-    TimeServiceClient::GetInstance()->SetTime(currentTime);
+    EXPECT_TRUE(TimeServiceClient::GetInstance()->SetTime(currentTime));
 }
 
 /**
@@ -1734,7 +1766,7 @@ HWTEST_F(TimeServiceSetTimeTest, SetTimeLargeValue001, TestSize.Level2)
         int64_t afterSet = TimeServiceClient::GetInstance()->GetWallTimeMs();
         EXPECT_GE(afterSet, largeTime - ONE_SECOND);
     }
-    TimeServiceClient::GetInstance()->SetTime(currentTime);
+    EXPECT_TRUE(TimeServiceClient::GetInstance()->SetTime(currentTime));
 }
 
 /**
@@ -1751,7 +1783,7 @@ HWTEST_F(TimeServiceSetTimeTest, SetTimeRapid001, TestSize.Level2)
         int64_t newTime = baseTime + i * MINUTE_TO_MILLISECOND;
         EXPECT_TRUE(TimeServiceClient::GetInstance()->SetTime(newTime));
     }
-    TimeServiceClient::GetInstance()->SetTime(baseTime);
+    EXPECT_TRUE(TimeServiceClient::GetInstance()->SetTime(baseTime));
 }
 
 /**

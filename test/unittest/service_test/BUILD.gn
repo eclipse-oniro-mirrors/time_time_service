@@ -108,6 +108,7 @@ ohos_unittest("TimeServiceTimerTest") {
     "src/time_service_timer_test.cpp",
     "src/time_service_power_on_timer_test.cpp",
     "src/timer_manager_deep_branch_test.cpp",
+    "src/timer_sa_branch_test.cpp",
   ]
 
   configs = [ ":module_private_config" ]
@@ -516,6 +517,58 @@ ohos_unittest("NtpDynamicLinkTest") {
   ]
 }
 
+# Recovered basic-surface suite (file landed in 9a7a229 but was never wired to
+# a target). Same client-static pattern as TimeClientTest: TimeServiceClient
+# sources compiled directly into the binary plus the SA static lib, so the IPC
+# entry points and the white-box service logic are exercised in-process.
+ohos_unittest("TimeServiceBasicTest") {
+  module_out_path = module_output_path
+
+  sources = [
+    "src/time_service_basic_test.cpp",
+    "${api_path}/src/time_service_client.cpp",
+    "${time_service_path}/time/src/itimer_info.cpp",
+    "${time_service_path}/time/src/timer_call_back.cpp",
+  ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "${api_path}:ntp_time_client_sources",
+    "${time_service_path}:timeservice_proxy",
+    "${time_service_path}:time_system_ability_static",
+  ]
+
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  external_deps = [
+    "ability_base:configuration",
+    "ability_base:want",
+    "ability_runtime:runtime",
+    "ability_runtime:wantagent_innerkits",
+    "icu:shared_icuuc",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libtoken_setproc",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "cJSON:cjson",
+    "common_event_service:cesfwk_innerkits",
+    "googletest:gtest_main",
+    "hilog:libhilog",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "power_manager:powermgr_client",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+}
+
 ohos_unittest("NtpTimeClientTest") {
   module_out_path = module_output_path
 
@@ -573,6 +626,7 @@ group("unittest") {
     ":TimeGettimeUtilsTest",
     ":TimePermissionTest",
     ":TimeProxyTest",
+    ":TimeServiceBasicTest",
     ":TimeServiceTimeTest",
     ":TimeServiceTimerTest",
     ":TimerAppStateObserverTest",

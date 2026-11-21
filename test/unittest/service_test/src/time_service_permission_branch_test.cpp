@@ -388,5 +388,106 @@ HWTEST_F(TimeServicePermissionBranchTest, SetPowerOnTimerEnabledNotSystemApp001,
     auto result = TimeSystemAbility::GetInstance()->SetPowerOnTimerEnabled("branch_power_on", true);
     EXPECT_EQ(result, E_TIME_NOT_SYSTEM_APP);
 }
+
+namespace {
+// Minimal in-TU callback stub: iface_cast<ITimerCallback> on the SA create
+// path requires a real IRemoteStub, so the CheckTimerPara cases below need a
+// valid callback object (the permission-reject cases do not reach it).
+class BranchCallbackStub : public IRemoteStub<ITimerCallback> {
+public:
+    BranchCallbackStub() = default;
+    ~BranchCallbackStub() override = default;
+    int32_t NotifyTimer(uint64_t timerId) override
+    {
+        return ERR_OK;
+    }
+    int32_t OnRemoteRequest(uint32_t code, OHOS::MessageParcel &data, OHOS::MessageParcel &reply,
+        OHOS::MessageOption &option) override
+    {
+        return OHOS::ERR_NONE;
+    }
+};
+
+sptr<IRemoteObject> MakeBranchCallback()
+{
+    sptr<BranchCallbackStub> callback = new (std::nothrow) BranchCallbackStub();
+    return callback;
+}
+} // namespace
+
+/**
+* @tc.name: CreateTimerWithWANotSystemApp001
+* @tc.desc: The want-agent CreateTimer overload from a non-system app token is rejected
+* @tc.precon: Current token is a plain app without system app flag
+* @tc.step: 1. Switch to non-system-app token
+*           2. Call the want-agent CreateTimer overload
+* @tc.expect: CreateTimer returns E_TIME_NOT_SYSTEM_APP and no timer id is produced
+* @tc.type: FUNC
+* @tc.require:
+* @tc.level: level1
+*/
+HWTEST_F(TimeServicePermissionBranchTest, CreateTimerWithWANotSystemApp001, TestSize.Level1)
+{
+    SetNotSystemAppToken();
+    OHOS::AbilityRuntime::WantAgent::WantAgent wantAgent;
+    uint64_t timerId = 0;
+    auto result = TimeSystemAbility::GetInstance()->CreateTimer(
+        "branch_timer_wa", 3, false, false, false, 0, wantAgent, MakeBranchCallback(), timerId);
+    EXPECT_EQ(result, E_TIME_NOT_SYSTEM_APP);
+    EXPECT_EQ(timerId, 0);
+}
+
+/**
+* @tc.name: CreateTimerAutoRestoreRealtimeReject001
+* @tc.desc: autoRestore on an elapsed-realtime timer is rejected by parameter checking
+* @tc.precon: Current token is a system app (default)
+* @tc.step: 1. Call CreateTimerWithoutWA with autoRestore=true and the
+*              ELAPSED_REALTIME type
+* @tc.expect: Returns E_TIME_AUTO_RESTORE_ERROR without creating a timer
+* @tc.type: FUNC
+* @tc.require:
+* @tc.level: level1
+*/
+HWTEST_F(TimeServicePermissionBranchTest, CreateTimerAutoRestoreRealtimeReject001, TestSize.Level1)
+{
+    SetSystemAppToken();
+    // Go through the ITimerInfo overload: the string-arg overloads wrap the
+    // parameter-check result as E_TIME_DEAL_FAILED, while this one returns the
+    // precise code, which is what the assertion below pins down.
+    auto info = std::make_shared<BranchTimerInfo>();
+    ASSERT_NE(info, nullptr);
+    info->SetType(1); // ELAPSED_REALTIME
+    info->autoRestore = true;
+    uint64_t timerId = 0;
+    auto result = TimeSystemAbility::GetInstance()->CreateTimer(info, MakeBranchCallback(), timerId);
+    EXPECT_EQ(result, E_TIME_AUTO_RESTORE_ERROR);
+    EXPECT_EQ(timerId, 0);
+}
+
+/**
+* @tc.name: CreateTimerNameTooLongReject001
+* @tc.desc: A timer name longer than STR_MAX_LENGTH is rejected by parameter checking
+* @tc.precon: Current token is a system app (default)
+* @tc.step: 1. Build a name of STR_MAX_LENGTH + 1 characters
+*           2. Call CreateTimerWithoutWA with it
+* @tc.expect: Returns E_TIME_PARAMETERS_INVALID without creating a timer
+* @tc.type: FUNC
+* @tc.require:
+* @tc.level: level1
+*/
+HWTEST_F(TimeServicePermissionBranchTest, CreateTimerNameTooLongReject001, TestSize.Level1)
+{
+    SetSystemAppToken();
+    // Same reason as the auto-restore case: the ITimerInfo overload returns
+    // the precise parameter-check code.
+    auto info = std::make_shared<BranchTimerInfo>();
+    ASSERT_NE(info, nullptr);
+    info->SetType(0); // RTC
+    info->name = std::string(65, 'a'); // STR_MAX_LENGTH is 64.
+    uint64_t timerId = 0;
+    auto result = TimeSystemAbility::GetInstance()->CreateTimer(info, MakeBranchCallback(), timerId);
+    EXPECT_EQ(result, E_TIME_PARAMETERS_INVALID);
+    EXPECT_EQ(timerId, 0);
+}
 } // namespace MiscServices
 } // namespace OHOS
