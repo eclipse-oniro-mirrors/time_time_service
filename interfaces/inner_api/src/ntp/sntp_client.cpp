@@ -399,8 +399,6 @@ void SNTPClient::SNTPMessage::clear()
     }
 }
 
-// LCOV_EXCL_START
-// The method has no input parameters, impossible to construct fuzz test.
 int64_t SNTPClient::getNtpTime()
 {
     return mNtpTime;
@@ -440,6 +438,5 @@ int64_t SNTPClient::getTransmitServerTime()
 {
     return mTransmitServerTime;
 }
-// LCOV_EXCL_STOP
 } // namespace MiscServices
 } // namespace OHOS
