@@ -32,7 +32,9 @@ class TimerHandler {
 public:
     static std::shared_ptr<TimerHandler> Create();
     int Set(uint32_t type, std::chrono::nanoseconds when, std::chrono::steady_clock::time_point bootTime);
-    uint32_t WaitForAlarm();
+    // Returns a bitmask of fired alarm fds, or a negative errno-style value when
+    // read() fails; callers must check for < 0 before using the value as a mask.
+    int WaitForAlarm();
     ~TimerHandler();
 private:
     TimerHandler(const TimerFds &fds, int epollfd);

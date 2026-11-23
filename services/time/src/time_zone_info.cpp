@@ -54,7 +54,14 @@ void TimeZoneInfo::Init()
     if (!SetTimezone(value)) {
         TIME_HILOGE(TIME_MODULE_SERVICE, "Init Set kernel failed");
     }
-    curTimezoneId_ = value;
+    {
+        // Every read/write of curTimezoneId_ must hold timezoneMutex_, matching
+        // SetTimezone/GetTimezone. Init() currently runs before the service is
+        // published, but keeping the lock discipline keeps this safe against any
+        // concurrent or future caller.
+        std::lock_guard<std::mutex> lock(timezoneMutex_);
+        curTimezoneId_ = value;
+    }
     TIME_HILOGD(TIME_MODULE_SERVICE, "Timezone value:%{public}s", value);
 }
 

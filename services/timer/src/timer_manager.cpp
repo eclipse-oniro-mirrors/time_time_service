@@ -56,7 +56,7 @@ using namespace AbilityRuntime::WantAgent;
 
 namespace {
 constexpr uint32_t TIME_CHANGED_BITS = 16;
-constexpr uint32_t TIME_CHANGED_MASK = 1 << TIME_CHANGED_BITS;
+constexpr uint32_t TIME_CHANGED_MASK = 1u << TIME_CHANGED_BITS;
 constexpr int ONE_THOUSAND = 1000;
 constexpr int NANO_TO_SECOND =  1000000000;
 constexpr int WANTAGENT_CODE_ELEVEN = 11;
@@ -787,13 +787,25 @@ void TimerManager::TimerLooper()
     pthread_setname_np(pthread_self(), "timer_loop");
     std::vector<std::shared_ptr<TimerInfo>> triggerList;
     while (runFlag_) {
-        uint32_t result = handler_->WaitForAlarm();
+        int result = handler_->WaitForAlarm();
+        if (result < 0) {
+            // read()/epoll failed. The error may have swallowed a time-change
+            // notification; a full rebatch is idempotent, so degrade to the
+            // time-change path and re-sync timer state with the kernel clock.
+            // Dropping the round (continue) would leave stale whenElapsed
+            // values and missed triggers until the next event arrives.
+            TIME_HILOGE(TIME_MODULE_SERVICE, "WaitForAlarm failed:%{public}d, errno:%{public}d", result, errno);
+            result = static_cast<int>(TIME_CHANGED_MASK);
+        }
+        // result is non-negative here; work with an unsigned copy so the bitwise
+        // mask tests stay on unsigned operands (G.EXP.23-CPP).
+        const uint32_t resultMask = static_cast<uint32_t>(result);
         auto nowRtc = std::chrono::system_clock::now();
         auto nowElapsed = TimeUtils::GetBootTimeNs();
         triggerList.clear();
 
-        if ((result & TIME_CHANGED_MASK) != 0) {
-            TIME_HILOGI(TIME_MODULE_SERVICE, "ret:%{public}u", result);
+        if ((resultMask & TIME_CHANGED_MASK) != 0) {
+            TIME_HILOGI(TIME_MODULE_SERVICE, "ret:%{public}d", result);
             system_clock::time_point lastTimeChangeClockTime;
             system_clock::time_point expectedClockTime;
             std::lock_guard<std::mutex> lock(mutex_);
@@ -810,7 +822,7 @@ void TimerManager::TimerLooper()
             }
         }
 
-        if (result != TIME_CHANGED_MASK) {
+        if (resultMask != TIME_CHANGED_MASK) {
             {
                 std::lock_guard<std::mutex> lock(mutex_);
                 TriggerTimersLocked(triggerList, nowElapsed);
