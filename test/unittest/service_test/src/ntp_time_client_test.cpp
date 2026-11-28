@@ -41,12 +41,14 @@ using namespace OHOS::MiscServices;
 // the test interposes the libc/system calls it uses (getaddrinfo/socket/send/
 // recv/...) within this executable.
 //
-// Isolation depends on the linker's default behavior plus this TU being built
-// with -fvisibility=hidden (module_private_config): the mocks are hidden and
-// therefore NOT exported into the executable's .dynsym, so shared libraries
-// (libhilog/samgr/ipc/...) keep using the real libc instead of being
-// intercepted. If that visibility setting or the symbol-interposition model
-// changes (e.g. switching to --wrap), revisit this isolation claim.
+// These extern "C" mocks ARE exported from the executable's .dynsym (the
+// -fvisibility=hidden setting does not hide them), so every shared library in
+// the test process (libhilog included) resolves these symbols to the mocks.
+// The mocks are therefore written to be environment-neutral: socket() counts
+// only AF_INET (SNTP's family) so the lazy hilog log-socket is not counted,
+// and connect/send/recv return success so unrelated library traffic is not
+// broken. If the interception model changes (e.g. switching to --wrap),
+// revisit these assumptions.
 // ---------------------------------------------------------------------------
 
 // NTP seconds from 1/1/1900 to 1/1/1970 (RFC 2030), same value as sntp_client.cpp.
@@ -153,7 +155,15 @@ void freeaddrinfo(struct addrinfo *res) {}
 
 int socket(int domain, int type, int protocol)
 {
-    g_socketCalls++;
+    // The mocks are exported from this executable (visibility hiding does not
+    // apply to these extern "C" definitions), so every library inside the test
+    // process resolves socket() to this mock. hilog creates its log-domain
+    // (AF_UNIX) socket lazily on the first log line, which would pollute the
+    // call counter. SNTP only ever creates AF_INET UDP sockets, so count those
+    // exclusively.
+    if (domain == AF_INET) {
+        g_socketCalls++;
+    }
     return g_mockSocketFail ? -1 : FAKE_SOCKET_FD;
 }
 

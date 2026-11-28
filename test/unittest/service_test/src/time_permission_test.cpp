@@ -17,6 +17,7 @@
 #include <ctime>
 #include <chrono>
 #include <fstream>
+#include <thread>
 #include <gtest/gtest.h>
 #include "time_common.h"
 #include "time_permission.h"
@@ -270,6 +271,24 @@ HWTEST_F(TimePermissionTest, CheckAuthorizationWithCheckedApp001, TestSize.Level
     bool ret = TimePermission::CheckAuthorization(TimePermission::setTimePrivilege);
 
     EXPECT_EQ(true, ret);
+}
+
+/**
+* @tc.name: IsAppNeedsAuthCheckFreshThread001
+* @tc.desc: IsAppNeedsAuthCheck on a fresh thread with no binder context stays false
+* @tc.precon: None (the test process is not the settings bundle)
+* @tc.step: 1. Call IsAppNeedsAuthCheck from a brand-new thread
+* @tc.expect: Returns false without crashing
+* @tc.type: FUNC
+* @tc.require:
+* @tc.level: level1
+*/
+HWTEST_F(TimePermissionTest, IsAppNeedsAuthCheckFreshThread001, TestSize.Level1)
+{
+    bool result = true;
+    std::thread worker([&result]() { result = TimePermission::IsAppNeedsAuthCheck(); });
+    worker.join();
+    EXPECT_EQ(false, result);
 }
 
 }
